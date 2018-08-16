@@ -16,10 +16,9 @@ import datetime
 import io
 from sklearn.metrics import pairwise_distances
 
-def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
+def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=100, max_iters=5000, random_seed=0):
     D = system.D;
 
-    k_max = 10;
     opt_method = 'adam';
     dynamics = None;
     num_zi = 1;
@@ -34,19 +33,17 @@ def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
     tf.set_random_seed(random_seed);
 
     # save tensorboard summary in intervals
-    tb_save_every = 25;
+    tb_save_every = 1;
     model_save_every = 50000;
 
     # AL switch criteria
     stop_early = True;
-    check_rate = 100;
 
-    max_iters = 5000;
     min_iters = 1000;
     cost_grad_lag = 100;
     pthresh = 0.05;
     #sigma_eps_buf = 1e-8;
-    tb_save_params = False;
+    tb_save_params = True;
 
     savedir = setup_IO(system, flow_dict, random_seed);
     print(savedir);
@@ -70,16 +67,12 @@ def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
     all_params = tf.trainable_variables();
     nparams = len(all_params);
 
-    # generative model is fully specified
-    all_params = tf.trainable_variables();
-    nparams = len(all_params);
- 
     # set up the constraint computation
     T_x = system.compute_suff_stats(phi);
     mu = system.compute_mu(behavior);
     T_x_mu_centered = system.center_suff_stats_by_mu(T_x, mu);
 
-    R2 = compute_R2(log_q_x, None, T_x_mu_centered);
+    #R2 = compute_R2(log_q_x, None, T_x_mu_centered);
 
     # augmented lagrangian optimization
     c = tf.placeholder(dtype=tf.float64, shape=());
@@ -117,7 +110,6 @@ def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
 
     num_diagnostic_checks = k_max*(max_iters // check_rate);
     costs = np.zeros((num_diagnostic_checks,));
-    R2s = np.zeros((num_diagnostic_checks,));
     T_x_mu_centereds = np.zeros((num_diagnostic_checks, system.num_suff_stats));
     check_it = 0;
     _c = c_init;
@@ -130,6 +122,14 @@ def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
         feed_dict_R2 = {Z0:z_i, c:_c};
         _T_x_mu_centered, _phi, _log_q_x = sess.run([T_x_mu_centered, phi, log_q_x], feed_dict_R2);
 
+        """
+        print('phi');
+        print(_phi);
+        print('T(x)');
+        print(_T_x_mu_centered.shape);
+        print('log_q_x');
+        print(_log_q_x);
+        """
         z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
         feed_dict = {Z0:z_i, c:_c};
 
@@ -193,51 +193,67 @@ def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
                     print('saving model at iter', i);
                     saver.save(sess, savedir + 'model');
 
-                if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
-                    _H, _T_x, _T_x_mu_centered, _phi, _log_q_x, _R2 = sess.run([H, T_x, T_x_mu_centered, phi, log_q_x, R2], feed_dict);
+                #if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
+                if (np.mod(cur_ind, check_rate)==0):
+                    _H, _T_x, _T_x_mu_centered, _phi, _log_q_x, = sess.run([H, T_x, T_x_mu_centered, phi, log_q_x], feed_dict);
                     print(42*'*');
                     print('it = %d ' % cur_ind);
                     print('H', _H);
-                    print('R2', _R2);
                     mean_T = np.mean(_T_x_mu_centered, 1);
-                    print('E[T_x - mu] = ', mean_T[0,0], mean_T[0,1]);
+                    if (system.num_suff_stats > 0):
+                        print('E[T_x - mu] = ', mean_T[0,0], mean_T[0,1]);
                     print('cost', cost_i);
 
-                    fig = plt.figure();
-                    fig.add_subplot(1,2,1);
-                    plt.hist(_phi[0,:,0,0]);
-                    plt.title('phi');
-                    fig.add_subplot(1,2,2);
-                    plt.hist(_T_x[0,:,0]);
-                    plt.title('T(g(phi))');
-                    plt.show();
+                    if (system.name == 'null_on_interval'):
+                        fig = plt.figure();
+                        plt.hist(_phi[0,:,0,0]);
+                        plt.title('phi');
+                        plt.show();
+                    elif (system.name == 'linear_1D'):
+                        fig = plt.figure();
+                        fig.add_subplot(1,2,1);
+                        plt.hist(_phi[0,:,0,0]);
+                        plt.title('phi');
+                        fig.add_subplot(1,2,2);
+                        plt.hist(_T_x[0,:,0]);
+                        plt.title('T(g(phi))');
+                        plt.show();
+                    elif (system.name == 'damped_harmonic_oscillator'):
+                        fig = plt.figure();
+                        fig.add_subplot(1,4,1);
+                        plt.hist(_phi[0,:,0,0]);
+                        plt.title('phi');
+                        fig.add_subplot(1,4,2);
+                        plt.hist(_phi[0,:,1,0]);
+                        plt.title('phi');
+                        fig.add_subplot(1,4,3);
+                        plt.hist(_phi[0,:,2,0]);
+                        plt.title('phi');
+                        fig.add_subplot(1,4,4);
+                        plt.hist(_T_x[0,:,0]);
+                        plt.title('T(g(phi))');
+                        plt.show();
 
                     z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
                     costs[check_it] = cost_i;
-                    R2s[check_it] = _R2;
                     T_x_mu_centereds[check_it] = np.mean(_T_x_mu_centered[0], 0);
 
                     plt.plot(costs);
                     plt.xlabel('iterations');
                     plt.ylabel('cost');
                     plt.show();
-
-                    plt.plot(R2s);
-                    plt.xlabel('iterations');
-                    plt.ylabel('r^2');
-                    plt.show();
-
+                    """
                     if stop_early:
                         has_converged = check_convergence([cost_grad_vals], cur_ind, cost_grad_lag, pthresh, criteria='grad_mean_ttest');
                     
                     if has_converged:
                         print('has converged!!!!!!');
                         convergence_it = cur_ind;
+                    """
 
                     print('saving to %s  ...' % savedir);
                 
-                    np.savez(savedir + 'results.npz',  R2s=R2s, \
-                                                       T_x_mu_centereds=T_x_mu_centereds, behavior=behavior, \
+                    np.savez(savedir + 'results.npz',  T_x_mu_centereds=T_x_mu_centereds, behavior=behavior, \
                                                        it=cur_ind, phi=_phi, \
                                                        convergence_it=convergence_it, check_rate=check_rate);
                 
@@ -259,4 +275,4 @@ def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    return costs, R2s;
+    return costs;
