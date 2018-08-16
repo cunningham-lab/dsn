@@ -16,7 +16,7 @@ import datetime
 import io
 from sklearn.metrics import pairwise_distances
 
-def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
+def train_dsn(system, behavior, n, flow_dict, lr_order=-3, random_seed=0):
     D = system.D;
 
     k_max = 10;
@@ -27,7 +27,7 @@ def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
 
     # set initialization of AL parameter c and learning rate
     lr = 10**lr_order
-    c_init = 1e-2;
+    c_init = 1e0;
 
     # good practice
     tf.reset_default_graph();
@@ -39,9 +39,9 @@ def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
 
     # AL switch criteria
     stop_early = True;
-    check_rate = 1000;
+    check_rate = 100;
 
-    max_iters = 3000;
+    max_iters = 5000;
     min_iters = 1000;
     cost_grad_lag = 100;
     pthresh = 0.05;
@@ -53,7 +53,7 @@ def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
 
 
     flow_layers, Z0, Z_AR, base_log_q_x, num_theta_params = \
-        construct_flow(flow_dict, D, system.T);
+        construct_flow(flow_dict, D, 1);
     flow_layers, num_theta_params = system.map_to_parameter_support(flow_layers, num_theta_params);
     Z0_shape = tf.shape(Z0);
     batch_size = tf.multiply(Z0_shape[0], Z0_shape[1]);
@@ -122,7 +122,7 @@ def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
     check_it = 0;
     _c = c_init;
     with tf.Session() as sess:
-        print('D=%d, T=%d, n=%d, lr=10^%.1f' % (D, T, n, np.log10(lr)));
+        print('training DSN for %s: dt=%.3f, T=%d' % (system.name, system.dt, system.T));
         init_op = tf.global_variables_initializer();
         sess.run(init_op);
 
@@ -194,29 +194,44 @@ def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
                     saver.save(sess, savedir + 'model');
 
                 if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
-                    _H, _T_x_mu_centered, _phi, _log_q_x, _R2 = sess.run([H, T_x_mu_centered, phi, log_q_x, R2], feed_dict);
+                    _H, _T_x, _T_x_mu_centered, _phi, _log_q_x, _R2 = sess.run([H, T_x, T_x_mu_centered, phi, log_q_x, R2], feed_dict);
                     print(42*'*');
                     print('it = %d ' % cur_ind);
                     print('H', _H);
                     print('R2', _R2);
+                    mean_T = np.mean(_T_x_mu_centered, 1);
+                    print('E[T_x - mu] = ', mean_T[0,0], mean_T[0,1]);
                     print('cost', cost_i);
+
                     fig = plt.figure();
                     fig.add_subplot(1,2,1);
                     plt.hist(_phi[0,:,0,0]);
                     plt.title('phi');
                     fig.add_subplot(1,2,2);
-                    plt.hist(_T_x_mu_centered[0,:,0]);
+                    plt.hist(_T_x[0,:,0]);
                     plt.title('T(g(phi))');
                     plt.show();
+
                     z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
                     costs[check_it] = cost_i;
                     R2s[check_it] = _R2;
                     T_x_mu_centereds[check_it] = np.mean(_T_x_mu_centered[0], 0);
 
+                    plt.plot(costs);
+                    plt.xlabel('iterations');
+                    plt.ylabel('cost');
+                    plt.show();
+
+                    plt.plot(R2s);
+                    plt.xlabel('iterations');
+                    plt.ylabel('r^2');
+                    plt.show();
+
                     if stop_early:
                         has_converged = check_convergence([cost_grad_vals], cur_ind, cost_grad_lag, pthresh, criteria='grad_mean_ttest');
                     
                     if has_converged:
+                        print('has converged!!!!!!');
                         convergence_it = cur_ind;
 
                     print('saving to %s  ...' % savedir);
@@ -244,4 +259,4 @@ def train_dsn(system, behavior, T, n, flow_dict, lr_order=-3, random_seed=0):
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    return _X, costs, Hs;
+    return costs, R2s;
