@@ -3,6 +3,7 @@ import numpy as np
 import time
 import csv
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from datetime import datetime
 import scipy.stats
 import sys
@@ -16,17 +17,16 @@ import datetime
 import io
 from sklearn.metrics import pairwise_distances
 
-def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=100, max_iters=5000, random_seed=0):
+def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3, check_rate=100, max_iters=5000, random_seed=0):
     D = system.D;
 
     opt_method = 'adam';
     dynamics = None;
     num_zi = 1;
-    np.random.seed(0);
 
     # set initialization of AL parameter c and learning rate
     lr = 10**lr_order
-    c_init = 1e0;
+    print('c_init', c_init);
 
     # good practice
     tf.reset_default_graph();
@@ -72,6 +72,10 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=
     mu = system.compute_mu(behavior);
     T_x_mu_centered = system.center_suff_stats_by_mu(T_x, mu);
 
+    if (system.name == 'damped_harmonic_oscillator'):
+        XY = system.simulate(phi);
+        X = tf.clip_by_value(XY[:,:,0,:], 1e-3, 1e3);
+
     #R2 = compute_R2(log_q_x, None, T_x_mu_centered);
 
     # augmented lagrangian optimization
@@ -110,6 +114,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=
 
     num_diagnostic_checks = k_max*(max_iters // check_rate);
     costs = np.zeros((num_diagnostic_checks,));
+    Hs = np.zeros((num_diagnostic_checks,));
     T_x_mu_centereds = np.zeros((num_diagnostic_checks, system.num_suff_stats));
     check_it = 0;
     _c = c_init;
@@ -200,15 +205,42 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=
                     print('it = %d ' % cur_ind);
                     print('H', _H);
                     mean_T = np.mean(_T_x_mu_centered, 1);
-                    if (system.num_suff_stats > 0):
-                        print('E[T_x - mu] = ', mean_T[0,0], mean_T[0,1]);
+                    #if (system.num_suff_stats > 0):
+                        #print('E[T_x - mu] = ', mean_T[0,0], mean_T[0,1]);
                     print('cost', cost_i);
 
-                    if (system.name == 'null_on_interval'):
+                    if (system.name in ['null_on_interval', 'one_con_on_interval', 'two_con_on_interval']):
                         fig = plt.figure();
-                        plt.hist(_phi[0,:,0,0]);
-                        plt.title('phi');
+                        print('system.D', system.D);
+                        for plot_ind in range(system.D):
+                            plt.subplot(1,system.D,plot_ind+1);
+                            plt.hist(_phi[0,:,plot_ind,0]);
+                            plt.title(r'$\phi_%d$' % (plot_ind+1));
                         plt.show();
+
+                        if (system.D == 3):
+                            fontsize = 14;
+                            k_i = _phi[0,:,0,0];
+                            m_i = _phi[0,:,1,0];
+                            c_i = _phi[0,:,2,0];
+
+                            fig = plt.figure();
+                            fig.add_subplot(1,3,1);
+                            plt.scatter(k_i, m_i);
+                            plt.xlabel(r'$\phi_1$', fontsize=fontsize);
+                            plt.ylabel(r'$\phi_2$', fontsize=fontsize);
+
+                            fig.add_subplot(1,3,2);
+                            plt.scatter(k_i, c_i);
+                            plt.xlabel(r'$\phi_1$', fontsize=fontsize);
+                            plt.ylabel(r'$\phi_3$', fontsize=fontsize);
+
+                            fig.add_subplot(1,3,3);
+                            plt.scatter(m_i, c_i);
+                            plt.xlabel(r'$\phi_2$', fontsize=fontsize);
+                            plt.ylabel(r'$\phi_3$', fontsize=fontsize);
+                            plt.show();
+
                     elif (system.name == 'linear_1D'):
                         fig = plt.figure();
                         fig.add_subplot(1,2,1);
@@ -220,27 +252,65 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=
                         plt.show();
                     elif (system.name == 'damped_harmonic_oscillator'):
                         fig = plt.figure();
-                        fig.add_subplot(1,4,1);
-                        plt.hist(_phi[0,:,0,0]);
-                        plt.title('phi');
-                        fig.add_subplot(1,4,2);
-                        plt.hist(_phi[0,:,1,0]);
-                        plt.title('phi');
-                        fig.add_subplot(1,4,3);
-                        plt.hist(_phi[0,:,2,0]);
-                        plt.title('phi');
-                        fig.add_subplot(1,4,4);
-                        plt.hist(_T_x[0,:,0]);
-                        plt.title('T(g(phi))');
+                        print('system.D', system.D);
+                        for plot_ind in range(system.D):
+                            plt.subplot(1,system.D,plot_ind+1);
+                            plt.hist(_phi[0,:,plot_ind,0]);
+                            plt.title(r'$\phi_%d$' % (plot_ind+1));
+                        plt.show();
+
+                        fontsize = 14;
+                        k_i = _phi[0,:,0,0];
+                        m_i = _phi[0,:,1,0];
+                        c_i = _phi[0,:,2,0];
+
+                        fig = plt.figure();
+                        fig.add_subplot(1,3,1);
+                        plt.scatter(k_i, m_i);
+                        plt.xlabel('k', fontsize=fontsize);
+                        plt.ylabel('m', fontsize=fontsize);
+
+                        fig.add_subplot(1,3,2);
+                        plt.scatter(k_i, c_i);
+                        plt.xlabel('k', fontsize=fontsize);
+                        plt.ylabel('c', fontsize=fontsize);
+
+                        fig.add_subplot(1,3,3);
+                        plt.scatter(m_i, c_i);
+                        plt.xlabel('m', fontsize=fontsize);
+                        plt.ylabel('c', fontsize=fontsize);
+                        plt.show();
+
+                        _T_x_mean = np.mean(_T_x[0], 0);
+                        plt.figure();
+                        plt.subplot(1,2,1);
+                        plt.plot(mu[:system.T]);
+                        plt.plot(_T_x_mean[:system.T]);
+                        plt.legend(['mu', 'E[T(x)]']);
+                        plt.title('X')
+
+                        plt.subplot(1,2,2);
+                        plt.plot(mu[system.T:]);
+                        plt.plot(_T_x_mean[system.T:]);
+                        plt.legend(['mu', 'E[T(x)]']);
+                        plt.title('X^2')
                         plt.show();
 
                     z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
+                    Hs[check_it] = _H;
                     costs[check_it] = cost_i;
                     T_x_mu_centereds[check_it] = np.mean(_T_x_mu_centered[0], 0);
 
-                    plt.plot(costs);
+                    iters = np.arange(check_rate, ((check_it+1)*check_rate)+1, check_rate);
+                    plt.figure();
+                    plt.subplot(1,2,1);
+                    plt.plot(iters, costs[:(check_it+1)]);
                     plt.xlabel('iterations');
                     plt.ylabel('cost');
+                    plt.subplot(1,2,2);
+                    plt.plot(iters, Hs[:(check_it+1)]);
+                    plt.xlabel('iterations');
+                    plt.ylabel('H');
                     plt.show();
                     """
                     if stop_early:
@@ -275,4 +345,4 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, lr_order=-3, check_rate=
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    return costs;
+    return costs, _phi, _T_x;
