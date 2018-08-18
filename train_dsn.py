@@ -79,6 +79,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     #R2 = compute_R2(log_q_x, None, T_x_mu_centered);
 
     # augmented lagrangian optimization
+    Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,));
     c = tf.placeholder(dtype=tf.float64, shape=());
     print('train network');
 
@@ -118,13 +119,14 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     T_x_mu_centereds = np.zeros((num_diagnostic_checks, system.num_suff_stats));
     check_it = 0;
     _c = c_init;
+    _lambda = np.zeros((system.num_suff_stats,));
     with tf.Session() as sess:
         print('training DSN for %s: dt=%.3f, T=%d' % (system.name, system.dt, system.T));
         init_op = tf.global_variables_initializer();
         sess.run(init_op);
 
         z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
-        feed_dict_R2 = {Z0:z_i, c:_c};
+        feed_dict_R2 = {Z0:z_i, Lambda:_lambda, c:_c};
         _T_x_mu_centered, _phi, _log_q_x = sess.run([T_x_mu_centered, phi, log_q_x], feed_dict_R2);
 
         """
@@ -136,7 +138,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
         print(_log_q_x);
         """
         z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
-        feed_dict = {Z0:z_i, c:_c};
+        feed_dict = {Z0:z_i, Lambda:_lambda, c:_c};
 
         cost_i, _cost_grads, summary = \
                     sess.run([cost, cost_grads, summary_op], feed_dict);
@@ -180,10 +182,14 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                     array_cur_len = 2*array_cur_len;
 
                 z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
-                feed_dict = {Z0:z_i, c:_c};
+                feed_dict = {Z0:z_i, Lambda:_lambda, c:_c};
 
-                ts, cost_i, _cost_grads, summary = \
-                    sess.run([train_step, cost, cost_grads, summary_op], feed_dict);
+                _T_x = sess.run(T_x, feed_dict);
+
+                ts, cost_i, _cost_grads, summary, _T_x, _H = \
+                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H], feed_dict);
+
+                _phi, _T_x, _H = sess.run([phi, T_x, H], feed_dict);
 
                 log_grads(_cost_grads, cost_grad_vals, cur_ind);
 
@@ -287,6 +293,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                         plt.plot(mu[:system.T]);
                         plt.plot(_T_x_mean[:system.T]);
                         plt.legend(['mu', 'E[T(x)]']);
+                        for plot_ind in range(10):
+                            plt.plot(_T_x[0,plot_ind,:system.T],'k--');
                         plt.title('X')
 
                         plt.subplot(1,2,2);
