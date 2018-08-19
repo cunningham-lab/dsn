@@ -16,6 +16,8 @@ from tf_util.tf_util import construct_flow, declare_theta, connect_flow, count_p
 import datetime
 import io
 from sklearn.metrics import pairwise_distances
+import pandas as pd
+import seaborn as sns
 
 def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3, check_rate=100, max_iters=5000, random_seed=0):
     D = system.D;
@@ -83,7 +85,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     c = tf.placeholder(dtype=tf.float64, shape=());
     print('train network');
 
-    cost, cost_grads, H = AL_cost(log_q_x, T_x_mu_centered, c, all_params);
+    cost, cost_grads, H = AL_cost(log_q_x, T_x_mu_centered, Lambda, c, all_params);
 
     grads_and_vars = [];
     for i in range(len(all_params)):
@@ -174,6 +176,11 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
             has_converged = False;
             #while ((i < (cost_grad_lag)) or (not has_converged)): 
             convergence_it = 0;
+            print('aug lag it', k);
+            print('lambda', _lambda);
+            plt.plot(_lambda);
+            print('c', _c);
+
             while (i < max_iters):
                 cur_ind = total_its + i;
 
@@ -256,6 +263,21 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                         plt.hist(_T_x[0,:,0]);
                         plt.title('T(g(phi))');
                         plt.show();
+
+                    elif (system.name == 'linear_2D'):
+                        data = pd.DataFrame(data=_phi[0,:,:,0]);
+                        fig = plt.figure();
+                        sns.pairplot(data);
+                        plt.show();
+
+                        _T_x_mean = np.mean(_T_x[0], 0);
+                        plt.figure();
+                        plt.subplot(1,2,1);
+                        plt.plot(mu);
+                        plt.plot(_T_x_mean)
+                        plt.legend(['mu', 'E[T(x)]']);
+                        plt.show();
+
                     elif (system.name == 'damped_harmonic_oscillator'):
                         fig = plt.figure();
                         print('system.D', system.D);
@@ -341,6 +363,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                 sys.stdout.flush();
                 i += 1;
 
+            _R = np.mean(_T_x_mu_centered[0], 0)
+            _lambda = _lambda + _c*_R;
             _c = 10*_c;
             total_its += i;
 
