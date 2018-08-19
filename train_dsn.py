@@ -2,8 +2,6 @@ import tensorflow as tf
 import numpy as np
 import time
 import csv
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from datetime import datetime
 import scipy.stats
 import sys
@@ -17,7 +15,12 @@ import datetime
 import io
 from sklearn.metrics import pairwise_distances
 import pandas as pd
-import seaborn as sns
+do_plot = False;
+if (do_plot):
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
 
 def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3, check_rate=100, max_iters=5000, random_seed=0):
     D = system.D;
@@ -115,10 +118,14 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     cost_grad_vals = np.zeros((array_init_len, nparam_vals));
     array_cur_len = array_init_len;
 
-    num_diagnostic_checks = k_max*(max_iters // check_rate);
+    num_diagnostic_checks = k_max*(max_iters // check_rate)+1;
     costs = np.zeros((num_diagnostic_checks,));
     Hs = np.zeros((num_diagnostic_checks,));
-    T_x_mu_centereds = np.zeros((num_diagnostic_checks, system.num_suff_stats));
+    T_xs = np.zeros((num_diagnostic_checks, system.num_suff_stats));
+    cs = [];
+    lambdas = [];
+    phis = np.zeros((k_max, n, system.D));
+    log_q_xs = np.zeros((k_max, n));
     check_it = 0;
     _c = c_init;
     _lambda = np.zeros((system.num_suff_stats,));
@@ -131,28 +138,25 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
         feed_dict_R2 = {Z0:z_i, Lambda:_lambda, c:_c};
         _T_x_mu_centered, _phi, _log_q_x = sess.run([T_x_mu_centered, phi, log_q_x], feed_dict_R2);
 
-        """
-        print('phi');
-        print(_phi);
-        print('T(x)');
-        print(_T_x_mu_centered.shape);
-        print('log_q_x');
-        print(_log_q_x);
-        """
         z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
         feed_dict = {Z0:z_i, Lambda:_lambda, c:_c};
 
         cost_i, _cost_grads, summary = \
                     sess.run([cost, cost_grads, summary_op], feed_dict);
 
-        _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
-        T_x_mu_centereds[0,:] = np.mean(_T_x_mu_centered[0], 0);
+        _T_x, _H = sess.run([T_x, H], feed_dict);
+        T_xs[0,:] = np.mean(_T_x[0], 0);
+        Hs[0] = _H;
+        costs[0] = cost_i;
+        check_it += 1;
         
         log_grads(_cost_grads, cost_grad_vals, 0);
        
         total_its = 1;
         for k in range(k_max):
             print("AL iteration %d" % (k+1));
+            cs.append(_c);
+            lambdas.append(_lambda);
             # reset optimizer
             print('resetting optimizer');
             if (opt_method == 'adam'):
@@ -177,9 +181,10 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
             #while ((i < (cost_grad_lag)) or (not has_converged)): 
             convergence_it = 0;
             print('aug lag it', k);
-            print('lambda', _lambda);
-            plt.plot(_lambda);
-            print('c', _c);
+            if (do_plot):
+                print('lambda', _lambda);
+                plt.plot(_lambda);
+                print('c', _c);
 
             while (i < max_iters):
                 cur_ind = total_its + i;
@@ -191,12 +196,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                 z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
                 feed_dict = {Z0:z_i, Lambda:_lambda, c:_c};
 
-                _T_x = sess.run(T_x, feed_dict);
-
                 ts, cost_i, _cost_grads, summary, _T_x, _H = \
                     sess.run([train_step, cost, cost_grads, summary_op, T_x, H], feed_dict);
-
-                _phi, _T_x, _H = sess.run([phi, T_x, H], feed_dict);
 
                 log_grads(_cost_grads, cost_grad_vals, cur_ind);
 
@@ -212,26 +213,82 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                     saver.save(sess, savedir + 'model');
 
                 #if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
-                if (np.mod(cur_ind, check_rate)==0):
-                    _H, _T_x, _T_x_mu_centered, _phi, _log_q_x, = sess.run([H, T_x, T_x_mu_centered, phi, log_q_x], feed_dict);
+                if (np.mod(cur_ind+1, check_rate)==0):
+                    _H, _T_x, _phi, _log_q_x = sess.run([H, T_x, phi, log_q_x], feed_dict);
                     print(42*'*');
-                    print('it = %d ' % cur_ind);
+                    print('it = %d ' % (cur_ind+1));
                     print('H', _H);
-                    mean_T = np.mean(_T_x_mu_centered, 1);
+                    mean_T = np.mean(_T_x, 1);
                     #if (system.num_suff_stats > 0):
                         #print('E[T_x - mu] = ', mean_T[0,0], mean_T[0,1]);
                     print('cost', cost_i);
 
-                    if (system.name in ['null_on_interval', 'one_con_on_interval', 'two_con_on_interval']):
-                        fig = plt.figure();
-                        print('system.D', system.D);
-                        for plot_ind in range(system.D):
-                            plt.subplot(1,system.D,plot_ind+1);
-                            plt.hist(_phi[0,:,plot_ind,0]);
-                            plt.title(r'$\phi_%d$' % (plot_ind+1));
-                        plt.show();
+                    if (do_plot):
+                        if (system.name in ['null_on_interval', 'one_con_on_interval', 'two_con_on_interval']):
+                            fig = plt.figure();
+                            print('system.D', system.D);
+                            for plot_ind in range(system.D):
+                                plt.subplot(1,system.D,plot_ind+1);
+                                plt.hist(_phi[0,:,plot_ind,0]);
+                                plt.title(r'$\phi_%d$' % (plot_ind+1));
+                            plt.show();
 
-                        if (system.D == 3):
+                            if (system.D == 3):
+                                fontsize = 14;
+                                k_i = _phi[0,:,0,0];
+                                m_i = _phi[0,:,1,0];
+                                c_i = _phi[0,:,2,0];
+
+                                fig = plt.figure();
+                                fig.add_subplot(1,3,1);
+                                plt.scatter(k_i, m_i);
+                                plt.xlabel(r'$\phi_1$', fontsize=fontsize);
+                                plt.ylabel(r'$\phi_2$', fontsize=fontsize);
+
+                                fig.add_subplot(1,3,2);
+                                plt.scatter(k_i, c_i);
+                                plt.xlabel(r'$\phi_1$', fontsize=fontsize);
+                                plt.ylabel(r'$\phi_3$', fontsize=fontsize);
+
+                                fig.add_subplot(1,3,3);
+                                plt.scatter(m_i, c_i);
+                                plt.xlabel(r'$\phi_2$', fontsize=fontsize);
+                                plt.ylabel(r'$\phi_3$', fontsize=fontsize);
+                                plt.show();
+
+                        elif (system.name == 'linear_1D'):
+                            fig = plt.figure();
+                            fig.add_subplot(1,2,1);
+                            plt.hist(_phi[0,:,0,0]);
+                            plt.title('phi');
+                            fig.add_subplot(1,2,2);
+                            plt.hist(_T_x[0,:,0]);
+                            plt.title('T(g(phi))');
+                            plt.show();
+
+                        elif (system.name == 'linear_2D'):
+                            data = pd.DataFrame(data=_phi[0,:,:,0]);
+                            fig = plt.figure();
+                            sns.pairplot(data);
+                            plt.show();
+
+                            _T_x_mean = np.mean(_T_x[0], 0);
+                            plt.figure();
+                            plt.subplot(1,2,1);
+                            plt.plot(mu);
+                            plt.plot(_T_x_mean)
+                            plt.legend(['mu', 'E[T(x)]']);
+                            plt.show();
+
+                        elif (system.name == 'damped_harmonic_oscillator'):
+                            fig = plt.figure();
+                            print('system.D', system.D);
+                            for plot_ind in range(system.D):
+                                plt.subplot(1,system.D,plot_ind+1);
+                                plt.hist(_phi[0,:,plot_ind,0]);
+                                plt.title(r'$\phi_%d$' % (plot_ind+1));
+                            plt.show();
+
                             fontsize = 14;
                             k_i = _phi[0,:,0,0];
                             m_i = _phi[0,:,1,0];
@@ -240,108 +297,54 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                             fig = plt.figure();
                             fig.add_subplot(1,3,1);
                             plt.scatter(k_i, m_i);
-                            plt.xlabel(r'$\phi_1$', fontsize=fontsize);
-                            plt.ylabel(r'$\phi_2$', fontsize=fontsize);
+                            plt.xlabel('k', fontsize=fontsize);
+                            plt.ylabel('m', fontsize=fontsize);
 
                             fig.add_subplot(1,3,2);
                             plt.scatter(k_i, c_i);
-                            plt.xlabel(r'$\phi_1$', fontsize=fontsize);
-                            plt.ylabel(r'$\phi_3$', fontsize=fontsize);
+                            plt.xlabel('k', fontsize=fontsize);
+                            plt.ylabel('c', fontsize=fontsize);
 
                             fig.add_subplot(1,3,3);
                             plt.scatter(m_i, c_i);
-                            plt.xlabel(r'$\phi_2$', fontsize=fontsize);
-                            plt.ylabel(r'$\phi_3$', fontsize=fontsize);
+                            plt.xlabel('m', fontsize=fontsize);
+                            plt.ylabel('c', fontsize=fontsize);
                             plt.show();
 
-                    elif (system.name == 'linear_1D'):
-                        fig = plt.figure();
-                        fig.add_subplot(1,2,1);
-                        plt.hist(_phi[0,:,0,0]);
-                        plt.title('phi');
-                        fig.add_subplot(1,2,2);
-                        plt.hist(_T_x[0,:,0]);
-                        plt.title('T(g(phi))');
-                        plt.show();
+                            _T_x_mean = np.mean(_T_x[0], 0);
+                            plt.figure();
+                            plt.subplot(1,2,1);
+                            plt.plot(mu[:system.T]);
+                            plt.plot(_T_x_mean[:system.T]);
+                            plt.legend(['mu', 'E[T(x)]']);
+                            for plot_ind in range(10):
+                                plt.plot(_T_x[0,plot_ind,:system.T],'k--');
+                            plt.title('X')
 
-                    elif (system.name == 'linear_2D'):
-                        data = pd.DataFrame(data=_phi[0,:,:,0]);
-                        fig = plt.figure();
-                        sns.pairplot(data);
-                        plt.show();
+                            plt.subplot(1,2,2);
+                            plt.plot(mu[system.T:]);
+                            plt.plot(_T_x_mean[system.T:]);
+                            plt.legend(['mu', 'E[T(x)]']);
+                            plt.title('X^2')
+                            plt.show();
 
-                        _T_x_mean = np.mean(_T_x[0], 0);
+                        iters = np.arange(check_rate, ((check_it+1)*check_rate)+1, check_rate);
                         plt.figure();
                         plt.subplot(1,2,1);
-                        plt.plot(mu);
-                        plt.plot(_T_x_mean)
-                        plt.legend(['mu', 'E[T(x)]']);
-                        plt.show();
-
-                    elif (system.name == 'damped_harmonic_oscillator'):
-                        fig = plt.figure();
-                        print('system.D', system.D);
-                        for plot_ind in range(system.D):
-                            plt.subplot(1,system.D,plot_ind+1);
-                            plt.hist(_phi[0,:,plot_ind,0]);
-                            plt.title(r'$\phi_%d$' % (plot_ind+1));
-                        plt.show();
-
-                        fontsize = 14;
-                        k_i = _phi[0,:,0,0];
-                        m_i = _phi[0,:,1,0];
-                        c_i = _phi[0,:,2,0];
-
-                        fig = plt.figure();
-                        fig.add_subplot(1,3,1);
-                        plt.scatter(k_i, m_i);
-                        plt.xlabel('k', fontsize=fontsize);
-                        plt.ylabel('m', fontsize=fontsize);
-
-                        fig.add_subplot(1,3,2);
-                        plt.scatter(k_i, c_i);
-                        plt.xlabel('k', fontsize=fontsize);
-                        plt.ylabel('c', fontsize=fontsize);
-
-                        fig.add_subplot(1,3,3);
-                        plt.scatter(m_i, c_i);
-                        plt.xlabel('m', fontsize=fontsize);
-                        plt.ylabel('c', fontsize=fontsize);
-                        plt.show();
-
-                        _T_x_mean = np.mean(_T_x[0], 0);
-                        plt.figure();
-                        plt.subplot(1,2,1);
-                        plt.plot(mu[:system.T]);
-                        plt.plot(_T_x_mean[:system.T]);
-                        plt.legend(['mu', 'E[T(x)]']);
-                        for plot_ind in range(10):
-                            plt.plot(_T_x[0,plot_ind,:system.T],'k--');
-                        plt.title('X')
-
+                        plt.plot(iters, costs[:(check_it+1)]);
+                        plt.xlabel('iterations');
+                        plt.ylabel('cost');
                         plt.subplot(1,2,2);
-                        plt.plot(mu[system.T:]);
-                        plt.plot(_T_x_mean[system.T:]);
-                        plt.legend(['mu', 'E[T(x)]']);
-                        plt.title('X^2')
+                        plt.plot(iters, Hs[:(check_it+1)]);
+                        plt.xlabel('iterations');
+                        plt.ylabel('H');
                         plt.show();
 
-                    z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
+                    
                     Hs[check_it] = _H;
                     costs[check_it] = cost_i;
-                    T_x_mu_centereds[check_it] = np.mean(_T_x_mu_centered[0], 0);
+                    T_xs[check_it] = np.mean(_T_x[0], 0);
 
-                    iters = np.arange(check_rate, ((check_it+1)*check_rate)+1, check_rate);
-                    plt.figure();
-                    plt.subplot(1,2,1);
-                    plt.plot(iters, costs[:(check_it+1)]);
-                    plt.xlabel('iterations');
-                    plt.ylabel('cost');
-                    plt.subplot(1,2,2);
-                    plt.plot(iters, Hs[:(check_it+1)]);
-                    plt.xlabel('iterations');
-                    plt.ylabel('H');
-                    plt.show();
                     """
                     if stop_early:
                         has_converged = check_convergence([cost_grad_vals], cur_ind, cost_grad_lag, pthresh, criteria='grad_mean_ttest');
@@ -353,8 +356,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
 
                     print('saving to %s  ...' % savedir);
                 
-                    np.savez(savedir + 'results.npz',  T_x_mu_centereds=T_x_mu_centereds, behavior=behavior, \
-                                                       it=cur_ind, phi=_phi, \
+                    np.savez(savedir + 'results.npz',  costs=costs, T_xs=T_xs, Hs=Hs, behavior=behavior, \
+                                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_xs=log_q_xs, \
                                                        convergence_it=convergence_it, check_rate=check_rate);
                 
                     print(42*'*');
@@ -362,10 +365,12 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
 
                 sys.stdout.flush();
                 i += 1;
+            phis[k,:,:] = _phi[0,:,:,0];
+            log_q_xs[k,:] = _log_q_x[0,:];
 
             _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
-            _c = 10*_c;
+            _c = 4*_c;
             total_its += i;
 
 
@@ -377,4 +382,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
+    np.savez(savedir + 'results.npz',  costs=costs, T_xs=T_xs, Hs=Hs, behavior=behavior, mu=mu, \
+                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_xs=log_q_xs,  \
+                                       convergence_it=convergence_it, check_rate=check_rate);
     return costs, _phi, _T_x;
