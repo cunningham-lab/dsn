@@ -50,7 +50,9 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     #sigma_eps_buf = 1e-8;
     tb_save_params = True;
 
-    savedir = setup_IO(system, flow_dict, random_seed);
+    c_init_order = int(np.log10(c_init));
+
+    savedir = setup_IO(system, flow_dict, lr_order, c_init_order, random_seed);
     print(savedir);
 
 

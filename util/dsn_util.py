@@ -12,12 +12,12 @@ from tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLaye
 from tf_util.tf_util import count_layer_params
 import scipy.linalg
 
-def setup_IO(system, flow_dict, random_seed):
+def setup_IO(system, flow_dict, lr_order, c_init_order, random_seed):
     # set file I/O stuff
     resdir = 'results/';
     flowstring = get_flowstring(flow_dict);
-    savedir = resdir + '/tb/' + '%s_D=%d_T=%d_flow=%s_rs=%d/' % \
-              (system.name, system.D, system.T, flowstring, random_seed);
+    savedir = resdir + '/tb/' + '%s_D=%d_T=%d_flow=%s_lr_order=%d_c=%d_rs=%d/' % \
+              (system.name, system.D, system.T, flowstring, lr_order, c_init_order, random_seed);
     return savedir
 
 def get_flowstring(flow_dict):
