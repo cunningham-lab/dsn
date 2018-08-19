@@ -476,12 +476,13 @@ def time_invariant_flow(Z_AR, eta, layers, constraint_type):
     return tf.transpose(Z), tf.transpose(sum_log_det_jacobians);
 
 
-def AL_cost(log_q_x, T_x_mu_centered, c, all_params):
+def AL_cost(log_q_x, T_x_mu_centered, Lambda, c, all_params):
     T_x_shape = tf.shape(T_x_mu_centered);
     M = T_x_shape[1];
     H = -tf.reduce_mean(log_q_x);
-    cost_terms_1 = -H;
-    cost = cost_terms_1 + (c/2.0)*tf.reduce_sum(tf.square(tf.reduce_mean(T_x_mu_centered[0], 0)));
+    R = tf.reduce_mean(T_x_mu_centered[0], 0)
+    cost_terms_1 = -H + tf.tensordot(Lambda, R, axes=[0,0]);
+    cost = cost_terms_1 + (c/2.0)*tf.reduce_sum(tf.square(R));
     grad_func1 = tf.gradients(cost_terms_1, all_params);
     
     T_x_1 = T_x_mu_centered[0,:(M//2),:];
