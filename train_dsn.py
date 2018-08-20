@@ -42,7 +42,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     model_save_every = 50000;
 
     # AL switch criteria
-    stop_early = True;
+    stop_early = False;
 
     min_iters = 1000;
     cost_grad_lag = 100;
@@ -88,7 +88,6 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     # augmented lagrangian optimization
     Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,));
     c = tf.placeholder(dtype=tf.float64, shape=());
-    print('train network');
 
     cost, cost_grads, H = AL_cost(log_q_x, T_x_mu_centered, Lambda, c, all_params);
 
@@ -198,8 +197,20 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                 z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
                 feed_dict = {Z0:z_i, Lambda:_lambda, c:_c};
 
-                ts, cost_i, _cost_grads, summary, _T_x, _H = \
-                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H], feed_dict);
+                ts, cost_i, _cost_grads, summary, _T_x, _H, _phi = \
+                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H, phi], feed_dict);
+                #print('iter', i);
+                #print('cost', cost_i);
+                #print('H', _H);
+                tx_nans = np.count_nonzero(np.isnan(_T_x));
+                tx_infs = np.count_nonzero(np.isinf(_T_x));
+                """print('Tx', tx_nans, 'nans');
+                print('Tx', tx_infs, 'infs');
+                if (tx_nans > 0 or tx_infs > 0):
+                    for i in range(n):
+                        print('T[%d,:]' % i, _T_x[0,i]);
+                print('phi', np.count_nonzero(np.isnan(_phi)), 'nans');
+                print('phi', np.count_nonzero(np.isinf(_phi)), 'infs');"""
 
                 log_grads(_cost_grads, cost_grad_vals, cur_ind);
 
@@ -330,14 +341,14 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                             plt.title('X^2')
                             plt.show();
 
-                        iters = np.arange(check_rate, ((check_it+1)*check_rate)+1, check_rate);
+                        iters = np.arange(check_rate, ((check_it)*check_rate)+1, check_rate);
                         plt.figure();
                         plt.subplot(1,2,1);
-                        plt.plot(iters, costs[:(check_it+1)]);
+                        plt.plot(iters, costs[:(check_it)]);
                         plt.xlabel('iterations');
                         plt.ylabel('cost');
                         plt.subplot(1,2,2);
-                        plt.plot(iters, Hs[:(check_it+1)]);
+                        plt.plot(iters, Hs[:(check_it)]);
                         plt.xlabel('iterations');
                         plt.ylabel('H');
                         plt.show();
