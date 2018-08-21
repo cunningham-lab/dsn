@@ -341,6 +341,16 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                             plt.title('X^2')
                             plt.show();
 
+                        if (system.name in ['rank1_rnn']):
+                            print('rank1 RNN!');
+                            _T_x_mean = np.mean(_T_x[0], 0);
+                            plt.figure();
+                            plt.subplot(1,2,1);
+                            plt.plot(mu);
+                            plt.plot(_T_x_mean)
+                            plt.legend(['mu', 'E[T(x)]']);
+                            plt.show();
+
                         iters = np.arange(check_rate, ((check_it)*check_rate)+1, check_rate);
                         plt.figure();
                         plt.subplot(1,2,1);
