@@ -124,28 +124,6 @@ def AR_to_autocov_tf(alpha, sigma_eps, P, T):
     
     return Sigma;
 
-def construct_flow(flow_dict, D_Z, T):
-    latent_layers = construct_latent_dynamics(flow_dict, D_Z, T);
-    time_invariant_layers = construct_time_invariant_flow(flow_dict, D_Z, T);
-
-    layers = latent_layers + time_invariant_layers;
-    nlayers = len(layers);
-
-    num_theta_params = 0;
-    for i in range(nlayers):
-        layer = layers[i];
-        print(i, layer);
-        num_theta_params += count_layer_params(layer);
-
-    Z0 = tf.placeholder(tf.float64, shape=(None, None, D_Z, None), name='Z0');
-    K = tf.shape(Z0)[0];
-    M = tf.shape(Z0)[1];
-
-    p0 = tf.reduce_prod(tf.exp((-tf.square(Z0))/2.0)/np.sqrt(2.0*np.pi), axis=[2,3]); 
-    base_log_q_x = tf.log(p0[:,:]);
-    Z_AR = Z0;
-    return layers, Z0, Z_AR, base_log_q_x, num_theta_params;
-
 def construct_latent_dynamics(flow_dict, D_Z, T):
     latent_dynamics = flow_dict['latent_dynamics'];
     inits = flow_dict['inits'];
@@ -474,26 +452,6 @@ def time_invariant_flow(Z_AR, eta, layers, constraint_type):
         Z = tf.concat((Z, tf.expand_dims(1-tf.reduce_sum(Z, axis=0), 0)), axis=0);
 
     return tf.transpose(Z), tf.transpose(sum_log_det_jacobians);
-
-
-def AL_cost(log_q_x, T_x_mu_centered, Lambda, c, all_params):
-    T_x_shape = tf.shape(T_x_mu_centered);
-    M = T_x_shape[1];
-    H = -tf.reduce_mean(log_q_x);
-    R = tf.reduce_mean(T_x_mu_centered[0], 0)
-    cost_terms_1 = -H + tf.tensordot(Lambda, R, axes=[0,0]);
-    cost = cost_terms_1 + (c/2.0)*tf.reduce_sum(tf.square(R));
-    grad_func1 = tf.gradients(cost_terms_1, all_params);
-    
-    T_x_1 = T_x_mu_centered[0,:(M//2),:];
-    T_x_2 = T_x_mu_centered[0,(M//2):,:];
-    grad_con = Lop(T_x_1, all_params, T_x_2);
-    grads = [];
-    nparams = len(all_params);
-    for i in range(nparams):
-        grads.append(grad_func1[i] + c*grad_con[i]);
-
-    return cost, grads, H;
 
 
 def compute_R2(log_q_x, log_h_x, T_x_mu_centered):
