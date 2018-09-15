@@ -15,7 +15,7 @@ import datetime
 import io
 from sklearn.metrics import pairwise_distances
 import pandas as pd
-do_plot = True;
+do_plot = False;
 if (do_plot):
     import pandas as pd
     import seaborn as sns
@@ -414,7 +414,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
 
             _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
-            _c = 10*_c;
+            _c = 5*_c;
             total_its += i;
 
 
