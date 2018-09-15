@@ -72,7 +72,6 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     phi, sum_log_det_jacobian, Z_by_layer = connect_flow(Z_AR, flow_layers, theta);
     log_q_x = base_log_q_x - sum_log_det_jacobian;
 
-    """
     dqdz = tf.gradients(log_q_x, Z_AR);
     hessian = [];
     for i in range(system.D):
@@ -82,7 +81,6 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     hessian = tf.concat(hessian, axis=2);
 
     trace_hessian = tf.linalg.trace(hessian[:,:,:,:,0]);
-    """
 
     # generative model is fully specified
     all_params = tf.trainable_variables();
@@ -140,6 +138,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
     cs = [];
     lambdas = [];
     phis = np.zeros((k_max, n, system.D));
+    tr_hesses = np.zeros((k_max, n));
     #tr_hesses = np.zeros((k_max, n));
     log_q_xs = np.zeros((k_max, n));
     check_it = 0;
@@ -212,8 +211,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                 z_i = np.random.normal(np.zeros((1,n,D,num_zi)), 1.0);
                 feed_dict = {Z0:z_i, Lambda:_lambda, c:_c};
 
-                ts, cost_i, _cost_grads, summary, _T_x, _H, _phi = \
-                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H, phi], feed_dict);
+                ts, cost_i, _cost_grads, summary, _T_x, _H, _phi, _tr_hess = \
+                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H, phi, trace_hessian], feed_dict);
                 tx_nans = np.count_nonzero(np.isnan(_T_x));
                 tx_infs = np.count_nonzero(np.isinf(_T_x));
 
@@ -401,6 +400,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                 
                     np.savez(savedir + 'results.npz',  costs=costs, T_xs=T_xs, Hs=Hs, behavior=behavior, mu=mu, \
                                                        it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_xs=log_q_xs, \
+                                                       trace_hessian=tr_hesses, \
                                                        convergence_it=convergence_it, check_rate=check_rate);
                 
                     print(42*'*');
@@ -410,7 +410,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
                 i += 1;
             phis[k,:,:] = _phi[0,:,:,0];
             log_q_xs[k,:] = _log_q_x[0,:];
-            #tr_hesses[k,:] = _tr_hess[0,:];
+            tr_hesses[k,:] = _tr_hess[0,:];
 
             _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
@@ -428,5 +428,6 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init=1e0, lr_order=-3,
             saver.save(sess, savedir + 'model');
     np.savez(savedir + 'results.npz',  costs=costs, T_xs=T_xs, Hs=Hs, behavior=behavior, mu=mu, \
                                        it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_xs=log_q_xs,  \
+                                       trace_hessian=tr_hesses, \
                                        convergence_it=convergence_it, check_rate=check_rate);
     return costs, _phi, _T_x;
