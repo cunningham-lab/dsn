@@ -9,10 +9,10 @@ import sys;
 
 
 is_rnn_std = int(sys.argv[1]) == 1;
+nlayers = int(sys.argv[2]);
 
 
 TIF_flow_type = 'PlanarFlowLayer';
-nlayers = 5;
 flow_dict = {'latent_dynamics':None, \
              'TIF_flow_type':TIF_flow_type, \
              'repeats':nlayers, \
@@ -20,9 +20,9 @@ flow_dict = {'latent_dynamics':None, \
 
 n = 1000;
 k_max = 10;
-c_init = 1e-3;
+c_init = 1e-2;
 check_rate = 100;
-max_iters = 1000;
+max_iters = 2000;
 lr_order = -3;
 random_seed = 0;
 

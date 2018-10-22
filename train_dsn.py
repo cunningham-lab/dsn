@@ -451,7 +451,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init_order=0, lr_order
             _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
             _R = np.mean(_T_phi_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
-            _c = 10*_c;
+            _c = 5*_c;
             total_its += i;
 
 
