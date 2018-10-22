@@ -5,16 +5,16 @@ from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
 import statsmodels.sandbox.distributions.mv_normal as mvd
 import matplotlib.pyplot as plt
-from tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLayer, \
+from lib.tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLayer, \
                         CholProdLayer, StructuredSpinnerLayer, TanhLayer, ExpLayer, \
-                        SoftPlusLayer, GP_EP_CondRegLayer, GP_EP_CondRegFillLayer, GP_Layer, AR_Layer, VAR_Layer, \
+                        SoftPlusLayer, GP_EP_CondRegLayer, GP_Layer, AR_Layer, VAR_Layer, \
                         FullyConnectedFlowLayer, ElemMultLayer
-from tf_util.tf_util import count_layer_params
+from lib.tf_util.tf_util import count_layer_params
 import scipy.linalg
 
-def setup_IO(system, flow_dict, lr_order, c_init_order, random_seed):
+def setup_IO(system, flow_dict, lr_order, c_init_order, random_seed, dir_str):
     # set file I/O stuff
-    resdir = 'results/';
+    resdir = 'results/' + dir_str + '/';
     flowstring = get_flowstring(flow_dict);
     savedir = resdir + '/tb/' + '%s_D=%d_T=%d_flow=%s_lr_order=%d_c=%d_rs=%d/' % \
               (system.name, system.D, system.T, flowstring, lr_order, c_init_order, random_seed);
@@ -454,12 +454,13 @@ def time_invariant_flow(Z_AR, eta, layers, constraint_type):
     return tf.transpose(Z), tf.transpose(sum_log_det_jacobians);
 
 
-def compute_R2(log_q_x, log_h_x, T_x_mu_centered):
-    T_x_shape = tf.shape(T_x_mu_centered);
+def compute_R2(log_q_x, log_h_x, T_x_in):
+    T_x_shape = tf.shape(T_x_in);
     M = T_x_shape[1];
-    num_suff_stats = T_x_mu_centered[2];
+    num_suff_stats = T_x_shape[2];
 
-    T_x = tf.concat((T_x_mu_centered[0], tf.ones((M, 1), tf.float64)), axis=1);
+    T_x_in = T_x_in[0] - tf.expand_dims(tf.reduce_mean(T_x_in[0], 0), 0);
+    T_x = tf.concat((T_x_in, tf.ones((M, 1), tf.float64)), axis=1);
     prec_mat = tf.matmul(tf.transpose(T_x), T_x); # + c*tf.eye(num_suff_stats+1, dtype=tf.float64);
 
     if (log_h_x is not None):
@@ -546,20 +547,6 @@ def log_grads(cost_grads, cost_grad_vals, ind):
             cost_grad_vals[ind, cgv_ind] = grad_reshape[ii];
             cgv_ind += 1;
     return None;
-
-def memory_extension(As, sigma_epsilons, cost_grad_vals, array_cur_len):
-    print('Doubling memory allocation for parameter logging.');
-    if ((As is not None) and (sigma_epsilons is not None)):
-        if (len(As.shape) > 3):
-            As = np.concatenate((As, np.zeros((array_cur_len, As.shape[1], As.shape[2], As.shape[3]))), axis=0);
-        else:
-            As = np.concatenate((As, np.zeros((array_cur_len, As.shape[1], As.shape[2]))), axis=0);   
-        sigma_epsilons = np.concatenate((sigma_epsilons, np.zeros((array_cur_len, sigma_epsilons.shape[1]))), axis=0);
-    else:
-        As = None;
-        sigma_epsilons = None;
-    cost_grad_vals = np.concatenate((cost_grad_vals, np.zeros((array_cur_len, cost_grad_vals.shape[1]))), axis=0);
-    return As, sigma_epsilons, cost_grad_vals;
 
 
 def adam_updates(params, cost_or_grads, lr=0.001, mom1=0.9, mom2=0.999):
