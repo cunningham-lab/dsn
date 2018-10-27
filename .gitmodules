@@ -1,7 +1,3 @@
 [submodule "lib/LowRank"]
 	path = lib/LowRank
 	url = https://github.com/fmastrogiuseppe/LowRank.git
-[submodule "lib/tf_util"]
-	path = lib/tf_util
-	url = https://github.com/cunningham-lab/tf_util.git
-	branch = master
