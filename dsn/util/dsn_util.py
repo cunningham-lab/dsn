@@ -9,7 +9,7 @@ from tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLaye
                         CholProdLayer, StructuredSpinnerLayer, TanhLayer, ExpLayer, \
                         SoftPlusLayer, GP_EP_CondRegLayer, GP_Layer, AR_Layer, VAR_Layer, \
                         FullyConnectedFlowLayer, ElemMultLayer
-from tf_util.tf_util import count_layer_params
+from tf_util.tf_util import count_layer_params, get_flowstring
 import scipy.linalg
 
 def setup_IO(system, flow_dict, lr_order, c_init_order, random_seed, dir_str):
@@ -27,16 +27,6 @@ def get_initdir(D, flow_dict, sigma):
     initdir = initdir + 'D=%d_%s_sigma=%.2f/' % \
               (D, flowstring, sigma);
     return initdir
-
-def get_flowstring(flow_dict):
-    latent_dynamics = flow_dict['latent_dynamics'];
-    tif_flow_type = flow_dict['TIF_flow_type'];
-    repeats = flow_dict['repeats'];
-    tif_str = '%d%s' % (repeats, tif_flow_type[:1]);
-    if (latent_dynamics is not None):
-        return '%s_%s' % (latent_dynamics, tif_str);
-    else:
-        return tif_str;
 
 def AR_to_autocov_np(alpha, sigma_eps, T):
     p = alpha.shape[0];
