@@ -5,11 +5,11 @@ from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
 import statsmodels.sandbox.distributions.mv_normal as mvd
 import matplotlib.pyplot as plt
-from lib.tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLayer, \
+from tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLayer, \
                         CholProdLayer, StructuredSpinnerLayer, TanhLayer, ExpLayer, \
                         SoftPlusLayer, GP_EP_CondRegLayer, GP_Layer, AR_Layer, VAR_Layer, \
                         FullyConnectedFlowLayer, ElemMultLayer
-from lib.tf_util.tf_util import count_layer_params
+from tf_util.tf_util import count_layer_params
 import scipy.linalg
 
 def setup_IO(system, flow_dict, lr_order, c_init_order, random_seed, dir_str):
@@ -22,7 +22,7 @@ def setup_IO(system, flow_dict, lr_order, c_init_order, random_seed, dir_str):
 
 def get_initdir(D, flow_dict, sigma):
     # set file I/O stuff
-    initdir = 'results/inits/' + ;
+    initdir = 'results/inits/';
     flowstring = get_flowstring(flow_dict);
     initdir = initdir + 'D=%d_%s_sigma=%.2f/' % \
               (D, flowstring, sigma);
@@ -531,17 +531,18 @@ def Lop(f, x, v):
     return gradients(f, x, grad_ys=v)
 
 def setup_param_logging(all_params):
+    summaries = [];
     nparams = len(all_params);
     for i in range(nparams):
         param = all_params[i];
         param_shape = tuple(param.get_shape().as_list());
         for ii in range(param_shape[0]):
             if (len(param_shape)==1 or (len(param_shape) < 2 and param_shape[1]==1)):
-                tf.summary.scalar('%s_%d' % (param.name[:-2], ii+1), param[ii]);
+                summaries.append(tf.summary.scalar('%s_%d' % (param.name[:-2], ii+1), param[ii]));
             else:
                 for jj in range(param_shape[1]):
-                    tf.summary.scalar('%s_%d%d' % (param.name[:-2], ii+1, jj+1), param[ii, jj]);
-    return None;
+                    summaries.append(f.summary.scalar('%s_%d%d' % (param.name[:-2], ii+1, jj+1), param[ii, jj]));
+    return summaries;
 
 def log_grads(cost_grads, cost_grad_vals, ind):
     cgv_ind = 0;
