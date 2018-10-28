@@ -33,14 +33,15 @@ if (do_plot):
     from mpl_toolkits.mplot3d import Axes3D
 from dsn.util.dsn_util import time_invariant_flow, check_convergence, setup_param_logging, \
                       initialize_optimization_parameters, computeMoments, getEtas, \
-                      approxKL, setup_IO, compute_R2, AR_to_autocov_np, \
+                      approxKL, setup_IO, get_initdir, compute_R2, AR_to_autocov_np, \
                       log_grads
 from tf_util.tf_util import construct_density_network, declare_theta, \
                                 connect_density_network, count_params, AL_cost, \
-                                memory_extension
+                                memory_extension, load_nf_init
 from tf_util.families import family_from_str
+from efn.train_nf import train_nf
 
-def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init_order=0, lr_order=-3, \
+def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, lr_order=-3, \
               random_seed=0, min_iters=1000,  max_iters=5000, check_rate=100, \
               dir_str='general'):
     """Trains a degenerate solution network (DSN).
@@ -86,26 +87,19 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init_order=0, lr_order
     COST_GRAD_LAG = 100;
     P_THRESH = 0.05;
 
-    #####W = tf.placeholder(tf.float64, shape=(None, None, system.D, None), name="W")
-    #####p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=[2, 3]);
-    #####base_log_q_phi = tf.log(p0[:, :]);
-
-    #####flow_layers, num_theta_params = construct_density_network(flow_dict, system.D, 1);
-    #####flow_layers, num_theta_params = system.map_to_parameter_support(flow_layers, num_theta_params);
-    
     # Look for model initialization
-    initdir = get_initdir(system.D, flow_dict, sigma_init);
-    if not os.path.exists(initdir):
-        fam_class = family_from_str('normal');
-        family = fam_class(system.D);
-        params = {'mu':np.zeros((system.D,)), \
-                  'Sigma':np.square(sigma_init)*np.eye(system.D)};
-        train_nf(family, params, flow_dict, M, lr_order, random_seed, \
-                 min_iters, max_iters, check_rate, None, profile=False, \
-                 savedir=initdir);
+    initialize_nf(system.D, flow_dict, sigma_init)
     
-    print('done training NF');
-    exit();
+    
+    inits = load_nf_init(initdir, flow_dict);
+    flow_dict.update({"inits":inits});
+
+    W = tf.placeholder(tf.float64, shape=(None, None, system.D, None), name="W")
+    p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=[2, 3]);
+    base_log_q_phi = tf.log(p0[:, :]);
+
+    flow_layers, num_theta_params = construct_density_network(flow_dict, system.D, 1);
+    flow_layers, num_theta_params = system.map_to_parameter_support(flow_layers, num_theta_params);
 
 
     # Create model save directory if doesn't exist.
@@ -115,7 +109,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init_order=0, lr_order
         os.makedirs(savedir);
 
     # Declare density network parameters.
-    theta = declare_theta(flow_layers);
+    theta = declare_theta(flow_layers, inits);
 
     # Connect declared tf Variables theta to the density network.
     phi, sum_log_det_jacobian, Z_by_layer = connect_density_network(W, flow_layers, theta);
@@ -483,3 +477,31 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, c_init_order=0, lr_order
                                        it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis,  \
                                        convergence_it=convergence_it, check_rate=check_rate);
     return costs, _phi, _T_phi;
+
+def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
+    initdir = get_initdir(D, flow_dict, sigma_init)
+    initfname = initdir + 'final_theta.npz';
+    resfname = initdir + 'results.npz';
+
+    learn_init = True;
+    if os.path.exists(initfname):
+
+        resfile = np.load(resfname);
+        assert(resfile['converged']);
+    
+    else:
+        fam_class = family_from_str('normal');
+        family = fam_class(D);
+        params = {'mu':np.zeros((D,)), \
+                  'Sigma':np.square(sigma_init)*np.eye(D), \
+                  'dist_seed':0};
+        n = 1000;
+        lr_order = -3;
+        random_seed = 0;
+        check_rate = 100;
+        max_iters = 1000000;
+        train_nf(family, params, flow_dict, n, lr_order, random_seed, \
+                 min_iters, max_iters, check_rate, None, profile=False, \
+                 savedir=initdir);
+        print('done initializing NF');
+    return None;
