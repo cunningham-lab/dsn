@@ -88,8 +88,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     P_THRESH = 0.05;
 
     # Look for model initialization
-    initialize_nf(system.D, flow_dict, sigma_init)
-    
+    initdir = initialize_nf(system.D, flow_dict, sigma_init)
     
     inits = load_nf_init(initdir, flow_dict);
     flow_dict.update({"inits":inits});
@@ -178,15 +177,17 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     costs = np.zeros((num_diagnostic_checks,));
     Hs = np.zeros((num_diagnostic_checks,));
     R2s = np.zeros((num_diagnostic_checks,));
-    T_phis = np.zeros((num_diagnostic_checks, system.num_suff_stats));
+    mean_T_phis = np.zeros((num_diagnostic_checks, system.num_suff_stats));
 
     # Keep track of AL parameters throughout training.
     cs = [];
     lambdas = [];
 
     # Take snapshots of phi and log density throughout training.
-    phis = np.zeros((k_max, n, system.D));
-    log_q_phis = np.zeros((k_max, n));
+    phis = np.zeros((k_max+1, n, system.D));
+    log_q_phis = np.zeros((k_max+1, n));
+    T_phis = np.zeros((k_max+1, n, system.num_suff_stats));
+
     #tr_hesses = np.zeros((k_max, n));
 
     _c = c_init;
@@ -200,16 +201,20 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
         feed_dict = {W:w_i, Lambda:_lambda, c:_c};
-        cost_i, _cost_grads, _T_phi, _H, _R2, summary = \
-                    sess.run([cost, cost_grads, T_phi, H, R2, summary_op], feed_dict);
+        cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, _R2, summary = \
+            sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, R2, summary_op], feed_dict);
         summary_writer.add_summary(summary, 0);
         log_grads(_cost_grads, cost_grad_vals, 0);
 
-        T_phis[0,:] = np.mean(_T_phi[0], 0);
+        mean_T_phis[0,:] = np.mean(_T_phi[0], 0);
         Hs[0] = _H;
         R2s[0] = _R2;
         costs[0] = cost_i;
         check_it += 1;
+
+        phis[0,:,:] = _phi[0,:,:,0];
+        log_q_phis[0,:] = _log_q_phi[0,:];
+        T_phis[0,:,:] = _T_phi[0];
         
        
         total_its = 1;
@@ -267,7 +272,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                     Hs[check_it] = _H;
                     R2s[check_it] = _R2;
                     costs[check_it] = cost_i;
-                    T_phis[check_it] = np.mean(_T_phi[0], 0);
+                    mean_T_phis[check_it] = np.mean(_T_phi[0], 0);
 
                     if (do_plot):
                         fontsize = 16;
@@ -322,7 +327,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                             plt.figure(figsize=(12,8));
                             for d in range(5):
                                 plt.subplot(2,3,d+1);
-                                plt.plot(iters, T_phis[:check_it,d], 'b');
+                                plt.plot(iters, mean_T_phis[:check_it,d], 'b');
                                 plt.plot([iters[0], iters[-1]], [mu[d], mu[d]], 'k--');
                                 plt.xlabel('iterations');
                                 plt.ylabel(r'$T(x)_%d$' % (d+1), fontsize=fontsize);
@@ -446,17 +451,18 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
                     print('saving to %s  ...' % savedir);
                 
-                    np.savez(savedir + 'results.npz',  costs=costs, T_phis=T_phis, Hs=Hs, R2s=R2s, behavior=behavior, mu=mu, \
+                    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_phis=mean_T_phis, behavior=behavior, mu=mu, \
                                                        it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis, \
-                                                       convergence_it=convergence_it, check_rate=check_rate);
+                                                        T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
                 
                     print(42*'*');
                     check_it += 1;
 
                 sys.stdout.flush();
                 i += 1;
-            phis[k,:,:] = _phi[0,:,:,0];
-            log_q_phis[k,:] = _log_q_phi[0,:];
+            phis[k+1,:,:] = _phi[0,:,:,0];
+            log_q_phis[k+1,:] = _log_q_phi[0,:];
+            T_phis[k+1,:,:] = _T_phi[0];
             #tr_hesses[k,:] = _tr_hess[0,:];
             _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
             _R = np.mean(_T_phi_mu_centered[0], 0)
@@ -504,4 +510,4 @@ def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
                  min_iters, max_iters, check_rate, None, profile=False, \
                  savedir=initdir);
         print('done initializing NF');
-    return None;
+    return initdir;
