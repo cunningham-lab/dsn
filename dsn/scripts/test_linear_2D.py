@@ -3,7 +3,6 @@ import numpy as np
 import tensorflow as tf
 from dsn.util.systems import system_from_str
 from dsn.train_dsn import train_dsn
-import seaborn as sns
 import pandas as pd
 import scipy.stats
 import sys, os
@@ -28,10 +27,10 @@ flow_dict = {'latent_dynamics':latent_dynamics, \
              'scale_layer':scale_layer};
 
 n = 1000;
-k_max = 10;
+k_max = 20;
 lr_order = -3;
-min_iters = 5000;
-max_iters = 10000;
+min_iters = 10000;
+max_iters = 25000;
 check_rate = 100;
 dist_seed = 0;
 dir_str = 'convergence_testing';

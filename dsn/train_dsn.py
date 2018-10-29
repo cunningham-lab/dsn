@@ -268,6 +268,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                     print('H', _H);
                     print('R2', _R2);
                     print('cost', cost_i);
+                    sys.stdout.flush();
 
                     Hs[check_it] = _H;
                     R2s[check_it] = _R2;
@@ -486,6 +487,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
 def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
     initdir = get_initdir(D, flow_dict, sigma_init)
+    print('initdir', initdir);
     initfname = initdir + 'final_theta.npz';
     resfname = initdir + 'results.npz';
 
@@ -496,6 +498,7 @@ def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
         assert(resfile['converged']);
     
     else:
+        print('here we go with the NF');
         fam_class = family_from_str('normal');
         family = fam_class(D);
         params = {'mu':np.zeros((D,)), \
