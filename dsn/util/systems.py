@@ -25,30 +25,27 @@ from dsn.util import tf_integrals as tf_integrals
 
 
 class system:
-    """Base class for exponential families.
+    """Base class for systems using DSN modeling.
 	
-	Exponential families differ in their sufficient statistics, base measures,
-	supports, ane therefore their natural parametrization.  Derivatives of this 
-	class are useful tools for learning exponential family models in tensorflow.
+	Degenerate solution networks (DSNs) learn the full parameter space of models
+    given some model behavioral constraints.  Given some system choice and a 
+    behavioral specification, these classes are designed to perform the system
+    specific functions that are necessary for training the corresponding DSN.
+
 
 	Attributes:
-			T (int): number of time points
-			dt (float): time resolution of simulation
-			behavior_str (str): determines sufficient statistics that characterize system
-	"""
+        behavior_str (str): Determines sufficient statistics that characterize system.
 
-    def __init__(self, behavior_str, T, dt):
+    """
+
+    def __init__(self, behavior_str):
         """family constructor
 
 		Args:
-			T (int): number of time points
-			dt (float): time resolution of simulation
-			behavior_str (str): determines sufficient statistics that characterize system
+			behavior_str (str): Determines sufficient statistics that characterize system.
 	
 		"""
         self.behavior_str = behavior_str
-        self.T = T
-        self.dt = dt
 
     def map_to_parameter_support(self, layers, num_theta_params):
         """Augment density network with bijective mapping to parameter support."""
@@ -66,8 +63,8 @@ class system:
         """Compute sufficient statistics that require simulation."""
         raise NotImplementedError()
 
-    def compute_mu(self, params):
-        """No comment yet."""
+    def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization."""
         raise NotImplementedError()
 
     def center_suff_stats_by_mu(self, T_x, mu):
@@ -75,21 +72,22 @@ class system:
         return T_x - np.expand_dims(np.expand_dims(mu, 0), 1)
 
 
+# The first defined systems are null systems on intervals.  These are used to validate
+# that we converge to the uniform distribution on a volume, plane, and line in these
+# cases.
+
 class null_on_interval(system):
-    """Null system.  D parameters no constraints.  
-	   Solution should be uniform on interval.
+    """Null system.  D parameters no constraints. Solution should be uniform on interval.
 
 	Attributes:
-		D (int): parametric dimensionality
-		a (float): beginning of interval
-		b (float): end of interval
+		D (int): Parametric dimensionality.
+		a (float): Beginning of interval.
+		b (float): End of interval.
 	"""
 
     def __init__(self, D, a=0, b=1):
         self.name = "null_on_interval"
         self.D = D
-        self.T = 1
-        self.dt = 0.001
         self.num_suff_stats = 0
         self.a = a
         self.b = b
@@ -102,6 +100,7 @@ class null_on_interval(system):
 
 		Returns:
 			T_x (tf.tensor): Sufficient statistics of samples.
+
 		"""
         phi_shape = tf.shape(phi)
         K = phi_shape[0]
@@ -109,6 +108,15 @@ class null_on_interval(system):
         return tf.zeros((K, M, 0), dtype=tf.float64)
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
         return np.array([], dtype=np.float64)
 
     def map_to_parameter_support(self, layers, num_theta_params):
@@ -121,6 +129,7 @@ class null_on_interval(system):
 		Returns:
 			layers (list): layers augmented with final support mapping layer.
 			num_theta_params (int): Updated count of density network parameters.
+
 		"""
         support_layer = IntervalFlowLayer("IntervalFlowLayer", self.a, self.b)
         num_theta_params += count_layer_params(support_layer)
@@ -133,9 +142,9 @@ class one_con_on_interval(null_on_interval):
 	   Solution should be uniform on the plane.
 
 	Attributes:
-		D (int): parametric dimensionality
-		a (float): beginning of interval
-		b (float): end of interval
+		D (int): Parametric dimensionality.
+        a (float): Beginning of interval.
+        b (float): End of interval.
 	"""
 
     def __init__(self, D, a=0, b=1):
@@ -154,6 +163,7 @@ class one_con_on_interval(null_on_interval):
 
 		Returns:
 			T_x (tf.tensor): Sufficient statistics of samples.
+
 		"""
         phi_shape = tf.shape(phi)
         K = phi_shape[0]
@@ -163,6 +173,15 @@ class one_con_on_interval(null_on_interval):
         return T_x
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
         return np.array([0.0, 0.001], dtype=np.float64)
 
     def map_to_parameter_support(self, layers, num_theta_params):
@@ -175,6 +194,7 @@ class one_con_on_interval(null_on_interval):
 		Returns:
 			layers (list): layers augmented with final support mapping layer.
 			num_theta_params (int): Updated count of density network parameters.
+
 		"""
         support_layer = IntervalFlowLayer("IntervalFlowLayer", self.a, self.b)
         num_theta_params += count_layer_params(support_layer)
@@ -187,9 +207,9 @@ class two_con_on_interval(null_on_interval):
 	   Solution should be uniform on the plane.
 
 	Attributes:
-		D (int): parametric dimensionality
-		a (float): beginning of interval
-		b (float): end of interval
+		D (int): Parametric dimensionality.
+        a (float): Beginning of interval.
+        b (float): End of interval.
 	"""
 
     def __init__(self, D, a=0, b=1):
@@ -208,6 +228,7 @@ class two_con_on_interval(null_on_interval):
 
 		Returns:
 			T_x (tf.tensor): Sufficient statistics of samples.
+
 		"""
         phi_shape = tf.shape(phi)
         K = phi_shape[0]
@@ -218,6 +239,15 @@ class two_con_on_interval(null_on_interval):
         return T_x
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
         return np.array([0.0, 0.0, 0.001, 0.001], dtype=np.float64)
 
     def map_to_parameter_support(self, layers, num_theta_params):
@@ -230,6 +260,7 @@ class two_con_on_interval(null_on_interval):
 		Returns:
 			layers (list): layers augmented with final support mapping layer.
 			num_theta_params (int): Updated count of density network parameters.
+
 		"""
         support_layer = IntervalFlowLayer("IntervalFlowLayer", self.a, self.b)
         num_theta_params += count_layer_params(support_layer)
@@ -237,8 +268,93 @@ class two_con_on_interval(null_on_interval):
         return layers, num_theta_params
 
 
+# Another validation setp is learning the multivariate Gaussian distribution
+
+class MultivariateNormal(system):
+    """Multivariate Gaussian validation system.
+
+    Attributes:
+        behavior_str (str): Determines sufficient statistics that characterize system.
+        D (int): Parametric dimensionality.
+
+    """
+
+    def __init__(self, behavior_str='moments', D):
+        super().__init__(behavior_str)
+        self.D = D;
+        self.name = "normal"
+        self.num_suff_stats = int(D + D * (D + 1) / 2)
+
+    def compute_suff_stats(self, phi):
+        """Compute sufficient statistics of density network samples.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            T_x (tf.tensor): Sufficient statistics of samples.
+
+        """
+        if self.behavior_str == "moments":
+            T_x = self.analytic_suff_stats(phi)
+        else:
+            raise NotImplementedError
+        return T_x
+
+    def analytic_suff_stats(self, phi):
+        """Compute closed form sufficient statistics.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            T_x (tf.tensor): Analytic sufficient statistics of samples.
+        """
+        phi_shape = tf.shape(phi)
+        K = phi_shape[0]
+        M = phi_shape[1]
+
+        cov_con_mask = np.triu(np.ones((self.D, self.D), dtype=np.bool_), 0)
+        T_phi_mean = tf.reduce_mean(phi, 3)
+        phi_KMTD = tf.transpose(phi, [0, 1, 3, 2])
+
+        phiphiT_KMTDD = tf.matmul(tf.expand_dims(phi_KMTD, 4), tf.expand_dims(phi_KMTD, 3))
+        T_phi_cov_KMTDZ = tf.transpose(
+            tf.boolean_mask(tf.transpose(phiphiT_KMTDD, [3, 4, 0, 1, 2]), cov_con_mask),
+            [1, 2, 3, 0],
+        )
+        T_phi_cov = tf.reduce_mean(T_phi_cov_KMTDZ, 2)
+        T_phi = tf.concat((T_phi_mean, T_phi_cov), axis=2)
+        return T_phi
+
+    def compute_mu(self, behavior):
+        """Compute the mean parameterization (mu) given the mean parameters.
+
+        Args:
+            behavior (dict): Mean parameters of behavioral distribution.
+
+        Returns:
+            mu (np.array): The mean parameterization vector of the exponential family.
+
+        """
+        mu = behavior["mu"]
+        Sigma = behavior["Sigma"]
+        mu_mu = mu
+        mu_Sigma = np.zeros((int(self.D * (self.D + 1) / 2)))
+        ind = 0
+        for i in range(self.D):
+            for j in range(i, self.D):
+                mu_Sigma[ind] = Sigma[i, j] + mu[i] * mu[j]
+                ind += 1
+
+        mu = np.concatenate((mu_mu, mu_Sigma), 0)
+        return mu
+
+
+# Dynamical systems
+
 class linear_1D(system):
-    """Linear one-dimensional systems.
+    """Exponential growth/decay.
 
 	Attributes:
 		D (int): parametric dimensionality
@@ -248,7 +364,9 @@ class linear_1D(system):
 	"""
 
     def __init__(self, behavior_str, T, dt, init_conds):
-        super().__init__(behavior_str, T, dt)
+        super().__init__(behavior_str)
+        self.T = T
+        self.dt = dt
         self.name = "linear_1D"
         self.D = 1
         self.init_conds = init_conds
@@ -314,6 +432,15 @@ class linear_1D(system):
         return T_x
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
         mu = behavior["mu"]
         Sigma = behavior["Sigma"]
         mu_mu = mu
@@ -329,7 +456,7 @@ class linear_1D(system):
 
 
 class damped_harmonic_oscillator(system):
-    """Linear one-dimensional systems.
+    """Damped harmonic oscillator.  Solution should be a line with noise.
 
 	Attributes:
 		D (int): parametric dimensionality
@@ -339,7 +466,9 @@ class damped_harmonic_oscillator(system):
 	"""
 
     def __init__(self, behavior_str, T, dt, init_conds, bounds):
-        super().__init__(behavior_str, T, dt)
+        super().__init__(behavior_str)
+        self.T = T
+        self.dt = dt
         self.name = "damped_harmonic_oscillator"
         self.D = 3
         self.init_conds = init_conds
@@ -347,13 +476,14 @@ class damped_harmonic_oscillator(system):
         self.bounds = bounds
 
     def simulate(self, phi):
-        """Compute sufficient statistics that require simulation.
+        """Simulate the damped harmonic oscillator given parameters phi.
 
 		Args:
 			phi (tf.tensor): Density network system parameter samples.
 
 		Returns:
-			T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+			g(phi) (tf.tensor): Simulated system activity.
+
 		"""
         phi_shape = tf.shape(phi)
         K = phi_shape[0]
@@ -401,7 +531,9 @@ class damped_harmonic_oscillator(system):
 
 		Returns:
 			T_x (tf.tensor): Sufficient statistics of samples.
+
 		"""
+
         if self.behavior_str == "trajectory":
             T_x = self.simulation_suff_stats(phi)
         else:
@@ -416,7 +548,9 @@ class damped_harmonic_oscillator(system):
 
 		Returns:
 			T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
 		"""
+
         if self.behavior_str == "trajectory":
             XY = self.simulate(phi)
             X = tf.clip_by_value(XY[:, :, 0, :], -1e3, 1e3)
@@ -424,6 +558,16 @@ class damped_harmonic_oscillator(system):
         return T_x
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
+
         mu = behavior["mu"]
         Sigma = behavior["Sigma"]
         mu_mu = mu
@@ -442,7 +586,9 @@ class damped_harmonic_oscillator(system):
 		Returns:
 			layers (list): layers augmented with final support mapping layer.
 			num_theta_params (int): Updated count of density network parameters.
+
 		"""
+
         support_layer = IntervalFlowLayer(
             "IntervalFlowLayer", self.bounds[0], self.bounds[1]
         )
@@ -450,105 +596,18 @@ class damped_harmonic_oscillator(system):
         layers.append(support_layer)
         return layers, num_theta_params
 
-class MultivariateNormal(system):
-    """Linear two-dimensional systems.
-
-    Attributes:
-        D (int): parametric dimensionality
-        T (int): number of time points
-        dt (float): time resolution of simulation
-        behavior_str (str): determines sufficient statistics that characterize system
-    """
-
-    def __init__(self, D, T=1, behavior_str='moments'):
-        self.D = D;
-        self.T = T;
-        self.behavior_str = behavior_str
-        self.name = "normal"
-        self.num_suff_stats = int(D + D * (D + 1) / 2)
-
-    def compute_suff_stats(self, phi):
-        """Compute sufficient statistics of density network samples.
-
-        Args:
-            phi (tf.tensor): Density network system parameter samples.
-
-        Returns:
-            T_x (tf.tensor): Sufficient statistics of samples.
-        """
-        if self.behavior_str == "moments":
-            T_x = self.analytic_suff_stats(phi)
-        else:
-            raise NotImplementedError
-        return T_x
-
-    def analytic_suff_stats(self, phi):
-        """Compute closed form sufficient statistics.
-
-        Args:
-            phi (tf.tensor): Density network system parameter samples.
-
-        Returns:
-            T_x (tf.tensor): Analytic sufficient statistics of samples.
-        """
-        phi_shape = tf.shape(phi)
-        K = phi_shape[0]
-        M = phi_shape[1]
-
-        cov_con_mask = np.triu(np.ones((self.D, self.D), dtype=np.bool_), 0)
-        T_phi_mean = tf.reduce_mean(phi, 3)
-        phi_KMTD = tf.transpose(phi, [0, 1, 3, 2])
-        # samps x D
-        phiphiT_KMTDD = tf.matmul(tf.expand_dims(phi_KMTD, 4), tf.expand_dims(phi_KMTD, 3))
-        T_phi_cov_KMTDZ = tf.transpose(
-            tf.boolean_mask(tf.transpose(phiphiT_KMTDD, [3, 4, 0, 1, 2]), cov_con_mask),
-            [1, 2, 3, 0],
-        )
-        T_phi_cov = tf.reduce_mean(T_phi_cov_KMTDZ, 2)
-        T_phi = tf.concat((T_phi_mean, T_phi_cov), axis=2)
-        return T_phi
-
-    def compute_mu(self, behavior):
-        """Compute the mean parameterization (mu) given the mean parameters.
-
-        Args:
-            behavior (dict): Mean parameters of behavioral distribution.
-
-        Returns:
-            mu (np.array): The mean parameterization vector of the exponential family.
-
-        """
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
-        mu_mu = mu
-        mu_Sigma = np.zeros((int(self.D * (self.D + 1) / 2)))
-        ind = 0
-        for i in range(self.D):
-            for j in range(i, self.D):
-                mu_Sigma[ind] = Sigma[i, j] + mu[i] * mu[j]
-                ind += 1
-
-        mu = np.concatenate((mu_mu, mu_Sigma), 0)
-        return mu
-
-
 
 class linear_2D(system):
-    """Linear two-dimensional systems.
+    """Linear two-dimensional system.
 
 	Attributes:
-		D (int): parametric dimensionality
-		T (int): number of time points
-		dt (float): time resolution of simulation
-		behavior_str (str): determines sufficient statistics that characterize system
+		behavior_str (str): Determines sufficient statistics that characterize system.
 	"""
 
     def __init__(self, behavior_str):
         self.behavior_str = behavior_str
         self.name = "linear_2D"
         self.D = 4
-        self.dt = 0.001
-        self.T = 1
         self.num_suff_stats = 4
 
     def compute_suff_stats(self, phi):
@@ -574,6 +633,7 @@ class linear_2D(system):
 
 		Returns:
 			T_x (tf.tensor): Analytic sufficient statistics of samples.
+
 		"""
         phi_shape = tf.shape(phi)
         K = phi_shape[0]
@@ -611,8 +671,6 @@ class linear_2D(system):
             moments = [
                 lambda_1_real,
                 tf.square(lambda_1_real),
-                #lambda_2_real,
-                #tf.square(lambda_2_real),
                 lambda_1_imag,
                 tf.square(lambda_1_imag),
             ]
@@ -620,155 +678,24 @@ class linear_2D(system):
         return T_x
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
         mu = behavior["mu"]
         Sigma = behavior["Sigma"]
         mu_mu = mu
         mu_Sigma = np.square(mu_mu) + Sigma
         print(mu_mu.shape, mu_Sigma.shape)
-        #mu = np.array(
-        #    [mu_mu[0], mu_Sigma[0], mu_mu[1], mu_Sigma[1], mu_mu[2], mu_Sigma[2]]
-        #)
         mu = np.array(
             [mu_mu[0], mu_Sigma[0], mu_mu[1], mu_Sigma[1]]
         )
         return mu
-
-
-class RNN_rank1(system):
-    """Rank-1 RNN with bistable states for low input magnitudes
-	   See Fig. 2F - Mastrogiuseppe et. al. 2018
-
-	Attributes:
-		D (int): parametric dimensionality
-		T (int): number of time points
-		dt (float): time resolution of simulation
-		behavior_str (str): determines sufficient statistics that characterize system
-	"""
-
-    def __init__(self, T, Ics_0, Ics_1, behavior_str):
-        self.behavior_str = behavior_str
-        self.name = "rank1_rnn"
-        self.D = 2
-        self.dt = 0.001
-        self.eps = 0.8
-        self.g = 0.8
-        self.T = T
-        self.Ics_0 = Ics_0
-        self.Ics_1 = Ics_1
-        self.num_suff_stats = 8
-
-    def compute_suff_stats(self, phi):
-        """Compute sufficient statistics of density network samples.
-
-		Args:
-			phi (tf.tensor): Density network system parameter samples.
-
-		Returns:
-			T_x (tf.tensor): Sufficient statistics of samples.
-		"""
-        if self.behavior_str == "bistable":
-            T_x = self.simulation_suff_stats(phi)
-        else:
-            raise NotImplementedError
-        return T_x
-
-    def simulation_suff_stats(self, phi):
-        """Compute sufficient statistics that require simulation.
-
-		Args:
-			phi (tf.tensor): Density network system parameter samples.
-
-		Returns:
-			T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
-		"""
-        if self.behavior_str == "bistable":
-            sol = self.simulate(phi)
-            sol_shape = tf.shape(sol)
-            K = sol_shape[1]
-            M = sol_shape[2]
-            D = sol_shape[3]
-            X = tf.clip_by_value(sol[2, :, :, :], -1e3, 1e3)
-            X = tf.expand_dims(tf.reshape(tf.transpose(X, [1, 0, 2]), [M, K * D]), 0)
-            T_x = tf.concat((X, tf.square(X)), 2)
-        return T_x
-
-    def simulate(self, phi):
-        Mm_tf = phi[:, :, 0, :]
-        Mn_tf = phi[:, :, 1, :]
-
-        Mm_tf = tf.tile(Mm_tf, [2, 1, 2])
-        Mn_tf = tf.tile(Mn_tf, [2, 1, 2])
-
-        # Mm = 3.5      # Mean of m
-        # Mn = 1.       # Mean of n
-        Mi = 0.0  # Mean of I
-
-        Sim = 1.0  # Std of m
-        Sin = 1.0  # Std of n
-        Sip = 1.0
-
-        Sini = np.concatenate(
-            (0.5 * np.ones((1, 1, 2)), 1.0 * np.ones((1, 1, 2))), axis=0
-        )
-
-        def consistent_solve(y, g, eps, T):
-            y_1 = y[:, :, :, 0]
-            y_2 = y[:, :, :, 1]
-            y_3 = y[:, :, :, 2]
-            for i in range(T):
-                Sii = np.sqrt((Sini / Sin) ** 2 + Sip ** 2)
-
-                mu = Mm_tf * y_3 + Mi
-                new1 = g * g * tf_integrals.PhiSq(mu, y_2) + Sim ** 2 * y_3 ** 2
-                new1 = new1 + Sii ** 2
-                new2 = Mn_tf * tf_integrals.Phi(mu, y_2) + Sini * tf_integrals.Prime(
-                    mu, y_2
-                )
-
-                y_new_1 = Mm_tf * new2 + Mi
-                y_new_2 = (1 - eps) * y_2 + eps * new1
-                y_new_3 = (1 - eps) * y_3 + eps * new2
-
-                y_1 = y_new_1
-                y_2 = y_new_2
-                y_3 = y_new_3
-
-            y_out = tf.stack([y_1, y_2, y_3], axis=0)
-            return y_out
-
-        Ics = np.concatenate(
-            (np.expand_dims(self.Ics_0, 2), np.expand_dims(self.Ics_1, 2)), axis=2
-        )
-        Ics = np.tile(Ics, [2, 1, 1, 1])
-        sol = consistent_solve(Ics, self.g, self.eps, self.T)
-
-        out = sol
-        return sol
-
-    def compute_mu(self, behavior):
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
-        mu_mu = mu
-        mu_Sigma = np.square(mu_mu) + Sigma
-        mu = np.concatenate((mu_mu, mu_Sigma), axis=0)
-        return mu
-
-    def map_to_parameter_support(self, layers, num_theta_params):
-        """Augment density network with bijective mapping to support.
-
-		Args:
-			layers (list): List of ordered normalizing flow layers.
-			num_theta_params (int): Running count of density network parameters.
-
-		Returns:
-			layers (list): layers augmented with final support mapping layer.
-			num_theta_params (int): Updated count of density network parameters.
-		"""
-
-        support_layer = SoftPlusLayer()
-        num_theta_params += count_layer_params(support_layer)
-        layers.append(support_layer)
-        return layers, num_theta_params
 
 
 class RNN_rank1_std(system):
@@ -776,17 +703,16 @@ class RNN_rank1_std(system):
 	   See Fig. 2F - Mastrogiuseppe et. al. 2018
 
 	Attributes:
-		D (int): parametric dimensionality
-		T (int): number of time points
-		dt (float): time resolution of simulation
-		behavior_str (str): determines sufficient statistics that characterize system
+		T (int): Number of consistency equation solve steps.
+        Ics_0 (np.array): A set of initial conditions.
+        Ics_1 (np.array): Another set of initial conditions.
+		behavior_str (str): Determines sufficient statistics that characterize system.
 	"""
 
     def __init__(self, T, Ics_0, Ics_1, behavior_str):
         self.behavior_str = behavior_str
         self.name = "rank1_rnn"
         self.D = 4
-        self.dt = 0.001
         self.eps = 0.8
         self.g = 0.8
         self.T = T
@@ -819,7 +745,7 @@ class RNN_rank1_std(system):
 			T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
 		"""
         if self.behavior_str == "bistable":
-            sol = self.simulate(phi)
+            sol = self.solve(phi)
             sol_shape = tf.shape(sol)
             K = sol_shape[1]
             M = sol_shape[2]
@@ -829,7 +755,17 @@ class RNN_rank1_std(system):
             T_x = tf.concat((X, tf.square(X)), 2)
         return T_x
 
-    def simulate(self, phi):
+    def solve(self, phi):
+        """Solve the consistency equations given parameters phi.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            g(phi) (tf.tensor): Simulated system activity.
+
+        """
+
         Mm_tf = phi[:, :, 0, :]
         Mn_tf = phi[:, :, 1, :]
         Sim_tf = phi[:, :, 2, :]
@@ -887,6 +823,15 @@ class RNN_rank1_std(system):
         return sol
 
     def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
         mu = behavior["mu"]
         Sigma = behavior["Sigma"]
         mu_mu = mu
@@ -904,6 +849,7 @@ class RNN_rank1_std(system):
 		Returns:
 			layers (list): layers augmented with final support mapping layer.
 			num_theta_params (int): Updated count of density network parameters.
+            
 		"""
 
         support_layer = SoftPlusLayer()
