@@ -102,7 +102,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
 
     # Create model save directory if doesn't exist.
-    savedir = setup_IO(system, flow_dict, lr_order, c_init_order, random_seed, dir_str);
+    savedir = setup_IO(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str);
     if not os.path.exists(savedir):
         print('Making directory %s' % savedir );
         os.makedirs(savedir);
@@ -480,9 +480,9 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    np.savez(savedir + 'results.npz',  costs=costs, T_phis=T_phis, Hs=Hs, R2s=R2s, behavior=behavior, mu=mu, \
+    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_phis=mean_T_phis, behavior=behavior, mu=mu, \
                                        it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis,  \
-                                       convergence_it=convergence_it, check_rate=check_rate);
+                                       T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
     return costs, _phi, _T_phi;
 
 def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
