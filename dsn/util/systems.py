@@ -279,7 +279,7 @@ class MultivariateNormal(system):
 
     """
 
-    def __init__(self, behavior_str='moments', D):
+    def __init__(self, behavior_str='moments', D=2):
         super().__init__(behavior_str)
         self.D = D;
         self.name = "normal"
@@ -427,7 +427,7 @@ class linear_1D(system):
 		"""
         if self.behavior_str == "steady_state":
             X = self.simulate(phi)
-            ss = X[:, :, :, -1]
+            ss = X[:, :, :, -1];
             T_x = tf.concat((ss, tf.square(ss)), 2)
         return T_x
 
@@ -743,7 +743,9 @@ class RNN_rank1_std(system):
 
 		Returns:
 			T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
 		"""
+
         if self.behavior_str == "bistable":
             sol = self.solve(phi)
             sol_shape = tf.shape(sol)
@@ -858,6 +860,228 @@ class RNN_rank1_std(system):
         return layers, num_theta_params
 
 
+class V1_circuit(system):
+    """ 4-neuron V1 circuit.
+
+        This is the standard 4-neuron rate model of V1 activity consisting of 
+         - E: pyramidal (excitatory) neurons
+         - P: parvalbumim expressing inhibitory neurons
+         - S: somatostatin expressing inhibitory neurons
+         - V: vasoactive intestinal peptide expressing inhibitory neurons
+
+        dr/dt = -r + [Wr + h]+^n
+
+    Attributes:
+        behavior_str (str):
+            'V_same': All neurons except V increase response.
+            'S_same': All neurons except S increase response.
+        param-str (str):
+            'h': Learn the input parameters.
+            'W': Learn the connectivity parameters.
+        T (int): Number of simulation time points.
+        dt (float): Time resolution of simulation.
+        init_conds (list): Specifies the initial state of the system.
+    """
+
+    def __init__(self, behavior_str, param_str, T, dt, init_conds):
+        super().__init__(behavior_str)
+        self.param_str = param_str
+        self.T = T
+        self.dt = dt
+        self.name = "V1_circuit"
+        # determine dimensionality and number of constraints
+        self.D = 0;
+        self.num_suff_stats = 0;
+        if (behavior_str in ['V_same', 'S_same']):
+            if (param_str in ['h', 'both']):
+                self.D += 8;
+            if (param_str == ['W', 'both']):
+                self.D += 11;
+            self.num_suff_stats += 8;
+        else:
+            raise NotImplementedError();
+        self.init_conds = init_conds
+
+    def simulate(self, phi):
+        """Simulate the V1 4-neuron circuit given parameters phi.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            g(phi) (tf.tensor): Simulated system activity.
+
+        """
+        # remove trailing dimension
+        phi = phi[:,:,:,0];
+        phi_shape = tf.shape(phi)
+        K = phi_shape[0]
+        M = phi_shape[1]
+
+        print("phi", phi.shape)
+        ind = 0;
+        if (self.behavior_str in ['V_same', 'S_same']):
+            if (self.param_str in ['h', 'both']):
+                h1 = tf.expand_dims(phi[:,:,0:4], 3);
+                h2 = tf.expand_dims(phi[:,:,4:8], 3);
+                ind += 8;
+            else:
+                # this would have to be based on a hypothesized input structure
+                h1 = np.ones((4,1));
+                h2 = -np.ones((4,1));
+                raise NotImplementedError();
+
+            if (self.param_str in ['W', 'both']):
+                W_EE = phi[:,:,ind];
+                W_EP = phi[:,:,ind+1];
+                W_ES = phi[:,:,ind+2];
+                W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((K,M))], axis=2);
+
+                W_PE = phi[:,:,ind+3];
+                W_PP = phi[:,:,ind+4];
+                W_PS = phi[:,:,ind+5];
+                W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((K,M))], axis=2);
+
+                W_SE = phi[:,:,ind+6];
+                W_SV = phi[:,:,ind+7];
+                W_SX = tf.stack([W_SE, tf.zeros((K,M)), tf.zeros((K,M)), -W_SV], axis=2);
+
+                W_VE = phi[:,:,ind+8];
+                W_VP = phi[:,:,ind+9];
+                W_VS = phi[:,:,ind+10];
+                W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((K,M))], axis=2);
+
+                W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2);
+
+            else:
+                # Using values from Pfeffer et al. 2013
+                E_pre = 1.0;
+                W_EE = E_pre;
+                W_EP = 1.0;
+                W_ES = 0.54;
+
+                W_PE = E_pre;
+                W_PP = 1.01;
+                W_PS = 0.33;
+
+                W_SE = E_pre;
+                W_SV = 0.15;
+
+                W_VE = E_pre;
+                W_VP = 0.22;
+                W_VS = 0.77;
+
+                W = np.array([[W_EE, -W_EP, -W_ES,   0.0], \
+                   [W_PE, -W_PP, -W_PS,   0.0], \
+                   [W_SE,   0.0,   0.0, -W_SV], \
+                   [W_VE, -W_VP, -W_VS,   0.0]]);
+                W = np.expand_dims(np.expand_dims(W, 0), 0);
+                W = tf.constant(W);
+                W = tf.tile(W, [K,M,1,1]);
+
+            # initial conditionsd
+            r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0));
+            r0 = tf.tile(r0, [K,M,1,1]);
+
+            # transition function
+            n = 2.0;
+            def f1(r, t):
+                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h1), n);
+                return tf.clip_by_value(drdt, 1e-3, 1e3);
+
+            def f2(r, t):
+                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h2), n);
+                return tf.clip_by_value(drdt, 1e-3, 1e3);
+
+            # time axis
+            t = np.arange(0,self.T*self.dt, self.dt);
+
+            r1_t = tf.contrib.integrate.odeint_fixed(f1, r0, t, method='rk4')
+            r2_t = tf.contrib.integrate.odeint_fixed(f2, r0, t, method='rk4')
+
+            return [r1_t, r2_t];
+        
+        else:
+            raise NotImplementedError();
+
+    def compute_suff_stats(self, phi):
+        """Compute sufficient statistics of density network samples.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            T_x (tf.tensor): Sufficient statistics of samples.
+
+        """
+
+        if (self.behavior_str in ["V_same", "S_same"]):
+            T_x = self.simulation_suff_stats(phi)
+        else:
+            raise NotImplementedError();
+        
+        return T_x
+
+    def simulation_suff_stats(self, phi):
+        """Compute sufficient statistics that require simulation.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
+        """
+
+        if (self.behavior_str in ["V_same", "S_same"]):
+            r1_t, r2_t = self.simulate(phi);
+            print(r1_t.shape);
+            r1_ss = r1_t[-1,:,:,:,0];
+            r2_ss = r2_t[-1,:,:,:,0];
+            print(r1_ss.shape);
+            diff_ss = r2_ss - r1_ss;
+            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
+            print(r1_ss.shape, diff_ss.shape, T_x.shape);
+        return T_x
+
+    def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
+
+        mu = behavior["mu"]
+        Sigma = behavior["Sigma"]
+        mu_mu = mu
+        mu_Sigma = np.square(mu_mu) + Sigma
+        mu = np.concatenate((mu_mu, mu_Sigma), 0)
+        return mu
+
+    def map_to_parameter_support(self, layers, num_theta_params):
+        """Augment density network with bijective mapping to parameter support.
+
+        Args:
+            layers (list): List of ordered normalizing flow layers.
+            num_theta_params (int): Running count of density network parameters.
+
+        Returns:
+            layers (list): layers augmented with final support mapping layer.
+            num_theta_params (int): Updated count of density network parameters.
+
+        """
+
+        support_layer = SoftPlusLayer()
+        num_theta_params += count_layer_params(support_layer)
+        layers.append(support_layer)
+        return layers, num_theta_params
+
+
+
 def system_from_str(system_str):
     if system_str in ["null", "null_on_interval"]:
         return null_on_interval
@@ -877,3 +1101,6 @@ def system_from_str(system_str):
         return RNN_rank1
     elif system_str in ["rank1_rnn_std"]:
         return RNN_rank1_std
+    elif system_str in ["V1_circuit"]:
+        return V1_circuit
+
