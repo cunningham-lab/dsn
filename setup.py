@@ -10,5 +10,6 @@ setup(name='dsn',
       packages=['dsn', 'dsn.util'],
       install_requires=['tf_util', 'tensorflow', 'numpy', 'statsmodels', \
                         'scipy', 'cvxopt', 'matplotlib', 'scikit-learn'],
-      dependency_links=['https://github.com/cunningham-lab/tf_util/tarball/master#egg=tf_util-1.0'],
+      dependency_links=['https://github.com/cunningham-lab/tf_util/tarball/master#egg=tf_util-1.0',
+                        'https://github.com/cunningham-lab/efn/tarball/master#egg=efn-1.0'],
      )
