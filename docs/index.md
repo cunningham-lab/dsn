@@ -2,13 +2,13 @@
 layout: default
 ---
 # Introduction #
-Put the first paragraph of the Cosyne abstract here.
+Theoretical neuroscientists have complemented experimental investigations in our field by designing and testing mathematical models of neural activity [1]. Free of the burdens of experimental neuroscience, theorists do this with rapid turnover, frequently rejecting and sometimes promoting new models, which make accurate post-dictions of established experiments.  Theoretical neuroscience is most powerful when it presents new models that make consequential and experimentally testable predictions [cite examples].  This scientific paradigm suffers from the general issue of indeterminacy; different parameterizations of these models make accurate post-dictions, but yield disparate predictions.  In the absence of data, an observation model, and a high-fidelity posterior inference method, we lack the ability to probabilistically characterize this solution space, making it difficult to assess which predictions are appropriate to make under a model and the system’s known behavior.  
 
-Be a salesperson and talk about why people might be on this webpage and want to use this repo.
+Using recent advancements in deep generative modeling, degenerate solution networks (DSNs) learn the full distribution of model parameterizations that yield a system behavior of interest. Maybe you want to use a DSN for X.  Maybe you want to use a DSN for Y and then Z.  The dsn repo is intended to facilitate all of those needs.  This tutorial explains how to use the repo to learn built-in or user-designed systems.
 
 # Installation #
 ## Standard ##
-These installation instructions are for users interested in learning degenerate solution spaces of systems, which are already implemented in the DSN systems library.
+These installation instructions are for users interested in learning degenerate solution spaces of systems, which are already implemented in the [DSN systems library](/systems/).
 ```bash
 echo "hello world"
 ```
