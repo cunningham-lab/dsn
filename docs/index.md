@@ -8,7 +8,7 @@ Using recent advancements in deep generative modeling, degenerate solution netwo
 
 # Installation #
 ## Standard ##
-These installation instructions are for users interested in learning degenerate solution spaces of systems, which are already implemented in the [DSN systems library](/systems/).
+These installation instructions are for users interested in learning degenerate solution spaces of systems, which are already implemented in the [DSN systems library](systems.md).
 ```bash
 echo "hello world"
 ```
