@@ -2,16 +2,25 @@
 title: Systems
 permalink: /systems/
 ---
+# Built-in systems library #
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+Many commonly used models in theoretical neuroscience are already implemented as built-in system classes in the DSN library.  For an introduction to the system class, see section X.X.X of the [tutorial](index.md).
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+*****
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
+## Linear system ##
 
+### Parameters ###
+write script to translate documentation to markdown
 
-[jekyll-organization]: https://github.com/jekyll
+### Behaviors ###
+#### Stability ####
+Blah blah blah
+
+#### Oscillations ####
+Blah blah blah
+
+*****
+
+## 4-neuron V1 circuit ##
+insert image of circuit
