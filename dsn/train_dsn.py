@@ -88,7 +88,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     P_THRESH = 0.05;
 
     # Look for model initialization
-    initdir = initialize_nf(system.D, flow_dict, sigma_init)
+    initdir = initialize_nf(system.D, flow_dict, sigma_init, random_seed)
     
     inits = load_nf_init(initdir, flow_dict);
     flow_dict.update({"inits":inits});
@@ -489,8 +489,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                                        T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
     return costs, _phi, _T_phi;
 
-def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
-    initdir = get_initdir(D, flow_dict, sigma_init)
+def initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters=50000):
+    initdir = get_initdir(D, flow_dict, sigma_init, random_seed)
     print('initdir', initdir);
     initfname = initdir + 'final_theta.npz';
     resfname = initdir + 'results.npz';
@@ -510,7 +510,6 @@ def initialize_nf(D, flow_dict, sigma_init, min_iters=50000):
                   'dist_seed':0};
         n = 1000;
         lr_order = -3;
-        random_seed = 0;
         check_rate = 100;
         max_iters = 1000000;
         train_nf(family, params, flow_dict, n, lr_order, random_seed, \

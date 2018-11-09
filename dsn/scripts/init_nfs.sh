@@ -6,4 +6,4 @@
 #SBATCH --mem-per-cpu=1gb
 
 source activate dsn
-python3 init_nfs.py $1 $2 $3
+python3 init_nfs.py $1 $2 $3 $4

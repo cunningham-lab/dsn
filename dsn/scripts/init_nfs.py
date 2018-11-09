@@ -6,6 +6,7 @@ os.chdir("../")
 D = int(sys.argv[1]);
 nlayers = int(sys.argv[2]);
 sigma_init = float(sys.argv[3]);
+random_seed = int(sys.argv[4]);
 
 latent_dynamics = None;
 TIF_flow_type = 'PlanarFlowLayer';
@@ -16,4 +17,4 @@ flow_dict = {'latent_dynamics':latent_dynamics, \
              'repeats':nlayers, \
              'scale_layer':scale_layer};
 
-initialize_nf(D, flow_dict, sigma_init);
+initialize_nf(D, flow_dict, sigma_init, random_seed);

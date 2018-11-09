@@ -21,12 +21,12 @@ def setup_IO(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed,
                lr_order, c_init_order, random_seed);
     return savedir
 
-def get_initdir(D, flow_dict, sigma):
+def get_initdir(D, flow_dict, sigma, random_seed):
     # set file I/O stuff
     initdir = 'results/inits/';
     flowstring = get_flowstring(flow_dict);
-    initdir = initdir + 'D=%d_%s_sigma=%.2f/' % \
-              (D, flowstring, sigma);
+    initdir = initdir + 'D=%d_%s_sigma=%.2f_rs=%d/' % \
+              (D, flowstring, sigma, random_seed);
     return initdir
 
 def AR_to_autocov_np(alpha, sigma_eps, T):
