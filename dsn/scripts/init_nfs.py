@@ -17,4 +17,9 @@ flow_dict = {'latent_dynamics':latent_dynamics, \
              'repeats':nlayers, \
              'scale_layer':scale_layer};
 
-initialize_nf(D, flow_dict, sigma_init, random_seed);
+if (sigma_init > 10):
+  min_iters = 200000;
+else:
+  min_iters = 50000;
+
+initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters);
