@@ -190,6 +190,11 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
     #tr_hesses = np.zeros((k_max, n));
 
+    gamma = 0.25;
+    num_norms = 100;
+    norms = np.zeros((num_norms,));
+    new_norms = np.zeros((num_norms,));
+
     _c = c_init;
     _lambda = np.zeros((system.num_suff_stats,));
     check_it = 0;
@@ -232,6 +237,13 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr);
             train_step = optimizer.apply_gradients(grads_and_vars);
             initialize_optimization_parameters(sess, optimizer, all_params);
+
+            for j in range(num_norms):
+                w_j = np.random.normal(np.zeros((1,n,system.D,1)), 1.0);
+                feed_dict.update({W:w_j});
+                _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
+                _R = np.mean(_T_phi_mu_centered[0], 0)
+                norms[j] = np.linalg.norm(_R);
 
             i = 0;
             has_converged = False;
@@ -472,7 +484,28 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
             _R = np.mean(_T_phi_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
-            _c = 5*_c;
+
+            # do the hypothesis test to figure out whether or not we should update c
+            feed_dict = {Lambda:_lambda, c:_c};
+
+            for j in range(num_norms):
+                w_j = np.random.normal(np.zeros((1,n,system.D,1)), 1.0);
+                feed_dict.update({W:w_j});
+                _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
+                _R = np.mean(_T_phi_mu_centered[0], 0)
+                new_norms[j] = np.linalg.norm(_R);
+
+            t,p = scipy.stats.ttest_ind(new_norms, gamma*norms, equal_var = False)
+            # probabilistic update based on p value
+            u = np.random.rand(1)
+            print('t', t, 'p', p);
+            if u < 1-p/2.0 and t>0:
+                print(u, 'not enough! c updated');
+                _c = 4*_c;
+            else:
+                print(u, 'same c');
+
+            _c = 4*_c;
             total_its += i;
 
 

@@ -16,8 +16,8 @@ def setup_IO(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed,
     # set file I/O stuff
     resdir = 'results/' + dir_str + '/';
     flowstring = get_flowstring(flow_dict);
-    savedir = resdir + '%s_D=%d_T=%d_flow=%s_sigma=%.2f_lr_order=%d_c=%d_rs=%d/' % \
-              (system.name, system.D, system.T, flowstring, sigma_init, \
+    savedir = resdir + '%s_D=%d_flow=%s_sigma=%.2f_lr_order=%d_c=%d_rs=%d/' % \
+              (system.name, system.D, flowstring, sigma_init, \
                lr_order, c_init_order, random_seed);
     return savedir
 
