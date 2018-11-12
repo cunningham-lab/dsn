@@ -89,7 +89,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
     # Look for model initialization
     initdir = initialize_nf(system.D, flow_dict, sigma_init, random_seed)
-    
+    print(initdir);
     inits = load_nf_init(initdir, flow_dict);
     flow_dict.update({"inits":inits});
 
@@ -136,7 +136,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
     if (system.name == 'damped_harmonic_oscillator'):
         XY = system.simulate(phi);
-        X = tf.clip_by_value(XY[:,:,0,:], 1e-3, 1e3);
+        X = tf.clip_by_value(XY[:,:,0,:], -1e3, 1e3);
 
     R2 = compute_R2(log_q_phi, None, T_phi);
 
@@ -263,9 +263,13 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                 w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
                 feed_dict = {W:w_i, Lambda:_lambda, c:_c};
 
+                start_time = time.time();
                 ts, cost_i, _cost_grads, summary, _T_phi, _H, _phi = \
                     sess.run([train_step, cost, cost_grads, summary_op, T_phi, H, phi], feed_dict);
-
+                end_time = time.time();
+                if (np.mod(cur_ind, check_rate)==0):
+                    print('iteration took %.2f seconds.' % (end_time-start_time));
+                    
                 log_grads(_cost_grads, cost_grad_vals, cur_ind);
 
                 if (np.mod(cur_ind, TB_SAVE_EVERY)==0):
@@ -535,7 +539,8 @@ def initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters=50000):
         assert(resfile['converged']);
     
     else:
-        print('here we go with the NF');
+        print(initfname);
+        print('training NF');
         fam_class = family_from_str('normal');
         family = fam_class(D);
         params = {'mu':np.zeros((D,)), \

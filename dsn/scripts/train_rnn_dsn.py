@@ -1,16 +1,19 @@
 import numpy as np
 import tensorflow as tf
-from tf_util.systems import system_from_str
-from train_dsn import train_dsn
-from util import fct_integrals as integrals
-from util import tf_integrals as tf_integrals
-from util import fct_mf as mf
-import sys;
+from dsn.util.systems import system_from_str
+from dsn.train_dsn import train_dsn
+from dsn.util import fct_integrals as integrals
+from dsn.util import tf_integrals as tf_integrals
+from dsn.util import fct_mf as mf
+import sys
+import os
 
+os.chdir("../")
 
-is_rnn_std = int(sys.argv[1]) == 1;
-nlayers = int(sys.argv[2]);
-
+nlayers = int(sys.argv[1]);
+sigma_init = float(sys.argv[2]);
+c_init_order = int(sys.argv[3]);
+random_seed = int(sys.argv[4]);
 
 TIF_flow_type = 'PlanarFlowLayer';
 flow_dict = {'latent_dynamics':None, \
@@ -19,12 +22,11 @@ flow_dict = {'latent_dynamics':None, \
              'scale_layer':True};
 
 n = 1000;
-k_max = 10;
-c_init = 1e-2;
+k_max = 20;
 check_rate = 100;
+min_iters = 1000;
 max_iters = 2000;
 lr_order = -3;
-random_seed = 0;
 
 def compute_bistable_mu(Sini, ics_0, ics_1):
     ### Set parameters
@@ -51,11 +53,7 @@ def compute_bistable_mu(Sini, ics_0, ics_1):
     mu = np.array([ss0, ss1]);
     return mu;
 
-
-if (is_rnn_std):
-	system_str = 'rank1_rnn_std';
-else:
-	system_str = 'rank1_rnn';
+system_str = 'rank1_rnn_std';
 
 K = 1;
 M = n;
@@ -83,5 +81,8 @@ Sigma = 0.05*np.ones((mu.shape[0],));
 behavior = {'mu':mu, 'Sigma':Sigma};
 print(behavior);
 cost, phi, T_x = train_dsn(system, behavior, n, flow_dict, \
-                       k_max=k_max, c_init=c_init, lr_order=lr_order, check_rate=check_rate, \
-                       max_iters=max_iters, random_seed=random_seed);
+                       k_max=k_max, sigma_init=sigma_init, \
+                       c_init_order=c_init_order, lr_order=lr_order, \
+                       random_seed=random_seed, min_iters=min_iters, \
+                       max_iters=max_iters, check_rate=check_rate);
+
