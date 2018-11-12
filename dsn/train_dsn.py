@@ -206,17 +206,15 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
         feed_dict = {W:w_i, Lambda:_lambda, c:_c};
-        #cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, _R2, summary = \
-        #    sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, R2, summary_op], feed_dict);
-        cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, summary = \
-            sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, summary_op], feed_dict);
-
+        cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, _R2, summary = \
+            sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, R2, summary_op], feed_dict);
+        
         summary_writer.add_summary(summary, 0);
         log_grads(_cost_grads, cost_grad_vals, 0);
 
         mean_T_phis[0,:] = np.mean(_T_phi[0], 0);
         Hs[0] = _H;
-        #R2s[0] = _R2;
+        R2s[0] = _R2;
         costs[0] = cost_i;
         check_it += 1;
 
@@ -281,17 +279,17 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
                 #if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
                 if (np.mod(cur_ind+1, check_rate)==0):
-                    #_H, _R2, _T_phi, _phi, _log_q_phi = sess.run([H, R2, T_phi, phi, log_q_phi], feed_dict);
-                    _H, _T_phi, _phi, _log_q_phi = sess.run([H, T_phi, phi, log_q_phi], feed_dict);
+                    _H, _R2, _T_phi, _phi, _log_q_phi = sess.run([H, R2, T_phi, phi, log_q_phi], feed_dict);
+                    #_H, _T_phi, _phi, _log_q_phi = sess.run([H, T_phi, phi, log_q_phi], feed_dict);
                     print(42*'*');
                     print('it = %d ' % (cur_ind+1));
                     print('H', _H);
-                    #print('R2', _R2);
+                    print('R2', _R2);
                     print('cost', cost_i);
                     sys.stdout.flush();
 
                     Hs[check_it] = _H;
-                    #R2s[check_it] = _R2;
+                    R2s[check_it] = _R2;
                     costs[check_it] = cost_i;
                     mean_T_phis[check_it] = np.mean(_T_phi[0], 0);
 

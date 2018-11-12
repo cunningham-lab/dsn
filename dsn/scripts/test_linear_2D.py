@@ -27,10 +27,10 @@ flow_dict = {'latent_dynamics':latent_dynamics, \
              'scale_layer':scale_layer};
 
 n = 1000;
-k_max = 20;
+k_max = 25;
 lr_order = -3;
 min_iters = 10000;
-max_iters = 25000;
+max_iters = 50000;
 check_rate = 100;
 dist_seed = 0;
 dir_str = 'convergence_testing';
