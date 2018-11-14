@@ -268,7 +268,7 @@ class two_con_on_interval(null_on_interval):
         return layers, num_theta_params
 
 
-# Another validation setp is learning the multivariate Gaussian distribution
+# Another validation step is learning the multivariate Gaussian distribution
 
 class MultivariateNormal(system):
     """Multivariate Gaussian validation system.
@@ -666,7 +666,6 @@ class linear_2D(system):
             lambda_1 = real_common + 0.5 * beta_sqrt
             lambda_2 = real_common - 0.5 * beta_sqrt
             lambda_1_real = tf.real(lambda_1)
-            lambda_2_real = tf.real(lambda_2)
             lambda_1_imag = tf.imag(lambda_1)
             moments = [
                 lambda_1_real,
@@ -698,7 +697,7 @@ class linear_2D(system):
         return mu
 
 
-class RNN_rank1_std(system):
+class R1RNN_input(system):
     """Rank-1 RNN with bistable states for low input magnitudes
 	   See Fig. 2F - Mastrogiuseppe et. al. 2018
 
@@ -711,7 +710,7 @@ class RNN_rank1_std(system):
 
     def __init__(self, T, Ics_0, Ics_1, behavior_str):
         self.behavior_str = behavior_str
-        self.name = "rank1_rnn"
+        self.name = "R1RNN_input"
         self.D = 4
         self.eps = 0.8
         self.g = 0.8
@@ -853,6 +852,165 @@ class RNN_rank1_std(system):
 			num_theta_params (int): Updated count of density network parameters.
             
 		"""
+
+        support_layer = SoftPlusLayer()
+        num_theta_params += count_layer_params(support_layer)
+        layers.append(support_layer)
+        return layers, num_theta_params
+
+
+class R1RNN_GNG(system):
+    """Rank-1 RNN for the Go No-Go task
+       See Fig. 3 - Mastrogiuseppe et. al. 2018
+
+    Attributes:
+        T (int): Number of consistency equation solve steps.
+        Ics_0 (np.array): A set of initial conditions.
+        Ics_1 (np.array): Another set of initial conditions.
+        behavior_str (str): Determines sufficient statistics that characterize system.
+    """
+
+    def __init__(self, T, Ics_0, behavior_str):
+        self.behavior_str = behavior_str
+        self.name = "R1RNN_GNG"
+        self.D = 5
+        self.eps = 0.8
+        self.T = T
+        self.Ics_0 = Ics_0
+        self.num_suff_stats = 4;
+
+    def compute_suff_stats(self, phi):
+        """Compute sufficient statistics of density network samples.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            T_x (tf.tensor): Sufficient statistics of samples.
+        """
+        if self.behavior_str == "gng":
+            T_x = self.simulation_suff_stats(phi)
+        else:
+            raise NotImplementedError
+        return T_x
+
+    def simulation_suff_stats(self, phi):
+        """Compute sufficient statistics that require simulation.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
+        """
+
+        if self.behavior_str == "gng":
+            sol = self.solve(phi)
+            print(sol.shape);
+            sol_shape = tf.shape(sol)
+            K = sol_shape[1]
+            M = sol_shape[2]
+            D = sol_shape[3]
+            print('sol shape');
+            print(sol);
+            X = tf.clip_by_value(sol[2, :, :, :], -1e3, 1e3)
+            X = tf.expand_dims(tf.reshape(tf.transpose(X, [1, 0, 2]), [M, K * D]), 0)
+            print('X shape');
+            print(X);
+            T_x = tf.concat((X, tf.square(X)), 2)
+        return T_x
+
+    def solve(self, phi):
+        """Solve the consistency equations given parameters phi.
+
+        Args:
+            phi (tf.tensor): Density network system parameter samples.
+
+        Returns:
+            g(phi) (tf.tensor): Simulated system activity.
+
+        """
+
+        Mm_tf = phi[:, :, 0, :]
+        Mn_tf = phi[:, :, 1, :]
+        Sim_tf = phi[:, :, 2, :]
+        Sin_tf = phi[:, :, 3, :]
+        g_tf = phi[:, :, 4, :];
+
+        Mm_tf = tf.tile(Mm_tf, [2, 1, 1])
+        Mn_tf = tf.tile(Mn_tf, [2, 1, 1])
+        Sim_tf = tf.tile(Sim_tf, [2, 1, 1])
+        Sin_tf = tf.tile(Sin_tf, [2, 1, 1])
+        g_tf = tf.tile(g_tf, [2, 1, 1])
+
+        Mi = 0.0  # Mean of I
+        Sip = 1.0
+
+        Sini = np.concatenate(
+            (0.0 * np.ones((1, 1, 1)), 1.0 * np.ones((1, 1, 1))), axis=0
+        )
+
+        def consistent_solve(y, eps, T):
+            y_1 = y[:, :, :, 0]
+            y_2 = y[:, :, :, 1]
+            y_3 = y[:, :, :, 2]
+            for i in range(T):
+                Sii = tf.sqrt((Sini / Sin_tf) ** 2 + Sip ** 2)
+
+                mu = Mm_tf * y_3 + Mi
+                new1 = tf.square(g_tf) * tf_integrals.PhiSq(mu, y_2) + Sim_tf ** 2 * y_3 ** 2
+                new1 = new1 + Sii ** 2
+                new2 = Mn_tf * tf_integrals.Phi(mu, y_2) + Sini * tf_integrals.Prime(
+                    mu, y_2
+                )
+
+                y_new_1 = Mm_tf * new2 + Mi
+                y_new_2 = (1 - eps) * y_2 + eps * new1
+                y_new_3 = (1 - eps) * y_3 + eps * new2
+
+                y_1 = y_new_1
+                y_2 = y_new_2
+                y_3 = y_new_3
+
+            y_out = tf.stack([y_1, y_2, y_3], axis=0)
+            return y_out
+
+        Ics = np.expand_dims(self.Ics_0, 2);
+        Ics = np.tile(Ics, [2, 1, 1, 1])
+        sol = consistent_solve(Ics, self.eps, self.T)
+
+        return sol
+
+    def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        Args:
+            behavior (dict): Parameterization of desired system behavior.
+
+        Returns:
+            mu (np.array): Expected moment constraints.
+
+        """
+        mu = behavior["mu"]
+        Sigma = behavior["Sigma"]
+        mu_mu = mu
+        mu_Sigma = np.square(mu_mu) + Sigma
+        mu = np.concatenate((mu_mu, mu_Sigma), axis=0)
+        return mu
+
+    def map_to_parameter_support(self, layers, num_theta_params):
+        """Augment density network with bijective mapping to support.
+
+        Args:
+            layers (list): List of ordered normalizing flow layers.
+            num_theta_params (int): Running count of density network parameters.
+
+        Returns:
+            layers (list): layers augmented with final support mapping layer.
+            num_theta_params (int): Updated count of density network parameters.
+            
+        """
 
         support_layer = SoftPlusLayer()
         num_theta_params += count_layer_params(support_layer)
@@ -1080,8 +1238,6 @@ class V1_circuit(system):
         layers.append(support_layer)
         return layers, num_theta_params
 
-
-
 def system_from_str(system_str):
     if system_str in ["null", "null_on_interval"]:
         return null_on_interval
@@ -1099,8 +1255,10 @@ def system_from_str(system_str):
         return damped_harmonic_oscillator
     elif system_str in ["rank1_rnn"]:
         return RNN_rank1
-    elif system_str in ["rank1_rnn_std"]:
-        return RNN_rank1_std
+    elif system_str in ["R1RNN_input"]:
+        return R1RNN_input
+    elif system_str in ["R1RNN_GNG"]:
+        return R1RNN_GNG
     elif system_str in ["V1_circuit"]:
         return V1_circuit
 
