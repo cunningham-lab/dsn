@@ -11,7 +11,7 @@ resdir = 'results/RNN/bptt/';
 
 if (not os.path.isdir(resdir)):
 	os.mkdir(resdir);
-fname = resdir + 'r1rnn_gng_bptt.npz';
+fname = resdir + 'r1rnn_gng_bptt_rs=%d.npz' % random_seed;
 
 np.random.seed(random_seed);
 tf.random.set_random_seed(random_seed);
