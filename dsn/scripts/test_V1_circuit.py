@@ -44,8 +44,8 @@ system = system_class(behavior_str, param_str, T, dt, init_conds);
 
 np.random.seed(dist_seed);
 
-mu = np.array([0.1, 0.1, 0.1, 0.0]);
-Sigma = np.array([0.05, 0.05, 0.05, 0.05]);
+mu = np.array([1.0, 0.25, 1.0, 0.0]);
+Sigma = np.array([0.01, 0.01, 0.01, 0.01]);
 behavior = {'mu':mu, 'Sigma':Sigma};
 
 cost, phi, T_x = train_dsn(system, behavior, n, flow_dict, \
