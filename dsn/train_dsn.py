@@ -117,17 +117,21 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     all_params = tf.trainable_variables()
     nparams = len(all_params)
 
-    """
-    dqdz = tf.gradients(log_q_phi, Z_AR);
+    dqdz = tf.gradients(log_q_phi, phi);
+    print(log_q_phi);
+    print(phi);
+    print(dqdz);
     hessian = [];
     for i in range(system.D):
-        hess_i = tf.gradients(dqdz[0][:,:,i,:], Z_AR);
+        print(i);
+        print(dqdz[0]);
+        print(phi);
+        hess_i = tf.gradients(dqdz[0][:,:,i,:], phi);
         print('hess_i', hess_i[0].shape);
         hessian.append(tf.expand_dims(hess_i[0], 2));
     hessian = tf.concat(hessian, axis=2);
 
     trace_hessian = tf.linalg.trace(hessian[:,:,:,:,0]);
-    """
 
     # Compute family-specific sufficient statistics and log base measure on samples.
     T_phi = system.compute_suff_stats(phi);
@@ -188,7 +192,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     log_q_phis = np.zeros((k_max+1, n));
     T_phis = np.zeros((k_max+1, n, system.num_suff_stats));
 
-    #tr_hesses = np.zeros((k_max, n));
+    tr_hesses = np.zeros((k_max, n));
 
     gamma = 0.25;
     num_norms = 100;
@@ -206,15 +210,18 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
         feed_dict = {W:w_i, Lambda:_lambda, c:_c};
-        cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, _R2, summary = \
-            sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, R2, summary_op], feed_dict);
+        #cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, _R2, summary = \
+        #    sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, R2, summary_op], feed_dict);
+        cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, summary = \
+            sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, summary_op], feed_dict);
         
+
         summary_writer.add_summary(summary, 0);
         log_grads(_cost_grads, cost_grad_vals, 0);
 
         mean_T_phis[0,:] = np.mean(_T_phi[0], 0);
         Hs[0] = _H;
-        R2s[0] = _R2;
+        #R2s[0] = _R2;
         costs[0] = cost_i;
         check_it += 1;
 
@@ -262,11 +269,11 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                 feed_dict = {W:w_i, Lambda:_lambda, c:_c};
 
                 start_time = time.time();
-                ts, cost_i, _cost_grads, summary, _T_phi, _H, _phi = \
-                    sess.run([train_step, cost, cost_grads, summary_op, T_phi, H, phi], feed_dict);
+                ts, cost_i, _cost_grads, summary, _T_phi, _H, _phi, _tr_hess = \
+                    sess.run([train_step, cost, cost_grads, summary_op, T_phi, H, phi, trace_hessian], feed_dict);
                 end_time = time.time();
                 if (np.mod(cur_ind, check_rate)==0):
-                    print('iteration took %.2f seconds.' % (end_time-start_time));
+                    print('iteration took %.4f seconds.' % (end_time-start_time));
                     
                 log_grads(_cost_grads, cost_grad_vals, cur_ind);
 
@@ -279,8 +286,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
                 #if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
                 if (np.mod(cur_ind+1, check_rate)==0):
-                    _H, _R2, _T_phi, _phi, _log_q_phi = sess.run([H, R2, T_phi, phi, log_q_phi], feed_dict);
-                    #_H, _T_phi, _phi, _log_q_phi = sess.run([H, T_phi, phi, log_q_phi], feed_dict);
+                    #_H, _R2, _T_phi, _phi, _log_q_phi = sess.run([H, R2, T_phi, phi, log_q_phi], feed_dict);
+                    _H, _T_phi, _phi, _log_q_phi = sess.run([H, T_phi, phi, log_q_phi], feed_dict);
                     print(42*'*');
                     print('it = %d ' % (cur_ind+1));
                     print('H', _H);
@@ -289,7 +296,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                     sys.stdout.flush();
 
                     Hs[check_it] = _H;
-                    R2s[check_it] = _R2;
+                    #R2s[check_it] = _R2;
                     costs[check_it] = cost_i;
                     mean_T_phis[check_it] = np.mean(_T_phi[0], 0);
 
@@ -471,7 +478,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                     print('saving to %s  ...' % savedir);
                 
                     np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_phis=mean_T_phis, behavior=behavior, mu=mu, \
-                                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis, \
+                                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis, tr_hesses=tr_hesses,  \
                                                         T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
                 
                     print(42*'*');
@@ -482,7 +489,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             phis[k+1,:,:] = _phi[0,:,:,0];
             log_q_phis[k+1,:] = _log_q_phi[0,:];
             T_phis[k+1,:,:] = _T_phi[0];
-            #tr_hesses[k,:] = _tr_hess[0,:];
+            tr_hesses[k,:] = _tr_hess[0,:];
             _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
             _R = np.mean(_T_phi_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
@@ -520,7 +527,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
     np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_phis=mean_T_phis, behavior=behavior, mu=mu, \
-                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis,  \
+                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis, tr_hesses=tr_hesses, \
                                        T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
     return costs, _phi, _T_phi;
 
