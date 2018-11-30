@@ -1031,8 +1031,7 @@ class V1_circuit(system):
 
     Attributes:
         behavior_str (str):
-            'V_same': All neurons except V increase response.
-            'S_same': All neurons except S increase response.
+            'ss': steady state responses
         param-str (str):
             'h': Learn the input parameters.
             'W': Learn the connectivity parameters.
@@ -1050,14 +1049,24 @@ class V1_circuit(system):
         # determine dimensionality and number of constraints
         self.D = 0;
         self.num_suff_stats = 0;
-        if (behavior_str in ['V_same', 'S_same']):
+
+        if (behavior_str in ['ss_all']):
             if (param_str in ['h', 'both']):
                 self.D += 8;
             if (param_str == ['W', 'both']):
                 self.D += 11;
             self.num_suff_stats += 8;
+
+        elif (behavior_str in ['ss_SV']):
+            if (param_str in ['h', 'both']):
+                self.D += 8;
+            if (param_str == ['W', 'both']):
+                self.D += 11;
+            self.num_suff_stats += 4;
+
         else:
             raise NotImplementedError();
+
         self.init_conds = init_conds
 
     def simulate(self, phi):
@@ -1078,7 +1087,7 @@ class V1_circuit(system):
 
         print("phi", phi.shape)
         ind = 0;
-        if (self.behavior_str in ['V_same', 'S_same']):
+        if (self.behavior_str in ['ss_all', 'ss_SV']):
             if (self.param_str in ['h', 'both']):
                 h1 = tf.expand_dims(phi[:,:,0:4], 3);
                 h2 = tf.expand_dims(phi[:,:,4:8], 3);
@@ -1137,7 +1146,7 @@ class V1_circuit(system):
                 W = tf.constant(W);
                 W = tf.tile(W, [K,M,1,1]);
 
-            # initial conditionsd
+            # initial conditions
             r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0));
             r0 = tf.tile(r0, [K,M,1,1]);
 
@@ -1173,7 +1182,7 @@ class V1_circuit(system):
 
         """
 
-        if (self.behavior_str in ["V_same", "S_same"]):
+        if (self.behavior_str in ["ss_all", "ss_SV"]):
             T_x = self.simulation_suff_stats(phi)
         else:
             raise NotImplementedError();
@@ -1191,15 +1200,18 @@ class V1_circuit(system):
 
         """
 
-        if (self.behavior_str in ["V_same", "S_same"]):
-            r1_t, r2_t = self.simulate(phi);
-            print(r1_t.shape);
+        r1_t, r2_t = self.simulate(phi);
+
+        if (self.behavior_str in ["ss_all"]):
             r1_ss = r1_t[-1,:,:,:,0];
             r2_ss = r2_t[-1,:,:,:,0];
-            print(r1_ss.shape);
-            diff_ss = r2_ss - r1_ss;
-            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
-            print(r1_ss.shape, diff_ss.shape, T_x.shape);
+        elif (self.behavior_str in ["ss_SV"]):
+            # extract somatostatin and VIP responses
+            r1_ss = r1_t[-1,:,:,2:,0];  
+            r2_ss = r2_t[-1,:,:,2:,0];
+        diff_ss = r2_ss - r1_ss;
+        T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
+        print(r1_ss.shape, diff_ss.shape, T_x.shape);
         return T_x
 
     def compute_mu(self, behavior):
