@@ -16,7 +16,7 @@ random_seed = int(sys.argv[4]);
 
 system_str = 'V1_circuit';
 T = 20;
-dt = 0.5;
+dt = 0.25;
 init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1);
 
 latent_dynamics = None;
@@ -30,11 +30,11 @@ flow_dict = {'latent_dynamics':latent_dynamics, \
 n = 1000;
 k_max = 20;
 lr_order = -3;
-min_iters = 5000;
-max_iters = 10000;
+min_iters = 2500;
+max_iters = 5000;
 check_rate = 100;
 dist_seed = 0;
-dir_str = 'V1_circuit';
+dir_str = 'V1_circuit_test';
 
 behavior_str = 'ss_SV';
 param_str = 'h';
@@ -44,8 +44,8 @@ system = system_class(behavior_str, param_str, T, dt, init_conds);
 
 np.random.seed(dist_seed);
 
-mu = np.array([1.0, 0.0]);
-Sigma = np.array([0.01, 0.01]);
+mu = np.array([0.5, 0.0]);
+Sigma = np.array([0.1, 0.05]);
 behavior = {'mu':mu, 'Sigma':Sigma};
 
 cost, phi, T_x = train_dsn(system, behavior, n, flow_dict, \

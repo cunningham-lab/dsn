@@ -1018,7 +1018,7 @@ class R1RNN_GNG(system):
         return layers, num_theta_params
 
 
-class Scircuit(system):
+class V1_circuit(system):
     """ 4-neuron V1 circuit.
 
         This is the standard 4-neuron rate model of V1 activity consisting of 
