@@ -4,7 +4,7 @@ permalink: /systems/
 ---
 
 <div class="topnav">
-  <a class="active" href="/index">Home</a>
+  <a class="active" href="../">Home</a>
   <a href="#">DSN Systems Library</a>
 </div>
 
