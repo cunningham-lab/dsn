@@ -7,12 +7,12 @@ layout: default
 
 <div class="topnav">
   <a class="active" href="/index">Home</a>
-  <a href="/systems">DSN Systems Library</a>
+  <a href="systems">DSN Systems Library</a>
 </div>
 
 Theoretical neuroscientists design and test mathematical models of neural activity, assessing a model's quality by its ability to replicate experimental results.  A general challenge has been addressing the indeterminacy of model parameterizations; different parameterizations of these models accurately reflect established experiments, yet make incompatible predictions about other aspects of neural activity.  Degenerate solution networks (DSNs) learn the full (i.e. maximum entropy) distribution of generative model parameterizations that yield a behavior of interest.  This is a tool designed for theorists, enabling a new class of model analyses relying on the full distribution of generative parameters that result in some statistically specified activity.
 
-This tutorial explains how to use the dsn git repo to learn built-in or user-specified systems. \\
+This tutorial explains how to use the dsn git repo to learn built-in or user-specified systems. 
 
 # Installation #
 
@@ -63,7 +63,7 @@ we learn the space of real entries of A that results in a band of oscillations: 
 \begin{equation}
 \text{imag}(\lambda) \sim \mathcal{N}(4\pi, 1)
 \end{equation}
-To do this, we train a DSN for this system, such that the first- and second-moment constraints are satisfied.  Even though we can compute (expect value of behavior) via the eigenvalues of A in closed form, we can not derive the distribution qthetastar, since the backward mapping from mu to eta of the exponential family is unknown.  Instead, we can train a DSN to learn the multimodal degenerate linear system parameterization.
+To do this, we train a DSN for this system, such that the first- and second-moment constraints are satisfied.  Even though we can compute (expected value of behavior) via the eigenvalues of A in closed form, we can not derive the distribution qthetastar, since the backward mapping from mu to eta of the exponential family is unknown.  Instead, we can train a DSN to learn the multimodal degenerate linear system parameterization.
 
 ## Training the DSN ##
 mix of text and code describing training procedure.
