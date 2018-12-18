@@ -6,7 +6,7 @@ layout: default
 
 
 <div class="topnav">
-  <a class="active" href="/index">Home</a>
+  <a class="active" href="#">Home</a>
   <a href="systems">DSN Systems Library</a>
 </div>
 
@@ -35,11 +35,11 @@ python setup.py develop
 ```
 
 # Degenerate Solution Networks (DSNs) #
-Consider model parameterization $$z$$ and data $$x$$ generated from some generative model of interest with known sampling procedure and likelihood $$p(x \mid z)$$, which may or may not be known.  Returning to the STG example, we have a known sampling procedure for simulating activity given a circuit parameterization, yet lack an explicit likelihood function for the generated neural activity due to the complex nonlinear dynamics.  In deep generative models, a simple random variable $$w \sim p_0$$ is mapped deterministically via a function $$f_\theta$$ parameterized by a neural network to the support of the distribution of interest where $$z = f_{\theta}(w)$$.
+Consider model parameterization $$z$$ and data $$x$$ generated from some generative model of interest with known sampling procedure and likelihood $$p(x \mid z)$$, which may or may not be known.  For example, consider a neural circuit model with known sampling procedure for simulating activity given a circuit parameterization.  Most often, such models lack an explicit likelihood function for the generated neural activity due to the complex nonlinear dynamics.  In deep generative models, a simple random variable $$w \sim p_0$$ is mapped deterministically via a function $$f_\theta$$ parameterized by a neural network to the support of the distribution of interest where $$z = f_{\theta}(w)$$.
 
-![](dsn.png)
+![degenerate solution network](dsn.png)
 
-Given a generative model $$p(x \mid z)$$ and some behavior of interest $$\mathcal{B}: E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu$$, DSNs are trained by optimizing the deep generative parameters $$\theta$$ to find the optimal approximation $$q_{\theta}^*$$ within the deep generative variational family $$Q$$ to $$p(z \mid \mathcal{B})$$. This procedure is loosely equivalent to variational inference (VI) using a deep generative variational family with respect to the likelihood of the mean sufficient statistics rather than the data itself (Loaiza-Ganem et al. 2017, Bittner & Cunningham 2018)  In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $$p(T(x) \mid z)$$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes (Kingma & Welling 2013) or black box variational inference (Ranganath et al. 2014). Instead, DSNs are optimized with the following objective for a given generative model and statistical constraints on its produced activity:
+Given a generative model $$p(x \mid z)$$ and some behavior of interest $$\mathcal{B}: E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu$$, DSNs are trained by optimizing the deep generative parameters $$\theta$$ to find the optimal approximation $$q_{\theta}^*$$ within the deep generative variational family $$Q$$ to $$p(z \mid \mathcal{B})$$. This procedure is loosely equivalent to variational inference (VI) using a deep generative variational family with respect to the likelihood of the mean sufficient statistics rather than the data itself ([Loaiza-Ganem et al. 2017](#Loaiza-Ganem2017maximum), [Bittner & Cunningham 2018](#Bittner2018learning))  In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $$p(T(x) \mid z)$$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes ([Kingma & Welling 2013](#Kingma2013autoencoding)) or black box variational inference ([Ranganath et al. 2014](#Ranganeth2014black)). Instead, DSNs are optimized with the following objective for a given generative model and statistical constraints on its produced activity:
 
 \begin{equation}
 q_\theta^*(z) = \mathop{\arg\,\max}\limits_{q_\theta \in Q} H(q_\theta(z))
@@ -78,17 +78,13 @@ Other model-behavior combinations (see V1 example) will have even more complexit
 ## this is how we do it ##
 
 # References #
- Sean Bittner and John Cunningham. *Learning exponential families.* (In review, AI Stats), ?(?):?-?, 2018.
+Sean Bittner and John Cunningham. *[Learning exponential families](https://github.com/cunningham-lab/efn/blob/master/written/EFN_AISTATS2019/Bittner_AIStats_2019.pdf){:target="_blank"}.* (In review, AI Stats), ?(?):?-?, 2018. <a name="Bittner2018learning"></a>
 
-Brian DePasquale, Christopher J Cueva, Kanaka Rajan, LF Abbott, et al. *full-force: A target-based method for training recurrent networks.* PloS one, 13(2):e0191527, 2018.
+Diederik P Kingma and Max Welling. *[Auto-encoding variational bayes](https://arxiv.org/abs/1312.6114){:target="_blank"}.* arXiv preprint arXiv:1312.6114, 2013. <a name="Kingma2013autoencoding"></a>
 
-Diederik P Kingma and Max Welling. *Auto-encoding variational bayes.* arXiv preprint arXiv:1312.6114, 2013.
+Gabriel Loaiza-Ganem, Yuanjun Gao, and John P Cunningham. *[Maximum entropy flow networks](https://arxiv.org/abs/1701.03504){:target="_blank"}.* arXiv preprint arXiv:1701.03504, 2017. <a name="Loaiza-Ganem2017maximum"></a>
 
-Gabriel Loaiza-Ganem, Yuanjun Gao, and John P Cunningham. *Maximum entropy flow networks.* arXiv preprint arXiv:1701.03504, 2017.
+Rajesh Ranganath, Sean Gerrish, and David Blei. *[Black box variational inference](https://arxiv.org/abs/1401.0118){:target="_blank"}.* In Artificial Intelligence and Statistics, pages 814-822, 2014. <a name="Ranganeth2014black"></a>
 
-James Martens and Ilya Sutskever. *Learning recurrent neural networks with hessian-free optimization.* In Proceedings of the 28th International Conference on Machine Learning (ICML-11), pages 1033-1040. Citeseer, 2011.
-
-Rajesh Ranganath, Sean Gerrish, and David Blei. *Black box variational inference.* In Artificial Intelligence and Statistics, pages 814-822, 2014.
-
-Danilo Jimenez Rezende and Shakir Mohamed. *Variational inference with normalizing flows.* arXiv preprint arXiv:1505.05770, 2015.
+Danilo Jimenez Rezende and Shakir Mohamed. *[Variational inference with normalizing flows](https://arxiv.org/abs/1505.05770){:target="_blank"}.* arXiv preprint arXiv:1505.05770, 2015. <a name="Rezende2015variational"></a>
 

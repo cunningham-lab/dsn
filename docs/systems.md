@@ -8,20 +8,171 @@ permalink: /systems/
   <a href="#">DSN Systems Library</a>
 </div>
 
-# Built-in systems library #
-
 Many commonly used models in theoretical neuroscience are already implemented as built-in system classes in the DSN library.  For an introduction to the system class, see section X.X.X of the [tutorial](index.md).
 
-Checking with-in page linking
-[dev install](index.md#dev-install). 
+Checking within page linking
+[dev install](../#dev-install). 
+
+# system #
+Base class for systems using DSN modeling.
+
+Degenerate solution networks (DSNs) learn the full parameter space of models
+given some model behavioral constraints. Given some system choice and a
+behavioral specification, these classes are designed to perform the system
+specific functions that are necessary for training the corresponding DSN.
+
+**Attributes**:\\
+**behavior_str** (str): *Determines sufficient statistics that characterize system.*
+
 
 *****
 
-## 2-D linear system ##
-Linear two-dimensional system
+# linear_2D #
+Linear two-dimensional system.
 
-### Attributes ###
+**Attributes**:\\
 **behavior_str** (str): *Determines sufficient statistics that characterize system.*
+
+### analytic_suff_stats ###
+Compute closed form sufficient statistics.
+
+**Args**:\\
+**phi** (tf.tensor): *Density network system parameter samples.*
+
+**Returns**:\\
+**T_x** (tf.tensor): *Analytic sufficient statistics of samples.*
+
+
+
+
+### center_suff_stats_by_mu ###
+Center sufficient statistics by the mean parameters mu.
+
+
+### compute_mu ###
+Calculate expected moment constraints given system paramterization.
+
+**Args**:\\
+**behavior** (dict): *Parameterization of desired system behavior.*
+
+**Returns**:\\
+**mu** (np.array): *Expected moment constraints.*
+
+
+
+
+### compute_suff_stats ###
+Compute sufficient statistics of density network samples.
+
+**Args**:\\
+**phi** (tf.tensor): *Density network system parameter samples.*
+
+**Returns**:\\
+**T_x** (tf.tensor): *Sufficient statistics of samples.*
+
+
+
+### map_to_parameter_support ###
+Augment density network with bijective mapping to parameter support.
+
+
+### simulation_suff_stats ###
+Compute sufficient statistics that require simulation.
+
+
+# V1_circuit #
+ 4-neuron V1 circuit.
+
+This is the standard 4-neuron rate model of V1 activity consisting of
+- E: pyramidal (excitatory) neurons
+- P: parvalbumim expressing inhibitory neurons
+- S: somatostatin expressing inhibitory neurons
+- V: vasoactive intestinal peptide expressing inhibitory neurons
+
+dr/dt = -r + [Wr + h]+^n
+
+**Attributes**:\\
+**behavior_str** (str): *(str):*
+'ss': steady state responses
+**param-str** (str): *(str):*
+'h': Learn the input parameters.
+'W': Learn the connectivity parameters.
+**T** (int): *Number of simulation time points.*
+**dt** (float): *Time resolution of simulation.*
+**init_conds** (list): *Specifies the initial state of the system.*
+
+### analytic_suff_stats ###
+Compute closed form sufficient statistics.
+
+
+### center_suff_stats_by_mu ###
+Center sufficient statistics by the mean parameters mu.
+
+
+### compute_mu ###
+Calculate expected moment constraints given system paramterization.
+
+**Args**:\\
+**behavior** (dict): *Parameterization of desired system behavior.*
+
+**Returns**:\\
+**mu** (np.array): *Expected moment constraints.*
+
+
+
+
+### compute_suff_stats ###
+Compute sufficient statistics of density network samples.
+
+**Args**:\\
+**phi** (tf.tensor): *Density network system parameter samples.*
+
+**Returns**:\\
+**T_x** (tf.tensor): *Sufficient statistics of samples.*
+
+
+
+
+### map_to_parameter_support ###
+Augment density network with bijective mapping to parameter support.
+
+**Args**:\\
+**layers** (list): *List of ordered normalizing flow layers.*
+**num_theta_params** (int): *Running count of density network parameters.*
+
+**Returns**:\\
+**layers** (list): *layers augmented with final support mapping layer.*
+**num_theta_params** (int): *Updated count of density network parameters.*
+
+
+
+
+### simulate ###
+Simulate the V1 4-neuron circuit given parameters phi.
+
+**Args**:\\
+**phi** (tf.tensor): *Density network system parameter samples.*
+
+**Returns**:\\
+**g(phi)** (tf.tensor): *Simulated system activity.*
+
+
+
+
+### simulation_suff_stats ###
+Compute sufficient statistics that require simulation.
+
+**Args**:\\
+**phi** (tf.tensor): *Density network system parameter samples.*
+
+**Returns**:\\
+**T_x** (tf.tensor): *Simulation-derived sufficient statistics of samples.*
+
+
+
+
+*****
+
 
 ### Behaviors ###
 #### Stability ####
