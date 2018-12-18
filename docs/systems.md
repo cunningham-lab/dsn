@@ -27,7 +27,7 @@ specific functions that are necessary for training the corresponding DSN.
 
 *****
 
-# linear_2D #
+# <a name="linear_2D"> </a> linear_2D #
 Linear two-dimensional system.
 
 **Attributes**:\\
