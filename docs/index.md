@@ -37,7 +37,7 @@ python setup.py develop
 # Degenerate Solution Networks (DSNs) #
 Consider model parameterization $$z$$ and data $$x$$ generated from some generative model of interest with known sampling procedure and likelihood $$p(x \mid z)$$, which may or may not be known.  For example, consider a neural circuit model with known sampling procedure for simulating activity given a circuit parameterization.  Most often, such models lack an explicit likelihood function for the generated neural activity due to the complex nonlinear dynamics.  In deep generative models, a simple random variable $$w \sim p_0$$ is mapped deterministically via a function $$f_\theta$$ parameterized by a neural network to the support of the distribution of interest where $$z = f_{\theta}(w)$$.
 
-![degenerate solution network](dsn.png)
+![degenerate solution network](images/dsn.png)
 
 Given a generative model $$p(x \mid z)$$ and some behavior of interest $$\mathcal{B}: E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu$$, DSNs are trained by optimizing the deep generative parameters $$\theta$$ to find the optimal approximation $$q_{\theta}^*$$ within the deep generative variational family $$Q$$ to $$p(z \mid \mathcal{B})$$. This procedure is loosely equivalent to variational inference (VI) using a deep generative variational family with respect to the likelihood of the mean sufficient statistics rather than the data itself ([Loaiza-Ganem et al. 2017](#Loaiza-Ganem2017maximum), [Bittner & Cunningham 2018](#Bittner2018learning))  In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $$p(T(x) \mid z)$$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes ([Kingma & Welling 2013](#Kingma2013autoencoding)) or black box variational inference ([Ranganath et al. 2014](#Ranganeth2014black)). Instead, DSNs are optimized with the following objective for a given generative model and statistical constraints on its produced activity:
 
@@ -48,30 +48,50 @@ q_\theta^*(z) = \mathop{\arg\,\max}\limits_{q_\theta \in Q} H(q_\theta(z))
  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
 \end{equation}
 
-# Example 1: An oscillating 2-D linear system. #
+We use an augmented Lagrangian approach to run the constrained optimization.  This procedure is elaborated in the [linear system example](#linearsystem).
 
-To provide intuition for DSNs, we learn the degenerate solution space of a 2-D linear system producing a gaussian distribution of oscillations.  For a linear system
+## Normalizing flow architecture ##
+Since we are optimizing parameters  $$\theta$$ of our deep generative model with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the DSN.
 
+\begin{equation}
+H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = E_{z \sim q_\theta}\left[-\log(q_\theta(z)) \right] = E_{w \sim q_0}\left[-\log(q_\theta(f_\theta(w))) \right]
+\end{equation}
+\begin{equation}
+\nabla_\theta H(q_\theta(z)) = E_{w \sim q_0}\left[- \nabla_\theta \log(q_\theta(f_\theta(w))) \right]
+\end{equation}
+
+Deep generative models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network. However, this computation have cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizimg flows ([Rezende & Mohammed 2015](#Rezende2015variational)) -- bijective functions with fast log determinant jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy.  
+
+This repository depends on [tf_util](https://github.com/cunningham-lab/tf_util), which has [code](https://github.com/cunningham-lab/tf_util/blob/master/tf_util/flows.py) for several normalizing flow classes.  Most of our analyses use planar flows, which have proven to be most expressive and efficient in our architecture searches.
+
+# Example 1: An oscillating 2-D linear system. <a name="linearsystem"> </a> #
+
+To provide intuition for DSNs to the reader, we discuss degenerate parameterizations of two-dimensional linear dynamical systems, 
 \begin{equation}
 \dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
 \end{equation}
+ that produce a band of oscillations. To train a DSN to learn the maximally entropic distribution of real entries of the dynamics matrix $$z = \left[a_1, a_2, a_3, a_4 \right]^\top$$ that yield a band of oscillations, we choose $$T(x)$$ to contain the first- and second-moments of the oscillatory frequency and the real part of the first eigenvalue of the oscillating system. 
 
-we learn the space of real entries of A that results in a band of oscillations: such that 
-\begin{equation}
-\text{real}(\lambda) \sim \mathcal{N}(0, 1)
-\end{equation}
-\begin{equation}
-\text{imag}(\lambda) \sim \mathcal{N}(4\pi, 1)
-\end{equation}
-To do this, we train a DSN for this system, such that the first- and second-moment constraints are satisfied.  Even though we can compute (expected value of behavior) via the eigenvalues of A in closed form, we can not derive the distribution qthetastar, since the backward mapping from mu to eta of the exponential family is unknown.  Instead, we can train a DSN to learn the multimodal degenerate linear system parameterization.
+ \begin{equation}
+ \mu = E \begin{bmatrix} \text{real}(\lambda_1) \\\\ \text{real}(\lambda_1)^2 \\\\ \text{imag}(\lambda_1) \\\\ \text{imag}(\lambda_1)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 1.0 \\\\ 4\pi \\\\ 16\pi^2+1.0 \end{bmatrix}
+ \end{equation} 
+ Even though we can compute $$E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right]$$ via the eigenvalues of $$A$$, we cannot derive the distribution $$q^*_\theta$$, since the backward mapping from the mean parameters $$\mu$$ to the natural parameters $$\eta$$ of this exponential family is unknown.  Instead, we can train a DSN to learn the degenerate linear system parameterization. 
 
-## Training the DSN ##
-mix of text and code describing training procedure.
+![oscillating linear systems](images/oscillating_linear_systems.png)
 
-[show dsn of 2-d linear system]
-Other model-behavior combinations (see V1 example) will have even more complexity, further motivating DSNs.
+ Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  Indeed, more subtle model-behavior combinations will have even more complexity, further motivating DSNs.
 
 ## Augmented lagrangian optimization ##
+To optimize $$q_\theta(z)$$, we run the constrained optimization using the augmented Lagrangian method.  We minimize the following objective:
+\begin{equation}
+L(\phi; \lambda, c) = -H(p_\phi) + \lambda^\top R(\phi) + \frac{c}{2}||R(\phi)||^2
+\end{equation}
+where $$\lambda \in \mathcal{R}^m$$ are the Lagrange multipliers and $$c$$ is the penalty coefficient.  For a fixed $$(\lambda, c)$$, we optimize $$\theta$$ with stochastic gradient descent.  We start with a low value of $$c$$ initially, and increase $c$ during each augmented Lagrangian epoch, as well as tune $\lambda$ based on the constraint violations.  For the linear 2-dimensional system (Fig. 2) optimization hyperparameters are initialized to $$c_1 = 10^{-5}$$ and $$\lambda_1 = \bf{0}$$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $$E[||R(\phi_{k+1})||] > \gamma E[||R(\phi_{k})||]$$ is computed, and $$c_{k+1}$$ is updated  to $$\beta c_k$$ with probability $$1-p$$.  In general, we use $$\beta = 4.0$$ and $$\gamma = 0.25$$.  The other update rule is $$\lambda_{k+1} = \lambda_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$$.  
+
+![linear system entropy](images/linear2D_H_opt.png)
+![linear system constraints](images/linear2D_constraints_opt.png)
+
+Each augmented Lagrangian epoch runs for 50,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of the DSN optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy may decrease, and structural pathologies in the distribution may be introduced.
 
 # Example 2: 4-neuron V1 modeling #
 
