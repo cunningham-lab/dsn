@@ -95,8 +95,6 @@ Each augmented Lagrangian epoch runs for 50,000 iterations.  We consider the opt
 
 # Example 2: 4-neuron V1 modeling #
 
-## this is how we do it ##
-
 # References #
 Sean Bittner and John Cunningham. *[Learning exponential families](https://github.com/cunningham-lab/efn/blob/master/written/EFN_AISTATS2019/Bittner_AIStats_2019.pdf){:target="_blank"}.* (In review, AI Stats), ?(?):?-?, 2018. <a name="Bittner2018learning"></a>
 
