@@ -1,18 +1,6 @@
----
-title: Systems
-permalink: /systems/
----
-
-<div class="topnav">
-  <a class="active" href="../">Home</a>
-  <a href="#">DSN Systems Library</a>
-</div>
-
-Many commonly used models in theoretical neuroscience are already implemented as built-in system classes in the DSN library.
-
 # dsn.util.systems
 
-## <a name="system"> </a> system
+## system
 ```python
 system(self, behavior_str)
 ```
@@ -28,37 +16,37 @@ __Attributes__
 - `behavior_str (str)`: Determines sufficient statistics that characterize system.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 system.map_to_parameter_support(self, layers, num_theta_params)
 ```
 Augment density network with bijective mapping to parameter support.
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 system.compute_suff_stats(self, phi)
 ```
 Compute sufficient statistics of density network samples.
-### analytic\_suff\_stats
+### analytic_suff_stats
 ```python
 system.analytic_suff_stats(self, phi)
 ```
 Compute closed form sufficient statistics.
-### simulation\_suff\_stats
+### simulation_suff_stats
 ```python
 system.simulation_suff_stats(self, phi)
 ```
 Compute sufficient statistics that require simulation.
-### compute\_mu
+### compute_mu
 ```python
 system.compute_mu(self, behavior)
 ```
 Calculate expected moment constraints given system paramterization.
-### center\_suff\_stats\_by\_mu
+### center_suff_stats_by_mu
 ```python
 system.center_suff_stats_by_mu(self, T_x, mu)
 ```
 Center sufficient statistics by the mean parameters mu.
-## <a name="linear_2D"> </a> linear\_2D
+## linear_2D
 ```python
 linear_2D(self, behavior_str)
 ```
@@ -68,7 +56,7 @@ __Attributes__
 
 - `behavior_str (str)`: Determines sufficient statistics that characterize system.
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 linear_2D.compute_suff_stats(self, phi)
 ```
@@ -82,7 +70,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
-### analytic\_suff\_stats
+### analytic_suff_stats
 ```python
 linear_2D.analytic_suff_stats(self, phi)
 ```
@@ -97,7 +85,7 @@ __Returns__
 `T_x (tf.tensor)`: Analytic sufficient statistics of samples.
 
 
-### compute\_mu
+### compute_mu
 ```python
 linear_2D.compute_mu(self, behavior)
 ```
@@ -112,7 +100,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-## <a name="R1RNN_input"> </a> R1RNN\_input
+## R1RNN_input
 ```python
 R1RNN_input(self, T, Ics_0, Ics_1, behavior_str)
 ```
@@ -126,7 +114,7 @@ __Attributes__
 - `Ics_1 (np.array)`: Another set of initial conditions.
 - `behavior_str (str)`: Determines sufficient statistics that characterize system.
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 R1RNN_input.compute_suff_stats(self, phi)
 ```
@@ -140,7 +128,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
-### simulation\_suff\_stats
+### simulation_suff_stats
 ```python
 R1RNN_input.simulation_suff_stats(self, phi)
 ```
@@ -170,7 +158,7 @@ __Returns__
 `g(phi) (tf.tensor)`: Simulated system activity.
 
 
-### compute\_mu
+### compute_mu
 ```python
 R1RNN_input.compute_mu(self, behavior)
 ```
@@ -185,7 +173,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 R1RNN_input.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -202,7 +190,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="R1RNN_GNG"> </a> R1RNN\_GNG
+## R1RNN_GNG
 ```python
 R1RNN_GNG(self, T, Ics_0, behavior_str)
 ```
@@ -216,7 +204,7 @@ __Attributes__
 - `Ics_1 (np.array)`: Another set of initial conditions.
 - `behavior_str (str)`: Determines sufficient statistics that characterize system.
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 R1RNN_GNG.compute_suff_stats(self, phi)
 ```
@@ -230,7 +218,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
-### simulation\_suff\_stats
+### simulation_suff_stats
 ```python
 R1RNN_GNG.simulation_suff_stats(self, phi)
 ```
@@ -260,7 +248,7 @@ __Returns__
 `g(phi) (tf.tensor)`: Simulated system activity.
 
 
-### compute\_mu
+### compute_mu
 ```python
 R1RNN_GNG.compute_mu(self, behavior)
 ```
@@ -275,7 +263,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 R1RNN_GNG.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -292,7 +280,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="V1_circuit"> </a> V1\_circuit
+## V1_circuit
 ```python
 V1_circuit(self, behavior_str, param_str, T, dt, init_conds)
 ```
@@ -332,7 +320,7 @@ __Returns__
 `g(phi) (tf.tensor)`: Simulated system activity.
 
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 V1_circuit.compute_suff_stats(self, phi)
 ```
@@ -347,7 +335,7 @@ __Returns__
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
 
-### simulation\_suff\_stats
+### simulation_suff_stats
 ```python
 V1_circuit.simulation_suff_stats(self, phi)
 ```
@@ -362,7 +350,7 @@ __Returns__
 `T_x (tf.tensor)`: Simulation-derived sufficient statistics of samples.
 
 
-### compute\_mu
+### compute_mu
 ```python
 V1_circuit.compute_mu(self, behavior)
 ```
@@ -377,7 +365,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 V1_circuit.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -394,7 +382,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="damped_harmonic_oscillator"> </a> damped\_harmonic\_oscillator
+## damped_harmonic_oscillator
 ```python
 damped_harmonic_oscillator(self, behavior_str, T, dt, init_conds, bounds)
 ```
@@ -422,7 +410,7 @@ __Returns__
 `g(phi) (tf.tensor)`: Simulated system activity.
 
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 damped_harmonic_oscillator.compute_suff_stats(self, phi)
 ```
@@ -437,7 +425,7 @@ __Returns__
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
 
-### simulation\_suff\_stats
+### simulation_suff_stats
 ```python
 damped_harmonic_oscillator.simulation_suff_stats(self, phi)
 ```
@@ -452,7 +440,7 @@ __Returns__
 `T_x (tf.tensor)`: Simulation-derived sufficient statistics of samples.
 
 
-### compute\_mu
+### compute_mu
 ```python
 damped_harmonic_oscillator.compute_mu(self, behavior)
 ```
@@ -467,7 +455,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 damped_harmonic_oscillator.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -484,7 +472,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="null_on_interval"> </a> null\_on\_interval
+## null_on_interval
 ```python
 null_on_interval(self, D, a=0, b=1)
 ```
@@ -496,7 +484,7 @@ __Attributes__
 - `a (float)`: Beginning of interval.
 - `b (float)`: End of interval.
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 null_on_interval.compute_suff_stats(self, phi)
 ```
@@ -511,7 +499,7 @@ __Returns__
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
 
-### compute\_mu
+### compute_mu
 ```python
 null_on_interval.compute_mu(self, behavior)
 ```
@@ -526,7 +514,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 null_on_interval.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -543,7 +531,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="one_con_on_interval"> </a> one\_con\_on\_interval
+## one_con_on_interval
 ```python
 one_con_on_interval(self, D, a=0, b=1)
 ```
@@ -556,7 +544,7 @@ __Attributes__
 - `a (float)`: Beginning of interval.
 - `b (float)`: End of interval.
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 one_con_on_interval.compute_suff_stats(self, phi)
 ```
@@ -571,7 +559,7 @@ __Returns__
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
 
-### compute\_mu
+### compute_mu
 ```python
 one_con_on_interval.compute_mu(self, behavior)
 ```
@@ -586,7 +574,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 one_con_on_interval.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -603,7 +591,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="two_con_on_interval"> </a> two\_con\_on\_interval
+## two_con_on_interval
 ```python
 two_con_on_interval(self, D, a=0, b=1)
 ```
@@ -616,7 +604,7 @@ __Attributes__
 - `a (float)`: Beginning of interval.
 - `b (float)`: End of interval.
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 two_con_on_interval.compute_suff_stats(self, phi)
 ```
@@ -631,7 +619,7 @@ __Returns__
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
 
-### compute\_mu
+### compute_mu
 ```python
 two_con_on_interval.compute_mu(self, behavior)
 ```
@@ -646,7 +634,7 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
-### map\_to\_parameter\_support
+### map_to_parameter_support
 ```python
 two_con_on_interval.map_to_parameter_support(self, layers, num_theta_params)
 ```
@@ -663,7 +651,7 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-## <a name="MultivariateNormal"> </a> MultivariateNormal
+## MultivariateNormal
 ```python
 MultivariateNormal(self, behavior_str='moments', D=2)
 ```
@@ -675,7 +663,7 @@ __Attributes__
 - `D (int)`: Parametric dimensionality.
 
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 MultivariateNormal.compute_suff_stats(self, phi)
 ```
@@ -690,7 +678,7 @@ __Returns__
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
 
-### analytic\_suff\_stats
+### analytic_suff_stats
 ```python
 MultivariateNormal.analytic_suff_stats(self, phi)
 ```
@@ -704,7 +692,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Analytic sufficient statistics of samples.
 
-### compute\_mu
+### compute_mu
 ```python
 MultivariateNormal.compute_mu(self, behavior)
 ```
@@ -719,7 +707,7 @@ __Returns__
 `mu (np.array)`: The mean parameterization vector of the exponential family.
 
 
-## <a name="linear_1D"> </a> linear\_1D
+## linear_1D
 ```python
 linear_1D(self, behavior_str, T, dt, init_conds)
 ```
@@ -732,7 +720,7 @@ __Attributes__
 - `dt (float)`: time resolution of simulation
 - `behavior_str (str)`: determines sufficient statistics that characterize system
 
-### compute\_suff\_stats
+### compute_suff_stats
 ```python
 linear_1D.compute_suff_stats(self, phi)
 ```
@@ -746,7 +734,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Sufficient statistics of samples.
 
-### analytic\_suff\_stats
+### analytic_suff_stats
 ```python
 linear_1D.analytic_suff_stats(self, phi)
 ```
@@ -760,7 +748,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Analytic sufficient statistics of samples.
 
-### simulation\_suff\_stats
+### simulation_suff_stats
 ```python
 linear_1D.simulation_suff_stats(self, phi)
 ```
@@ -774,7 +762,7 @@ __Returns__
 
 `T_x (tf.tensor)`: Simulation-derived sufficient statistics of samples.
 
-### compute\_mu
+### compute_mu
 ```python
 linear_1D.compute_mu(self, behavior)
 ```
