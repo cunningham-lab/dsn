@@ -6,6 +6,8 @@ title: Systems
 permalink: /systems/
 ---
 
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+
 <div class="topnav">
   <a class="active" href="../">Home</a>
   <a href="#">DSN Systems Library</a>
@@ -23,7 +25,11 @@ lines = [];
 i = 1;
 for line in sourcefile:
 	if (line[:3] == "## "):
+		# write a big line to separate classes
+		destfile.write('\n*****\n');
+		# fine underscores in class names
 		proc_line = line.replace('_', '\_');
+		# add ref tag
 		line = line[:2] + ' <a name="' + line[3:-1] + '"> </a> ' + proc_line[3:]
 	elif (line[:4] == "### "):
 		line = line.replace('_', '\_');

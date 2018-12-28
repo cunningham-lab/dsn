@@ -3,6 +3,8 @@ title: Systems
 permalink: /systems/
 ---
 
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+
 <div class="topnav">
   <a class="active" href="../">Home</a>
   <a href="#">DSN Systems Library</a>
@@ -12,6 +14,8 @@ Many commonly used models in theoretical neuroscience are already implemented as
 
 # dsn.util.systems
 
+
+*****
 ## <a name="system"> </a> system
 ```python
 system(self, behavior_str)
@@ -28,73 +32,114 @@ __Attributes__
 - `behavior_str (str)`: Determines sufficient statistics that characterize system.
 
 
-### map\_to\_parameter\_support
-```python
-system.map_to_parameter_support(self, layers, num_theta_params)
-```
-Augment density network with bijective mapping to parameter support.
 ### compute\_suff\_stats
 ```python
-system.compute_suff_stats(self, phi)
+system.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
-### analytic\_suff\_stats
-```python
-system.analytic_suff_stats(self, phi)
-```
-Compute closed form sufficient statistics.
-### simulation\_suff\_stats
-```python
-system.simulation_suff_stats(self, phi)
-```
-Compute sufficient statistics that require simulation.
+
+__Arguments__
+
+- __z (tf.tensor)__: Density network system parameter samples.
+
+__Returns__
+
+`T_x (tf.tensor)`: Sufficient statistics of samples.
+
+
 ### compute\_mu
 ```python
 system.compute_mu(self, behavior)
 ```
 Calculate expected moment constraints given system paramterization.
+
+__Arguments__
+
+- __behavior (dict)__: Parameterization of desired system behavior.
+
+__Returns__
+
+`mu (np.array)`: Expected moment constraints.
+
+
+### map\_to\_parameter\_support
+```python
+system.map_to_parameter_support(self, layers, num_theta_params)
+```
+Augment density network with bijective mapping to parameter support.
+
+__Arguments__
+
+- __layers (list)__: List of ordered normalizing flow layers.
+- __num_theta_params (int)__: Running count of density network parameters.
+
+__Returns__
+
+`layers (list)`: layers augmented with final support mapping layer. \\
+`num_theta_params (int)`: Updated count of density network parameters.
+
+
 ### center\_suff\_stats\_by\_mu
 ```python
 system.center_suff_stats_by_mu(self, T_x, mu)
 ```
 Center sufficient statistics by the mean parameters mu.
+
+__Arguments__
+
+- __T_x (tf.tensor)__: Sufficient statistics of samples.
+- __mu (np.array)__: mean vector of constraints
+
+__Returns__
+
+`T_x_mu_centered (tf.tensor)`: Mean centered sufficient statistics of samples.
+
+
+
+*****
 ## <a name="linear_2D"> </a> linear\_2D
 ```python
 linear_2D(self, behavior_str)
 ```
 Linear two-dimensional system.
 
+This is a simple system explored in the <a href="../#linear_2D_example">DSN tutorial</a>, which demonstrates the
+utility of DSNs in an intuitive way.
+
+\begin{equation}
+\dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
+\end{equation}
+
+Behaviors:
+
+'oscillation' - specify a distribution of oscillatory frequencies
+
 __Attributes__
 
-- `behavior_str (str)`: Determines sufficient statistics that characterize system.
+- `behavior_str (str)`: In `['oscillation']`.  Determines sufficient statistics that characterize system.
 
 ### compute\_suff\_stats
 ```python
-linear_2D.compute_suff_stats(self, phi)
+linear_2D.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
 
+Behaviors:
+
+'oscillation' - Specifies a distribution of oscillatory frequencies and
+                expansion/decay factors using the eigendecomposition of
+                the dynamics matrix.
+\begin{equation}
+E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) = E \begin{bmatrix} \text{real}(\lambda_1) \\\\ \text{real}(\lambda_1)^2 \\\\ \text{imag}(\lambda_1) \\\\ \text{imag}(\lambda_1)^2 \end{bmatrix}
+\end{equation}
+
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
 `T_x (tf.tensor)`: Sufficient statistics of samples.
-
-### analytic\_suff\_stats
-```python
-linear_2D.analytic_suff_stats(self, phi)
-```
-Compute closed form sufficient statistics.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Analytic sufficient statistics of samples.
 
 
 ### compute\_mu
@@ -112,6 +157,8 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
+
+*****
 ## <a name="R1RNN_input"> </a> R1RNN\_input
 ```python
 R1RNN_input(self, T, Ics_0, Ics_1, behavior_str)
@@ -128,13 +175,13 @@ __Attributes__
 
 ### compute\_suff\_stats
 ```python
-R1RNN_input.compute_suff_stats(self, phi)
+R1RNN_input.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -142,13 +189,13 @@ __Returns__
 
 ### simulation\_suff\_stats
 ```python
-R1RNN_input.simulation_suff_stats(self, phi)
+R1RNN_input.simulation_suff_stats(self, z)
 ```
 Compute sufficient statistics that require simulation.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -157,17 +204,17 @@ __Returns__
 
 ### solve
 ```python
-R1RNN_input.solve(self, phi)
+R1RNN_input.solve(self, z)
 ```
-Solve the consistency equations given parameters phi.
+Solve the consistency equations given parameters z.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
-`g(phi) (tf.tensor)`: Simulated system activity.
+`g(z) (tf.tensor)`: Simulated system activity.
 
 
 ### compute\_mu
@@ -198,10 +245,12 @@ __Arguments__
 
 __Returns__
 
-`layers (list)`: layers augmented with final support mapping layer.
-`num_theta_params (int)`: Updated count of density network parameters.
+`(list)`: layers augmented with final support mapping layer.
+`(int)`: Updated count of density network parameters.
 
 
+
+*****
 ## <a name="R1RNN_GNG"> </a> R1RNN\_GNG
 ```python
 R1RNN_GNG(self, T, Ics_0, behavior_str)
@@ -218,13 +267,13 @@ __Attributes__
 
 ### compute\_suff\_stats
 ```python
-R1RNN_GNG.compute_suff_stats(self, phi)
+R1RNN_GNG.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -232,13 +281,13 @@ __Returns__
 
 ### simulation\_suff\_stats
 ```python
-R1RNN_GNG.simulation_suff_stats(self, phi)
+R1RNN_GNG.simulation_suff_stats(self, z)
 ```
 Compute sufficient statistics that require simulation.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -247,17 +296,17 @@ __Returns__
 
 ### solve
 ```python
-R1RNN_GNG.solve(self, phi)
+R1RNN_GNG.solve(self, z)
 ```
-Solve the consistency equations given parameters phi.
+Solve the consistency equations given parameters z.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
-`g(phi) (tf.tensor)`: Simulated system activity.
+`g(z) (tf.tensor)`: Simulated system activity.
 
 
 ### compute\_mu
@@ -292,6 +341,8 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
+
+*****
 ## <a name="V1_circuit"> </a> V1\_circuit
 ```python
 V1_circuit(self, behavior_str, param_str, T, dt, init_conds)
@@ -319,28 +370,28 @@ __Attributes__
 
 ### simulate
 ```python
-V1_circuit.simulate(self, phi)
+V1_circuit.simulate(self, z)
 ```
-Simulate the V1 4-neuron circuit given parameters phi.
+Simulate the V1 4-neuron circuit given parameters z.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
-`g(phi) (tf.tensor)`: Simulated system activity.
+`g(z) (tf.tensor)`: Simulated system activity.
 
 
 ### compute\_suff\_stats
 ```python
-V1_circuit.compute_suff_stats(self, phi)
+V1_circuit.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -349,13 +400,13 @@ __Returns__
 
 ### simulation\_suff\_stats
 ```python
-V1_circuit.simulation_suff_stats(self, phi)
+V1_circuit.simulation_suff_stats(self, z)
 ```
 Compute sufficient statistics that require simulation.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -394,6 +445,8 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
+
+*****
 ## <a name="damped_harmonic_oscillator"> </a> damped\_harmonic\_oscillator
 ```python
 damped_harmonic_oscillator(self, behavior_str, T, dt, init_conds, bounds)
@@ -409,28 +462,28 @@ __Attributes__
 
 ### simulate
 ```python
-damped_harmonic_oscillator.simulate(self, phi)
+damped_harmonic_oscillator.simulate(self, z)
 ```
-Simulate the damped harmonic oscillator given parameters phi.
+Simulate the damped harmonic oscillator given parameters z.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
-`g(phi) (tf.tensor)`: Simulated system activity.
+`g(z) (tf.tensor)`: Simulated system activity.
 
 
 ### compute\_suff\_stats
 ```python
-damped_harmonic_oscillator.compute_suff_stats(self, phi)
+damped_harmonic_oscillator.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -439,13 +492,13 @@ __Returns__
 
 ### simulation\_suff\_stats
 ```python
-damped_harmonic_oscillator.simulation_suff_stats(self, phi)
+damped_harmonic_oscillator.simulation_suff_stats(self, z)
 ```
 Compute sufficient statistics that require simulation.
 
 __Arguments__
 
-- __phi (tf.tensor)__: Density network system parameter samples.
+- __z (tf.tensor)__: Density network system parameter samples.
 
 __Returns__
 
@@ -482,310 +535,5 @@ __Returns__
 
 `layers (list)`: layers augmented with final support mapping layer.
 `num_theta_params (int)`: Updated count of density network parameters.
-
-
-## <a name="null_on_interval"> </a> null\_on\_interval
-```python
-null_on_interval(self, D, a=0, b=1)
-```
-Null system.  D parameters no constraints. Solution should be uniform on interval.
-
-__Attributes__
-
-- `D (int)`: Parametric dimensionality.
-- `a (float)`: Beginning of interval.
-- `b (float)`: End of interval.
-
-### compute\_suff\_stats
-```python
-null_on_interval.compute_suff_stats(self, phi)
-```
-Compute sufficient statistics of density network samples.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Sufficient statistics of samples.
-
-
-### compute\_mu
-```python
-null_on_interval.compute_mu(self, behavior)
-```
-Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
-
-__Returns__
-
-`mu (np.array)`: Expected moment constraints.
-
-
-### map\_to\_parameter\_support
-```python
-null_on_interval.map_to_parameter_support(self, layers, num_theta_params)
-```
-Augment density network with bijective mapping to parameter support.
-
-__Arguments__
-
-- __layers (list)__: List of ordered normalizing flow layers.
-- __num_theta_params (int)__: Running count of density network parameters.
-
-__Returns__
-
-`layers (list)`: layers augmented with final support mapping layer.
-`num_theta_params (int)`: Updated count of density network parameters.
-
-
-## <a name="one_con_on_interval"> </a> one\_con\_on\_interval
-```python
-one_con_on_interval(self, D, a=0, b=1)
-```
-System with one constraint.  D parameters dim1 == dim2.
-Solution should be uniform on the plane.
-
-__Attributes__
-
-- `D (int)`: Parametric dimensionality.
-- `a (float)`: Beginning of interval.
-- `b (float)`: End of interval.
-
-### compute\_suff\_stats
-```python
-one_con_on_interval.compute_suff_stats(self, phi)
-```
-Compute sufficient statistics of density network samples.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Sufficient statistics of samples.
-
-
-### compute\_mu
-```python
-one_con_on_interval.compute_mu(self, behavior)
-```
-Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
-
-__Returns__
-
-`mu (np.array)`: Expected moment constraints.
-
-
-### map\_to\_parameter\_support
-```python
-one_con_on_interval.map_to_parameter_support(self, layers, num_theta_params)
-```
-Augment density network with bijective mapping to parameter support.
-
-__Arguments__
-
-- __layers (list)__: List of ordered normalizing flow layers.
-- __num_theta_params (int)__: Running count of density network parameters.
-
-__Returns__
-
-`layers (list)`: layers augmented with final support mapping layer.
-`num_theta_params (int)`: Updated count of density network parameters.
-
-
-## <a name="two_con_on_interval"> </a> two\_con\_on\_interval
-```python
-two_con_on_interval(self, D, a=0, b=1)
-```
-System with two constraints.  D parameters dim1 == dim2, dim2 == dim3
-Solution should be uniform on the plane.
-
-__Attributes__
-
-- `D (int)`: Parametric dimensionality.
-- `a (float)`: Beginning of interval.
-- `b (float)`: End of interval.
-
-### compute\_suff\_stats
-```python
-two_con_on_interval.compute_suff_stats(self, phi)
-```
-Compute sufficient statistics of density network samples.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Sufficient statistics of samples.
-
-
-### compute\_mu
-```python
-two_con_on_interval.compute_mu(self, behavior)
-```
-Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
-
-__Returns__
-
-`mu (np.array)`: Expected moment constraints.
-
-
-### map\_to\_parameter\_support
-```python
-two_con_on_interval.map_to_parameter_support(self, layers, num_theta_params)
-```
-Augment density network with bijective mapping to parameter support.
-
-__Arguments__
-
-- __layers (list)__: List of ordered normalizing flow layers.
-- __num_theta_params (int)__: Running count of density network parameters.
-
-__Returns__
-
-`layers (list)`: layers augmented with final support mapping layer.
-`num_theta_params (int)`: Updated count of density network parameters.
-
-
-## <a name="MultivariateNormal"> </a> MultivariateNormal
-```python
-MultivariateNormal(self, behavior_str='moments', D=2)
-```
-Multivariate Gaussian validation system.
-
-__Attributes__
-
-- `behavior_str (str)`: Determines sufficient statistics that characterize system.
-- `D (int)`: Parametric dimensionality.
-
-
-### compute\_suff\_stats
-```python
-MultivariateNormal.compute_suff_stats(self, phi)
-```
-Compute sufficient statistics of density network samples.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Sufficient statistics of samples.
-
-
-### analytic\_suff\_stats
-```python
-MultivariateNormal.analytic_suff_stats(self, phi)
-```
-Compute closed form sufficient statistics.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Analytic sufficient statistics of samples.
-
-### compute\_mu
-```python
-MultivariateNormal.compute_mu(self, behavior)
-```
-Compute the mean parameterization (mu) given the mean parameters.
-
-__Arguments__
-
-- __behavior (dict)__: Mean parameters of behavioral distribution.
-
-__Returns__
-
-`mu (np.array)`: The mean parameterization vector of the exponential family.
-
-
-## <a name="linear_1D"> </a> linear\_1D
-```python
-linear_1D(self, behavior_str, T, dt, init_conds)
-```
-Exponential growth/decay.
-
-__Attributes__
-
-- `D (int)`: parametric dimensionality
-- `T (int)`: number of time points
-- `dt (float)`: time resolution of simulation
-- `behavior_str (str)`: determines sufficient statistics that characterize system
-
-### compute\_suff\_stats
-```python
-linear_1D.compute_suff_stats(self, phi)
-```
-Compute sufficient statistics of density network samples.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Sufficient statistics of samples.
-
-### analytic\_suff\_stats
-```python
-linear_1D.analytic_suff_stats(self, phi)
-```
-Compute closed form sufficient statistics.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Analytic sufficient statistics of samples.
-
-### simulation\_suff\_stats
-```python
-linear_1D.simulation_suff_stats(self, phi)
-```
-Compute sufficient statistics that require simulation.
-
-__Arguments__
-
-- __phi (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Simulation-derived sufficient statistics of samples.
-
-### compute\_mu
-```python
-linear_1D.compute_mu(self, behavior)
-```
-Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
-
-__Returns__
-
-`mu (np.array)`: Expected moment constraints.
 
 
