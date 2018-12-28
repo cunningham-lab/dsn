@@ -18,7 +18,7 @@ Many commonly used models in theoretical neuroscience are already implemented as
 *****
 ## <a name="system"> </a> system
 ```python
-system(self, behavior_str)
+system(self, fixed_params, behavior_str)
 ```
 Base class for systems using DSN modeling.
 
@@ -29,7 +29,61 @@ specific functions that are necessary for training the corresponding DSN.
 
 __Attributes__
 
+- `self.D (int)`: Dimensionality of $$z$$.
+- `self.num_suff_stats (int)`: Dimensionality of behavioral constraint vector
+                               $$T(x)$$.
+- `all_params (list)`: List of strings of all parameters of full system model.
+- `fixed_params (dict)`: Parameter string indexes its fixed value.
+- `free_params (list)`: List of strings in `all_params` but not `fixed_params.keys()`.
+                        These params make up z.
 - `behavior_str (str)`: Determines sufficient statistics that characterize system.
+
+- `all_param_labels (list)`: List of tex strings for all parameters.
+- `z_labels (list)`: List of tex strings for free parameters.
+- `T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
+
+### get\_all\_sys\_params
+```python
+system.get_all_sys_params(self)
+```
+Returns ordered list of all system parameters and individual element labels.
+
+__Returns__
+
+`all_params (list)`: List of strings of all parameters of full system model.
+`all_param_labels (list)`: List of tex strings for all parameters.
+
+### get\_free\_params
+```python
+system.get_free_params(self)
+```
+Returns members of `all_params` not in `fixed_params.keys()`.
+
+__Returns__
+
+`free_params (list)`: List of strings of parameters in $$z$$.
+
+
+### get\_z\_labels
+```python
+system.get_z_labels(self)
+```
+Returns `z_labels`.
+
+__Returns__
+
+`z_labels (list)`: List of tex strings for free parameters.
+
+
+### get\_T\_x\_labels
+```python
+system.get_T_x_labels(self)
+```
+Returns `T_x_labels`.
+
+__Returns__
+
+`T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
 
 
 ### compute\_suff\_stats
@@ -99,7 +153,7 @@ __Returns__
 *****
 ## <a name="linear_2D"> </a> linear\_2D
 ```python
-linear_2D(self, behavior_str)
+linear_2D(self, fixed_params, behavior_str)
 ```
 Linear two-dimensional system.
 

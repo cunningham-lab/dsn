@@ -33,18 +33,79 @@ class system:
     specific functions that are necessary for training the corresponding DSN.
 
     # Attributes
+        self.D (int): Dimensionality of $$z$$.
+        self.num_suff_stats (int): Dimensionality of behavioral constraint vector 
+                                   $$T(x)$$.
+        all_params (list): List of strings of all parameters of full system model.
+        fixed_params (dict): Parameter string indexes its fixed value.
+        free_params (list): List of strings in `all_params` but not `fixed_params.keys()`.
+                            These params make up z.
         behavior_str (str): Determines sufficient statistics that characterize system.
 
+        all_param_labels (list): List of tex strings for all parameters.
+        z_labels (list): List of tex strings for free parameters.
+        T_x_labels (list): List of tex strings for elements of $$T(x)$$.
     """
 
-    def __init__(self, behavior_str):
-        """family constructor
+    def __init__(self, fixed_params, behavior_str):
+        """System constructor.
 
 		# Arguments 
+            fixed_params (dict): Specifies fixed parameters and their values.
 			behavior_str (str): Determines sufficient statistics that characterize system.
 	
 		"""
+        self.fixed_params = fixed_params
         self.behavior_str = behavior_str
+        self.all_params, self.all_param_labels = self.get_all_sys_params()
+        self.free_params = self.get_free_params()
+        self.z_labels = self.get_z_labels()
+        self.T_x_labels = self.get_T_x_labels()
+        self.D = len(self.z_labels)
+        self.num_suff_stats = len(self.T_x_labels)
+
+    def get_all_sys_params(self,):
+        """Returns ordered list of all system parameters and individual element labels.
+
+        # Returns
+            all_params (list): List of strings of all parameters of full system model.
+            all_param_labels (list): List of tex strings for all parameters.
+        """
+        raise NotImplementedError()
+
+    def get_free_params(self,):
+        """Returns members of `all_params` not in `fixed_params.keys()`.
+
+        # Returns
+            free_params (list): List of strings of parameters in $$z$$.
+
+        """
+        free_params = []
+        for param_str in self.all_params:
+            if (not param_str in self.fixed_params.keys()):
+                free_params.append(param_str)
+        return free_params
+
+    def get_z_labels(self,):
+        """Returns `z_labels`.
+
+        # Returns
+            z_labels (list): List of tex strings for free parameters.
+
+        """
+        z_labels = [];
+        for free_param in self.free_params:
+            z_labels += self.all_param_labels[free_param]
+        return z_labels
+
+    def get_T_x_labels(self,):
+        """Returns `T_x_labels`.
+
+        # Returns
+            T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+
+        """
+        raise NotImplementedError()
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -116,11 +177,23 @@ class linear_2D(system):
         behavior_str (str): In `['oscillation']`.  Determines sufficient statistics that characterize system.
     """
 
-    def __init__(self, behavior_str):
-        self.behavior_str = behavior_str
+    def __init__(self, fixed_params, behavior_str):
+        super().__init__(fixed_params, behavior_str)
         self.name = "linear_2D"
-        self.D = 4
-        self.num_suff_stats = 4
+
+    def get_all_sys_params(self,):
+        all_params = ['A', 'tau'];
+        all_param_labels = {'A':[r'$a_1$', r'$a_2$', r'$a_3$', r'$a_4$'], \
+                            'tau':[r'$\tau$']}
+        return all_params, all_param_labels
+
+    def get_T_x_labels(self,):
+        if (self.behavior_str == 'oscillation'):
+            T_x_labels = ['1', '2', '3', '4'];
+        else:
+            raise NotImplementedError()
+        return T_x_labels;
+
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -179,13 +252,12 @@ class linear_2D(system):
             mu (np.array): Expected moment constraints.
 
         """
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
-        mu_mu = mu
-        mu_Sigma = np.square(mu_mu) + Sigma
-        print(mu_mu.shape, mu_Sigma.shape)
+        means = behavior["means"]
+        variances = behavior["variances"]
+        first_moments = means
+        second_moments = np.square(means) + variances
         mu = np.array(
-            [mu_mu[0], mu_Sigma[0], mu_mu[1], mu_Sigma[1]]
+            [first_moments[0], second_moments[0], first_moments[1], second_moments[1]]
         )
         return mu
 
