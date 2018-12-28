@@ -95,7 +95,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
     W = tf.placeholder(tf.float64, shape=(None, None, system.D, None), name="W")
     p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=[2, 3]);
-    base_log_q_phi = tf.log(p0[:, :]);
+    base_log_q_z = tf.log(p0[:, :]);
 
     flow_layers, num_theta_params = construct_density_network(flow_dict, system.D, 1);
     flow_layers, num_theta_params = system.map_to_parameter_support(flow_layers, num_theta_params);
@@ -111,29 +111,25 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     theta = declare_theta(flow_layers, inits);
 
     # Connect declared tf Variables theta to the density network.
-    phi, sum_log_det_jacobian, Z_by_layer = connect_density_network(W, flow_layers, theta);
-    log_q_phi = base_log_q_phi - sum_log_det_jacobian;
+    z, sum_log_det_jacobian, Z_by_layer = connect_density_network(W, flow_layers, theta);
+    log_q_z = base_log_q_z - sum_log_det_jacobian;
 
     all_params = tf.trainable_variables()
     nparams = len(all_params)
 
     # Compute family-specific sufficient statistics and log base measure on samples.
-    T_phi = system.compute_suff_stats(phi);
+    T_x = system.compute_suff_stats(z);
     mu = system.compute_mu(behavior);
-    T_phi_mu_centered = system.center_suff_stats_by_mu(T_phi, mu);
+    T_x_mu_centered = system.center_suff_stats_by_mu(T_x, mu);
 
-    if (system.name == 'damped_harmonic_oscillator'):
-        XY = system.simulate(phi);
-        X = tf.clip_by_value(XY[:,:,0,:], -1e3, 1e3);
-
-    R2 = compute_R2(log_q_phi, None, T_phi);
+    R2 = compute_R2(log_q_z, None, T_x);
 
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,));
     c = tf.placeholder(dtype=tf.float64, shape=());
 
     # Augmented Lagrangian cost function.
-    cost, cost_grads, H = AL_cost(log_q_phi, T_phi_mu_centered, Lambda, c, all_params);
+    cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, all_params);
 
     # Compute gradient of density network params (theta) wrt cost.
     grads_and_vars = [];
@@ -142,12 +138,12 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
     # Add inputs and outputs of NF to saved tf model.
     tf.add_to_collection('W', W);
-    tf.add_to_collection('phi', phi);
+    tf.add_to_collection('z', z);
     saver = tf.train.Saver();
 
     # Tensorboard logging.
     summary_writer = tf.summary.FileWriter(savedir);
-    tf.summary.scalar('H', -tf.reduce_mean(log_q_phi));
+    tf.summary.scalar('H', -tf.reduce_mean(log_q_z));
     tf.summary.scalar('cost', cost);
     if (tb_save_params):
         setup_param_logging(all_params);
@@ -165,16 +161,16 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
     costs = np.zeros((num_diagnostic_checks,));
     Hs = np.zeros((num_diagnostic_checks,));
     R2s = np.zeros((num_diagnostic_checks,));
-    mean_T_phis = np.zeros((num_diagnostic_checks, system.num_suff_stats));
+    mean_T_xs = np.zeros((num_diagnostic_checks, system.num_suff_stats));
 
     # Keep track of AL parameters throughout training.
     cs = [];
     lambdas = [];
 
-    # Take snapshots of phi and log density throughout training.
-    phis = np.zeros((k_max+1, n, system.D));
-    log_q_phis = np.zeros((k_max+1, n));
-    T_phis = np.zeros((k_max+1, n, system.num_suff_stats));
+    # Take snapshots of z and log density throughout training.
+    zs = np.zeros((k_max+1, n, system.D));
+    log_q_zs = np.zeros((k_max+1, n));
+    T_xs = np.zeros((k_max+1, n, system.num_suff_stats));
 
     gamma = 0.25;
     num_norms = 100;
@@ -192,24 +188,22 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
         feed_dict = {W:w_i, Lambda:_lambda, c:_c};
-        #cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, _R2, summary = \
-        #    sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, R2, summary_op], feed_dict);
-        cost_i, _cost_grads, _phi, _T_phi, _H, _log_q_phi, summary = \
-            sess.run([cost, cost_grads, phi, T_phi, H, log_q_phi, summary_op], feed_dict);
+        cost_i, _cost_grads, _z, _T_x, _H, _log_q_z, summary = \
+            sess.run([cost, cost_grads, z, T_x, H, log_q_z, summary_op], feed_dict);
         
 
         summary_writer.add_summary(summary, 0);
         log_grads(_cost_grads, cost_grad_vals, 0);
 
-        mean_T_phis[0,:] = np.mean(_T_phi[0], 0);
+        mean_T_xs[0,:] = np.mean(_T_x[0], 0);
         Hs[0] = _H;
         #R2s[0] = _R2;
         costs[0] = cost_i;
         check_it += 1;
 
-        phis[0,:,:] = _phi[0,:,:,0];
-        log_q_phis[0,:] = _log_q_phi[0,:];
-        T_phis[0,:,:] = _T_phi[0];
+        zs[0,:,:] = _z[0,:,:,0];
+        log_q_zs[0,:] = _log_q_z[0,:];
+        T_xs[0,:,:] = _T_x[0];
         
        
         total_its = 1;
@@ -228,8 +222,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1,n,system.D,1)), 1.0);
                 feed_dict.update({W:w_j});
-                _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
-                _R = np.mean(_T_phi_mu_centered[0], 0)
+                _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
+                _R = np.mean(_T_x_mu_centered[0], 0)
                 norms[j] = np.linalg.norm(_R);
 
             i = 0;
@@ -251,8 +245,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                 feed_dict = {W:w_i, Lambda:_lambda, c:_c};
 
                 start_time = time.time();
-                ts, cost_i, _cost_grads, summary, _T_phi, _H, _phi = \
-                    sess.run([train_step, cost, cost_grads, summary_op, T_phi, H, phi], feed_dict);
+                ts, cost_i, _cost_grads, summary, _T_x, _H, _z = \
+                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H, z], feed_dict);
                 end_time = time.time();
                 if (np.mod(cur_ind, check_rate)==0):
                     print('iteration took %.4f seconds.' % (end_time-start_time));
@@ -266,10 +260,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                     print('saving model at iter', i);
                     saver.save(sess, savedir + 'model');
 
-                #if (i > (cost_grad_lag) and np.mod(cur_ind, check_rate)==0):
                 if (np.mod(cur_ind+1, check_rate)==0):
-                    #_H, _R2, _T_phi, _phi, _log_q_phi = sess.run([H, R2, T_phi, phi, log_q_phi], feed_dict);
-                    _H, _T_phi, _phi, _log_q_phi = sess.run([H, T_phi, phi, log_q_phi], feed_dict);
+                    _H, _T_x, _z, _log_q_z = sess.run([H, T_x, z, log_q_z], feed_dict);
                     print(42*'*');
                     print('it = %d ' % (cur_ind+1));
                     print('H', _H);
@@ -280,174 +272,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
                     Hs[check_it] = _H;
                     #R2s[check_it] = _R2;
                     costs[check_it] = cost_i;
-                    mean_T_phis[check_it] = np.mean(_T_phi[0], 0);
-
-                    if (do_plot):
-                        fontsize = 16;
-                        if (system.name in ['null_on_interval', 'one_con_on_interval', 'two_con_on_interval']):
-                            fig = plt.figure();
-                            print('system.D', system.D);
-                            for plot_ind in range(system.D):
-                                plt.subplot(1,system.D,plot_ind+1);
-                                plt.hist(_phi[0,:,plot_ind,0]);
-                                plt.title(r'$\phi_%d$' % (plot_ind+1));
-                            plt.show();
-
-                            if (system.D == 3):
-                                k_i = _phi[0,:,0,0];
-                                m_i = _phi[0,:,1,0];
-                                c_i = _phi[0,:,2,0];
-
-                                fig = plt.figure();
-                                fig.add_subplot(1,3,1);
-                                plt.scatter(k_i, m_i);
-                                plt.xlabel(r'$\phi_1$', fontsize=fontsize);
-                                plt.ylabel(r'$\phi_2$', fontsize=fontsize);
-
-                                fig.add_subplot(1,3,2);
-                                plt.scatter(k_i, c_i);
-                                plt.xlabel(r'$\phi_1$', fontsize=fontsize);
-                                plt.ylabel(r'$\phi_3$', fontsize=fontsize);
-
-                                fig.add_subplot(1,3,3);
-                                plt.scatter(m_i, c_i);
-                                plt.xlabel(r'$\phi_2$', fontsize=fontsize);
-                                plt.ylabel(r'$\phi_3$', fontsize=fontsize);
-                                plt.show();
-
-                        elif (system.name == 'linear_1D'):
-                            fig = plt.figure();
-                            fig.add_subplot(1,2,1);
-                            plt.hist(_phi[0,:,0,0]);
-                            plt.title('phi');
-                            fig.add_subplot(1,2,2);
-                            plt.hist(_T_phi[0,:,0]);
-                            plt.title('T(g(phi))');
-                            plt.show();
-
-                        elif (system.name == 'normal'):
-                            iters = np.arange(check_rate, ((check_it)*check_rate)+1, check_rate);
-                            plt.figure(figsize=(6,6));
-                            plt.scatter(_phi[0,:,0,0], _phi[0,:,1,0]);
-                            plt.xlabel(r'$\phi_1$', fontsize=fontsize);
-                            plt.ylabel(r'$\phi_2$', fontsize=fontsize);
-                            plt.show();
-                            plt.figure(figsize=(12,8));
-                            for d in range(5):
-                                plt.subplot(2,3,d+1);
-                                plt.plot(iters, mean_T_phis[:check_it,d], 'b');
-                                plt.plot([iters[0], iters[-1]], [mu[d], mu[d]], 'k--');
-                                plt.xlabel('iterations');
-                                plt.ylabel(r'$T(x)_%d$' % (d+1), fontsize=fontsize);
-                            plt.show();
-
-                        elif (system.name == 'linear_2D'):
-                            data = pd.DataFrame(data=_phi[0,:,:,0]);
-                            fig = plt.figure();
-                            sns.pairplot(data);
-                            plt.show();
-
-                            _T_phi_mean = np.mean(_T_phi[0], 0);
-                            plt.figure();
-                            plt.subplot(1,2,1);
-                            plt.plot(mu);
-                            plt.plot(_T_phi_mean)
-                            plt.legend(['mu', 'E[T(x)]']);
-                            plt.show();
-
-                        elif (system.name == 'damped_harmonic_oscillator'):
-                            fig = plt.figure();
-                            print('system.D', system.D);
-                            for plot_ind in range(system.D):
-                                plt.subplot(1,system.D,plot_ind+1);
-                                plt.hist(_phi[0,:,plot_ind,0]);
-                                plt.title(r'$\phi_%d$' % (plot_ind+1));
-                            plt.show();
-
-                            fontsize = 14;
-                            k_i = _phi[0,:,0,0];
-                            m_i = _phi[0,:,1,0];
-                            c_i = _phi[0,:,2,0];
-
-                            fig = plt.figure();
-                            fig.add_subplot(1,3,1);
-                            plt.scatter(k_i, m_i);
-                            plt.xlabel('k', fontsize=fontsize);
-                            plt.ylabel('m', fontsize=fontsize);
-
-                            fig.add_subplot(1,3,2);
-                            plt.scatter(k_i, c_i);
-                            plt.xlabel('k', fontsize=fontsize);
-                            plt.ylabel('c', fontsize=fontsize);
-
-                            fig.add_subplot(1,3,3);
-                            plt.scatter(m_i, c_i);
-                            plt.xlabel('m', fontsize=fontsize);
-                            plt.ylabel('c', fontsize=fontsize);
-                            plt.show();
-
-                            _T_phi_mean = np.mean(_T_phi[0], 0);
-                            plt.figure();
-                            plt.subplot(1,2,1);
-                            plt.plot(mu[:system.T]);
-                            plt.plot(_T_phi_mean[:system.T]);
-                            plt.legend(['mu', 'E[T(x)]']);
-                            for plot_ind in range(10):
-                                plt.plot(_T_phi[0,plot_ind,:system.T],'k--');
-                            plt.title('X')
-
-                            plt.subplot(1,2,2);
-                            plt.plot(mu[system.T:]);
-                            plt.plot(_T_phi_mean[system.T:]);
-                            plt.legend(['mu', 'E[T(x)]']);
-                            plt.title('X^2')
-                            plt.show();
-
-                        if (system.name in ['rank1_rnn']):
-                            print('rank1 RNN!');
-                            _T_phi_mean = np.mean(_T_phi[0], 0);
-                            _T_phi_std = np.std(_T_phi[0], 0);
-                            plt.figure();
-                            plt.subplot(1,2,1);
-                            mu_len = mu.shape[0];
-                            x_axis = np.arange(mu_len);
-                            plt.plot(x_axis, mu);
-                            plt.errorbar(x_axis, _T_phi_mean, _T_phi_std)
-                            plt.legend(['mu', 'E[T(x)]']);
-                            plt.subplot(1,2,2);
-                            plt.scatter(_phi[0,:,0], _phi[0,:,1]);
-                            plt.xlabel('Mm');
-                            plt.ylabel('Mn');
-                            plt.show();
-                            """
-                            plt.subplot(1,4,3);
-                            plt.scatter(_phi[0,:,0], _phi[0,:,2]);
-                            plt.xlabel('Mm');
-                            plt.ylabel('Sim');
-                            plt.subplot(1,4,3);
-                            plt.scatter(_phi[0,:,2], _phi[0,:,3]);
-                            plt.xlabel('Sim');
-                            plt.ylabel('Sin');
-                            
-                            """
-
-                        iters = np.arange(check_rate, ((check_it)*check_rate)+1, check_rate);
-                        plt.figure(figsize=(12,4));
-                        plt.subplot(1,3,1);
-                        plt.plot(iters, costs[:(check_it)], 'k');
-                        plt.xlabel('iterations');
-                        plt.ylabel('cost', fontsize=fontsize);
-                        plt.subplot(1,3,2);
-                        plt.plot(iters, Hs[:(check_it)], 'b');
-                        plt.xlabel('iterations');
-                        plt.ylabel('H', fontsize=fontsize);
-                        plt.subplot(1,3,3);
-                        plt.plot(iters, R2s[:(check_it)], 'r');
-                        plt.xlabel('iterations');
-                        plt.ylabel(r'$r^2$', fontsize=fontsize);
-                        plt.ylim([0,1.05]);
-                        plt.show();
-
+                    mean_T_xs[check_it] = np.mean(_T_x[0], 0);
 
                     if stop_early:
                         has_converged = check_convergence([cost_grad_vals], cur_ind, COST_GRAD_LAG, P_THRESH, criteria='grad_mean_ttest');
@@ -459,20 +284,20 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
                     print('saving to %s  ...' % savedir);
                 
-                    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_phis=mean_T_phis, behavior=behavior, mu=mu, \
-                                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis,  \
-                                                        T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
+                    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=behavior, mu=mu, \
+                                                       it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
+                                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
                 
                     print(42*'*');
                     check_it += 1;
 
                 sys.stdout.flush();
                 i += 1;
-            phis[k+1,:,:] = _phi[0,:,:,0];
-            log_q_phis[k+1,:] = _log_q_phi[0,:];
-            T_phis[k+1,:,:] = _T_phi[0];
-            _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
-            _R = np.mean(_T_phi_mu_centered[0], 0)
+            zs[k+1,:,:] = _z[0,:,:,0];
+            log_q_zs[k+1,:] = _log_q_z[0,:];
+            T_xs[k+1,:,:] = _T_x[0];
+            _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
+            _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c*_R;
 
             # do the hypothesis test to figure out whether or not we should update c
@@ -481,8 +306,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1,n,system.D,1)), 1.0);
                 feed_dict.update({W:w_j});
-                _T_phi_mu_centered = sess.run(T_phi_mu_centered, feed_dict);
-                _R = np.mean(_T_phi_mu_centered[0], 0)
+                _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
+                _R = np.mean(_T_x_mu_centered[0], 0)
                 new_norms[j] = np.linalg.norm(_R);
 
             t,p = scipy.stats.ttest_ind(new_norms, gamma*norms, equal_var = False)
@@ -507,10 +332,10 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_phis=mean_T_phis, behavior=behavior, mu=mu, \
-                                       it=cur_ind, phis=phis, cs=cs, lambdas=lambdas, log_q_phis=log_q_phis, \
-                                       T_phis=T_phis, convergence_it=convergence_it, check_rate=check_rate);
-    return costs, _phi, _T_phi;
+    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=behavior, mu=mu, \
+                                       it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
+                                       T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
+    return costs, _z, _T_z;
 
 def initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters=50000):
     initdir = get_initdir(D, flow_dict, sigma_init, random_seed)
