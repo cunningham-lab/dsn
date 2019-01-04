@@ -95,7 +95,7 @@ class system:
         """
         z_labels = [];
         for free_param in self.free_params:
-            z_labels += self.all_param_labels[free_param]
+            z_labels.append(self.all_param_labels[free_param])
         return z_labels
 
     def get_T_x_labels(self,):
@@ -166,7 +166,7 @@ class linear_2D(system):
     utility of DSNs in an intuitive way.  
 
     \\begin{equation}
-    \dot{x} = Ax, A = \\begin{bmatrix} a_1 & a_2 \\\\\\\\ a_3 & a_4 \end{bmatrix}
+    \\tau \dot{x} = Ax, A = \\begin{bmatrix} a_1 & a_2 \\\\\\\\ a_3 & a_4 \end{bmatrix}
     \end{equation}
 
     Behaviors:
@@ -182,12 +182,27 @@ class linear_2D(system):
         self.name = "linear_2D"
 
     def get_all_sys_params(self,):
+        """Returns ordered list of all system parameters and individual element labels.
+
+         - $$A$$ - 2x2 dynamics matrix
+         - $$\\tau$$ - scalar timescale parameter
+
+        # Returns
+            all_params (list): List of strings of all parameters of full system model.
+            all_param_labels (list): List of tex strings for all parameters.
+        """
         all_params = ['A', 'tau'];
         all_param_labels = {'A':[r'$a_1$', r'$a_2$', r'$a_3$', r'$a_4$'], \
                             'tau':[r'$\tau$']}
         return all_params, all_param_labels
 
     def get_T_x_labels(self,):
+        """Returns `T_x_labels`.
+
+        # Returns
+            T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+
+        """
         if (self.behavior_str == 'oscillation'):
             T_x_labels = ['1', '2', '3', '4'];
         else:
@@ -219,14 +234,38 @@ class linear_2D(system):
             K = z_shape[0]
             M = z_shape[1]
 
-            a1 = z[:, :, 0, :]
-            a2 = z[:, :, 1, :]
-            a3 = z[:, :, 2, :]
-            a4 = z[:, :, 3, :]
+            # read free parameters from z vector
+            ind = 0;
+            for free_param in self.free_params:
+                if (free_param == 'A'):
+                    a1 = z[:, :, ind, :]
+                    a2 = z[:, :, ind+1, :]
+                    a3 = z[:, :, ind+2, :]
+                    a4 = z[:, :, ind+3, :]
+                    ind += 4
+                elif (free_param == 'tau'):
+                    tau = z[:, :, ind, :]
+                    ind += 1
 
-            beta = tf.complex(tf.square(a1 + a4) - 4 * (a1 * a4 + a2 * a3), np.float64(0.0))
+            # load fixed parameters
+            for fixed_param in self.fixed_params.keys():
+                if (fixed_param == 'A'):
+                    a1 = self.fixed_params['A'][0]
+                    a2 = self.fixed_params['A'][1]
+                    a3 = self.fixed_params['A'][2]
+                    a4 = self.fixed_params['A'][3]
+                elif (fixed_param == 'tau'):
+                    tau = self.fixed_params['tau']
+
+            # C = A / tau are the effective linear dynamics 
+            c1 = tf.divide(a1, tau)
+            c2 = tf.divide(a2, tau)
+            c3 = tf.divide(a3, tau)
+            c4 = tf.divide(a4, tau)
+
+            beta = tf.complex(tf.square(c1 + c4) - 4 * (c1 * c4 + c2 * c3), np.float64(0.0))
             beta_sqrt = tf.sqrt(beta)
-            real_common = tf.complex(0.5 * (a1 + a4), np.float64(0.0))
+            real_common = tf.complex(0.5 * (c1 + c4), np.float64(0.0))
 
             lambda_1 = real_common + 0.5 * beta_sqrt
             lambda_1_real = tf.real(lambda_1)
@@ -260,6 +299,417 @@ class linear_2D(system):
             [first_moments[0], second_moments[0], first_moments[1], second_moments[1]]
         )
         return mu
+
+
+class V1_circuit(system):
+    """ 4-neuron V1 circuit.
+
+        This is the standard 4-neuron rate model of V1 activity consisting of 
+         - E: pyramidal (excitatory) neurons
+         - P: parvalbumim expressing inhibitory neurons
+         - S: somatostatin expressing inhibitory neurons
+         - V: vasoactive intestinal peptide (VIP) expressing inhibitory neurons
+
+         [include a graphic of the circuit connectivity]
+
+        The dynamics of each neural populations average rate 
+        $$r = \\begin{bmatrix} r_E \\\\ r_P \\\\ r_S \\\\ r_V \end{bmatrix}$$
+        are given by:
+        \\begin{equation}
+        \\tau \\frac{dr}{dt} = -r + [Wr + h]_+^n
+        \end{equation}
+
+        In some cases, these neuron types do not send projections to one of the other 
+        types.  Additionally, much work has been done to measure the relative magnitudes
+        of the synaptic projections between neural types.
+        \\begin{equation}
+        W = \\begin{bmatrix} W_{EE} & -1.0 & -0.54 & 0 \\\\\\\\ W_{PE} & -1.01 & -0.33 & 0 \\\\\\\\ W_{SE} & 0 & 0 & -0.15 \\\\\\\\ W_{VE} & -0.22 & -0.77 & 0 \end{bmatrix}
+        \end{equation}
+
+        In this model, we are interested in capturing V1 responses across varying 
+        contrasts $$c$$, stimulus sizes $$s$$, and locomotion $$r$$ conditions.
+
+        \\begin{equation} 
+        h = b + g_{FF}(c) h_{FF} + g_{LAT}(c,s) h_{LAT} + g_{RUN}(r) h_{RUN}
+        \end{equation}
+
+        \\begin{equation} \\begin{bmatrix} h_E \\\\\\\\ h_P \\\\\\\\ h_S \\\\\\\\ h_V \end{bmatrix}
+         = \\begin{bmatrix} b_E \\\\\\\\ b_P \\\\\\\\ b_S \\\\\\\\ b_V \end{bmatrix} + g_{FF}(c) \\begin{bmatrix} h_{FF,E} \\\\\\\\ h_{FF,P} \\\\\\\\ 0 \\\\\\\\ 0 \end{bmatrix} + g_{LAT}(c,s) \\begin{bmatrix} h_{LAT,E} \\\\\\\\ h_{LAT,P} \\\\\\\\ h_{LAT,S} \\\\\\\\ h_{LAT,V} \end{bmatrix} + g_{RUN}(r) \\begin{bmatrix} h_{RUN,E} \\\\\\\\ h_{RUN,P} \\\\\\\\ h_{RUN,S} \\\\\\\\ h_{RUN,V} \end{bmatrix}
+        \end{equation}
+
+        where $$g_{FF}(c)$$, $$g_{LAT}(c,s)$$, and $$g_{FF}(r)$$ modulate the input
+        parmeterization $$h$$ according to condition.  See initialization argument
+        `model_opts` on how to set the form of these functions. 
+
+    # Attributes
+        behavior_str (str): In `['differences', 'data']`.  Determines sufficient statistics that characterize system.
+        model_opts (dict): 
+          * model_opts[`'g_FF'`] 
+            * `'c'` (default) $$g_{FF}(c) = c$$ 
+            * `'saturate'` $$g_{FF}(c) = \\frac{c^a}{c_{50}^a + c^a}$$
+          * model_opts[`'g_LAT'`] 
+            * `'linear'` (default) $$g_{LAT}(c,s) = c[s_0 - s]_+$$ 
+            * `'square'` $$g_{LAT}(c,s) = c[s_0^2 - s^2]_+$$
+          * model_opts[`'g_RUN'`] 
+            * `'r'` (default) $$g_{RUN}(r) = r$$ 
+        T (int): Number of simulation time points.
+        dt (float): Time resolution of simulation.
+        init_conds (list): Specifies the initial state of the system.
+    """
+
+    def __init__(self, fixed_params, behavior_str, \
+                 model_opts={'g_FF':'c', 'g_LAT':'linear', 'g_RUN':'r'}, \
+                 T=20, dt=0.25, \
+                 init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)):
+        self.model_opts = model_opts
+        super().__init__(fixed_params, behavior_str)
+        self.name = "V1_circuit"
+        self.T = T
+        self.dt = dt
+        self.init_conds = init_conds
+
+
+    def get_all_sys_params(self,):
+        """Returns ordered list of all system parameters and individual element labels.
+
+         - $$W_{EE}$$ - strength of excitatory-to-excitatory projection
+         - $$W_{PE}$$ - strength of excitatory-to-parvalbumin projection 
+         - $$W_{SE}$$ - strength of excitatory-to-somatostatin projection 
+         - $$W_{VE}$$ - strength of excitatory-to-VIP projection
+         - $$b_{E}$$ - constant input to excitatory population 
+         - $$b_{P}$$ - constant input to parvalbumin population 
+         - $$b_{S}$$ - constant input to somatostatin population 
+         - $$b_{V}$$ - constant input to VIP population 
+         - $$h_{FF,E}$$ - feed-forward input to excitatory population
+         - $$h_{FF,P}$$ - feed-forward input to parvalbumin population
+         - $$h_{LAT,E}$$ - lateral input to excitatory population
+         - $$h_{LAT,P}$$ - lateral input to parvalbumin population
+         - $$h_{LAT,S}$$ - lateral input to somatostatin population
+         - $$h_{LAT,V}$$ - lateral input to VIP population
+         - $$h_{RUN,E}$$ - locomotion input to excitatory population
+         - $$h_{RUN,P}$$ - locomotion input to parvalbumin population
+         - $$h_{RUN,S}$$ - locomotion input to somatostatin population
+         - $$h_{RUN,V}$$ - locomotion input to VIP population
+         - $$\\tau$$ - dynamics timescale
+         - $$n$$ - scalar for power of dynamics
+         - $$s_0$$ - reference stimulus level
+
+         When `model_opts['g_FF'] == 'saturate'`
+         - $$a$$ - contrast saturation shape
+         - $$c_{50}$$ - constrast at 50%
+
+        # Returns
+            all_params (list): List of strings of all parameters of full system model.
+            all_param_labels (list): List of tex strings for all parameters.
+        """
+        all_params = ['W_EE', 'W_PE', 'W_SE', 'W_VE', \
+                      'b_E', 'b_P', 'b_S', 'b_V', \
+                      'h_FFE', 'h_FFP', \
+                      'h_LATE', 'h_LATP', 'h_LATS', 'h_LATV', \
+                      'h_RUNE', 'h_RUNP', 'h_RUNS', 'h_RUNV', \
+                      'tau', 'n', 's_0']
+        all_param_labels = {'W_EE':r'$W_{EE}$', 'W_PE':r'$W_{PE}$', 'W_SE':r'$W_{SE}$', 'W_VE':r'$W_{VE}$', \
+                      'b_E':r'$b_{E}$', 'b_P':r'$b_{P}$', 'b_S':r'$b_{S}$', 'b_V':r'$b_{V}$', \
+                      'h_FFE':r'$h_{FF,E}$', 'h_FFP':r'$h_{FF,P}$', \
+                      'h_LATE':r'$h_{LAT,E}$', 'h_LATP':r'$h_{LAT,P}$', 'h_LATS':r'$h_{LAT,S}$', 'h_LATV':r'$h_{LAT,V}$', \
+                      'h_RUNE':r'$h_{RUN,E}$', 'h_RUNP':r'$h_{RUN,P}$', 'h_RUNS':r'$h_{RUN,S}$', 'h_RUNV':r'$h_{RUN,V}$', \
+                      'tau':r'$\tau$', 'n':r'$n$', 's_0':r'$s_0$'}
+
+        if (self.model_opts['g_FF'] == 'saturate'):
+            all_params +=  ['a', 'c_50']
+            all_param_labels.update({'a':r'$a$', 'c_50':r'$c_{50}$'})
+
+        return all_params, all_param_labels
+
+    def get_T_x_labels(self,):
+        """Returns `T_x_labels`.
+
+        # Returns
+            T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+
+        """
+        if (self.behavior_str == 'data'):
+            T_x_labels = ['1', '2', '3', '4'];
+        else:
+            raise NotImplementedError()
+        return T_x_labels;
+
+    def simulate(self, z):
+        """Simulate the V1 4-neuron circuit given parameters z.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            g(z) (tf.tensor): Simulated system activity.
+
+        """
+        # remove trailing dimension
+        z = z[:,:,:,0]
+
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        # Assumed parameters
+        W_EP = 1.0*tf.ones((K,M))
+        W_ES = 0.54*tf.ones((K,M))
+
+        W_PP = 1.01*tf.ones((K,M))
+        W_PS = 0.33*tf.ones((K,M))
+
+        W_SV = 0.15*tf.ones((K,M))
+
+        W_VP = 0.22*tf.ones((K,M))
+        W_VS = 0.77*tf.ones((K,M))
+
+        # read free parameters from z vector
+        ind = 0;
+        for free_param in self.free_params:
+            if (free_param == 'W_EE'):
+                W_EE = z[:, :, ind]
+            elif (free_param == 'W_PE'):
+                W_PE = z[:, :, ind]
+            elif (free_param == 'W_SE'):
+                W_SE = z[:, :, ind]
+            elif (free_param == 'W_VE'):
+                W_VE = z[:, :, ind]
+
+            elif (free_param == 'b_E'):
+                b_E = z[:, :, ind]
+            elif (free_param == 'b_P'):
+                b_P = z[:, :, ind]
+            elif (free_param == 'b_S'):
+                b_S = z[:, :, ind]
+            elif (free_param == 'b_V'):
+                b_V = z[:, :, ind]
+
+            elif (free_param == 'h_FFE'):
+                h_FFE = z[:, :, ind]
+            elif (free_param == 'h_FFP'):
+                h_FFP = z[:, :, ind]
+
+            elif (free_param == 'h_LATE'):
+                h_LATE = z[:, :, ind]
+            elif (free_param == 'h_LATP'):
+                h_LATP = z[:, :, ind]
+            elif (free_param == 'h_LATS'):
+                h_LATS = z[:, :, ind]
+            elif (free_param == 'h_LATV'):
+                h_LATV = z[:, :, ind]
+
+            elif (free_param == 'h_RUNE'):
+                h_RUNE = z[:, :, ind]
+            elif (free_param == 'h_RUNP'):
+                h_RUNP = z[:, :, ind]
+            elif (free_param == 'h_RUNS'):
+                h_RUNS = z[:, :, ind]
+            elif (free_param == 'h_RUNV'):
+                h_RUNV = z[:, :, ind]
+
+            elif (free_param == 'tau'):
+                tau = z[:, :, ind]
+            elif (free_param == 'n'):
+                n = z[:, :, ind]
+            elif (free_param == 's_0'):
+                s_0 = z[:, :, ind]
+            elif (free_param == 'a'):
+                a = z[:, :, ind]
+            elif (free_param == 'c_50'):
+                c_50 = z[:, :, ind]
+
+            else:
+                print('Error: unknown free parameter: %s.' % free_param)
+                raise NotImplementedError()
+            ind += 1
+
+        # load fixed parameters
+        for fixed_param in self.fixed_params.keys():
+            print('fixed param', fixed_param)
+            if (fixed_param == 'W_EE'):
+                W_EE = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'W_PE'):
+                W_PE = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'W_SE'):
+                W_SE = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'W_VE'):
+                W_VE = self.fixed_params[fixed_param]*tf.ones((K,M));
+
+            elif (fixed_param == 'b_E'):
+                b_E = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'b_P'):
+                b_P = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'b_S'):
+                b_S = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'b_V'):
+                b_V = self.fixed_params[fixed_param]*tf.ones((K,M));
+
+            elif (fixed_param == 'h_FFE'):
+                h_FFE = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_FFP'):
+                h_FFP = self.fixed_params[fixed_param]*tf.ones((K,M));
+
+            elif (fixed_param == 'h_LATE'):
+                h_LATE = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_LATP'):
+                h_LATP = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_LATS'):
+                h_LATS = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_LATV'):
+                h_LATV = self.fixed_params[fixed_param]*tf.ones((K,M));
+
+            elif (fixed_param == 'h_RUNE'):
+                h_RUNE = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_RUNP'):
+                h_RUNP = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_RUNS'):
+                h_RUNS = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'h_RUNV'):
+                h_RUNV = self.fixed_params[fixed_param]*tf.ones((K,M));
+
+            elif (fixed_param == 'tau'):
+                tau = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'n'):
+                n = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 's_0'):
+                s_0 = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'a'):
+                a = self.fixed_params[fixed_param]*tf.ones((K,M));
+            elif (fixed_param == 'c_50'):
+                c_50 = self.fixed_params[fixed_param]*tf.ones((K,M));
+
+            else:
+                print('Error: unknown fixed parameter: %s.' % fixed_param)
+                raise NotImplementedError()
+
+            ind += 1
+
+        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((K,M))], axis=2);
+        W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((K,M))], axis=2);
+        W_SX = tf.stack([W_SE, tf.zeros((K,M)), tf.zeros((K,M)), -W_SV], axis=2);
+        W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((K,M))], axis=2);
+        W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2);
+
+
+        # tau
+        tau = tf.expand_dims(tf.expand_dims(tau, 2), 3)
+        # dynamics power
+        n = tf.expand_dims(tf.expand_dims(n, 2), 3)
+        # reference stimulus
+        s_0 = tf.expand_dims(tf.expand_dims(s_0, 2), 3)
+
+        # initial conditions
+        r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0));
+        r0 = tf.tile(r0, [K,M,1,1]);
+
+        # construct the input
+        def f(r, t):
+            drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h), n), tau)
+            return tf.clip_by_value(drdt, -1e3, 1e3);
+
+        """ # transition function
+            def f1(r, t):
+                drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h1), n), tau)
+                return tf.clip_by_value(drdt, 1e-3, 1e3);
+
+            def f2(r, t):
+                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h2), n);
+                return tf.clip_by_value(drdt, 1e-3, 1e3);
+
+            r1_t = tf.contrib.integrate.odeint_fixed(f1, r0, t, method='rk4')
+            r2_t = tf.contrib.integrate.odeint_fixed(f2, r0, t, method='rk4')
+        """
+
+        # time axis
+        t = np.arange(0, self.T*self.dt, self.dt)
+        r_t = tf.contrib.integrate.odeint_fixed(f, r0, t, method='rk4')
+        return [r_t];
+    
+    def compute_suff_stats(self, z):
+        """Compute sufficient statistics of density network samples.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Sufficient statistics of samples.
+
+        """
+
+        if (self.behavior_str in ['data', 'difference']):
+            T_x = self.simulation_suff_stats(z)
+        else:
+            raise NotImplementedError();
+        
+        return T_x
+
+    def simulation_suff_stats(self, z):
+        """Compute sufficient statistics that require simulation.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
+        """
+
+        #r1_t, r2_t = self.simulate(z);
+        r_t = self.simulate(z);
+
+        if (self.behavior_str in ["ss_all"]):
+            r1_ss = r1_t[-1,:,:,:,0];
+            r2_ss = r2_t[-1,:,:,:,0];
+        elif (self.behavior_str in ["ss_SV"]):
+            # extract somatostatin and VIP responses
+            r1_ss = r1_t[-1,:,:,2:,0];  
+            r2_ss = r2_t[-1,:,:,2:,0];
+        diff_ss = r2_ss - r1_ss;
+        T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
+        print(r1_ss.shape, diff_ss.shape, T_x.shape);
+        return T_x
+
+    def compute_mu(self, behavior):
+        """Calculate expected moment constraints given system paramterization.
+
+        # Arguments
+            behavior (dict): Parameterization of desired system behavior.
+
+        # Returns
+            mu (np.array): Expected moment constraints.
+
+        """
+
+        mu = behavior["mu"]
+        Sigma = behavior["Sigma"]
+        mu_mu = mu
+        mu_Sigma = np.square(mu_mu) + Sigma
+        mu = np.concatenate((mu_mu, mu_Sigma), 0)
+        return mu
+
+    def mu_to_ellipse(self, behavior):
+        mu = behavior["mu"]
+        Sigma = behavior["Sigma"]
+
+    def map_to_parameter_support(self, layers, num_theta_params):
+        """Augment density network with bijective mapping to parameter support.
+
+        # Arguments
+            layers (list): List of ordered normalizing flow layers.
+            num_theta_params (int): Running count of density network parameters.
+
+        # Returns
+            layers (list): layers augmented with final support mapping layer.
+            num_theta_params (int): Updated count of density network parameters.
+
+        """
+
+        support_layer = SoftPlusLayer()
+        num_theta_params += count_layer_params(support_layer)
+        layers.append(support_layer)
+        return layers, num_theta_params
+
+        
 
 
 class R1RNN_input(system):
@@ -583,253 +1033,7 @@ class R1RNN_GNG(system):
         return layers, num_theta_params
 
 
-class V1_circuit(system):
-    """ 4-neuron V1 circuit.
 
-        This is the standard 4-neuron rate model of V1 activity consisting of 
-         - E: pyramidal (excitatory) neurons
-         - P: parvalbumim expressing inhibitory neurons
-         - S: somatostatin expressing inhibitory neurons
-         - V: vasoactive intestinal peptide expressing inhibitory neurons
-
-        dr/dt = -r + [Wr + h]+^n
-
-    # Attributes
-        behavior_str (str):
-            'ss': steady state responses
-        param-str (str):
-            'h': Learn the input parameters.
-            'W': Learn the connectivity parameters.
-        T (int): Number of simulation time points.
-        dt (float): Time resolution of simulation.
-        init_conds (list): Specifies the initial state of the system.
-    """
-
-    def __init__(self, behavior_str, param_str, T, dt, init_conds):
-        super().__init__(behavior_str)
-        self.param_str = param_str
-        self.T = T
-        self.dt = dt
-        self.name = "V1_circuit"
-        # determine dimensionality and number of constraints
-        self.D = 0;
-        self.num_suff_stats = 0;
-
-        self.z_labels = []
-        self.T_x_labels = []
-
-        if (behavior_str in ['ss_all']):
-            if (param_str in ['h', 'both']):
-                self.D += 8;
-                self.z_labels += [r'$h_{E,1}$', r'$h_{P,1}$', r'$h_{S,1}$', r'$h_{V,1}$', \
-                                r'$h_{E,2}$', r'$h_{P,2}$', r'$h_{S,2}$', r'$h_{V,2}$']
-            if (param_str == ['W', 'both']):
-                self.D += 11;
-                raise NotImplementedError();
-            self.num_suff_stats += 8;
-            self.T_x_labels += [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
-                                  r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
-
-        elif (behavior_str in ['ss_SV']):
-            if (param_str in ['h', 'both']):
-                self.D += 8;
-                self.z_labels += [r'$h_{E,1}$', r'$h_{P,1}$', r'$h_{S,1}$', r'$h_{V,1}$', \
-                                r'$h_{E,2}$', r'$h_{P,2}$', r'$h_{S,2}$', r'$h_{V,2}$']
-            if (param_str == ['W', 'both']):
-                self.D += 11;
-                raise NotImplementedError();
-            self.num_suff_stats += 4;
-            self.T_x_labels += [r'$d_{S,ss}$', r'$d_{V,ss}$', \
-                                  r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
-
-        else:
-            raise NotImplementedError();
-
-        self.init_conds = init_conds
-
-    def simulate(self, z):
-        """Simulate the V1 4-neuron circuit given parameters z.
-
-        # Arguments
-            z (tf.tensor): Density network system parameter samples.
-
-        # Returns
-            g(z) (tf.tensor): Simulated system activity.
-
-        """
-        # remove trailing dimension
-        z = z[:,:,:,0];
-        z_shape = tf.shape(z)
-        K = z_shape[0]
-        M = z_shape[1]
-
-        ind = 0;
-        if (self.behavior_str in ['ss_all', 'ss_SV']):
-            if (self.param_str in ['h', 'both']):
-                h1 = tf.expand_dims(z[:,:,0:4], 3);
-                h2 = tf.expand_dims(z[:,:,4:8], 3);
-                ind += 8;
-            else:
-                # this would have to be based on a hypothesized input structure
-                h1 = np.ones((4,1));
-                h2 = -np.ones((4,1));
-                raise NotImplementedError();
-
-            if (self.param_str in ['W', 'both']):
-                W_EE = z[:,:,ind];
-                W_EP = z[:,:,ind+1];
-                W_ES = z[:,:,ind+2];
-                W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((K,M))], axis=2);
-
-                W_PE = z[:,:,ind+3];
-                W_PP = z[:,:,ind+4];
-                W_PS = z[:,:,ind+5];
-                W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((K,M))], axis=2);
-
-                W_SE = z[:,:,ind+6];
-                W_SV = z[:,:,ind+7];
-                W_SX = tf.stack([W_SE, tf.zeros((K,M)), tf.zeros((K,M)), -W_SV], axis=2);
-
-                W_VE = z[:,:,ind+8];
-                W_VP = z[:,:,ind+9];
-                W_VS = z[:,:,ind+10];
-                W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((K,M))], axis=2);
-
-                W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2);
-
-            else:
-                # Using values from Pfeffer et al. 2013
-                E_pre = 1.0;
-                W_EE = E_pre;
-                W_EP = 1.0;
-                W_ES = 0.54;
-
-                W_PE = E_pre;
-                W_PP = 1.01;
-                W_PS = 0.33;
-
-                W_SE = E_pre;
-                W_SV = 0.15;
-
-                W_VE = E_pre;
-                W_VP = 0.22;
-                W_VS = 0.77;
-
-                W = np.array([[W_EE, -W_EP, -W_ES,   0.0], \
-                   [W_PE, -W_PP, -W_PS,   0.0], \
-                   [W_SE,   0.0,   0.0, -W_SV], \
-                   [W_VE, -W_VP, -W_VS,   0.0]]);
-                W = np.expand_dims(np.expand_dims(W, 0), 0);
-                W = tf.constant(W);
-                W = tf.tile(W, [K,M,1,1]);
-
-            # initial conditions
-            r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0));
-            r0 = tf.tile(r0, [K,M,1,1]);
-
-            # transition function
-            n = 2.0;
-            def f1(r, t):
-                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h1), n);
-                return tf.clip_by_value(drdt, 1e-3, 1e3);
-
-            def f2(r, t):
-                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h2), n);
-                return tf.clip_by_value(drdt, 1e-3, 1e3);
-
-            # time axis
-            t = np.arange(0,self.T*self.dt, self.dt);
-
-            r1_t = tf.contrib.integrate.odeint_fixed(f1, r0, t, method='rk4')
-            r2_t = tf.contrib.integrate.odeint_fixed(f2, r0, t, method='rk4')
-
-            return [r1_t, r2_t];
-        
-        else:
-            raise NotImplementedError();
-
-    def compute_suff_stats(self, z):
-        """Compute sufficient statistics of density network samples.
-
-        # Arguments
-            z (tf.tensor): Density network system parameter samples.
-
-        # Returns
-            T_x (tf.tensor): Sufficient statistics of samples.
-
-        """
-
-        if (self.behavior_str in ["ss_all", "ss_SV"]):
-            T_x = self.simulation_suff_stats(z)
-        else:
-            raise NotImplementedError();
-        
-        return T_x
-
-    def simulation_suff_stats(self, z):
-        """Compute sufficient statistics that require simulation.
-
-        # Arguments
-            z (tf.tensor): Density network system parameter samples.
-
-        # Returns
-            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
-
-        """
-
-        r1_t, r2_t = self.simulate(z);
-
-        if (self.behavior_str in ["ss_all"]):
-            r1_ss = r1_t[-1,:,:,:,0];
-            r2_ss = r2_t[-1,:,:,:,0];
-        elif (self.behavior_str in ["ss_SV"]):
-            # extract somatostatin and VIP responses
-            r1_ss = r1_t[-1,:,:,2:,0];  
-            r2_ss = r2_t[-1,:,:,2:,0];
-        diff_ss = r2_ss - r1_ss;
-        T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
-        print(r1_ss.shape, diff_ss.shape, T_x.shape);
-        return T_x
-
-    def compute_mu(self, behavior):
-        """Calculate expected moment constraints given system paramterization.
-
-        # Arguments
-            behavior (dict): Parameterization of desired system behavior.
-
-        # Returns
-            mu (np.array): Expected moment constraints.
-
-        """
-
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
-        mu_mu = mu
-        mu_Sigma = np.square(mu_mu) + Sigma
-        mu = np.concatenate((mu_mu, mu_Sigma), 0)
-        return mu
-
-    def mu_to_ellipse(self, behavior):
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
-
-    def map_to_parameter_support(self, layers, num_theta_params):
-        """Augment density network with bijective mapping to parameter support.
-
-        # Arguments
-            layers (list): List of ordered normalizing flow layers.
-            num_theta_params (int): Running count of density network parameters.
-
-        # Returns
-            layers (list): layers augmented with final support mapping layer.
-            num_theta_params (int): Updated count of density network parameters.
-
-        """
-
-        support_layer = SoftPlusLayer()
-        num_theta_params += count_layer_params(support_layer)
-        layers.append(support_layer)
-        return layers, num_theta_params
 
 class damped_harmonic_oscillator(system):
     """Damped harmonic oscillator.  Solution should be a line with noise.

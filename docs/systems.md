@@ -10,12 +10,10 @@ permalink: /systems/
   <a href="#">DSN Systems Library</a>
 </div>
 
-Many commonly used models in theoretical neuroscience are already implemented as built-in system classes in the DSN library.
+Some neural circuit models from theoretical neuroscience are already implemented as built-in system classes in the DSN library.
 
 # dsn.util.systems
 
-
-*****
 ## <a name="system"> </a> system
 ```python
 system(self, fixed_params, behavior_str)
@@ -149,8 +147,6 @@ __Returns__
 `T_x_mu_centered (tf.tensor)`: Mean centered sufficient statistics of samples.
 
 
-
-*****
 ## <a name="linear_2D"> </a> linear\_2D
 ```python
 linear_2D(self, fixed_params, behavior_str)
@@ -161,7 +157,7 @@ This is a simple system explored in the <a href="../#linear_2D_example">DSN tuto
 utility of DSNs in an intuitive way.
 
 \begin{equation}
-\dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
+\tau \dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
 \end{equation}
 
 Behaviors:
@@ -171,6 +167,31 @@ Behaviors:
 __Attributes__
 
 - `behavior_str (str)`: In `['oscillation']`.  Determines sufficient statistics that characterize system.
+
+### get\_all\_sys\_params
+```python
+linear_2D.get_all_sys_params(self)
+```
+Returns ordered list of all system parameters and individual element labels.
+
+- $$A$$ - 2x2 dynamics matrix
+- $$\tau$$ - scalar timescale parameter
+
+__Returns__
+
+`all_params (list)`: List of strings of all parameters of full system model.
+`all_param_labels (list)`: List of tex strings for all parameters.
+
+### get\_T\_x\_labels
+```python
+linear_2D.get_T_x_labels(self)
+```
+Returns `T_x_labels`.
+
+__Returns__
+
+`T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
+
 
 ### compute\_suff\_stats
 ```python
@@ -211,8 +232,193 @@ __Returns__
 `mu (np.array)`: Expected moment constraints.
 
 
+## <a name="V1_circuit"> </a> V1\_circuit
+```python
+V1_circuit(self, fixed_params, behavior_str, model_opts={'g_FF': 'c', 'g_LAT': 'linear', 'g_RUN': 'r'}, T=20, dt=0.25, init_conds=array([[1. ],
+       [1.1],
+       [1.2],
+       [1.3]]))
+```
+4-neuron V1 circuit.
 
-*****
+This is the standard 4-neuron rate model of V1 activity consisting of
+ - E: pyramidal (excitatory) neurons
+ - P: parvalbumim expressing inhibitory neurons
+ - S: somatostatin expressing inhibitory neurons
+ - V: vasoactive intestinal peptide (VIP) expressing inhibitory neurons
+
+ [include a graphic of the circuit connectivity]
+
+The dynamics of each neural populations average rate
+$$r = \begin{bmatrix} r_E \\ r_P \\ r_S \\ r_V \end{bmatrix}$$
+are given by:
+\begin{equation}
+\tau \frac{dr}{dt} = -r + [Wr + h]_+^n
+\end{equation}
+
+In some cases, these neuron types do not send projections to one of the other
+types.  Additionally, much work has been done to measure the relative magnitudes
+of the synaptic projections between neural types.
+\begin{equation}
+W = \begin{bmatrix} W_{EE} & -1.0 & -0.54 & 0 \\\\ W_{PE} & -1.01 & -0.33 & 0 \\\\ W_{SE} & 0 & 0 & -0.15 \\\\ W_{VE} & -0.22 & -0.77 & 0 \end{bmatrix}
+\end{equation}
+
+In this model, we are interested in capturing V1 responses across varying
+contrasts $$c$$, stimulus sizes $$s$$, and locomotion $$r$$ conditions.
+
+\begin{equation}
+h = b + g_{FF}(c) h_{FF} + g_{LAT}(c,s) h_{LAT} + g_{RUN}(r) h_{RUN}
+\end{equation}
+
+\begin{equation} \begin{bmatrix} h_E \\\\ h_P \\\\ h_S \\\\ h_V \end{bmatrix}
+ = \begin{bmatrix} b_E \\\\ b_P \\\\ b_S \\\\ b_V \end{bmatrix} + g_{FF}(c) \begin{bmatrix} h_{FF,E} \\\\ h_{FF,P} \\\\ 0 \\\\ 0 \end{bmatrix} + g_{LAT}(c,s) \begin{bmatrix} h_{LAT,E} \\\\ h_{LAT,P} \\\\ h_{LAT,S} \\\\ h_{LAT,V} \end{bmatrix} + g_{RUN}(r) \begin{bmatrix} h_{RUN,E} \\\\ h_{RUN,P} \\\\ h_{RUN,S} \\\\ h_{RUN,V} \end{bmatrix}
+\end{equation}
+
+where $$g_{FF}(c)$$, $$g_{LAT}(c,s)$$, and $$g_{FF}(r)$$ modulate the input
+parmeterization $$h$$ according to condition.  See initialization argument
+`model_opts` on how to set the form of these functions.
+
+__Attributes__
+
+- `behavior_str (str)`: In `['differences', 'data']`.  Determines sufficient statistics that characterize system.
+- `model_opts (dict)`:
+  * model_opts[`'g_FF'`]
+    * `'c'` (default) $$g_{FF}(c) = c$$
+    * `'saturate'` $$g_{FF}(c) = \frac{c^a}{c_{50}^a + c^a}$$
+  * model_opts[`'g_LAT'`]
+    * `'linear'` (default) $$g_{LAT}(c,s) = c[s_0 - s]_+$$
+    * `'square'` $$g_{LAT}(c,s) = c[s_0^2 - s^2]_+$$
+  * model_opts[`'g_RUN'`]
+    * `'r'` (default) $$g_{RUN}(r) = r$$
+- `T (int)`: Number of simulation time points.
+- `dt (float)`: Time resolution of simulation.
+- `init_conds (list)`: Specifies the initial state of the system.
+
+### get\_all\_sys\_params
+```python
+V1_circuit.get_all_sys_params(self)
+```
+Returns ordered list of all system parameters and individual element labels.
+
+- $$W_{EE}$$ - strength of excitatory-to-excitatory projection
+- $$W_{PE}$$ - strength of excitatory-to-parvalbumin projection
+- $$W_{SE}$$ - strength of excitatory-to-somatostatin projection
+- $$W_{VE}$$ - strength of excitatory-to-VIP projection
+- $$b_{E}$$ - constant input to excitatory population
+- $$b_{P}$$ - constant input to parvalbumin population
+- $$b_{S}$$ - constant input to somatostatin population
+- $$b_{V}$$ - constant input to VIP population
+- $$h_{FF,E}$$ - feed-forward input to excitatory population
+- $$h_{FF,P}$$ - feed-forward input to parvalbumin population
+- $$h_{LAT,E}$$ - lateral input to excitatory population
+- $$h_{LAT,P}$$ - lateral input to parvalbumin population
+- $$h_{LAT,S}$$ - lateral input to somatostatin population
+- $$h_{LAT,V}$$ - lateral input to VIP population
+- $$h_{RUN,E}$$ - locomotion input to excitatory population
+- $$h_{RUN,P}$$ - locomotion input to parvalbumin population
+- $$h_{RUN,S}$$ - locomotion input to somatostatin population
+- $$h_{RUN,V}$$ - locomotion input to VIP population
+- $$\tau$$ - dynamics timescale
+- $$n$$ - scalar for power of dynamics
+- $$s_0$$ - reference stimulus level
+
+When `model_opts['g_FF'] == 'saturate'`
+- $$a$$ - contrast saturation shape
+- $$c_{50}$$ - constrast at 50%
+
+__Returns__
+
+`all_params (list)`: List of strings of all parameters of full system model.
+`all_param_labels (list)`: List of tex strings for all parameters.
+
+### get\_T\_x\_labels
+```python
+V1_circuit.get_T_x_labels(self)
+```
+Returns `T_x_labels`.
+
+__Returns__
+
+`T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
+
+
+### simulate
+```python
+V1_circuit.simulate(self, z)
+```
+Simulate the V1 4-neuron circuit given parameters z.
+
+__Arguments__
+
+- __z (tf.tensor)__: Density network system parameter samples.
+
+__Returns__
+
+`g(z) (tf.tensor)`: Simulated system activity.
+
+
+### compute\_suff\_stats
+```python
+V1_circuit.compute_suff_stats(self, z)
+```
+Compute sufficient statistics of density network samples.
+
+__Arguments__
+
+- __z (tf.tensor)__: Density network system parameter samples.
+
+__Returns__
+
+`T_x (tf.tensor)`: Sufficient statistics of samples.
+
+
+### simulation\_suff\_stats
+```python
+V1_circuit.simulation_suff_stats(self, z)
+```
+Compute sufficient statistics that require simulation.
+
+__Arguments__
+
+- __z (tf.tensor)__: Density network system parameter samples.
+
+__Returns__
+
+`T_x (tf.tensor)`: Simulation-derived sufficient statistics of samples.
+
+
+### compute\_mu
+```python
+V1_circuit.compute_mu(self, behavior)
+```
+Calculate expected moment constraints given system paramterization.
+
+__Arguments__
+
+- __behavior (dict)__: Parameterization of desired system behavior.
+
+__Returns__
+
+`mu (np.array)`: Expected moment constraints.
+
+
+### map\_to\_parameter\_support
+```python
+V1_circuit.map_to_parameter_support(self, layers, num_theta_params)
+```
+Augment density network with bijective mapping to parameter support.
+
+__Arguments__
+
+- __layers (list)__: List of ordered normalizing flow layers.
+- __num_theta_params (int)__: Running count of density network parameters.
+
+__Returns__
+
+`layers (list)`: layers augmented with final support mapping layer.
+`num_theta_params (int)`: Updated count of density network parameters.
+
+
 ## <a name="R1RNN_input"> </a> R1RNN\_input
 ```python
 R1RNN_input(self, T, Ics_0, Ics_1, behavior_str)
@@ -303,8 +509,6 @@ __Returns__
 `(int)`: Updated count of density network parameters.
 
 
-
-*****
 ## <a name="R1RNN_GNG"> </a> R1RNN\_GNG
 ```python
 R1RNN_GNG(self, T, Ics_0, behavior_str)
@@ -395,112 +599,6 @@ __Returns__
 `num_theta_params (int)`: Updated count of density network parameters.
 
 
-
-*****
-## <a name="V1_circuit"> </a> V1\_circuit
-```python
-V1_circuit(self, behavior_str, param_str, T, dt, init_conds)
-```
-4-neuron V1 circuit.
-
-This is the standard 4-neuron rate model of V1 activity consisting of
- - E: pyramidal (excitatory) neurons
- - P: parvalbumim expressing inhibitory neurons
- - S: somatostatin expressing inhibitory neurons
- - V: vasoactive intestinal peptide expressing inhibitory neurons
-
-dr/dt = -r + [Wr + h]+^n
-
-__Attributes__
-
-- `behavior_str (str)`:
-- `'ss'`: steady state responses
-- `param-str (str)`:
-- `'h'`: Learn the input parameters.
-- `'W'`: Learn the connectivity parameters.
-- `T (int)`: Number of simulation time points.
-- `dt (float)`: Time resolution of simulation.
-- `init_conds (list)`: Specifies the initial state of the system.
-
-### simulate
-```python
-V1_circuit.simulate(self, z)
-```
-Simulate the V1 4-neuron circuit given parameters z.
-
-__Arguments__
-
-- __z (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`g(z) (tf.tensor)`: Simulated system activity.
-
-
-### compute\_suff\_stats
-```python
-V1_circuit.compute_suff_stats(self, z)
-```
-Compute sufficient statistics of density network samples.
-
-__Arguments__
-
-- __z (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Sufficient statistics of samples.
-
-
-### simulation\_suff\_stats
-```python
-V1_circuit.simulation_suff_stats(self, z)
-```
-Compute sufficient statistics that require simulation.
-
-__Arguments__
-
-- __z (tf.tensor)__: Density network system parameter samples.
-
-__Returns__
-
-`T_x (tf.tensor)`: Simulation-derived sufficient statistics of samples.
-
-
-### compute\_mu
-```python
-V1_circuit.compute_mu(self, behavior)
-```
-Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
-
-__Returns__
-
-`mu (np.array)`: Expected moment constraints.
-
-
-### map\_to\_parameter\_support
-```python
-V1_circuit.map_to_parameter_support(self, layers, num_theta_params)
-```
-Augment density network with bijective mapping to parameter support.
-
-__Arguments__
-
-- __layers (list)__: List of ordered normalizing flow layers.
-- __num_theta_params (int)__: Running count of density network parameters.
-
-__Returns__
-
-`layers (list)`: layers augmented with final support mapping layer.
-`num_theta_params (int)`: Updated count of density network parameters.
-
-
-
-*****
 ## <a name="damped_harmonic_oscillator"> </a> damped\_harmonic\_oscillator
 ```python
 damped_harmonic_oscillator(self, behavior_str, T, dt, init_conds, bounds)
