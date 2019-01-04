@@ -2,4 +2,4 @@ title: Degenerate solution networks (DSNs)
 description: Learn how to use the dsn repo to learn solution spaces of models given their behavior.
 show_downloads: true
 google_analytics:
-theme: jekyll-theme-cayman
+theme: jekyll-theme-slate
