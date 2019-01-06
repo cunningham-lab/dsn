@@ -41,14 +41,13 @@ from tf_util.tf_util import construct_density_network, declare_theta, \
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
 
-def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, lr_order=-3, \
+def train_dsn(system, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, lr_order=-3, \
               random_seed=0, min_iters=1000,  max_iters=5000, check_rate=100, \
               dir_str='general'):
     """Trains a degenerate solution network (DSN).
 
         Args:
             system (obj): Instance of tf_util.systems.system.
-            behavior (dict): Mean parameters of model behavior to learn with DSN.
             n (int): Batch size.
             flow_dict (dict): Specifies structure of approximating density network.
             k_max (int): Number of augmented Lagrangian iterations.
@@ -119,8 +118,8 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
     # Compute family-specific sufficient statistics and log base measure on samples.
     T_x = system.compute_suff_stats(z);
-    mu = system.compute_mu(behavior);
-    T_x_mu_centered = system.center_suff_stats_by_mu(T_x, mu);
+    mu = system.compute_mu();
+    T_x_mu_centered = system.center_suff_stats_by_mu(T_x);
 
     R2 = compute_R2(log_q_z, None, T_x);
 
@@ -284,7 +283,7 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
 
                     print('saving to %s  ...' % savedir);
                 
-                    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=behavior, mu=mu, \
+                    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
                                                        it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
                                                         T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
                 
@@ -332,14 +331,14 @@ def train_dsn(system, behavior, n, flow_dict, k_max=10, sigma_init=10.0, c_init_
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=behavior, mu=mu, \
+    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
                                        it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
     return costs, _z, _T_z;
 
 def initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters=50000):
     initdir = get_initdir(D, flow_dict, sigma_init, random_seed)
-    print('initdir', initdir);
+
     initfname = initdir + 'final_theta.npz';
     resfname = initdir + 'results.npz';
 

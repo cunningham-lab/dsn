@@ -40,23 +40,24 @@ class system:
         fixed_params (dict): Parameter string indexes its fixed value.
         free_params (list): List of strings in `all_params` but not `fixed_params.keys()`.
                             These params make up z.
-        behavior_str (str): Determines sufficient statistics that characterize system.
-
+        behavior (dict): Contains the behavioral type and the constraints.
+        mu (np.array): The mean constrain vector for DSN optimization.
         all_param_labels (list): List of tex strings for all parameters.
         z_labels (list): List of tex strings for free parameters.
         T_x_labels (list): List of tex strings for elements of $$T(x)$$.
     """
 
-    def __init__(self, fixed_params, behavior_str):
+    def __init__(self, fixed_params, behavior):
         """System constructor.
 
 		# Arguments 
             fixed_params (dict): Specifies fixed parameters and their values.
-			behavior_str (str): Determines sufficient statistics that characterize system.
+			behavior (dict): Contains the behavioral type and the constraints.
 	
 		"""
         self.fixed_params = fixed_params
-        self.behavior_str = behavior_str
+        self.behavior = behavior
+        self.mu = self.compute_mu()
         self.all_params, self.all_param_labels = self.get_all_sys_params()
         self.free_params = self.get_free_params()
         self.z_labels = self.get_z_labels()
@@ -95,7 +96,7 @@ class system:
         """
         z_labels = [];
         for free_param in self.free_params:
-            z_labels.append(self.all_param_labels[free_param])
+            z_labels += self.all_param_labels[free_param]
         return z_labels
 
     def get_T_x_labels(self,):
@@ -119,11 +120,8 @@ class system:
         """
         raise NotImplementedError()
 
-    def compute_mu(self, behavior):
+    def compute_mu(self,):
         """Calculate expected moment constraints given system paramterization.
-
-        # Arguments
-            behavior (dict): Parameterization of desired system behavior.
 
         # Returns
             mu (np.array): Expected moment constraints.
@@ -145,7 +143,7 @@ class system:
         """
         return layers, num_theta_params
 
-    def center_suff_stats_by_mu(self, T_x, mu):
+    def center_suff_stats_by_mu(self, T_x):
         """Center sufficient statistics by the mean parameters mu.
     
         # Arguments
@@ -156,7 +154,7 @@ class system:
             T_x_mu_centered (tf.tensor): Mean centered sufficient statistics of samples.
         
         """
-        return T_x - np.expand_dims(np.expand_dims(mu, 0), 1)
+        return T_x - np.expand_dims(np.expand_dims(self.mu, 0), 1)
 
 
 class linear_2D(system):
@@ -174,11 +172,11 @@ class linear_2D(system):
     'oscillation' - specify a distribution of oscillatory frequencies
 
     # Attributes
-        behavior_str (str): In `['oscillation']`.  Determines sufficient statistics that characterize system.
+        behavior (dict): TODO: update documentation
     """
 
-    def __init__(self, fixed_params, behavior_str):
-        super().__init__(fixed_params, behavior_str)
+    def __init__(self, fixed_params, behavior):
+        super().__init__(fixed_params, behavior)
         self.name = "linear_2D"
 
     def get_all_sys_params(self,):
@@ -203,8 +201,9 @@ class linear_2D(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if (self.behavior_str == 'oscillation'):
-            T_x_labels = ['1', '2', '3', '4'];
+        if (self.behavior['type']== 'oscillation'):
+            T_x_labels = [r'real($\lambda_1$)', r'imag($\lambda_1$)', \
+                          r'real($\lambda_1$)^2', r'imag($\lambda_1$)^2'];
         else:
             raise NotImplementedError()
         return T_x_labels;
@@ -229,7 +228,7 @@ class linear_2D(system):
 			T_x (tf.tensor): Sufficient statistics of samples.
 
 		"""
-        if self.behavior_str == "oscillation":
+        if self.behavior['type'] == "oscillation":
             z_shape = tf.shape(z)
             K = z_shape[0]
             M = z_shape[1]
@@ -272,8 +271,8 @@ class linear_2D(system):
             lambda_1_imag = tf.imag(lambda_1)
             moments = [
                 lambda_1_real,
-                tf.square(lambda_1_real),
                 lambda_1_imag,
+                tf.square(lambda_1_real),
                 tf.square(lambda_1_imag),
             ]
             T_x = tf.concat(moments, 2)
@@ -281,23 +280,18 @@ class linear_2D(system):
             raise NotImplementedError
         return T_x
 
-    def compute_mu(self, behavior):
+    def compute_mu(self,):
         """Calculate expected moment constraints given system paramterization.
-
-        # Arguments
-            behavior (dict): Parameterization of desired system behavior.
 
         # Returns
             mu (np.array): Expected moment constraints.
 
         """
-        means = behavior["means"]
-        variances = behavior["variances"]
+        means = self.behavior["means"]
+        variances = self.behavior["vars"]
         first_moments = means
         second_moments = np.square(means) + variances
-        mu = np.array(
-            [first_moments[0], second_moments[0], first_moments[1], second_moments[1]]
-        )
+        mu = np.concatenate((first_moments, second_moments), axis=0)
         return mu
 
 
@@ -342,7 +336,7 @@ class V1_circuit(system):
         `model_opts` on how to set the form of these functions. 
 
     # Attributes
-        behavior_str (str): In `['differences', 'data']`.  Determines sufficient statistics that characterize system.
+        behavior (dict): TODO: add documentation
         model_opts (dict): 
           * model_opts[`'g_FF'`] 
             * `'c'` (default) $$g_{FF}(c) = c$$ 
@@ -357,16 +351,22 @@ class V1_circuit(system):
         init_conds (list): Specifies the initial state of the system.
     """
 
-    def __init__(self, fixed_params, behavior_str, \
+    def __init__(self, fixed_params, behavior, \
                  model_opts={'g_FF':'c', 'g_LAT':'linear', 'g_RUN':'r'}, \
                  T=20, dt=0.25, \
                  init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)):
         self.model_opts = model_opts
-        super().__init__(fixed_params, behavior_str)
+        super().__init__(fixed_params, behavior)
         self.name = "V1_circuit"
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
+
+        # compute number of conditions C
+        num_c = self.behavior['c_vals'].shape[0]
+        num_s = self.behavior['s_vals'].shape[0]
+        num_r = self.behavior['r_vals'].shape[0]
+        self.C = num_c*num_s*num_r
 
 
     def get_all_sys_params(self,):
@@ -408,12 +408,12 @@ class V1_circuit(system):
                       'h_LATE', 'h_LATP', 'h_LATS', 'h_LATV', \
                       'h_RUNE', 'h_RUNP', 'h_RUNS', 'h_RUNV', \
                       'tau', 'n', 's_0']
-        all_param_labels = {'W_EE':r'$W_{EE}$', 'W_PE':r'$W_{PE}$', 'W_SE':r'$W_{SE}$', 'W_VE':r'$W_{VE}$', \
-                      'b_E':r'$b_{E}$', 'b_P':r'$b_{P}$', 'b_S':r'$b_{S}$', 'b_V':r'$b_{V}$', \
-                      'h_FFE':r'$h_{FF,E}$', 'h_FFP':r'$h_{FF,P}$', \
-                      'h_LATE':r'$h_{LAT,E}$', 'h_LATP':r'$h_{LAT,P}$', 'h_LATS':r'$h_{LAT,S}$', 'h_LATV':r'$h_{LAT,V}$', \
-                      'h_RUNE':r'$h_{RUN,E}$', 'h_RUNP':r'$h_{RUN,P}$', 'h_RUNS':r'$h_{RUN,S}$', 'h_RUNV':r'$h_{RUN,V}$', \
-                      'tau':r'$\tau$', 'n':r'$n$', 's_0':r'$s_0$'}
+        all_param_labels = {'W_EE':[r'$W_{EE}$'], 'W_PE':[r'$W_{PE}$'], 'W_SE':[r'$W_{SE}$'], 'W_VE':[r'$W_{VE}$'], \
+                      'b_E':[r'$b_{E}$'], 'b_P':[r'$b_{P}$'], 'b_S':[r'$b_{S}$'], 'b_V':[r'$b_{V}$'], \
+                      'h_FFE':[r'$h_{FF,E}$'], 'h_FFP':[r'$h_{FF,P}$'], \
+                      'h_LATE':[r'$h_{LAT,E}$'], 'h_LATP':[r'$h_{LAT,P}$'], 'h_LATS':[r'$h_{LAT,S}$'], 'h_LATV':[r'$h_{LAT,V}$'], \
+                      'h_RUNE':[r'$h_{RUN,E}$'], 'h_RUNP':[r'$h_{RUN,P}$'], 'h_RUNS':[r'$h_{RUN,S}$'], 'h_RUNV':[r'$h_{RUN,V}$'], \
+                      'tau':[r'$\tau$'], 'n':[r'$n$'], 's_0':[r'$s_0$']}
 
         if (self.model_opts['g_FF'] == 'saturate'):
             all_params +=  ['a', 'c_50']
@@ -428,8 +428,9 @@ class V1_circuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if (self.behavior_str == 'data'):
-            T_x_labels = ['1', '2', '3', '4'];
+        if (self.behavior['type'] == 'difference'):
+            T_x_labels = [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
+                          r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
         else:
             raise NotImplementedError()
         return T_x_labels;
@@ -447,76 +448,77 @@ class V1_circuit(system):
         # remove trailing dimension
         z = z[:,:,:,0]
 
+        # get number of batch samples
         z_shape = tf.shape(z)
         K = z_shape[0]
         M = z_shape[1]
 
         # Assumed parameters
-        W_EP = 1.0*tf.ones((K,M))
-        W_ES = 0.54*tf.ones((K,M))
+        W_EP = 1.0*tf.ones((self.C,M), dtype=tf.float64)
+        W_ES = 0.54*tf.ones((self.C,M), dtype=tf.float64)
 
-        W_PP = 1.01*tf.ones((K,M))
-        W_PS = 0.33*tf.ones((K,M))
+        W_PP = 1.01*tf.ones((self.C,M), dtype=tf.float64)
+        W_PS = 0.33*tf.ones((self.C,M), dtype=tf.float64)
 
-        W_SV = 0.15*tf.ones((K,M))
+        W_SV = 0.15*tf.ones((self.C,M), dtype=tf.float64)
 
-        W_VP = 0.22*tf.ones((K,M))
-        W_VS = 0.77*tf.ones((K,M))
+        W_VP = 0.22*tf.ones((self.C,M), dtype=tf.float64)
+        W_VS = 0.77*tf.ones((self.C,M), dtype=tf.float64)
 
         # read free parameters from z vector
         ind = 0;
         for free_param in self.free_params:
             if (free_param == 'W_EE'):
-                W_EE = z[:, :, ind]
+                W_EE = tf.tile(z[:, :, ind], [self.C, 1])
             elif (free_param == 'W_PE'):
-                W_PE = z[:, :, ind]
+                W_PE = tf.tile(z[:, :, ind], [self.C, 1])
             elif (free_param == 'W_SE'):
-                W_SE = z[:, :, ind]
+                W_SE = tf.tile(z[:, :, ind], [self.C, 1])
             elif (free_param == 'W_VE'):
-                W_VE = z[:, :, ind]
+                W_VE = tf.tile(z[:, :, ind], [self.C, 1])
 
             elif (free_param == 'b_E'):
-                b_E = z[:, :, ind]
+                b_E = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'b_P'):
-                b_P = z[:, :, ind]
+                b_P = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'b_S'):
-                b_S = z[:, :, ind]
+                b_S = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'b_V'):
-                b_V = z[:, :, ind]
+                b_V = tf.tile(z[:, :, ind], [1, 1])
 
             elif (free_param == 'h_FFE'):
-                h_FFE = z[:, :, ind]
+                h_FFE = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_FFP'):
-                h_FFP = z[:, :, ind]
+                h_FFP = tf.tile(z[:, :, ind], [1, 1])
 
             elif (free_param == 'h_LATE'):
-                h_LATE = z[:, :, ind]
+                h_LATE = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_LATP'):
-                h_LATP = z[:, :, ind]
+                h_LATP = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_LATS'):
-                h_LATS = z[:, :, ind]
+                h_LATS = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_LATV'):
-                h_LATV = z[:, :, ind]
+                h_LATV = tf.tile(z[:, :, ind], [1, 1])
 
             elif (free_param == 'h_RUNE'):
-                h_RUNE = z[:, :, ind]
+                h_RUNE = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_RUNP'):
-                h_RUNP = z[:, :, ind]
+                h_RUNP = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_RUNS'):
-                h_RUNS = z[:, :, ind]
+                h_RUNS = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'h_RUNV'):
-                h_RUNV = z[:, :, ind]
+                h_RUNV = tf.tile(z[:, :, ind], [1, 1])
 
             elif (free_param == 'tau'):
-                tau = z[:, :, ind]
+                tau = tf.tile(z[:, :, ind], [self.C, 1])
             elif (free_param == 'n'):
-                n = z[:, :, ind]
+                n = tf.tile(z[:, :, ind], [self.C, 1])
             elif (free_param == 's_0'):
-                s_0 = z[:, :, ind]
+                s_0 = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'a'):
-                a = z[:, :, ind]
+                a = tf.tile(z[:, :, ind], [1, 1])
             elif (free_param == 'c_50'):
-                c_50 = z[:, :, ind]
+                c_50 = tf.tile(z[:, :, ind], [1, 1])
 
             else:
                 print('Error: unknown free parameter: %s.' % free_param)
@@ -525,58 +527,57 @@ class V1_circuit(system):
 
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
-            print('fixed param', fixed_param)
             if (fixed_param == 'W_EE'):
-                W_EE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                W_EE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
             elif (fixed_param == 'W_PE'):
-                W_PE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                W_PE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
             elif (fixed_param == 'W_SE'):
-                W_SE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                W_SE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
             elif (fixed_param == 'W_VE'):
-                W_VE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                W_VE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
 
             elif (fixed_param == 'b_E'):
-                b_E = self.fixed_params[fixed_param]*tf.ones((K,M));
+                b_E = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'b_P'):
-                b_P = self.fixed_params[fixed_param]*tf.ones((K,M));
+                b_P = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'b_S'):
-                b_S = self.fixed_params[fixed_param]*tf.ones((K,M));
+                b_S = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'b_V'):
-                b_V = self.fixed_params[fixed_param]*tf.ones((K,M));
+                b_V = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
 
             elif (fixed_param == 'h_FFE'):
-                h_FFE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_FFE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_FFP'):
-                h_FFP = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_FFP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
 
             elif (fixed_param == 'h_LATE'):
-                h_LATE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_LATE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_LATP'):
-                h_LATP = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_LATP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_LATS'):
-                h_LATS = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_LATS = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_LATV'):
-                h_LATV = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_LATV = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
 
             elif (fixed_param == 'h_RUNE'):
-                h_RUNE = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_RUNE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_RUNP'):
-                h_RUNP = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_RUNP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_RUNS'):
-                h_RUNS = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_RUNS = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'h_RUNV'):
-                h_RUNV = self.fixed_params[fixed_param]*tf.ones((K,M));
+                h_RUNV = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
 
             elif (fixed_param == 'tau'):
-                tau = self.fixed_params[fixed_param]*tf.ones((K,M));
+                tau = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
             elif (fixed_param == 'n'):
-                n = self.fixed_params[fixed_param]*tf.ones((K,M));
+                n = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
             elif (fixed_param == 's_0'):
-                s_0 = self.fixed_params[fixed_param]*tf.ones((K,M));
+                s_0 = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'a'):
-                a = self.fixed_params[fixed_param]*tf.ones((K,M));
+                a = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
             elif (fixed_param == 'c_50'):
-                c_50 = self.fixed_params[fixed_param]*tf.ones((K,M));
+                c_50 = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
 
             else:
                 print('Error: unknown fixed parameter: %s.' % fixed_param)
@@ -584,46 +585,85 @@ class V1_circuit(system):
 
             ind += 1
 
-        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((K,M))], axis=2);
-        W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((K,M))], axis=2);
-        W_SX = tf.stack([W_SE, tf.zeros((K,M)), tf.zeros((K,M)), -W_SV], axis=2);
-        W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((K,M))], axis=2);
-        W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2);
+        # Gather weights into the dynamics matrix W [K,M,4,4]
+        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
+        W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
+        W_SX = tf.stack([W_SE, tf.zeros((self.C,M), dtype=tf.float64), tf.zeros((self.C,M), dtype=tf.float64), -W_SV], axis=2);
+        W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
+        W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2); 
 
+        # Gather inputs into b [K,M,4,1]
+        b = tf.expand_dims(tf.stack([b_E, b_P, b_S, b_V], axis=2), 3); 
+        h_FF = tf.expand_dims(tf.stack([h_FFE, h_FFP, tf.zeros((1,M), dtype=tf.float64), tf.zeros((1,M), dtype=tf.float64)], axis=2), 3);
+        h_LAT = tf.expand_dims(tf.stack([h_LATE, h_LATP, h_LATS, h_LATV], axis=2), 3);
+        h_RUN = tf.expand_dims(tf.stack([h_RUNE, h_RUNP, h_RUNS, h_RUNV], axis=2), 3); 
 
-        # tau
+        # tau [K,M,1,1]
         tau = tf.expand_dims(tf.expand_dims(tau, 2), 3)
-        # dynamics power
+        # dynamics power [K,M,1,1]
         n = tf.expand_dims(tf.expand_dims(n, 2), 3)
-        # reference stimulus
+        # reference stimulus [K,M,1,1]
         s_0 = tf.expand_dims(tf.expand_dims(s_0, 2), 3)
 
+        if (self.model_opts['g_LAT'] == 'saturate'):
+            # saturation shape [K,M,1,1]
+            a = tf.expand_dims(tf.expand_dims(a, 2), 3)
+            # 50% constrast value [K,M,1,1]
+            c_50 = tf.expand_dims(tf.expand_dims(c_50, 2), 3)
+
+        # set up input h
+        num_c = self.behavior['c_vals'].shape[0]
+        num_s = self.behavior['s_vals'].shape[0]
+        num_r = self.behavior['r_vals'].shape[0]
+        hs = []
+        for i in range(num_c):
+            c = self.behavior['c_vals'][i]
+            # compute g_FF for this condition
+            if (self.model_opts['g_FF'] == 'c'):
+                g_FF = c
+            elif (self.model_opts['g_FF'] == 'saturate'):
+                g_FF = tf.divide(tf.pow(c, a), tf.pow(c_50, a) + tf.pow(c, a))
+            else:
+                raise NotImplementedError()
+
+            for j in range(num_s):
+                s = self.behavior['s_vals'][j]
+                # compute g_LAT for this condition
+                if (self.model_opts['g_LAT'] == 'linear'):
+                    g_LAT = tf.multiply(c, tf.nn.relu(s - s_0))
+                elif (self.model_opts['g_LAT'] == 'square'):
+                    g_LAT = tf.multiply(c, tf.nn.relu(tf.square(s) - tf.square(s_0)))
+                else:
+                    raise NotImplementedError()
+
+                for k in range(num_r):
+                    if (self.model_opts['g_RUN'] == 'r'):
+                        r = self.behavior['r_vals'][k]
+                    else:
+                        raise NotImplementedError()
+
+                    g_RUN = r
+                    h_csr = b + tf.multiply(g_FF, h_FF) \
+                              + tf.multiply(g_LAT, h_LAT) \
+                              + tf.multiply(g_RUN, h_RUN)
+                    hs.append(h_csr)
+        h = tf.concat(hs, axis=0)
+
         # initial conditions
-        r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0));
-        r0 = tf.tile(r0, [K,M,1,1]);
+        r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0), dtype=tf.float64);
+        r0 = tf.tile(r0, [self.C,M,1,1]); # [K,M,4,1]
 
         # construct the input
         def f(r, t):
             drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h), n), tau)
-            return tf.clip_by_value(drdt, -1e3, 1e3);
-
-        """ # transition function
-            def f1(r, t):
-                drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h1), n), tau)
-                return tf.clip_by_value(drdt, 1e-3, 1e3);
-
-            def f2(r, t):
-                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h2), n);
-                return tf.clip_by_value(drdt, 1e-3, 1e3);
-
-            r1_t = tf.contrib.integrate.odeint_fixed(f1, r0, t, method='rk4')
-            r2_t = tf.contrib.integrate.odeint_fixed(f2, r0, t, method='rk4')
-        """
+            return tf.clip_by_value(drdt, -1e6, 1e6);
 
         # time axis
         t = np.arange(0, self.T*self.dt, self.dt)
+
+        # simulate ODE
         r_t = tf.contrib.integrate.odeint_fixed(f, r0, t, method='rk4')
-        return [r_t];
+        return r_t;
     
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -636,7 +676,7 @@ class V1_circuit(system):
 
         """
 
-        if (self.behavior_str in ['data', 'difference']):
+        if (self.behavior['type'] in ['data', 'difference']):
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError();
@@ -655,41 +695,41 @@ class V1_circuit(system):
         """
 
         #r1_t, r2_t = self.simulate(z);
-        r_t = self.simulate(z);
+        r_t = self.simulate(z); # [T, C, M, D, 1]
 
-        if (self.behavior_str in ["ss_all"]):
-            r1_ss = r1_t[-1,:,:,:,0];
-            r2_ss = r2_t[-1,:,:,:,0];
-        elif (self.behavior_str in ["ss_SV"]):
-            # extract somatostatin and VIP responses
-            r1_ss = r1_t[-1,:,:,2:,0];  
-            r2_ss = r2_t[-1,:,:,2:,0];
-        diff_ss = r2_ss - r1_ss;
-        T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
-        print(r1_ss.shape, diff_ss.shape, T_x.shape);
+        if (self.behavior['type'] == 'difference'):
+            r1_ss = r_t[-1,0,:,:,0];
+            r2_ss = r_t[-1,1,:,:,0];
+            diff_ss = tf.expand_dims(r2_ss - r1_ss, 0)
+            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
+
+        elif (self.behavior['type'] == 'data'):
+            r_shape = tf.shape(r_t)
+            M = tf.shape[2]
+            r_ss = tf.transpose(r1_t[-1,:,:,:,0], [1,2,0]) # [M,C,D];
+            r_ss = tf.reshape(r_ss, [M, self.C*self.D])
+            T_x = tf.concat((r_ss, tf.square(r_ss)), 2);
+
         return T_x
 
-    def compute_mu(self, behavior):
+    def compute_mu(self,):
         """Calculate expected moment constraints given system paramterization.
-
-        # Arguments
-            behavior (dict): Parameterization of desired system behavior.
 
         # Returns
             mu (np.array): Expected moment constraints.
 
         """
 
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
-        mu_mu = mu
-        mu_Sigma = np.square(mu_mu) + Sigma
-        mu = np.concatenate((mu_mu, mu_Sigma), 0)
+        if (self.behavior['type'] == 'difference'): 
+            means = self.behavior['d_mean']
+            variances = self.behavior["d_var"]
+        elif (self.behavior['type'] == 'data'):
+            means = np.reshape(self.behavior['r_mean'], (self.C*self.D,))
+            variances = np.reshape(self.behavior['r_var'], (self.C*self.D,))
+        first_moments = means
+        second_moments = np.square(means) + variances
+        mu = np.concatenate((first_moments, second_moments), axis=0)
         return mu
-
-    def mu_to_ellipse(self, behavior):
-        mu = behavior["mu"]
-        Sigma = behavior["Sigma"]
 
     def map_to_parameter_support(self, layers, num_theta_params):
         """Augment density network with bijective mapping to parameter support.
