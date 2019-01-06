@@ -75,7 +75,7 @@ This repository depends on [tf_util](https://github.com/cunningham-lab/tf_util),
 
 To provide intuition for DSNs to the reader, we discuss degenerate parameterizations of two-dimensional linear dynamical systems, 
 \begin{equation}
-\dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
+\tau \dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
 \end{equation}
  that produce a band of oscillations. To train a DSN to learn the maximally entropic distribution of real entries of the dynamics matrix $$z = \left[a_1, a_2, a_3, a_4 \right]^\top$$ that yield a band of oscillations, we choose $$T(x)$$ to contain the first- and second-moments of the oscillatory frequency $$\omega$$ and the primary growth/decay factor $$c$$ of the oscillating system. Let's say we want to learn the distribution of real entries of A that yield a $$c$$ around zero with variance 1.0, and oscillations at 2 Hz with variance 1.0.  We will then constrain the behavior of the DSN to have the following constraints:
 
@@ -83,7 +83,7 @@ To provide intuition for DSNs to the reader, we discuss degenerate parameterizat
  \mu = E \begin{bmatrix} c \\\\ c^2 \\\\ \omega \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 1.0 \\\\ 2\pi \omega \\\\ 4\pi^2\omega^2 + 1.0 \end{bmatrix}
  \end{equation} 
 
- We could simuilate system activity $$x$$ from $$z$$ for some finite number of time steps, and estimate $$\omega$$ by e.g. taking the peak of the Discrete Fourier series.  Instead, we can compute that sufficient statistics for this oscillating behavior through a closed form function $$f_{p, T}(z)$$ by taking the eigendecomposition of the dynamics matrix.
+ We could simuilate system activity $$x$$ from $$z$$ for some finite number of time steps, and estimate $$\omega$$ by e.g. taking the peak of the Discrete Fourier series.  Instead, we can compute that sufficient statistics for this oscillating behavior through a closed form function $$f_{p, T}(z)$f$ by taking the eigendecomposition of the dynamics matrix.
 
  
 \begin{equation}
@@ -96,11 +96,11 @@ Where $$\lambda_1$$ and $$\lambda_2$$ are eigenvalues of the dynamics matrix ord
 
 First, import the following libraries.
 ```python
-import os
 import numpy as np
 from dsn.train_dsn import train_dsn
-from dsn.util.systems import system_from_str
+from dsn.util.systems import linear_2D
 from dsn.util.dsn_util import setup_IO
+from dsn.util.plot_util import assess_constraints, plot_opt, dsn_pairplots
 ```
 
 We choose our deep generative model by specifying 10 layers planar flows preceded by a layer of elementwise multiplication.
@@ -124,21 +124,29 @@ random_seed= 0
 
 If there are no pre-initialized weights for the architecture, variance, and random seed of choice in /results/inits/, then the DSN will be optimized to produce samples from the isotropic gaussian, save the weights in case this choice is made again, and proceed with learning the DSN.
 
-To train a DSN to learn one of the [built in system classes](systems.md), you can get easily obtain the system class by using the system_from_str function and providing the desired system as a string input.  Many systems have multiple types of behaviors for which DSNs can be trained with respect to.  Each system class constructor takes a `behavior_str` input.  In this case, we tell the 2D linear system constructor we are focused on learning system parameterizations that yield oscillations.
-```python
-# create an instance of the 2D linear system class, with behavior
-# of interest set to 'oscillation'.
-system_class = system_from_str('linear_2D')
-system = system_class('oscillation')
-```
+To train a DSN to learn one of the [built in system classes](systems.md), you can use a system class from the `dsn.dsn_utils.systems` library.  Each system class constructor takes two dictionary arguments:
 
-Next, we want to specify the oscillating behavior as some first- and second- moment constraints.  By looking at the documentation for [linear_2D](systems.md#linear_2D), we see that we should specify the behavioral constraints for oscillating systems as a mean and variance of the real and imaginary components of the first eigenvalue.
+ `fixed params` -  the parameters of the model that won't be learned and their fixed values.  For example, if we want to learn the 4 real entries of A, but leave $$\tau$$ fixed at $$1.0$$, we do the following.
 ```python
-# Specify desired mean and variance for the real and imaginary
+# create an instance of the 2D linear system class, with free parameter A,
+# tau = 1.0, and behavior of interest 'oscillation'.
+fixed_params = {'tau':1.0};
+``` 
+
+ `behavior`: which specifies the type of behavior and associated constraints.  First, the behavioral type is set to 'oscillation'.  The first and second elements of the mean and variance vectors correspond to the real and imaginary components of the first eigenvalue, respectively.  If we want an average oscillatory frequency of 2.0 Hz and 0.0 growth/decay, and variance of 1.0, we do the following:
+ ```python
+ # Specify desired mean and variance for the real and imaginary
 # components of the first eigenvalue.
-mu = np.array([0.0, 4*np.pi])
-Sigma = np.array([1.0, 1.0])
-behavior = {'mu':mu, 'Sigma':Sigma}
+behavior_type = 'oscillation'
+f = 2.0; # 2 Hz
+means = np.array([0.0, 2*np.pi*f])
+variances = np.array([1.0, 1.0])
+behavior = {'type':behavior_type, 'means':means, 'vars':variances}
+ ```
+
+Then, we finally create an instance of the 2D linear system class.
+```python
+system = linear_2D(fixed_params, behavior)
 ```
 
 Finally, we select some optimization hyperparameters, and off we go!
@@ -148,10 +156,11 @@ batch_size = 1000;
 c_init_order = -5
 lr_order = -3
 
-train_dsn(system, behavior, batch_size, flow_dict, \
-          k_max=25, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
-          random_seed=random_seed, min_iters=10000, max_iters=50000, \
-          check_rate=100, dir_str='test')
+train_dsn(system, batch_size, flow_dict, \
+          k_max=k_max, sigma_init=sigma_init, \
+          c_init_order=c_init_order, lr_order=lr_order,\
+          random_seed=random_seed, min_iters=5000, \
+          max_iters=10000, check_rate=100, dir_str='test')
 
 ``` 
 
@@ -190,7 +199,7 @@ plot_phis([fname], system.D, labels, [''], AL_final_its, fontsize=20)
 
 
 Sean Bittner \\
-December 18, 2018 
+January 6, 2018 
 
 # References #
 Sean Bittner and John Cunningham. *[Learning exponential families](https://github.com/cunningham-lab/efn/blob/master/written/EFN_AISTATS2019/Bittner_AIStats_2019.pdf){:target="_blank"}.* (In prep.), ?(?):?-?, 2018. <a name="Bittner2018learning"></a>
