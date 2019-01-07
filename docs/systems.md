@@ -186,7 +186,7 @@ Returns `T_x_labels`.
 
 Behaviors:
 
-'oscillation' - $$[$$real($$\lambda_1$$), imag($$\lambda_1$$), real$$(\lambda_1)^2$$, imag$$(\lambda_1)^2]$$
+'oscillation' - $$[$$real($$\lambda_1$$), $$\frac{\text{imag}(\lambda_1)}{2 \pi}$$, real$$(\lambda_1)^2$$, $$(\frac{\text{imag}(\lambda_1)}{2 \pi})^2]$$
 
 __Returns__
 
@@ -205,7 +205,7 @@ Behaviors:
                 expansion/decay factors using the eigendecomposition of
                 the dynamics matrix.
 \begin{equation}
-E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) = E \begin{bmatrix} \text{real}(\lambda_1) \\\\ \text{imag}(\lambda_1) \\\\ \text{real}(\lambda_1)^2 \\\\ \text{imag}(\lambda_1)^2 \end{bmatrix}
+E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) = E \begin{bmatrix} \text{real}(\lambda_1) \\\\ \frac{\text{imag}(\lambda_1)}{2\pi} \\\\ \text{real}(\lambda_1)^2 \\\\ (\frac{\text{imag}(\lambda_1)}{2\pi}^2 \end{bmatrix}
 \end{equation}
 
 __Arguments__

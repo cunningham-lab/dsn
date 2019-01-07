@@ -80,14 +80,14 @@ To provide intuition for DSNs to the reader, we discuss degenerate parameterizat
  that produce a band of oscillations. To train a DSN to learn the maximally entropic distribution of real entries of the dynamics matrix $$z = \left[a_1, a_2, a_3, a_4 \right]^\top$$ that yield a band of oscillations, we choose $$T(x)$$ to contain the first- and second-moments of the oscillatory frequency $$\omega$$ and the primary growth/decay factor $$c$$ of the oscillating system. Let's say we want to learn the distribution of real entries of A that yield a $$c$$ around zero with variance 1.0, and oscillations at 2 Hz with variance 1.0.  We will then constrain the behavior of the DSN to have the following constraints:
 
  \begin{equation}
- \mu = E \begin{bmatrix} c \\\\ c^2 \\\\ \omega \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 1.0 \\\\ 2\pi \omega \\\\ 4\pi^2\omega^2 + 1.0 \end{bmatrix}
+ \mu = E \begin{bmatrix} c \\\\ \omega \\\\ c^2 \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 2.0 \\\\ 1.0 \\\\ 5.0 \end{bmatrix}
  \end{equation} 
 
- We could simuilate system activity $$x$$ from $$z$$ for some finite number of time steps, and estimate $$\omega$$ by e.g. taking the peak of the Discrete Fourier series.  Instead, we can compute that sufficient statistics for this oscillating behavior through a closed form function $$f_{p, T}(z)$f$ by taking the eigendecomposition of the dynamics matrix.
+ We could simuilate system activity $$x$$ from $$z$$ for some finite number of time steps, and estimate $$\omega$$ by e.g. taking the peak of the Discrete Fourier series.  Instead, we can compute that sufficient statistics for this oscillating behavior through a closed form function $$f_{p, T}(z)$$ by taking the eigendecomposition of the dynamics matrix.
 
  
 \begin{equation}
-E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) =  \begin{bmatrix} \text{real}(\lambda_1) \\\\ \text{real}(\lambda_1)^2 \\\\ \text{imag}(\lambda_1) \\\\ \text{imag}(\lambda_1)^2 \end{bmatrix}
+E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) =  \begin{bmatrix} \text{real}(\lambda_1) \\\\ \frac{\text{imag}(\lambda_1)}{2 \pi} \\\\ \text{real}(\lambda_1)^2 \\\\ (\frac{\text{imag}(\lambda_1)}{2 \pi})^2 \end{bmatrix}
 \end{equation}
 
 Where $$\lambda_1$$ and $$\lambda_2$$ are eigenvalues of the dynamics matrix ordered by their real parts.
