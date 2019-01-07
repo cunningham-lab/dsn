@@ -16,7 +16,7 @@ Some neural circuit models from theoretical neuroscience are already implemented
 
 ## <a name="system"> </a> system
 ```python
-system(self, fixed_params, behavior_str)
+system(self, fixed_params, behavior)
 ```
 Base class for systems using DSN modeling.
 
@@ -34,8 +34,8 @@ __Attributes__
 - `fixed_params (dict)`: Parameter string indexes its fixed value.
 - `free_params (list)`: List of strings in `all_params` but not `fixed_params.keys()`.
                         These params make up z.
-- `behavior_str (str)`: Determines sufficient statistics that characterize system.
-
+- `behavior (dict)`: Contains the behavioral type and the constraints.
+- `mu (np.array)`: The mean constrain vector for DSN optimization.
 - `all_param_labels (list)`: List of tex strings for all parameters.
 - `z_labels (list)`: List of tex strings for free parameters.
 - `T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
@@ -101,13 +101,9 @@ __Returns__
 
 ### compute\_mu
 ```python
-system.compute_mu(self, behavior)
+system.compute_mu(self)
 ```
 Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
 
 __Returns__
 
@@ -133,7 +129,7 @@ __Returns__
 
 ### center\_suff\_stats\_by\_mu
 ```python
-system.center_suff_stats_by_mu(self, T_x, mu)
+system.center_suff_stats_by_mu(self, T_x)
 ```
 Center sufficient statistics by the mean parameters mu.
 
@@ -149,7 +145,7 @@ __Returns__
 
 ## <a name="linear_2D"> </a> linear\_2D
 ```python
-linear_2D(self, fixed_params, behavior_str)
+linear_2D(self, fixed_params, behavior)
 ```
 Linear two-dimensional system.
 
@@ -166,7 +162,7 @@ Behaviors:
 
 __Attributes__
 
-- `behavior_str (str)`: In `['oscillation']`.  Determines sufficient statistics that characterize system.
+- `behavior (dict)`: see linear_2D.compute_suff_stats
 
 ### get\_all\_sys\_params
 ```python
@@ -188,6 +184,10 @@ linear_2D.get_T_x_labels(self)
 ```
 Returns `T_x_labels`.
 
+Behaviors:
+
+'oscillation' - $$[$$real($$\lambda_1$$), imag($$\lambda_1$$), real$$(\lambda_1)^2$$, imag$$(\lambda_1)^2]$$
+
 __Returns__
 
 `T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
@@ -205,7 +205,7 @@ Behaviors:
                 expansion/decay factors using the eigendecomposition of
                 the dynamics matrix.
 \begin{equation}
-E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) = E \begin{bmatrix} \text{real}(\lambda_1) \\\\ \text{real}(\lambda_1)^2 \\\\ \text{imag}(\lambda_1) \\\\ \text{imag}(\lambda_1)^2 \end{bmatrix}
+E_{x\sim p(x \mid z)}\left[T(x)\right] = f_{p,T}(z) = E \begin{bmatrix} \text{real}(\lambda_1) \\\\ \text{imag}(\lambda_1) \\\\ \text{real}(\lambda_1)^2 \\\\ \text{imag}(\lambda_1)^2 \end{bmatrix}
 \end{equation}
 
 __Arguments__
@@ -219,13 +219,9 @@ __Returns__
 
 ### compute\_mu
 ```python
-linear_2D.compute_mu(self, behavior)
+linear_2D.compute_mu(self)
 ```
 Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
 
 __Returns__
 
@@ -234,7 +230,7 @@ __Returns__
 
 ## <a name="V1_circuit"> </a> V1\_circuit
 ```python
-V1_circuit(self, fixed_params, behavior_str, model_opts={'g_FF': 'c', 'g_LAT': 'linear', 'g_RUN': 'r'}, T=20, dt=0.25, init_conds=array([[1. ],
+V1_circuit(self, fixed_params, behavior, model_opts={'g_FF': 'c', 'g_LAT': 'linear', 'g_RUN': 'r'}, T=20, dt=0.25, init_conds=array([[1. ],
        [1.1],
        [1.2],
        [1.3]]))
@@ -280,7 +276,7 @@ parmeterization $$h$$ according to condition.  See initialization argument
 
 __Attributes__
 
-- `behavior_str (str)`: In `['differences', 'data']`.  Determines sufficient statistics that characterize system.
+- `behavior (dict)`: see V1_circuit.compute_suff_stats
 - `model_opts (dict)`:
   * model_opts[`'g_FF'`]
     * `'c'` (default) $$g_{FF}(c) = c$$
@@ -337,6 +333,12 @@ V1_circuit.get_T_x_labels(self)
 ```
 Returns `T_x_labels`.
 
+Behaviors:
+
+'difference' - $$[d_{E,ss}, d_{P,ss}, d_{S,ss}, d_{V,ss}, d_{E,ss}^2, d_{P,ss}^2, d_{S,ss}^2, d_{V,ss}^2]$$
+
+'data' - $$[r_{E,ss}(c,s,r), ...,  r_{E,ss}(c,s,r)^2, ...]$$
+
 __Returns__
 
 `T_x_labels (list)`: List of tex strings for elements of $$T(x)$$.
@@ -362,6 +364,39 @@ __Returns__
 V1_circuit.compute_suff_stats(self, z)
 ```
 Compute sufficient statistics of density network samples.
+
+Behaviors:
+
+'difference' -
+
+  The total number of conditions from all of
+  self,behavior.c_vals, s_vals, and r_vals should be two.
+  The steady state of the first condition $$(c_1,s_1,r_1)$$ is
+  subtracted from that of the second condition $$(c_2,s_2,r_2)$$ to get a
+  difference vector
+  \begin{equation}
+  d_{\alpha,ss} = r_{\alpha,ss}(c_2,s_2,r_2) - r_{\alpha,ss}(c_1,s_1,r_1)
+  \end{equation}
+
+  The total constraint vector is
+  \begin{equation}
+  E_{x\sim p(x \mid z)}\left[T(x)\right] = \begin{bmatrix} d_{E,ss} \\\\ d_{P,ss} \\\\ d_{S,ss} \\\\ d_{V,ss} \\\\ d_{E,ss}^2 \\\\ d_{P,ss}^2 \\\\ d_{S,ss}^2 \\\\ d_{V,ss}^2 \end{bmatrix}
+  \end{equation}
+
+
+'data' -
+
+  The user specifies the grid inputs for conditions via
+  self.behavior.c_vals, s_vals, and r_vals.  The first and second
+  moments of the steady states for these conditions make up the
+  sufficient statistics vector.  Since the index is $$(c,s,r)$$,
+  values of r are iterated over first, then s, then c (as is
+  the c-standard) to construct the $$T(x)$$ vector.
+
+  The total constraint vector is
+  \begin{equation}
+  E_{x\sim p(x \mid z)}\left[T(x)\right] = \begin{bmatrix} r_{E,ss}(c,s,r) \\\\ ... \\\\  r_{E,ss}(c,s,r)^2 \\\\ ... \end{bmatrix}
+  \end{equation}
 
 __Arguments__
 
@@ -389,13 +424,9 @@ __Returns__
 
 ### compute\_mu
 ```python
-V1_circuit.compute_mu(self, behavior)
+V1_circuit.compute_mu(self)
 ```
 Calculate expected moment constraints given system paramterization.
-
-__Arguments__
-
-- __behavior (dict)__: Parameterization of desired system behavior.
 
 __Returns__
 
