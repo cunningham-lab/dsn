@@ -1,7 +1,3 @@
 # README #
 
-### Degenerate Solution Networks ###
-
-* Marine Biological Laboratory 
-* MCN 2018 course project 
-* Sean Bittner
+https://cunningham-lab.github.io/dsn/
