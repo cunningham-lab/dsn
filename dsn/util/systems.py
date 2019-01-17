@@ -157,10 +157,10 @@ class system:
         return T_x - np.expand_dims(np.expand_dims(self.mu, 0), 1)
 
 
-class linear_2D(system):
+class Linear2D(system):
     """Linear two-dimensional system.
 
-    This is a simple system explored in the <a href="../#linear_2D_example">DSN tutorial</a>, which demonstrates the
+    This is a simple system explored in the <a href="../#Linear2D_example">DSN tutorial</a>, which demonstrates the
     utility of DSNs in an intuitive way.  
 
     \\begin{equation}
@@ -172,12 +172,12 @@ class linear_2D(system):
     'oscillation' - specify a distribution of oscillatory frequencies
 
     # Attributes
-        behavior (dict): see linear_2D.compute_suff_stats
+        behavior (dict): see Linear2D.compute_suff_stats
     """
 
     def __init__(self, fixed_params, behavior):
         super().__init__(fixed_params, behavior)
-        self.name = "linear_2D"
+        self.name = "Linear2D"
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -241,13 +241,13 @@ class linear_2D(system):
             ind = 0;
             for free_param in self.free_params:
                 if (free_param == 'A'):
-                    a1 = z[:, :, ind, :]
-                    a2 = z[:, :, ind+1, :]
-                    a3 = z[:, :, ind+2, :]
-                    a4 = z[:, :, ind+3, :]
+                    a1 = z[:, :, ind]
+                    a2 = z[:, :, ind+1]
+                    a3 = z[:, :, ind+2]
+                    a4 = z[:, :, ind+3]
                     ind += 4
                 elif (free_param == 'tau'):
-                    tau = z[:, :, ind, :]
+                    tau = z[:, :, ind]
                     ind += 1
 
             # load fixed parameters
@@ -266,7 +266,7 @@ class linear_2D(system):
             c3 = tf.divide(a3, tau)
             c4 = tf.divide(a4, tau)
 
-            beta = tf.complex(tf.square(c1 + c4) - 4 * (c1 * c4 + c2 * c3), np.float64(0.0))
+            beta = tf.complex(tf.square(c1 + c4) - 4 * (c1 * c4 - c2 * c3), np.float64(0.0))
             beta_sqrt = tf.sqrt(beta)
             real_common = tf.complex(0.5 * (c1 + c4), np.float64(0.0))
 
@@ -279,7 +279,7 @@ class linear_2D(system):
                 tf.square(lambda_1_real),
                 tf.square(lambda_1_imag),
             ]
-            T_x = tf.concat(moments, 2)
+            T_x = tf.stack(moments, 2)
         else:
             raise NotImplementedError
         return T_x
@@ -292,14 +292,14 @@ class linear_2D(system):
 
         """
         means = self.behavior["means"]
-        variances = self.behavior["vars"]
+        variances = self.behavior["variances"]
         first_moments = means
         second_moments = np.square(means) + variances
         mu = np.concatenate((first_moments, second_moments), axis=0)
         return mu
 
 
-class V1_circuit(system):
+class V1Circuit(system):
     """ 4-neuron V1 circuit.
 
         This is the standard 4-neuron rate model of V1 activity consisting of 
@@ -340,7 +340,7 @@ class V1_circuit(system):
         `model_opts` on how to set the form of these functions. 
 
     # Attributes
-        behavior (dict): see V1_circuit.compute_suff_stats
+        behavior (dict): see V1Circuit.compute_suff_stats
         model_opts (dict): 
           * model_opts[`'g_FF'`] 
             * `'c'` (default) $$g_{FF}(c) = c$$ 
@@ -361,7 +361,7 @@ class V1_circuit(system):
                  init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
-        self.name = "V1_circuit"
+        self.name = "V1Circuit"
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
@@ -1261,8 +1261,8 @@ class damped_harmonic_oscillator(system):
 
 
 def system_from_str(system_str):
-    if system_str in ["linear_2D"]:
-        return linear_2D
+    if system_str in ["Linear2D"]:
+        return Linear2D
     elif system_str in ["damped_harmonic_oscillator", "dho"]:
         return damped_harmonic_oscillator
     elif system_str in ["rank1_rnn"]:
@@ -1271,6 +1271,6 @@ def system_from_str(system_str):
         return R1RNN_input
     elif system_str in ["R1RNN_GNG"]:
         return R1RNN_GNG
-    elif system_str in ["V1_circuit"]:
-        return V1_circuit
+    elif system_str in ["V1Circuit"]:
+        return V1Circuit
 
