@@ -36,99 +36,6 @@ def get_initdir(D, flow_dict, sigma, random_seed):
               (D, flowstring, sigma, random_seed);
     return initdir
 
-def AR_to_autocov_np(alpha, sigma_eps, T):
-    p = alpha.shape[0];
-    if (T-1 < p):
-        p = T-1;
-    if (p==1):
-        gamma0 = (sigma_eps**2) / (1 - (alpha[0]**2));
-        gamma1 = alpha[0]*gamma0;
-        gamma = np.zeros((T,));
-        gamma[:2] = np.array([gamma0, gamma1]);
-        for i in range(2,T):
-            gamma[i] = alpha[0]*gamma[i-1];
-        
-    elif (p==2):
-        gamma0 = (sigma_eps**2) / (1 - ((alpha[0]**2 + alpha[1]*alpha[0]**2) / (1 - alpha[1])) - (alpha[1]**2));
-        gamma1 = (alpha[0]*gamma0) / (1 - alpha[1]);
-        gamma2 = alpha[0]*gamma1 + alpha[1]*gamma0;
-        gamma = np.zeros((T,));
-        gamma[:3] = np.array([gamma0, gamma1, gamma2]);
-        for i in range(3, T):
-            gamma[i] = alpha[0]*gamma[i-1] + alpha[1]*gamma[i-2];
-            
-    elif (p==3):
-        beta = (alpha[0] + alpha[1]*alpha[2]) / ((1 - alpha[1])*(1-((alpha[2]*(alpha[0]+alpha[2])) / (1 - alpha[1]))));
-        
-        term1_denom = 1 - (alpha[1]**2) - (alpha[2]**2) - (alpha[0]*alpha[1]*alpha[2]);
-        term1_denom = term1_denom - (alpha[0] + alpha[1]*(alpha[0]+alpha[2]) + alpha[1]*alpha[2] + (alpha[0]*alpha[2]*(alpha[0]+alpha[2])))*beta;
-        
-        gamma0 = (sigma_eps**2) / term1_denom;
-        gamma1 = beta*gamma0;
-        gamma2 = (alpha[0] + alpha[2])*gamma1 + alpha[1]*gamma0;
-        gamma3 = alpha[0]*gamma2 + alpha[1]*gamma1 + alpha[2]*gamma0;
-        
-        gamma = np.zeros((T,));
-        gamma[:4] = np.array([gamma0, gamma1, gamma2, gamma3]);
-        for i in range(4, T):
-            gamma[i] = alpha[0]*gamma[i-1] + alpha[1]*gamma[i-2] + alpha[2]*gamma[i-3];
-        
-        
-    else:
-        raise NotImplementedError();
-        
-    Sigma = scipy.linalg.toeplitz(gamma, gamma);
-    return Sigma
-
-def AR_to_autocov_tf(alpha, sigma_eps, P, T):
-    if (T-1 < P):
-        P = T-1;
-    if (P==1):
-        gamma0 = (sigma_eps**2) / (1 - (alpha[0]**2));
-        gamma1 = alpha[0]*gamma0;
-        gammas = [gamma0, gamma1];
-        for i in range(2,T):
-            gammas.append(alpha[0]*gammas[i-1]);
-        
-    elif (P==2):
-        gamma0 = (sigma_eps**2) / (1 - ((alpha[0]**2 + alpha[1]*alpha[0]**2) / (1 - alpha[1])) - (alpha[1]**2));
-        gamma1 = (alpha[0]*gamma0) / (1 - alpha[1]);
-        gamma2 = alpha[0]*gamma1 + alpha[1]*gamma0;
-        gammas = [gamma0, gamma1, gamma2];
-        for i in range(3, T):
-            gammas.append(alpha[0]*gammas[i-1] + alpha[1]*gammas[i-2]);
-            
-    elif (P==3):
-        beta = (alpha[0] + alpha[1]*alpha[2]) / ((1 - alpha[1])*(1-((alpha[2]*(alpha[0]+alpha[2])) / (1 - alpha[1]))));
-        
-        term1_denom = 1 - (alpha[1]**2) - (alpha[2]**2) - (alpha[0]*alpha[1]*alpha[2]);
-        term1_denom = term1_denom - (alpha[0] + alpha[1]*(alpha[0]+alpha[2]) + alpha[1]*alpha[2] + (alpha[0]*alpha[2]*(alpha[0]+alpha[2])))*beta;
-        
-        gamma0 = (sigma_eps**2) / term1_denom;
-        gamma1 = beta*gamma0;
-        gamma2 = (alpha[0] + alpha[2])*gamma1 + alpha[1]*gamma0;
-        gamma3 = alpha[0]*gamma2 + alpha[1]*gamma1 + alpha[2]*gamma0;
-        
-        gammas = [gamma0, gamma1, gamma2, gamma3];
-        for i in range(4, T):
-            gammas.append(alpha[0]*gammas[i-1] + alpha[1]*gammas[i-2] + alpha[2]*gammas[i-3]);
-        
-        
-    else:
-        raise NotImplementedError();
-        
-    gammas_rev = gammas[::-1]; # reverse list
-        
-    Sigma_rows = [];
-    for i in range(T):
-        first = gammas_rev[T-(i+1):(T-1)];
-        second = gammas_rev[:(T-i)];
-        row_i = gammas_rev[T-(i+1):(T-1)] + gammas[:(T-i)];
-        Sigma_rows.append(row_i);
-
-    Sigma = tf.convert_to_tensor(Sigma_rows);
-    
-    return Sigma;
 
 def construct_latent_dynamics(flow_dict, D_Z, T):
     latent_dynamics = flow_dict['latent_dynamics'];
@@ -196,60 +103,6 @@ def construct_time_invariant_flow(flow_dict, D_Z, T):
         layer_ind += 1;
         
     return layers;
-
-
-def declare_theta(flow_layers):
-    L_flow = len(flow_layers);
-    theta =[];
-    for i in range(L_flow):
-        layer = flow_layers[i];
-        layer_name, param_names, param_dims, initializers, lock = layer.get_layer_info();
-        nparams = len(param_names);
-        layer_i_params = [];
-        for j in range(nparams):
-            if (lock):
-                param_ij = initializers[j];
-            else:
-                if (isinstance(initializers[j], tf.Tensor)):
-                    print(initializers[j]);
-                    param_ij = tf.get_variable(layer_name+'_'+param_names[j], \
-                                               dtype=tf.float64, \
-                                               initializer=initializers[j]);
-                else:
-                    print(initializers[j]);
-                    param_ij = tf.get_variable(layer_name+'_'+param_names[j], shape=param_dims[j], \
-                                               dtype=tf.float64, \
-                                               initializer=initializers[j]);
-            layer_i_params.append(param_ij);
-        theta.append(layer_i_params);
-    return theta;
-
-def connect_flow(Z, layers, theta, ts=None):
-    Z_shape = tf.shape(Z);
-    K = Z_shape[0];
-    M = Z_shape[1];
-    D_Z = Z_shape[2];
-    T = Z_shape[3];
-
-    sum_log_det_jacobians = tf.zeros((K,M), dtype=tf.float64);
-    nlayers = len(layers);
-    Z_by_layer = [];
-    Z_by_layer.append(Z);
-    print('zshapes in');
-    print('connect flow');
-    for i in range(nlayers):
-        print(Z.shape);
-        layer = layers[i];
-        print(i, layer.name);
-        theta_layer = theta[i];
-        layer.connect_parameter_network(theta_layer);
-        if (isinstance(layer, GP_Layer) or isinstance(layer, GP_EP_CondRegLayer)):
-            Z, sum_log_det_jacobians = layer.forward_and_jacobian(Z, sum_log_det_jacobians, ts);
-        else:
-            Z, sum_log_det_jacobians = layer.forward_and_jacobian(Z, sum_log_det_jacobians);
-        Z_by_layer.append(Z);
-    print(Z.shape);
-    return Z, sum_log_det_jacobians, Z_by_layer;
 
 p_eps = 10e-6;
 def initialize_optimization_parameters(sess, optimizer, all_params):
@@ -428,36 +281,6 @@ def autocovariance(X, tau_max, T, batch_size):
     Tx_autocov = 0;
     Rx_autocov = 0;
     return Tx_autocov, Rx_autocov;
-
-
-def time_invariant_flow(Z_AR, eta, layers, constraint_type):
-    Z_AR_shape = tf.shape(Z_AR);
-    batch_size = Z_AR_shape[0];
-    D = Z_AR_shape[1];
-    T = Z_AR_shape[2];
-    Z_AR_flat = tf.reshape(tf.transpose(Z_AR, [0, 2, 1]), [T*batch_size, D]);
-
-    Z = tf.transpose(Z_AR_flat);
-    eta = tf.transpose(eta);
-    #sum_log_det_jacobian = tf.zeros((1,T*batch_size));
-    sum_log_det_jacobians = 0.0;
-    for layer in layers:
-        Z, sum_log_det_jacobians = layer.forward_and_jacobian(Z, eta, sum_log_det_jacobians, reuse=False);
-
-    # final layer translates to the support
-    if (constraint_type == 'dirichlet'):
-        Z = tf.exp(Z) / (tf.reduce_sum(tf.exp(Z) ,axis=0) + 1); 
-        # compute the jacobian using matrix determinant lemma
-        u = Z;
-        Adiag = u;
-        Ainvdiag = 1.0 / u;
-        v = -u;
-        g_det_jacobian = (1.0+tf.reduce_sum(tf.multiply(tf.multiply(v,Ainvdiag), u), axis=0))*tf.reduce_prod(Adiag, axis=0);
-        g_log_det_jacobian = tf.log(g_det_jacobian);
-        sum_log_det_jacobians += g_log_det_jacobian;
-        Z = tf.concat((Z, tf.expand_dims(1-tf.reduce_sum(Z, axis=0), 0)), axis=0);
-
-    return tf.transpose(Z), tf.transpose(sum_log_det_jacobians);
 
 
 def compute_R2(log_q_x, log_h_x, T_x_in):

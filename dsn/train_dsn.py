@@ -24,16 +24,9 @@ import os
 import datetime
 import io 
 from sklearn.metrics import pairwise_distances
-import pandas as pd
-do_plot = False;
-if (do_plot):
-    import pandas as pd
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
-from dsn.util.dsn_util import time_invariant_flow, check_convergence, setup_param_logging, \
+from dsn.util.dsn_util import check_convergence, setup_param_logging, \
                       initialize_optimization_parameters, computeMoments, getEtas, \
-                      approxKL, setup_IO, get_initdir, compute_R2, AR_to_autocov_np, \
+                      approxKL, setup_IO, get_initdir, compute_R2, \
                       log_grads
 from tf_util.tf_util import construct_density_network, declare_theta, \
                                 connect_density_network, count_params, AL_cost, \
@@ -41,7 +34,7 @@ from tf_util.tf_util import construct_density_network, declare_theta, \
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
 
-def train_dsn(system, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, lr_order=-3, \
+def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, lr_order=-3, \
               random_seed=0, min_iters=1000,  max_iters=5000, check_rate=100, \
               dir_str='general'):
     """Trains a degenerate solution network (DSN).
@@ -49,7 +42,7 @@ def train_dsn(system, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         Args:
             system (obj): Instance of tf_util.systems.system.
             n (int): Batch size.
-            flow_dict (dict): Specifies structure of approximating density network.
+            arch_dict (dict): Specifies structure of approximating density network.
             k_max (int): Number of augmented Lagrangian iterations.
             c_init (float): Augmented Lagrangian trade-off parameter initialization.
             lr_order (float): Adam learning rate is 10^(lr_order).
@@ -87,21 +80,21 @@ def train_dsn(system, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     P_THRESH = 0.05;
 
     # Look for model initialization
-    initdir = initialize_nf(system.D, flow_dict, sigma_init, random_seed)
+    initdir = initialize_nf(system.D, arch_dict, sigma_init, random_seed)
     print(initdir);
-    inits = load_nf_init(initdir, flow_dict);
-    flow_dict.update({"inits":inits});
+    inits = load_nf_init(initdir, arch_dict);
+    arch_dict.update({"inits":inits});
 
     W = tf.placeholder(tf.float64, shape=(None, None, system.D, None), name="W")
     p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=[2, 3]);
     base_log_q_z = tf.log(p0[:, :]);
 
-    flow_layers, num_theta_params = construct_density_network(flow_dict, system.D, 1);
+    flow_layers, num_theta_params = construct_density_network(arch_dict, system.D, 1);
     flow_layers, num_theta_params = system.map_to_parameter_support(flow_layers, num_theta_params);
 
 
     # Create model save directory if doesn't exist.
-    savedir = setup_IO(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str);
+    savedir = setup_IO(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str);
     if not os.path.exists(savedir):
         print('Making directory %s' % savedir );
         os.makedirs(savedir);
@@ -229,9 +222,6 @@ def train_dsn(system, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             has_converged = False;
             convergence_it = 0;
             print('Aug Lag it', k);
-            if (do_plot):
-                print('lambda', _lambda);
-                print('c', _c);
 
             while (i < max_iters):
                 cur_ind = total_its + i;
@@ -336,8 +326,9 @@ def train_dsn(system, n, flow_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
     return costs, _z, _T_z;
 
-def initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters=50000):
-    initdir = get_initdir(D, flow_dict, sigma_init, random_seed)
+
+def initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters=50000):
+    initdir = get_initdir(D, arch_dict, sigma_init, random_seed)
 
     initfname = initdir + 'final_theta.npz';
     resfname = initdir + 'results.npz';
@@ -360,7 +351,7 @@ def initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters=50000):
         lr_order = -3;
         check_rate = 100;
         max_iters = 1000000;
-        train_nf(family, params, flow_dict, n, lr_order, random_seed, \
+        train_nf(family, params, arch_dict, n, lr_order, random_seed, \
                  min_iters, max_iters, check_rate, None, profile=False, \
                  savedir=initdir);
         print('done initializing NF');

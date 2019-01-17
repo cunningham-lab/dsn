@@ -172,7 +172,7 @@ class linear_2D(system):
     'oscillation' - specify a distribution of oscillatory frequencies
 
     # Attributes
-        behavior (dict): TODO: update documentation
+        behavior (dict): see linear_2D.compute_suff_stats
     """
 
     def __init__(self, fixed_params, behavior):
@@ -197,6 +197,10 @@ class linear_2D(system):
     def get_T_x_labels(self,):
         """Returns `T_x_labels`.
 
+        Behaviors:
+
+        'oscillation' - $$[$$real($$\lambda_1$$), $$\\frac{\\text{imag}(\lambda_1)}{2 \pi}$$, real$$(\lambda_1)^2$$, $$(\\frac{\\text{imag}(\lambda_1)}{2 \pi})^2]$$
+
         # Returns
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
@@ -218,7 +222,7 @@ class linear_2D(system):
                         expansion/decay factors using the eigendecomposition of
                         the dynamics matrix.
         \\begin{equation}
-        E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = f_{p,T}(z) = E \\begin{bmatrix} \\text{real}(\\lambda_1) \\\\\\\\ \\text{real}(\\lambda_1)^2 \\\\\\\\ \\text{imag}(\\lambda_1) \\\\\\\\ \\text{imag}(\\lambda_1)^2 \end{bmatrix}
+        E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = f_{p,T}(z) = E \\begin{bmatrix} \\text{real}(\\lambda_1) \\\\\\\\ \\frac{\\text{imag}(\\lambda_1)}{2\pi} \\\\\\\\ \\text{real}(\\lambda_1)^2 \\\\\\\\ (\\frac{\\text{imag}(\\lambda_1)}{2\pi}^2 \end{bmatrix}
         \end{equation}
 
 		# Arguments
@@ -336,7 +340,7 @@ class V1_circuit(system):
         `model_opts` on how to set the form of these functions. 
 
     # Attributes
-        behavior (dict): TODO: add documentation
+        behavior (dict): see V1_circuit.compute_suff_stats
         model_opts (dict): 
           * model_opts[`'g_FF'`] 
             * `'c'` (default) $$g_{FF}(c) = c$$ 
@@ -423,6 +427,12 @@ class V1_circuit(system):
 
     def get_T_x_labels(self,):
         """Returns `T_x_labels`.
+
+        Behaviors:
+
+        'difference' - $$[d_{E,ss}, d_{P,ss}, d_{S,ss}, d_{V,ss}, d_{E,ss}^2, d_{P,ss}^2, d_{S,ss}^2, d_{V,ss}^2]$$
+        
+        'data' - $$[r_{E,ss}(c,s,r), ...,  r_{E,ss}(c,s,r)^2, ...]$$
 
         # Returns
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
@@ -667,6 +677,39 @@ class V1_circuit(system):
     
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
+
+        Behaviors:
+
+        'difference' - 
+
+          The total number of conditions from all of 
+          self,behavior.c_vals, s_vals, and r_vals should be two.  
+          The steady state of the first condition $$(c_1,s_1,r_1)$$ is 
+          subtracted from that of the second condition $$(c_2,s_2,r_2)$$ to get a 
+          difference vector
+          \\begin{equation}
+          d_{\\alpha,ss} = r_{\\alpha,ss}(c_2,s_2,r_2) - r_{\\alpha,ss}(c_1,s_1,r_1)
+          \end{equation}
+        
+          The total constraint vector is
+          \\begin{equation}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} d_{E,ss} \\\\\\\\ d_{P,ss} \\\\\\\\ d_{S,ss} \\\\\\\\ d_{V,ss} \\\\\\\\ d_{E,ss}^2 \\\\\\\\ d_{P,ss}^2 \\\\\\\\ d_{S,ss}^2 \\\\\\\\ d_{V,ss}^2 \end{bmatrix}
+          \end{equation}
+
+        
+        'data' - 
+
+          The user specifies the grid inputs for conditions via 
+          self.behavior.c_vals, s_vals, and r_vals.  The first and second
+          moments of the steady states for these conditions make up the
+          sufficient statistics vector.  Since the index is $$(c,s,r)$$, 
+          values of r are iterated over first, then s, then c (as is 
+          the c-standard) to construct the $$T(x)$$ vector.
+
+          The total constraint vector is
+          \\begin{equation}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} r_{E,ss}(c,s,r) \\\\\\\\ ... \\\\\\\\  r_{E,ss}(c,s,r)^2 \\\\\\\\ ... \end{bmatrix}
+          \end{equation}
 
         # Arguments
             z (tf.tensor): Density network system parameter samples.
