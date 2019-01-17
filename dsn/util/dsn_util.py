@@ -12,9 +12,9 @@ from tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLaye
 from tf_util.tf_util import count_layer_params, get_flowstring
 import scipy.linalg
 
-def setup_IO(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str):
+def get_savedir(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str):
     # set file I/O stuff
-    resdir = 'results/' + dir_str + '/';
+    resdir = 'models/' + dir_str + '/';
     flowstring = get_flowstring(flow_dict);
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
@@ -30,7 +30,7 @@ def setup_IO(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed,
 
 def get_initdir(D, flow_dict, sigma, random_seed):
     # set file I/O stuff
-    initdir = 'results/inits/';
+    initdir = 'data/inits/';
     flowstring = get_flowstring(flow_dict);
     initdir = initdir + 'D=%d_%s_sigma=%.2f_rs=%d/' % \
               (D, flowstring, sigma, random_seed);
@@ -331,7 +331,7 @@ def gradients(f, x, grad_ys=None):
                 grad[i] = tf.zeros_like(x[i])
         return grad
     else:
-        grad = tf.gradients(f, x, grad_ys=grad_ys)[0]
+        grad = tf.gradients(f, xad, grad_ys=grad_ys)[0]
         if grad is None:
             return tf.zeros_like(x)
         else:

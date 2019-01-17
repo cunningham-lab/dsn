@@ -26,7 +26,7 @@ import io
 from sklearn.metrics import pairwise_distances
 from dsn.util.dsn_util import check_convergence, setup_param_logging, \
                       initialize_optimization_parameters, computeMoments, getEtas, \
-                      approxKL, setup_IO, get_initdir, compute_R2, \
+                      approxKL, get_savedir, get_initdir, compute_R2, \
                       log_grads
 from tf_util.tf_util import construct_density_network, declare_theta, \
                                 connect_density_network, count_params, AL_cost, \
@@ -94,7 +94,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
 
     # Create model save directory if doesn't exist.
-    savedir = setup_IO(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str);
+    savedir = get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str);
     if not os.path.exists(savedir):
         print('Making directory %s' % savedir );
         os.makedirs(savedir);
@@ -273,7 +273,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
                     print('saving to %s  ...' % savedir);
                 
-                    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
+                    np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
                                                        it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
                                                         T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
                 
@@ -321,7 +321,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             # save the model
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
-    np.savez(savedir + 'results.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
+    np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
                                        it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
     return costs, _z, _T_z;
@@ -330,8 +330,8 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 def initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters=50000):
     initdir = get_initdir(D, arch_dict, sigma_init, random_seed)
 
-    initfname = initdir + 'final_theta.npz';
-    resfname = initdir + 'results.npz';
+    initfname = initdir + 'theta.npz';
+    resfname = initdir + 'opt_info.npz';
 
     learn_init = True;
     if os.path.exists(initfname):
