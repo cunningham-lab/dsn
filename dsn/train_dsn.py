@@ -26,11 +26,11 @@ import io
 from sklearn.metrics import pairwise_distances
 from dsn.util.dsn_util import check_convergence, setup_param_logging, \
                       initialize_optimization_parameters, computeMoments, getEtas, \
-                      approxKL, get_savedir, get_initdir, compute_R2, \
+                      approxKL, get_savedir, compute_R2, \
                       log_grads
-from tf_util.tf_util import construct_density_network, declare_theta, \
-                                connect_density_network, count_params, AL_cost, \
-                                memory_extension, load_nf_init
+from tf_util.tf_util import density_network, \
+                               count_params, AL_cost, \
+                                memory_extension, get_initdir, load_nf_init
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
 
@@ -62,11 +62,6 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     lr = 10**lr_order
     c_init = 10**c_init_order;
 
-    # Reset tf graph, and set random seeds.
-    tf.reset_default_graph();
-    tf.set_random_seed(random_seed);
-    np.random.seed(0);
-
     # save tensorboard summary in intervals
     TB_SAVE_EVERY = 50;
     MODEL_SAVE_EVERY = 5000;
@@ -79,19 +74,18 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     COST_GRAD_LAG = 100;
     P_THRESH = 0.05;
 
-    # Look for model initialization
-    initdir = initialize_nf(system.D, arch_dict, sigma_init, random_seed)
-    print(initdir);
-    inits = load_nf_init(initdir, arch_dict);
-    arch_dict.update({"inits":inits});
+    # Look for model initialization.  If not found, optimize the init.
+    initdir = initialize_nf(system.D, arch_dict, sigma_init, random_seed, min_iters=2000)
 
-    W = tf.placeholder(tf.float64, shape=(None, None, system.D, None), name="W")
-    p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=[2, 3]);
-    base_log_q_z = tf.log(p0[:, :]);
+    # Reset tf graph, and set random seeds.
+    tf.reset_default_graph()
+    tf.set_random_seed(random_seed);
+    np.random.seed(0);
 
-    flow_layers, num_theta_params = construct_density_network(arch_dict, system.D, 1);
-    flow_layers, num_theta_params = system.map_to_parameter_support(flow_layers, num_theta_params);
-
+    # Load nf initialization
+    W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
+    p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2);
+    base_log_q_z = tf.log(p0);
 
     # Create model save directory if doesn't exist.
     savedir = get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str);
@@ -99,18 +93,17 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         print('Making directory %s' % savedir );
         os.makedirs(savedir);
 
-    # Declare density network parameters.
-    theta = declare_theta(flow_layers, inits);
+    # Construct density network parameters.
+    # TODO need to set up support mapping stuff!!!
+    Z, sum_log_det_jacobian, flow_layers = density_network(W, arch_dict, None, initdir=initdir)
+    log_q_z = base_log_q_z - sum_log_det_jacobian
 
-    # Connect declared tf Variables theta to the density network.
-    z, sum_log_det_jacobian, Z_by_layer = connect_density_network(W, flow_layers, theta);
-    log_q_z = base_log_q_z - sum_log_det_jacobian;
 
     all_params = tf.trainable_variables()
     nparams = len(all_params)
 
     # Compute family-specific sufficient statistics and log base measure on samples.
-    T_x = system.compute_suff_stats(z);
+    T_x = system.compute_suff_stats(Z);
     mu = system.compute_mu();
     T_x_mu_centered = system.center_suff_stats_by_mu(T_x);
 
@@ -130,7 +123,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
     # Add inputs and outputs of NF to saved tf model.
     tf.add_to_collection('W', W);
-    tf.add_to_collection('z', z);
+    tf.add_to_collection('Z', Z);
     saver = tf.train.Saver();
 
     # Tensorboard logging.
@@ -160,7 +153,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     lambdas = [];
 
     # Take snapshots of z and log density throughout training.
-    zs = np.zeros((k_max+1, n, system.D));
+    Zs = np.zeros((k_max+1, n, system.D));
     log_q_zs = np.zeros((k_max+1, n));
     T_xs = np.zeros((k_max+1, n, system.num_suff_stats));
 
@@ -178,10 +171,10 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         sess.run(init_op);
 
         # Log initial state of the DSN.
-        w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
+        w_i = np.random.normal(np.zeros((K,n,system.D)), 1.0);
         feed_dict = {W:w_i, Lambda:_lambda, c:_c};
-        cost_i, _cost_grads, _z, _T_x, _H, _log_q_z, summary = \
-            sess.run([cost, cost_grads, z, T_x, H, log_q_z, summary_op], feed_dict);
+        cost_i, _cost_grads, _Z, _T_x, _H, _log_q_z, summary = \
+            sess.run([cost, cost_grads, Z, T_x, H, log_q_z, summary_op], feed_dict);
         
 
         summary_writer.add_summary(summary, 0);
@@ -193,7 +186,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         costs[0] = cost_i;
         check_it += 1;
 
-        zs[0,:,:] = _z[0,:,:,0];
+        Zs[0,:,:] = _Z[0,:,:];
         log_q_zs[0,:] = _log_q_z[0,:];
         T_xs[0,:,:] = _T_x[0];
         
@@ -212,7 +205,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             initialize_optimization_parameters(sess, optimizer, all_params);
 
             for j in range(num_norms):
-                w_j = np.random.normal(np.zeros((1,n,system.D,1)), 1.0);
+                w_j = np.random.normal(np.zeros((1,n,system.D)), 1.0);
                 feed_dict.update({W:w_j});
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
                 _R = np.mean(_T_x_mu_centered[0], 0)
@@ -230,12 +223,12 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                     cost_grad_vals = memory_extension([cost_grad_vals], array_cur_len)[0];
                     array_cur_len = 2*array_cur_len;
 
-                w_i = np.random.normal(np.zeros((K,n,system.D,1)), 1.0);
+                w_i = np.random.normal(np.zeros((K,n,system.D)), 1.0);
                 feed_dict = {W:w_i, Lambda:_lambda, c:_c};
 
                 start_time = time.time();
-                ts, cost_i, _cost_grads, summary, _T_x, _H, _z = \
-                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H, z], feed_dict);
+                ts, cost_i, _cost_grads, summary, _T_x, _H, _Z = \
+                    sess.run([train_step, cost, cost_grads, summary_op, T_x, H, Z], feed_dict);
                 end_time = time.time();
                 if (np.mod(cur_ind, check_rate)==0):
                     print('iteration took %.4f seconds.' % (end_time-start_time));
@@ -250,7 +243,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                     saver.save(sess, savedir + 'model');
 
                 if (np.mod(cur_ind+1, check_rate)==0):
-                    _H, _T_x, _z, _log_q_z = sess.run([H, T_x, z, log_q_z], feed_dict);
+                    _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict);
                     print(42*'*');
                     print('it = %d ' % (cur_ind+1));
                     print('H', _H);
@@ -274,7 +267,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                     print('saving to %s  ...' % savedir);
                 
                     np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
-                                                       it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
+                                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
                                                         T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
                 
                     print(42*'*');
@@ -282,7 +275,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
                 sys.stdout.flush();
                 i += 1;
-            zs[k+1,:,:] = _z[0,:,:,0];
+            Zs[k+1,:,:] = _Z[0,:,:];
             log_q_zs[k+1,:] = _log_q_z[0,:];
             T_xs[k+1,:,:] = _T_x[0];
             _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
@@ -293,7 +286,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             feed_dict = {Lambda:_lambda, c:_c};
 
             for j in range(num_norms):
-                w_j = np.random.normal(np.zeros((1,n,system.D,1)), 1.0);
+                w_j = np.random.normal(np.zeros((1,n,system.D)), 1.0);
                 feed_dict.update({W:w_j});
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
                 _R = np.mean(_T_x_mu_centered[0], 0)
@@ -322,9 +315,9 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
     np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
-                                       it=cur_ind, zs=zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
+                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
-    return costs, _z, _T_z;
+    return costs, _Z, _T_z;
 
 
 def initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters=50000):
@@ -333,15 +326,15 @@ def initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters=50000):
     initfname = initdir + 'theta.npz';
     resfname = initdir + 'opt_info.npz';
 
-    learn_init = True;
     if os.path.exists(initfname):
 
-        resfile = np.load(resfname);
-        assert(resfile['converged']);
+        resfile = np.load(resfname)
+        if (not resfile['converged']):
+            print("Error: Found initialization file, but optimiation has not converged.")
+            print("Tip: Consider adjusting approximation architecture or min_iters.")
+            exit() 
     
     else:
-        print(initfname);
-        print('training NF');
         fam_class = family_from_str('normal');
         family = fam_class(D);
         params = {'mu':np.zeros((D,)), \

@@ -28,15 +28,6 @@ def get_savedir(system, flow_dict, sigma_init, lr_order, c_init_order, random_se
                random_seed);
     return savedir
 
-def get_initdir(D, flow_dict, sigma, random_seed):
-    # set file I/O stuff
-    initdir = 'data/inits/';
-    flowstring = get_flowstring(flow_dict);
-    initdir = initdir + 'D=%d_%s_sigma=%.2f_rs=%d/' % \
-              (D, flowstring, sigma, random_seed);
-    return initdir
-
-
 def construct_latent_dynamics(flow_dict, D_Z, T):
     latent_dynamics = flow_dict['latent_dynamics'];
     inits = flow_dict['inits'];
