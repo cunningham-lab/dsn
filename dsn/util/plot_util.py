@@ -14,13 +14,14 @@ def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 		for k in range(k_max+1):
 			T_xs = npzfile['T_xs'][k];
 			for j in range(n_suff_stats):
-				t, p = scipy.stats.ttest_1samp(T_xs[:100,j], mu[j]);
+				t, p = scipy.stats.ttest_1samp(T_xs[:50,j], mu[j]);
 				p_values[i,k,j] = p;
 
+	print(p_values)
 	AL_final_its = [];
 	for i in range(n_fnames):
 		for j in range(k_max+1):
-			con_sat = np.prod(p_values[i,j,:] > alpha);
+			con_sat = np.prod(p_values[i,j,:] > (alpha / n_suff_stats));
 			if (con_sat==1):
 				AL_final_its.append(j);
 				break;
@@ -117,18 +118,19 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 	figs.append(fig);
 	for i in range(n_suff_stats):
 		ax = axs[i//n_cols][i % n_cols];
-		ax.plot([iterations[0], iterations[last_ind]], [mu[i], mu[i]], 'k--');
 		for j in range(n_fnames):
 			mean_T_xs = mean_T_xs_list[j];
 			if (j < max_legendstrs):
 				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i], label=legendstrs[j]);
 			else:
 				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i]);
+		ax.plot([iterations[0], iterations[last_ind]], [mu[i], mu[i]], 'k--');
 		ax.set_ylabel(r"$E[T_%d(z)]$" % (i+1), fontsize=fontsize);
 		if (i==(n_cols-1)):
 			ax.legend(fontsize=fontsize);
 		if (i > n_suff_stats - n_cols - 1):
 			ax.set_xlabel('iterations', fontsize=fontsize);
+
 		ax.spines['right'].set_visible(False)
 		ax.spines['top'].set_visible(False)
 	plt.tight_layout();
@@ -193,10 +195,10 @@ def coloring_from_str(c_str, system, npzfile, AL_final_it):
 
 def dist_from_str(dist_str, f_str, system, npzfile, AL_final_it):
 	dist_label_strs = [];
-	if (dist_str in ['zs', 'T_xs']):
+	if (dist_str in ['Zs', 'T_xs']):
 		dist = npzfile[dist_str][AL_final_it, :, :];
 		if (f_str == 'identity'):
-			if (dist_str == 'zs'):
+			if (dist_str == 'Zs'):
 				dist_label_strs = system.z_labels;
 			elif (dist_str == 'T_xs'):
 				dist_label_strs = system.T_x_labels;

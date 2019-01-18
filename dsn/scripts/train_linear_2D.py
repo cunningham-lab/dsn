@@ -1,18 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from dsn.util.systems import linear_2D
+from dsn.util.systems import Linear2D
 from dsn.train_dsn import train_dsn
 import pandas as pd
 import scipy.stats
 import sys, os
+
+os.chdir('../')
 
 nlayers = int(sys.argv[1]);
 c_init_order = int(sys.argv[2]);
 sigma_init = float(sys.argv[3]);
 random_seed = int(sys.argv[4]);
 
-system_str = 'linear_2D';
 D = 4;
 T = 1;
 
@@ -42,7 +43,7 @@ mu = np.array([0.0, 2*np.pi*omega]);
 Sigma = np.array([1.0, 1.0]);
 behavior = {'type':'oscillation', 'means':mu, 'variances':Sigma};
 
-system = linear_2D(fixed_params, behavior);
+system = Linear2D(fixed_params, behavior);
 
 np.random.seed(dist_seed);
 cost, phi, T_x = train_dsn(system, n, arch_dict, \

@@ -9,13 +9,13 @@ from tf_util.flows import AffineFlowLayer, PlanarFlowLayer, SimplexBijectionLaye
                         CholProdLayer, StructuredSpinnerLayer, TanhLayer, ExpLayer, \
                         SoftPlusLayer, GP_EP_CondRegLayer, GP_Layer, AR_Layer, VAR_Layer, \
                         FullyConnectedFlowLayer, ElemMultLayer
-from tf_util.tf_util import count_layer_params, get_flowstring
+from tf_util.tf_util import count_layer_params, get_archstring
 import scipy.linalg
 
-def get_savedir(system, flow_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str):
+def get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str):
     # set file I/O stuff
     resdir = 'models/' + dir_str + '/';
-    flowstring = get_flowstring(flow_dict);
+    archstring = get_archstring(arch_dict);
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
     if (num_free_params > 1):
@@ -24,7 +24,7 @@ def get_savedir(system, flow_dict, sigma_init, lr_order, c_init_order, random_se
 
     savedir = resdir + '%s_%s_%s_flow=%s_sigma=%.2f_lr_order=%d_c=%d_rs=%d/' % \
               (system.name, sysparams, system.behavior['type'], \
-               flowstring, sigma_init, lr_order, c_init_order, \
+               archstring, sigma_init, lr_order, c_init_order, \
                random_seed);
     return savedir
 
@@ -96,7 +96,7 @@ def construct_time_invariant_flow(flow_dict, D_Z, T):
     return layers;
 
 p_eps = 10e-6;
-def initialize_optimization_parameters(sess, optimizer, all_params):
+def initialize_adam_parameters(sess, optimizer, all_params):
     nparams = len(all_params);
     slot_names = optimizer.get_slot_names();
     num_slot_names = len(slot_names);
@@ -114,33 +114,16 @@ def initialize_optimization_parameters(sess, optimizer, all_params):
         sess.run(beta2_power.initializer);
     return None;
 
-def check_convergence(to_check, cur_ind, lag, thresh, criteria='lag_diff', wsize=50):
-    len_to_check = len(to_check);    
-    vals = to_check[0];
-    for i in range(1,len_to_check):
-        vals = np.concatenate((vals, to_check[1]), axis=1);
-
-    if (criteria=='lag_diff'):
-        lag_mean = np.mean(vals[(cur_ind-(lag+wsize)):(cur_ind-lag),:], axis=0);
-        cur_mean = np.mean(vals[(cur_ind-wsize):cur_ind,:], axis=0);
-        log_param_diff = np.log(np.linalg.norm(lag_mean-cur_mean));
-        has_converged = log_param_diff < thresh;
-    elif (criteria=='grad_mean_ttest'):
-        last_grads = vals[(cur_ind-lag):cur_ind, :];
-        Sigma_grads = np.dot(last_grads.T, last_grads) / (lag); # zero-mean covariance
-        nvars = last_grads.shape[1];
-        #mvt = mvd.MVT(np.zeros((nvars,)), Sigma_grads, lag);
-        #grad_mean = np.mean(last_grads, 0);
-        #t_cdf = mvt.cdf(grad_mean);
-        #has_converged = (t_cdf > (thresh/2) and t_cdf < (1-(thresh/2)));
-        #print('cdf val', t_cdf, 'convergence', has_converged);
-        has_converged = True;
-        for i in range(nvars):
-            t, p = ttest_1samp(last_grads[:,i], 0);
-            # if any grad mean is not zero, reject
-            if (p < thresh):
-                has_converged = False;
-                break;
+def check_convergence(cost_grad_vals, cur_ind, lag, alpha):
+    last_grads = cost_grad_vals[(cur_ind-lag):cur_ind, :];
+    nvars = last_grads.shape[1];
+    has_converged = True;
+    for i in range(nvars):
+        t, p = ttest_1samp(last_grads[:,i], 0);
+        # if any grad mean is not zero, reject
+        if (p < (alpha / nvars)):
+            has_converged = False;
+            break;
     return has_converged;
 
 def approxKL(y_k, X_k, constraint_type, params, plot=False):
@@ -355,19 +338,6 @@ def setup_param_logging(all_params):
                 for jj in range(param_shape[1]):
                     summaries.append(f.summary.scalar('%s_%d%d' % (param.name[:-2], ii+1, jj+1), param[ii, jj]));
     return summaries;
-
-def log_grads(cost_grads, cost_grad_vals, ind):
-    cgv_ind = 0;
-    nparams = len(cost_grads);
-    for i in range(nparams):
-        grad = cost_grads[i];
-        grad_shape = grad.shape;
-        ngrad_vals = np.prod(grad_shape);
-        grad_reshape = np.reshape(grad, (ngrad_vals,));
-        for ii in range(ngrad_vals):
-            cost_grad_vals[ind, cgv_ind] = grad_reshape[ii];
-            cgv_ind += 1;
-    return None;
 
 
 def adam_updates(params, cost_or_grads, lr=0.001, mom1=0.9, mom2=0.999):

@@ -24,11 +24,10 @@ import os
 import datetime
 import io 
 from sklearn.metrics import pairwise_distances
-from dsn.util.dsn_util import check_convergence, setup_param_logging, \
-                      initialize_optimization_parameters, computeMoments, getEtas, \
-                      approxKL, get_savedir, compute_R2, \
-                      log_grads
-from tf_util.tf_util import density_network, \
+from dsn.util.dsn_util import setup_param_logging, \
+                      initialize_adam_parameters, computeMoments, getEtas, \
+                      approxKL, get_savedir, compute_R2, check_convergence 
+from tf_util.tf_util import density_network, log_grads, \
                                count_params, AL_cost, \
                                 memory_extension, get_initdir, load_nf_init
 from tf_util.families import family_from_str
@@ -72,10 +71,10 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     # samples are significantly different than zero in each dimension.
     stop_early = False;
     COST_GRAD_LAG = 100;
-    P_THRESH = 0.05;
+    ALPHA = 0.05;
 
     # Look for model initialization.  If not found, optimize the init.
-    initdir = initialize_nf(system.D, arch_dict, sigma_init, random_seed, min_iters=2000)
+    initdir = initialize_nf(system.D, arch_dict, sigma_init, random_seed)
 
     # Reset tf graph, and set random seeds.
     tf.reset_default_graph()
@@ -151,6 +150,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     # Keep track of AL parameters throughout training.
     cs = [];
     lambdas = [];
+    epoch_inds = [0]
 
     # Take snapshots of z and log density throughout training.
     Zs = np.zeros((k_max+1, n, system.D));
@@ -199,10 +199,9 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
             # Reset the optimizer so momentum from previous epoch of AL optimization
             # does not effect optimization in the next epoch. 
-            print('resetting optimizer');
             optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr);
             train_step = optimizer.apply_gradients(grads_and_vars);
-            initialize_optimization_parameters(sess, optimizer, all_params);
+            initialize_adam_parameters(sess, optimizer, all_params);
 
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1,n,system.D)), 1.0);
@@ -257,7 +256,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0);
 
                     if stop_early:
-                        has_converged = check_convergence([cost_grad_vals], cur_ind, COST_GRAD_LAG, P_THRESH, criteria='grad_mean_ttest');
+                        has_converged = check_convergence(cost_grad_vals, cur_ind, COST_GRAD_LAG, ALPHA);
                     
                     if has_converged:
                         print('has converged!!!!!!');
@@ -267,8 +266,8 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                     print('saving to %s  ...' % savedir);
                 
                     np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
-                                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
-                                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
+                                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, cost_grads=cost_grad_vals,  \
+                                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate, epoch_inds=epoch_inds);
                 
                     print(42*'*');
                     check_it += 1;
@@ -304,6 +303,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
             _c = 4*_c;
             total_its += i;
+            epoch_inds.append(total_its)
 
 
             # save all the hyperparams
@@ -315,8 +315,8 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
     np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
-                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
-                                       T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate);
+                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, cost_grads=cost_grad_vals,  \
+                                       T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate, epoch_inds=epoch_inds);
     return costs, _Z, _T_z;
 
 
