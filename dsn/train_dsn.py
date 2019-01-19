@@ -266,7 +266,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                     print('saving to %s  ...' % savedir);
                 
                     np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
-                                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, cost_grads=cost_grad_vals,  \
+                                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, \
                                                         T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate, epoch_inds=epoch_inds);
                 
                     print(42*'*');
@@ -315,7 +315,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             print('saving to', savedir);
             saver.save(sess, savedir + 'model');
     np.savez(savedir + 'opt_info.npz',  costs=costs, Hs=Hs, R2s=R2s, mean_T_xs=mean_T_xs, behavior=system.behavior, mu=system.mu, \
-                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs, cost_grads=cost_grad_vals,  \
+                                       it=cur_ind, Zs=Zs, cs=cs, lambdas=lambdas, log_q_zs=log_q_zs,  \
                                        T_xs=T_xs, convergence_it=convergence_it, check_rate=check_rate, epoch_inds=epoch_inds);
     return costs, _Z, _T_z;
 

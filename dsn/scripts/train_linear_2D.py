@@ -27,7 +27,7 @@ arch_dict = {'D':D, \
              'repeats':nlayers};
 
 n = 1000;
-k_max = 25;
+k_max = 5;
 lr_order = -3;
 min_iters = 10000;
 max_iters = 50000;
