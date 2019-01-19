@@ -1,12 +1,15 @@
 #!/bin/bash
 
-for nlayers in 10 20
+for nlayers in 10
 do
-  for c_order in -10 0
+  for c_order in -10 -5 0
   do
-    for sigma_init in 1 10 100
+    for sigma_init in 1 10
     do
-      sbatch test_linear_2D.sh $nlayers $c_order $sigma_init 0
+      for rs in {1..5}
+      do
+        sbatch train_linear_2D.sh $nlayers $c_order $sigma_init $rs
+      done
     done
   done
 done
