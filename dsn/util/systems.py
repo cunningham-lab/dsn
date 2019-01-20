@@ -64,6 +64,7 @@ class system:
         self.T_x_labels = self.get_T_x_labels()
         self.D = len(self.z_labels)
         self.num_suff_stats = len(self.T_x_labels)
+        self.support_mapping = None
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -129,20 +130,6 @@ class system:
         """
         raise NotImplementedError()
 
-    def map_to_parameter_support(self, layers, num_theta_params):
-        """Augment density network with bijective mapping to parameter support.
-
-        # Arguments
-            layers (list): List of ordered normalizing flow layers.
-            num_theta_params (int): Running count of density network parameters.
-
-        # Returns
-            layers (list): layers augmented with final support mapping layer. \\\\
-            num_theta_params (int): Updated count of density network parameters.
-
-        """
-        return layers, num_theta_params
-
     def center_suff_stats_by_mu(self, T_x):
         """Center sufficient statistics by the mean parameters mu.
     
@@ -207,7 +194,7 @@ class Linear2D(system):
         """
         if (self.behavior['type']== 'oscillation'):
             T_x_labels = [r'real($\lambda_1$)', r'imag($\lambda_1$)', \
-                          r'real($\lambda_1$)^2', r'imag($\lambda_1$)^2'];
+                          r'real$(\lambda_1)^2$', r'imag$(\lambda_1)^2$'];
         else:
             raise NotImplementedError()
         return T_x_labels;
@@ -357,7 +344,7 @@ class V1Circuit(system):
 
     def __init__(self, fixed_params, behavior, \
                  model_opts={'g_FF':'c', 'g_LAT':'linear', 'g_RUN':'r'}, \
-                 T=20, dt=0.25, \
+                 T=40, dt=0.25, \
                  init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
@@ -445,20 +432,25 @@ class V1Circuit(system):
             raise NotImplementedError()
         return T_x_labels;
 
-    def simulate(self, z):
-        """Simulate the V1 4-neuron circuit given parameters z.
+    def filter_Z(self, z):
+        """Returns the system matrix/vector variables depending free parameter ordering.
 
         # Arguments
             z (tf.tensor): Density network system parameter samples.
 
         # Returns
-            g(z) (tf.tensor): Simulated system activity.
+            W (tf.tensor): [C,M,4,4] Dynamics matrices.
+            b (tf.tensor): [1,M,4,1] Static inputs.
+            h_FF (tf.tensor): [1,M,4,1] Feed forward inputs.
+            h_LAT (tf.tensor): [1,M,4,1] Lateral inputs.
+            h_RUN (tf.tensor): [1,M,4,1] Running inputs.
+            tau (tf.tensor): [C,M,1,1] Dynamics timescales.
+            n (tf.tensor): [C,M,1,1] Dynamics power coefficients.
+            s_0 (tf.tensor): [1,M,1,1] Reference stimulus values.
+            a (tf.tensor): [1,M,1,1] Contrast saturation shape.
+            c_50 (tf.tensor): [1,M,1,1] Contrast at 50%.
 
         """
-        # remove trailing dimension
-        z = z[:,:,:,0]
-
-        # get number of batch samples
         z_shape = tf.shape(z)
         K = z_shape[0]
         M = z_shape[1]
@@ -620,8 +612,14 @@ class V1Circuit(system):
             a = tf.expand_dims(tf.expand_dims(a, 2), 3)
             # 50% constrast value [K,M,1,1]
             c_50 = tf.expand_dims(tf.expand_dims(c_50, 2), 3)
+        else:
+            a = None
+            c_50 = None
 
-        # set up input h
+
+        return W, b, h_FF, h_LAT, h_RUN, tau, n, s_0, a, c_50
+
+    def compute_h(self, b, h_FF, h_LAT, h_RUN, s_0, a=None, c_50=None):
         num_c = self.behavior['c_vals'].shape[0]
         num_s = self.behavior['s_vals'].shape[0]
         num_r = self.behavior['r_vals'].shape[0]
@@ -658,6 +656,27 @@ class V1Circuit(system):
                               + tf.multiply(g_RUN, h_RUN)
                     hs.append(h_csr)
         h = tf.concat(hs, axis=0)
+
+        return h
+
+    def simulate(self, z):
+        """Simulate the V1 4-neuron circuit given parameters z.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            g(z) (tf.tensor): Simulated system activity.
+
+        """
+
+        # get number of batch samples
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        W, b, h_FF, h_LAT, h_RUN, tau, n, s_0, a, c_50 = self.filter_Z(z)
+        h = self.compute_h(b, h_FF, h_LAT, h_RUN, s_0, a, c_50)
 
         # initial conditions
         r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0), dtype=tf.float64);
@@ -774,23 +793,11 @@ class V1Circuit(system):
         mu = np.concatenate((first_moments, second_moments), axis=0)
         return mu
 
-    def map_to_parameter_support(self, layers, num_theta_params):
-        """Augment density network with bijective mapping to parameter support.
-
-        # Arguments
-            layers (list): List of ordered normalizing flow layers.
-            num_theta_params (int): Running count of density network parameters.
-
-        # Returns
-            layers (list): layers augmented with final support mapping layer.
-            num_theta_params (int): Updated count of density network parameters.
+    def support_mapping(self, inputs):
+        """TODO add documentation
 
         """
-
-        support_layer = SoftPlusLayer()
-        num_theta_params += count_layer_params(support_layer)
-        layers.append(support_layer)
-        return layers, num_theta_params
+        return SoftPlusLayer([], inputs)
 
         
 
@@ -938,23 +945,11 @@ class R1RNN_input(system):
         mu = np.concatenate((mu_mu, mu_Sigma), axis=0)
         return mu
 
-    def map_to_parameter_support(self, layers, num_theta_params):
-        """Augment density network with bijective mapping to support.
+    def support_mapping(self, inputs):
+        """TODO add documentation
 
-		# Arguments
-			layers (list): List of ordered normalizing flow layers.
-			num_theta_params (int): Running count of density network parameters.
-
-		# Returns
-			(list): layers augmented with final support mapping layer.
-			(int): Updated count of density network parameters.
-            
-		"""
-
-        support_layer = SoftPlusLayer()
-        num_theta_params += count_layer_params(support_layer)
-        layers.append(support_layer)
-        return layers, num_theta_params
+        """
+        return SoftPlusLayer([], inputs)
 
 
 class R1RNN_GNG(system):
@@ -1114,6 +1109,8 @@ class R1RNN_GNG(system):
         num_theta_params += count_layer_params(support_layer)
         layers.append(support_layer)
         return layers, num_theta_params
+
+
 
 
 

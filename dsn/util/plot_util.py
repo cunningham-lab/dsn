@@ -4,6 +4,7 @@ import scipy.stats
 from sklearn.manifold import TSNE
 
 def assess_constraints(fnames, alpha, k_max, n_suff_stats):
+	NUM_SAMPS = 200
 	n_fnames = len(fnames);
 	p_values = np.zeros((n_fnames, k_max+1, n_suff_stats));
 	for i in range(n_fnames):
@@ -14,10 +15,9 @@ def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 		for k in range(k_max+1):
 			T_xs = npzfile['T_xs'][k];
 			for j in range(n_suff_stats):
-				t, p = scipy.stats.ttest_1samp(T_xs[:50,j], mu[j]);
+				t, p = scipy.stats.ttest_1samp(T_xs[:NUM_SAMPS,j], mu[j]);
 				p_values[i,k,j] = p;
 
-	print(p_values)
 	AL_final_its = [];
 	for i in range(n_fnames):
 		for j in range(k_max+1):
@@ -38,6 +38,7 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 	R2s_list = [];
 	mean_T_xs_list = [];
 	T_xs_list = [];
+	epoch_inds_list = []
 	for i in range(n_fnames):
 		fname = fnames[i];
 		npzfile = np.load(fname);
@@ -46,11 +47,13 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 		R2s = npzfile['R2s'];
 		mean_T_xs = npzfile['mean_T_xs'];
 		T_xs = npzfile['T_xs'];
+		epoch_inds = npzfile['epoch_inds']
 
 		costs_list.append(costs);
 		Hs_list.append(Hs);
 		R2s_list.append(R2s);
 		mean_T_xs_list.append(mean_T_xs);
+		epoch_inds_list.append(epoch_inds)
 
 		if (i==0):
 			mu = npzfile['mu'];
@@ -81,10 +84,14 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 	ax = axs[1];
 	for i in range(n_fnames):
 		Hs = Hs_list[i];
+		epoch_inds = epoch_inds_list[i]
 		if (i < 5):
 			ax.plot(iterations[:last_ind], Hs[:last_ind], label=legendstrs[i]);
 		else:
 			ax.plot(iterations[:last_ind], Hs[:last_ind])
+		if (n_fnames == 1 and AL_final_its[i] is not None):
+			conv_it = epoch_inds[AL_final_its[i]]
+			ax.plot([conv_it, conv_it], [np.min(Hs[:last_ind]), np.max(Hs[:last_ind])], 'k--')
 	ax.set_xlabel('iterations', fontsize=fontsize);
 	ax.set_ylabel('H', fontsize=fontsize);
 	ax.spines['right'].set_visible(False)
@@ -94,10 +101,14 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 		ax = axs[2]
 		for i in range(n_fnames):
 			R2s = R2s_list[i];
+			epoch_inds = epoch_inds_list[i]
 			if (i < max_legendstrs):
 				ax.plot(iterations[:last_ind], R2s[:last_ind], label=legendstrs[i]);
 			else:
 				ax.plot(iterations[:last_ind], R2s[:last_ind])
+		if (n_fnames == 1 and AL_final_its[i] is not None):
+			conv_it = epoch_inds[AL_final_its[i]]
+			ax.plot([conv_it, conv_it], [np.min(R2s[:last_ind]), np.max(R2s[:last_ind])], 'k--')
 		ax.set_xlabel('iterations', fontsize=fontsize);
 		ax.set_ylabel(r'$r^2$', fontsize=fontsize);
 		ax.spines['right'].set_visible(False)
@@ -109,27 +120,50 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 
 
 	# plot constraints throughout optimization
-	n_cols = 4;
-	n_rows = int(np.ceil(n_suff_stats/n_cols));
-	figsize = (n_cols*3, n_rows*3);
-	fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize);
+	yscale_fac = 5
+	n_cols = 4
+	n_rows = int(np.ceil(n_suff_stats/n_cols))
+	figsize = (n_cols*3, n_rows*3)
+	fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
 	if (n_rows == 1):
-		axs = [axs];
-	figs.append(fig);
+		axs = [axs]
+	figs.append(fig)
 	for i in range(n_suff_stats):
-		ax = axs[i//n_cols][i % n_cols];
+		ax = axs[i//n_cols][i % n_cols]
+		# make ylim 2* mean abs error of last 50% of optimization
+		mean_abs_errors = np.zeros((n_fnames,))
 		for j in range(n_fnames):
-			mean_T_xs = mean_T_xs_list[j];
+			mean_T_xs = mean_T_xs_list[j]
+			epoch_inds = epoch_inds_list[j]
 			if (j < max_legendstrs):
-				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i], label=legendstrs[j]);
+				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i], label=legendstrs[j])
 			else:
-				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i]);
-		ax.plot([iterations[0], iterations[last_ind]], [mu[i], mu[i]], 'k--');
-		ax.set_ylabel(r"$E[T_%d(z)]$" % (i+1), fontsize=fontsize);
+				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i])
+			mean_abs_errors[j] = np.mean(np.abs(mean_T_xs[(last_ind//2):last_ind, i] - mu[i]))
+			if (n_fnames == 1):
+				T_x_means = np.mean(T_xs[:,:,i], axis=1)
+				T_x_stds = np.std(T_xs[:,:,i], axis=1)
+				ax.errorbar(epoch_inds, T_x_means, T_x_stds, c='r', elinewidth=3)
+				if (AL_final_its[j] is not None):
+					conv_it = epoch_inds[AL_final_its[j]]
+					line_min = min([np.min(mean_T_xs[:last_ind,i]), mu[i]-yscale_fac*mean_abs_errors[j], np.min(T_x_means - 4*T_x_stds)])
+					line_max = max([np.max(mean_T_xs[:last_ind,i]), mu[i]+yscale_fac*mean_abs_errors[j], np.max(T_x_means + 4*T_x_stds)])
+					ax.plot([conv_it, conv_it], [line_min, line_max], 'k--')
+			
+		ax.plot([iterations[0], iterations[last_ind]], [mu[i], mu[i]], 'k-')
+		# make ylim 2* mean abs error of last 50% of optimization
+		if (n_fnames == 1):
+			ymin = min(mu[i]-yscale_fac*np.max(mean_abs_errors), np.min(T_x_means[(k_max//2):] - 2*T_x_stds[(k_max//2):]))
+			ymax = max(mu[i]-yscale_fac*np.max(mean_abs_errors), np.max(T_x_means[(k_max//2):] + 2*T_x_stds[(k_max//2):]))
+		else:
+			ymin = mu[i]-yscale_fac*np.max(mean_abs_errors)
+			ymax = mu[i]+yscale_fac*np.max(mean_abs_errors)
+		ax.set_ylim(ymin, ymax)
+		ax.set_ylabel(r"$E[T_%d(z)]$" % (i+1), fontsize=fontsize)
 		if (i==(n_cols-1)):
-			ax.legend(fontsize=fontsize);
+			ax.legend(fontsize=fontsize)
 		if (i > n_suff_stats - n_cols - 1):
-			ax.set_xlabel('iterations', fontsize=fontsize);
+			ax.set_xlabel('iterations', fontsize=fontsize)
 
 		ax.spines['right'].set_visible(False)
 		ax.spines['top'].set_visible(False)
@@ -156,8 +190,7 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 		ax.set_xlabel('aug Lag it', fontsize=fontsize);
 		ax.set_ylabel('p value', fontsize=fontsize);
 		ax.set_ylim([0,1]);
-		if (i==(n_cols-1)):
-			ax.legend(fontsize=fontsize);
+		ax.legend(fontsize=fontsize);
 	plt.tight_layout();
 	plt.show();
 
@@ -169,6 +202,10 @@ def coloring_from_str(c_str, system, npzfile, AL_final_it):
 	if (c_str == 'log_q_z'):
 		c = npzfile['log_q_zs'][AL_final_it];
 		c_label_str = r'$log(q_\theta)$';
+	elif (c_str == 'real part'):
+		c = npzfile['T_xs'][AL_final_it, :, 0];
+		cm = plt.cm.get_cmap('Reds')
+		c_label_str = r'real($\lambda_1$)'
 	elif (c_str == 'dE'):
 		c = npzfile['T_xs'][AL_final_it, :, 0];
 		cm = plt.cm.get_cmap('Greys')
@@ -317,7 +354,7 @@ def dsn_pairplots(fnames, dist_str, system, D, f_str='identity', \
 			fig.subplots_adjust(right=0.90)
 			cbar_ax = fig.add_axes([0.92, 0.15, 0.04, 0.7])
 			clb = fig.colorbar(h, cax=cbar_ax);
-			plt.text(-.2, 1.02*np.max(c), c_label_str, {'fontsize':fontsize})
+			plt.text(-.2, 1.02*np.max(c[plot_inds]), c_label_str, {'fontsize':fontsize})
 			#clb.ax.set_ylabel(c_label_str, rotation=270, fontsize=fontsize);
 		plt.suptitle(legendstrs[k], fontsize=fontsize);
 		plt.savefig(pfname);
