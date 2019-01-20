@@ -426,8 +426,13 @@ class V1Circuit(system):
 
         """
         if (self.behavior['type'] == 'difference'):
-            T_x_labels = [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
-                          r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
+            all_T_x_labels = [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
+                              r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
+            diff_inds = self.behavior['diff_inds']
+            label_inds = diff_inds + list(map(lambda x : x + 4, diff_inds))
+            T_x_labels = []
+            for i in range(len(label_inds)):
+                T_x_labels.append(all_T_x_labels[label_inds[i]])
         else:
             raise NotImplementedError()
         return T_x_labels;
@@ -760,8 +765,14 @@ class V1Circuit(system):
         r_t = self.simulate(z); # [T, C, M, D, 1]
 
         if (self.behavior['type'] == 'difference'):
-            r1_ss = r_t[-1,0,:,:,0];
-            r2_ss = r_t[-1,1,:,:,0];
+            diff_inds = self.behavior['diff_inds']
+            r1_ss_list = []
+            r2_ss_list = []
+            for ind in range(len(diff_inds)):
+                r1_ss_list.append(r_t[-1,0,:,ind,0])
+                r2_ss_list.append(r_t[-1,1,:,ind,0])
+            r1_ss = tf.stack(r1_ss_list, axis=1)
+            r2_ss = tf.stack(r2_ss_list, axis=1)
             diff_ss = tf.expand_dims(r2_ss - r1_ss, 0)
             T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
 

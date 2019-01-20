@@ -39,13 +39,15 @@ fixed_params = {'W_EE':1.0, \
                 'n':2.0, \
                 's_0':30};
 
-
+behavior_type = 'difference'
+diff_inds = [2, 3]
 c_vals=np.array([0.0])
 s_vals=np.array([1.0])
 r_vals=np.array([0.0, 1.0])
-d_mean = np.array([1.0, 0.25, 1.0, 0.0]);
-d_vars = np.array([0.01, 0.01, 0.01, 0.01]);
-behavior = {'type':'difference', \
+d_mean = np.array([1.0, 0.0]);
+d_vars = np.array([0.1, 0.1]);
+behavior = {'type':behavior_type, \
+            'diff_inds':diff_inds, \
             'c_vals':c_vals, \
             's_vals':s_vals, \
             'r_vals':r_vals, \
@@ -63,7 +65,6 @@ system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
 k_max = 10
 batch_size = 1000;
-c_init_order = -5
 lr_order = -3
 
 

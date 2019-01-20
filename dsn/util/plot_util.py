@@ -363,6 +363,59 @@ def dsn_pairplots(fnames, dist_str, system, D, f_str='identity', \
 
 	return figs
 
+
+def pairplot(Z, dims, labels, origin=False, xlims=None, ylims=None, \
+	         c=None, c_label=None, cmap=None, \
+	         fontsize=12, figsize=(12,12), fname='temp.png'):
+	num_dims = len(dims)
+	rand_order = np.random.permutation(Z.shape[0])
+	Z = Z[rand_order, :]
+
+	if (c is not None):
+		c = c[rand_order]
+		plot_inds, below_inds, over_inds = filter_outliers(c, 2);
+
+	fig, axs = plt.subplots(num_dims-1, num_dims-1, figsize=figsize);
+	for i in range(num_dims-1):
+		dim_i = dims[i]
+		for j in range(1, num_dims):
+			ax = axs[i, j-1]
+			if (j > i):
+				dim_j = dims[j]
+				if ((xlims is not None) and (ylims is not None) and origin):
+					ax.plot(xlims, [0, 0], c=0.5*np.ones(3), linestyle='--')
+					ax.plot([0, 0], ylims, c=0.5*np.ones(3), linestyle='--')
+				if (c is not None):
+					ax.scatter(Z[below_inds,dim_j], Z[below_inds, dim_i], c='w', \
+						       edgecolors='k', linewidths=0.25);
+					ax.scatter(Z[over_inds,dim_j], Z[over_inds, dim_i], c='k', \
+						       edgecolors='k', linewidths=0.25);
+					h = ax.scatter(Z[plot_inds,dim_j], Z[plot_inds, dim_i], c=c[plot_inds], cmap=cmap, \
+						           edgecolors='k', linewidths=0.25);
+				else:
+					h = ax.scatter(Z[:,dim_j], Z[:, dim_i], \
+						           edgecolors='k', linewidths=0.25);
+				if (i+1==j):
+					ax.set_xlabel(labels[j], fontsize=fontsize);
+					ax.set_ylabel(labels[i], fontsize=fontsize);
+				if (xlims is not None):
+					ax.set_xlim(xlims)
+				if (ylims is not None):
+					ax.set_ylim(ylims)
+			else:
+				ax.axis('off')
+
+	if (c is not None):
+		fig.subplots_adjust(right=0.90)
+		cbar_ax = fig.add_axes([0.92, 0.15, 0.04, 0.7])
+		clb = fig.colorbar(h, cax=cbar_ax);
+		plt.text(-.2, 1.02*np.max(c[plot_inds]), c_label, {'fontsize':fontsize})
+	#plt.savefig(fname)
+	plt.show()
+	return fig
+
+
+
 def dsn_tSNE(fnames, dist_str, c_str, system, legendstrs=[], AL_final_its=[], \
 	              fontsize=14, pfname='temp.png'):
 	n_fnames = len(fnames);
