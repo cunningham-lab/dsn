@@ -3,8 +3,41 @@ import numpy as np
 import scipy.stats
 from sklearn.manifold import TSNE
 
-def assess_constraints(fnames, alpha, k_max, n_suff_stats):
+"""def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 	NUM_SAMPS = 200
+	n_fnames = len(fnames);
+	p_values = np.zeros((n_fnames, k_max+1, n_suff_stats));
+	for i in range(n_fnames):
+		fname = fnames[i];
+		npzfile = np.load(fname);
+		mu = npzfile['mu']
+		print(i,mu)
+
+		for k in range(k_max+1):
+			T_xs = npzfile['T_xs'][k];
+			for j in range(n_suff_stats):
+				t, p = scipy.stats.ttest_1samp(T_xs[:NUM_SAMPS,j], mu[j]);
+				if (k==0):
+					print('k=0')
+					print(j, 't', t, 'p', p)
+					print('mu', mu[j])
+					print('T', T_xs[:NUM_SAMPS,j])
+				p_values[i,k,j] = p;
+
+	AL_final_its = [];
+	for i in range(n_fnames):
+		for j in range(k_max+1):
+			con_sat = np.prod(p_values[i,j,:] > (alpha / n_suff_stats));
+			if (con_sat==1):
+				AL_final_its.append(j);
+				break;
+			if (j==(k_max)):
+				AL_final_its.append(None)
+	return p_values, AL_final_its;"""
+
+def assess_constraints(fnames, alpha, k_max, n_suff_stats):
+	BOOT_SAMPS = 800
+	SAMPS_PER_BOOT = 200
 	n_fnames = len(fnames);
 	p_values = np.zeros((n_fnames, k_max+1, n_suff_stats));
 	for i in range(n_fnames):
@@ -14,9 +47,15 @@ def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 
 		for k in range(k_max+1):
 			T_xs = npzfile['T_xs'][k];
+			total_samps = T_xs.shape[0]
 			for j in range(n_suff_stats):
-				t, p = scipy.stats.ttest_1samp(T_xs[:NUM_SAMPS,j], mu[j]);
-				p_values[i,k,j] = p;
+				boot_means = np.zeros((BOOT_SAMPS,))
+				for ii in range(BOOT_SAMPS):
+					inds_ii = np.random.choice(np.arange(total_samps), SAMPS_PER_BOOT, replace=False)
+					boot_means[ii] = np.mean(T_xs[inds_ii,j])
+				gt = float(np.sum(boot_means > mu[j]))
+				lt = float(np.sum(boot_means < mu[j]))
+				p_values[i,k,j] = 2*min(gt/BOOT_SAMPS, lt/BOOT_SAMPS)
 
 	AL_final_its = [];
 	for i in range(n_fnames):
@@ -194,7 +233,7 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 	plt.tight_layout();
 	plt.show();
 
-	return figs
+	return figs, AL_final_its, p_values
 
 
 def coloring_from_str(c_str, system, npzfile, AL_final_it):

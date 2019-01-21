@@ -93,8 +93,8 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         os.makedirs(savedir);
 
     # Construct density network parameters.
-    # TODO need to set up support mapping stuff!!!
-    Z, sum_log_det_jacobian, flow_layers = density_network(W, arch_dict, None, initdir=initdir)
+    print(system.name, system.support_mapping)
+    Z, sum_log_det_jacobian, flow_layers = density_network(W, arch_dict, system.support_mapping, initdir=initdir)
     log_q_z = base_log_q_z - sum_log_det_jacobian
 
 
@@ -225,11 +225,12 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
                 w_i = np.random.normal(np.zeros((K,n,system.D)), 1.0);
                 feed_dict = {W:w_i, Lambda:_lambda, c:_c};
 
-                start_time = time.time();
+                if (np.mod(cur_ind, check_rate)==0):
+                    start_time = time.time()
                 ts, cost_i, _cost_grads, summary, _T_x, _H, _Z = \
                     sess.run([train_step, cost, cost_grads, summary_op, T_x, H, Z], feed_dict);
-                end_time = time.time();
                 if (np.mod(cur_ind, check_rate)==0):
+                    end_time = time.time()
                     print('iteration took %.4f seconds.' % (end_time-start_time));
                     
                 log_grads(_cost_grads, cost_grad_vals, cur_ind);

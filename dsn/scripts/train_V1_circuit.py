@@ -70,5 +70,5 @@ lr_order = -3
 
 train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
-          random_seed=random_seed, min_iters=5000, max_iters=10000, \
-          check_rate=100, dir_str='V1_circuit')
+          random_seed=random_seed, min_iters=1000, max_iters=2000, \
+          check_rate=100, dir_str='test')

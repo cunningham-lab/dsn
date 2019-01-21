@@ -16,6 +16,7 @@
 import tensorflow as tf
 import numpy as np
 from tf_util.tf_util import count_layer_params
+from tf_util.normalizing_flows import SoftPlusFlow
 from tf_util.flows import SoftPlusLayer, IntervalFlowLayer
 import scipy.stats
 from scipy.special import gammaln, psi
@@ -64,7 +65,6 @@ class system:
         self.T_x_labels = self.get_T_x_labels()
         self.D = len(self.z_labels)
         self.num_suff_stats = len(self.T_x_labels)
-        self.support_mapping = None
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -165,6 +165,7 @@ class Linear2D(system):
     def __init__(self, fixed_params, behavior):
         super().__init__(fixed_params, behavior)
         self.name = "Linear2D"
+        self.support_mapping = None
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -808,7 +809,7 @@ class V1Circuit(system):
         """TODO add documentation
 
         """
-        return SoftPlusLayer([], inputs)
+        return SoftPlusFlow([], inputs)
 
         
 
@@ -960,7 +961,7 @@ class R1RNN_input(system):
         """TODO add documentation
 
         """
-        return SoftPlusLayer([], inputs)
+        return SoftPlusFlow([], inputs)
 
 
 class R1RNN_GNG(system):
