@@ -769,7 +769,7 @@ class V1Circuit(system):
             diff_inds = self.behavior['diff_inds']
             r1_ss_list = []
             r2_ss_list = []
-            for ind in range(len(diff_inds)):
+            for ind in diff_inds:
                 r1_ss_list.append(r_t[-1,0,:,ind,0])
                 r2_ss_list.append(r_t[-1,1,:,ind,0])
             r1_ss = tf.stack(r1_ss_list, axis=1)
