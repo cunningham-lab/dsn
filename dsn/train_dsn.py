@@ -303,7 +303,6 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             else:
                 print(u, 'same c');
 
-            _c = 4*_c;
             total_its += i;
             epoch_inds.append(total_its-1)
 
