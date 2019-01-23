@@ -19,26 +19,26 @@ T = 1;
 
 latent_dynamics = None;
 TIF_flow_type = 'PlanarFlow';
-elem_mult_flow = True;
+mult_and_shift = 'post';
 arch_dict = {'D':D, \
              'latent_dynamics':latent_dynamics, \
-             'elem_mult_flow':elem_mult_flow, \
+             'mult_and_shift':mult_and_shift, \
              'TIF_flow_type':TIF_flow_type, \
              'repeats':nlayers};
 
 n = 1000;
-k_max = 10;
+k_max = 20;
 lr_order = -3;
 min_iters = 10000;
-max_iters = 50000;
+max_iters = 20000;
 check_rate = 100;
 dist_seed = 0;
-dir_str = 'Linear2D/5Hz/a';
+dir_str = 'Linear2D/1Hz/d';
 
 
-fixed_params = {'tau':0.1}
+fixed_params = {'tau':1.0}
 
-omega = 5 
+omega = 1
 mu = np.array([0.0, 2*np.pi*omega]);
 Sigma = np.array([1.0, 1.0]);
 behavior = {'type':'oscillation', 'means':mu, 'variances':Sigma};

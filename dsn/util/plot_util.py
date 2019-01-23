@@ -55,7 +55,8 @@ def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 					boot_means[ii] = np.mean(T_xs[inds_ii,j])
 				gt = float(np.sum(boot_means > mu[j]))
 				lt = float(np.sum(boot_means < mu[j]))
-				p_values[i,k,j] = 2*min(gt/BOOT_SAMPS, lt/BOOT_SAMPS)
+				p_val = 2*min(gt/BOOT_SAMPS, lt/BOOT_SAMPS)
+				p_values[i,k,j] = p_val
 
 	AL_final_its = [];
 	for i in range(n_fnames):
@@ -68,7 +69,38 @@ def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 				AL_final_its.append(None)
 	return p_values, AL_final_its;
 
-def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
+def assess_constraints2(fnames, k_max, n_suff_stats, tol=.1):
+	n_fnames = len(fnames);
+	AL_final_its = [];
+	for i in range(n_fnames):
+		fname = fnames[i];
+		npzfile = np.load(fname);
+		mu = npzfile['mu']
+
+		
+		for k in range(k_max+1):
+			T_xs = npzfile['T_xs'][k];
+			total_samps = T_xs.shape[0]
+			T_x_mean = np.mean(T_xs, 0)
+			failed = False
+			for j in range(n_suff_stats//2):
+				if (T_x_mean[j] < (mu[j]-tol) or (mu[j]+tol) < T_x_mean[j]):
+					failed = True
+					break
+			for j in range(n_suff_stats//2, n_suff_stats):
+				if (mu[j]+tol < T_x_mean[j]):
+					failed = True
+					break
+			if (not failed):
+				AL_final_its.append(k)
+				break
+
+		if (failed):
+			AL_final_its.append(None)
+
+	return AL_final_its
+
+def plot_opt(fnames, legendstrs=[], con_method='1', alpha=0.05, plotR2=False, fontsize=14):
 	max_legendstrs = 5;
 	n_fnames = len(fnames);
 	# read optimization diagnostics from files
@@ -103,6 +135,12 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 			iterations = np.arange(0, check_rate*nits, check_rate);
 			n_suff_stats = mean_T_xs_list[0].shape[1];
 			p_values, AL_final_its = assess_constraints(fnames, alpha, k_max, n_suff_stats);
+			if (con_method == '1'):
+				pass
+			elif (con_method == '2'):
+				AL_final_its = assess_constraints2(fnames, k_max, n_suff_stats, tol=.1)
+			else:
+				raise NotImplementedError()
 
 	figs = [];
 
@@ -170,34 +208,37 @@ def plot_opt(fnames, legendstrs=[], alpha=0.05, plotR2=False, fontsize=14):
 	for i in range(n_suff_stats):
 		ax = axs[i//n_cols][i % n_cols]
 		# make ylim 2* mean abs error of last 50% of optimization
-		mean_abs_errors = np.zeros((n_fnames,))
+		median_abs_errors = np.zeros((n_fnames,))
 		for j in range(n_fnames):
 			mean_T_xs = mean_T_xs_list[j]
 			epoch_inds = epoch_inds_list[j]
+			num_epoch_inds = len(epoch_inds)
 			if (j < max_legendstrs):
 				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i], label=legendstrs[j])
 			else:
 				ax.plot(iterations[:last_ind], mean_T_xs[:last_ind,i])
-			mean_abs_errors[j] = np.mean(np.abs(mean_T_xs[(last_ind//2):last_ind, i] - mu[i]))
+
+			median_abs_errors[j] = np.median(np.abs(mean_T_xs[(last_ind//2):last_ind, i] - mu[i]))
 			if (n_fnames == 1):
 				T_x_means = np.mean(T_xs[:,:,i], axis=1)
 				T_x_stds = np.std(T_xs[:,:,i], axis=1)
-				ax.errorbar(epoch_inds, T_x_means, T_x_stds, c='r', elinewidth=3)
+				num_epoch_inds = len(epoch_inds)
+				ax.errorbar(epoch_inds, T_x_means[:num_epoch_inds], T_x_stds[:num_epoch_inds], c='r', elinewidth=3)
 				if (AL_final_its[j] is not None):
 					conv_it = epoch_inds[AL_final_its[j]]
-					line_min = min([np.min(mean_T_xs[:last_ind,i]), mu[i]-yscale_fac*mean_abs_errors[j], np.min(T_x_means - 4*T_x_stds)])
-					line_max = max([np.max(mean_T_xs[:last_ind,i]), mu[i]+yscale_fac*mean_abs_errors[j], np.max(T_x_means + 4*T_x_stds)])
+					line_min = min([np.min(mean_T_xs[:last_ind,i]), mu[i]-yscale_fac*median_abs_errors[j], np.min(T_x_means - 2*T_x_stds)])
+					line_max = max([np.max(mean_T_xs[:last_ind,i]), mu[i]+yscale_fac*median_abs_errors[j], np.max(T_x_means + 2*T_x_stds)])
 					ax.plot([conv_it, conv_it], [line_min, line_max], 'k--')
 			
 		ax.plot([iterations[0], iterations[last_ind]], [mu[i], mu[i]], 'k-')
 		# make ylim 2* mean abs error of last 50% of optimization
 		if (n_fnames == 1):
-			ymin = min(mu[i]-yscale_fac*np.max(mean_abs_errors), np.min(T_x_means[(k_max//2):] - 2*T_x_stds[(k_max//2):]))
-			ymax = max(mu[i]-yscale_fac*np.max(mean_abs_errors), np.max(T_x_means[(k_max//2):] + 2*T_x_stds[(k_max//2):]))
+			ymin = min(mu[i]-yscale_fac*np.max(median_abs_errors), np.min(T_x_means[(k_max//2):] - 2*T_x_stds[(k_max//2):]))
+			ymax = max(mu[i]+yscale_fac*np.max(median_abs_errors), np.max(T_x_means[(k_max//2):] + 2*T_x_stds[(k_max//2):]))
 		else:
-			ymin = mu[i]-yscale_fac*np.max(mean_abs_errors)
-			ymax = mu[i]+yscale_fac*np.max(mean_abs_errors)
-		ax.set_ylim(ymin, ymax)
+			ymin = mu[i]-yscale_fac*np.max(median_abs_errors)
+			ymax = mu[i]+yscale_fac*np.max(median_abs_errors)
+		ax.set_ylim(-1, 2)
 		ax.set_ylabel(r"$E[T_%d(z)]$" % (i+1), fontsize=fontsize)
 		if (i==(n_cols-1)):
 			ax.legend(fontsize=fontsize)
@@ -292,6 +333,7 @@ def dist_from_str(dist_str, f_str, system, npzfile, AL_final_it):
 def filter_outliers(c, num_stds=4):
 	c_mean = np.mean(c);
 	c_std = np.std(c);
+	print(c_mean, c_std)
 	all_inds = np.arange(c.shape[0]);
 	below_inds = all_inds[c < c_mean - num_stds*c_std];
 	over_inds = all_inds[c > c_mean + num_stds*c_std];
@@ -335,6 +377,7 @@ def plot_ellipse(ax, mean_x, mean_y, std_x, std_y, c):
 
 def dsn_pairplots(fnames, dist_str, system, D, f_str='identity', \
 	              c_str=None, legendstrs=[], AL_final_its=[], \
+	              xlims=None, ylims=None, \
 	              fontsize=14, ellipses=False, \
 	              pfname='temp.png'):
 	n_fnames = len(fnames);
@@ -366,9 +409,10 @@ def dsn_pairplots(fnames, dist_str, system, D, f_str='identity', \
 			print('%s has not converged so not plotting.' % legendstrs[k]);
 			continue;
 		npzfile = np.load(fname);
-		dist, dist_label_strs = dist_from_str(dist_str, f_str, system, npzfile, AL_final_it);
-		c, c_label_str, cm = coloring_from_str(c_str, system, npzfile, AL_final_it);
-		plot_inds, below_inds, over_inds = filter_outliers(c, 2);
+		dist, dist_label_strs = dist_from_str(dist_str, f_str, system, npzfile, AL_final_it)
+		c, c_label_str, cm = coloring_from_str(c_str, system, npzfile, AL_final_it)
+		plot_inds, below_inds, over_inds = filter_outliers(c, 2)
+		print('p b o', plot_inds.shape,below_inds.shape,over_inds.shape)
 		fig, axs = plt.subplots(D, D, figsize=figsize);
 		for i in range(D):
 			for j in range(D):
@@ -387,6 +431,10 @@ def dsn_pairplots(fnames, dist_str, system, D, f_str='identity', \
 					ax.set_xlabel(dist_label_strs[j], fontsize=fontsize);
 				if (j==0):
 					ax.set_ylabel(dist_label_strs[i], fontsize=fontsize);
+				if xlims is not None:
+					ax.set_xlim(xlims)
+				if ylims is not None:
+					ax.set_ylim(ylims)
 
 		# add the colorbar
 		if (c is not None):
@@ -409,10 +457,10 @@ def pairplot(Z, dims, labels, origin=False, xlims=None, ylims=None, \
 	num_dims = len(dims)
 	rand_order = np.random.permutation(Z.shape[0])
 	Z = Z[rand_order, :]
-
 	if (c is not None):
 		c = c[rand_order]
 		plot_inds, below_inds, over_inds = filter_outliers(c, 2);
+
 
 	fig, axs = plt.subplots(num_dims-1, num_dims-1, figsize=figsize);
 	for i in range(num_dims-1):
