@@ -17,10 +17,10 @@ random_seed = int(sys.argv[4]);
 D = 8
 latent_dynamics = None;
 TIF_flow_type = 'PlanarFlow';
-elem_mult_flow = True;
+mult_and_shift = 'post';
 arch_dict = {'D':D, \
              'latent_dynamics':latent_dynamics, \
-             'elem_mult_flow':elem_mult_flow, \
+             'mult_and_shift':mult_and_shift, \
              'TIF_flow_type':TIF_flow_type, \
              'repeats':nlayers};
 
