@@ -40,12 +40,12 @@ fixed_params = {'W_EE':1.0, \
                 's_0':30};
 
 behavior_type = 'difference'
-diff_inds = [0, 1, 2, 3]
+diff_inds = [2, 3]
 c_vals=np.array([0.0])
 s_vals=np.array([1.0])
 r_vals=np.array([0.0, 1.0])
-d_mean = np.array([1.0, 1.0, 1.0, 0.0]);
-d_vars = np.array([0.5, 0.5, 0.5, 0.1]);
+d_mean = np.array([1.0, 0.0]);
+d_vars = np.array([0.1, 0.1]);
 behavior = {'type':behavior_type, \
             'diff_inds':diff_inds, \
             'c_vals':c_vals, \
@@ -71,4 +71,4 @@ lr_order = -3
 train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
           random_seed=random_seed, min_iters=2000, max_iters=4000, \
-          check_rate=100, dir_str='V1Circuit_full2')
+          check_rate=100, dir_str='V1Circuit')
