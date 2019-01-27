@@ -22,8 +22,9 @@ import scipy.stats
 from scipy.special import gammaln, psi
 import scipy.io as sio
 from itertools import compress
-from dsn.util import tf_integrals as tf_integrals
+from dsn.util.tf_DMFT_solvers import spont_chaotic_solve
 
+DTYPE = tf.float64
 
 class system:
     """Base class for systems using DSN modeling.
@@ -462,16 +463,16 @@ class V1Circuit(system):
         M = z_shape[1]
 
         # Assumed parameters
-        W_EP = 1.0*tf.ones((self.C,M), dtype=tf.float64)
-        W_ES = 0.54*tf.ones((self.C,M), dtype=tf.float64)
+        W_EP = 1.0*tf.ones((self.C,M), dtype=DTYPE)
+        W_ES = 0.54*tf.ones((self.C,M), dtype=DTYPE)
 
-        W_PP = 1.01*tf.ones((self.C,M), dtype=tf.float64)
-        W_PS = 0.33*tf.ones((self.C,M), dtype=tf.float64)
+        W_PP = 1.01*tf.ones((self.C,M), dtype=DTYPE)
+        W_PS = 0.33*tf.ones((self.C,M), dtype=DTYPE)
 
-        W_SV = 0.15*tf.ones((self.C,M), dtype=tf.float64)
+        W_SV = 0.15*tf.ones((self.C,M), dtype=DTYPE)
 
-        W_VP = 0.22*tf.ones((self.C,M), dtype=tf.float64)
-        W_VS = 0.77*tf.ones((self.C,M), dtype=tf.float64)
+        W_VP = 0.22*tf.ones((self.C,M), dtype=DTYPE)
+        W_VS = 0.77*tf.ones((self.C,M), dtype=DTYPE)
 
         # read free parameters from z vector
         ind = 0;
@@ -536,71 +537,71 @@ class V1Circuit(system):
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
             if (fixed_param == 'W_EE'):
-                W_EE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
+                W_EE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=DTYPE);
             elif (fixed_param == 'W_PE'):
-                W_PE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
+                W_PE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=DTYPE);
             elif (fixed_param == 'W_SE'):
-                W_SE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
+                W_SE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=DTYPE);
             elif (fixed_param == 'W_VE'):
-                W_VE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
+                W_VE = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=DTYPE);
 
             elif (fixed_param == 'b_E'):
-                b_E = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                b_E = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'b_P'):
-                b_P = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                b_P = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'b_S'):
-                b_S = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                b_S = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'b_V'):
-                b_V = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                b_V = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
 
             elif (fixed_param == 'h_FFE'):
-                h_FFE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_FFE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_FFP'):
-                h_FFP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_FFP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
 
             elif (fixed_param == 'h_LATE'):
-                h_LATE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_LATE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_LATP'):
-                h_LATP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_LATP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_LATS'):
-                h_LATS = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_LATS = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_LATV'):
-                h_LATV = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_LATV = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
 
             elif (fixed_param == 'h_RUNE'):
-                h_RUNE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_RUNE = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_RUNP'):
-                h_RUNP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_RUNP = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_RUNS'):
-                h_RUNS = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_RUNS = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'h_RUNV'):
-                h_RUNV = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                h_RUNV = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
 
             elif (fixed_param == 'tau'):
-                tau = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
+                tau = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=DTYPE);
             elif (fixed_param == 'n'):
-                n = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=tf.float64);
+                n = self.fixed_params[fixed_param]*tf.ones((self.C,M), dtype=DTYPE);
             elif (fixed_param == 's_0'):
-                s_0 = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                s_0 = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'a'):
-                a = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                a = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'c_50'):
-                c_50 = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                c_50 = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
 
             else:
                 print('Error: unknown fixed parameter: %s.' % fixed_param)
                 raise NotImplementedError()
 
         # Gather weights into the dynamics matrix W [K,M,4,4]
-        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
-        W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
-        W_SX = tf.stack([W_SE, tf.zeros((self.C,M), dtype=tf.float64), tf.zeros((self.C,M), dtype=tf.float64), -W_SV], axis=2);
-        W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
+        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C,M), dtype=DTYPE)], axis=2);
+        W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((self.C,M), dtype=DTYPE)], axis=2);
+        W_SX = tf.stack([W_SE, tf.zeros((self.C,M), dtype=DTYPE), tf.zeros((self.C,M), dtype=DTYPE), -W_SV], axis=2);
+        W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((self.C,M), dtype=DTYPE)], axis=2);
         W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2); 
 
         # Gather inputs into b [K,M,4,1]
         b = tf.expand_dims(tf.stack([b_E, b_P, b_S, b_V], axis=2), 3); 
-        h_FF = tf.expand_dims(tf.stack([h_FFE, h_FFP, tf.zeros((1,M), dtype=tf.float64), tf.zeros((1,M), dtype=tf.float64)], axis=2), 3);
+        h_FF = tf.expand_dims(tf.stack([h_FFE, h_FFP, tf.zeros((1,M), dtype=DTYPE), tf.zeros((1,M), dtype=DTYPE)], axis=2), 3);
         h_LAT = tf.expand_dims(tf.stack([h_LATE, h_LATP, h_LATS, h_LATV], axis=2), 3);
         h_RUN = tf.expand_dims(tf.stack([h_RUNE, h_RUNP, h_RUNS, h_RUNV], axis=2), 3); 
 
@@ -683,7 +684,7 @@ class V1Circuit(system):
         h = self.compute_h(b, h_FF, h_LAT, h_RUN, s_0, a, c_50)
 
         # initial conditions
-        r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0), dtype=tf.float64);
+        r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0), dtype=DTYPE);
         r0 = tf.tile(r0, [self.C,M,1,1]); # [K,M,4,1]
 
         # construct the input
@@ -868,22 +869,15 @@ class LowRankRNN(system):
 
         Behaviors:
 
-        'difference' - $$[d_{E,ss}, d_{P,ss}, d_{S,ss}, d_{V,ss}, d_{E,ss}^2, d_{P,ss}^2, d_{S,ss}^2, d_{V,ss}^2]$$
+        'struct_chaos' - $$[\mu, \delta_{\infty}, (\delta_0 - \delta_{\infty}), \mu^2, \delta_{\infty}^2, (\delta_0 - \delta_{\infty})^2]$$
         
-        'data' - $$[r_{E,ss}(c,s,r), ...,  r_{E,ss}(c,s,r)^2, ...]$$
-
         # Returns
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if (self.behavior['type'] == 'difference'):
-            all_T_x_labels = [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
-                              r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
-            diff_inds = self.behavior['diff_inds']
-            label_inds = diff_inds + list(map(lambda x : x + 4, diff_inds))
-            T_x_labels = []
-            for i in range(len(label_inds)):
-                T_x_labels.append(all_T_x_labels[label_inds[i]])
+        if (self.behavior['type'] == 'struct_chaos'):
+            T_x_labels = [r'$\mu$', r'$\delta_{\infty}$', r'$\delta_0 - \delta_{\infty}$', \
+                          r'$\mu^2$', r'$\delta_{\infty}^2$', r'$(\delta_0 - \delta_{\infty})^2$']
         else:
             raise NotImplementedError()
         return T_x_labels;
@@ -925,13 +919,13 @@ class LowRankRNN(system):
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
             if (fixed_param == 'g'):
-                g = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                g = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'Mm'):
-                Mm = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                Mm = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'Mn'):
-                Mn = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                Mn = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             elif (fixed_param == 'Sm'):
-                Sm = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+                Sm = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=DTYPE);
             else:
                 print('Error: unknown fixed parameter: %s.' % fixed_param)
                 raise NotImplementedError()
@@ -944,35 +938,16 @@ class LowRankRNN(system):
 
         Behaviors:
 
-        'difference' - 
+        'struct_chaos' - 
 
-          The total number of conditions from all of 
-          self,behavior.c_vals, s_vals, and r_vals should be two.  
-          The steady state of the first condition $$(c_1,s_1,r_1)$$ is 
-          subtracted from that of the second condition $$(c_2,s_2,r_2)$$ to get a 
-          difference vector
+          TODO provide description
           \\begin{equation}
-          d_{\\alpha,ss} = r_{\\alpha,ss}(c_2,s_2,r_2) - r_{\\alpha,ss}(c_1,s_1,r_1)
+          equations
           \end{equation}
         
           The total constraint vector is
           \\begin{equation}
-          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} d_{E,ss} \\\\\\\\ d_{P,ss} \\\\\\\\ d_{S,ss} \\\\\\\\ d_{V,ss} \\\\\\\\ d_{E,ss}^2 \\\\\\\\ d_{P,ss}^2 \\\\\\\\ d_{S,ss}^2 \\\\\\\\ d_{V,ss}^2 \end{bmatrix}
-          \end{equation}
-
-        
-        'data' - 
-
-          The user specifies the grid inputs for conditions via 
-          self.behavior.c_vals, s_vals, and r_vals.  The first and second
-          moments of the steady states for these conditions make up the
-          sufficient statistics vector.  Since the index is $$(c,s,r)$$, 
-          values of r are iterated over first, then s, then c (as is 
-          the c-standard) to construct the $$T(x)$$ vector.
-
-          The total constraint vector is
-          \\begin{equation}
-          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} r_{E,ss}(c,s,r) \\\\\\\\ ... \\\\\\\\  r_{E,ss}(c,s,r)^2 \\\\\\\\ ... \end{bmatrix}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} more \\\\\\\\ stuff  \end{bmatrix}
           \end{equation}
 
         # Arguments
@@ -983,46 +958,31 @@ class LowRankRNN(system):
 
         """
 
-        if (self.behavior['type'] in ['data', 'difference']):
-            T_x = self.simulation_suff_stats(z)
+        if (self.behavior['type'] == 'struct_chaos'):
+            M = tf.shape(z)[1]
+            if (self.model_opts['input_type'] == 'spont'):
+                g, Mm, Mn, Sm = self.filter_Z(z)
+                mu_init = 50.0*tf.ones((M,), dtype=DTYPE)
+                delta_0_init = 55.0*tf.ones((M,), dtype=DTYPE)
+                delta_inf_init = 45.0*tf.ones((M,), dtype=DTYPE)
+
+                mu, delta_0, delta_inf = spont_chaotic_solve(mu_init, delta_0_init, delta_inf_init, \
+                                                            g[0,:], Mm[0,:], Mn[0,:], Sm[0,:], self.solve_its, \
+                                                            self.solve_eps, db=False)
+
+                static_var = delta_inf
+                temporal_var = delta_0 - delta_inf
+
+                first_moments = tf.stack([mu, static_var, temporal_var], axis=1)
+                second_moments = tf.square(first_moments)
+                T_x = tf.expand_dims(tf.concat((first_moments, second_moments), axis=1), 0)
+
+            else:
+                raise NotImplementedError()
+            
         else:
-            raise NotImplementedError();
+            raise NotImplementedError()
         
-        return T_x
-
-    def simulation_suff_stats(self, z):
-        """Compute sufficient statistics that require simulation.
-
-        # Arguments
-            z (tf.tensor): Density network system parameter samples.
-
-        # Returns
-            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
-
-        """
-
-        #r1_t, r2_t = self.simulate(z);
-        r_t = self.simulate(z); # [T, C, M, D, 1]
-
-        if (self.behavior['type'] == 'difference'):
-            diff_inds = self.behavior['diff_inds']
-            r1_ss_list = []
-            r2_ss_list = []
-            for ind in diff_inds:
-                r1_ss_list.append(r_t[-1,0,:,ind,0])
-                r2_ss_list.append(r_t[-1,1,:,ind,0])
-            r1_ss = tf.stack(r1_ss_list, axis=1)
-            r2_ss = tf.stack(r2_ss_list, axis=1)
-            diff_ss = tf.expand_dims(r2_ss - r1_ss, 0)
-            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
-
-        elif (self.behavior['type'] == 'data'):
-            r_shape = tf.shape(r_t)
-            M = tf.shape[2]
-            r_ss = tf.transpose(r1_t[-1,:,:,:,0], [1,2,0]) # [M,C,D];
-            r_ss = tf.reshape(r_ss, [M, self.C*self.D])
-            T_x = tf.concat((r_ss, tf.square(r_ss)), 2);
-
         return T_x
 
     def compute_mu(self,):
@@ -1033,12 +993,11 @@ class LowRankRNN(system):
 
         """
 
-        if (self.behavior['type'] == 'difference'): 
-            means = self.behavior['d_mean']
-            variances = self.behavior["d_var"]
-        elif (self.behavior['type'] == 'data'):
-            means = np.reshape(self.behavior['r_mean'], (self.C*self.D,))
-            variances = np.reshape(self.behavior['r_var'], (self.C*self.D,))
+        if (self.behavior['type'] == 'struct_chaos'): 
+            means = self.behavior['means']
+            variances = self.behavior["variances"]
+        else:
+            raise NotImplementedError()
         first_moments = means
         second_moments = np.square(means) + variances
         mu = np.concatenate((first_moments, second_moments), axis=0)
