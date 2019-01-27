@@ -81,6 +81,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     tf.set_random_seed(random_seed);
     np.random.seed(0);
 
+    print(0)
     # Load nf initialization
     W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
     p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2);
@@ -92,39 +93,48 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         print('Making directory %s' % savedir );
         os.makedirs(savedir);
 
+    print(1)
     # Construct density network parameters.
     print(system.name, system.support_mapping)
     Z, sum_log_det_jacobian, flow_layers = density_network(W, arch_dict, system.support_mapping, initdir=initdir)
     log_q_z = base_log_q_z - sum_log_det_jacobian
 
-
+    print(2)
     all_params = tf.trainable_variables()
     nparams = len(all_params)
 
+    print(3)
     # Compute family-specific sufficient statistics and log base measure on samples.
     T_x = system.compute_suff_stats(Z);
     mu = system.compute_mu();
     T_x_mu_centered = system.center_suff_stats_by_mu(T_x);
 
+    print(4)
     R2 = compute_R2(log_q_z, None, T_x);
 
+    print(5)
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,));
     c = tf.placeholder(dtype=tf.float64, shape=());
 
+    print(6)
     # Augmented Lagrangian cost function.
+    print('Setting up augmented lagrangian gradient graph.')
     cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, all_params);
 
+    print(7)
     # Compute gradient of density network params (theta) wrt cost.
     grads_and_vars = [];
     for i in range(len(all_params)):
         grads_and_vars.append((cost_grads[i], all_params[i]));
 
+    print(8)
     # Add inputs and outputs of NF to saved tf model.
     tf.add_to_collection('W', W);
     tf.add_to_collection('Z', Z);
     saver = tf.train.Saver();
 
+    print(9)
     # Tensorboard logging.
     summary_writer = tf.summary.FileWriter(savedir);
     tf.summary.scalar('H', -tf.reduce_mean(log_q_z));
@@ -134,6 +144,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
     summary_op = tf.summary.merge_all();
 
+    print(10)
     # Dynamically extend logging of parameter gradients.
     array_init_len = int(np.ceil((max_iters*k_max)/OPT_COMPRESS_FAC));
     nparam_vals = count_params(all_params);
@@ -158,7 +169,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
     T_xs = np.zeros((k_max+1, n, system.num_suff_stats));
 
     gamma = 0.25;
-    num_norms = 100;
+    num_norms = 5;
     norms = np.zeros((num_norms,));
     new_norms = np.zeros((num_norms,));
 
@@ -171,11 +182,12 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
         sess.run(init_op);
 
         # Log initial state of the DSN.
+        print(11)
         w_i = np.random.normal(np.zeros((K,n,system.D)), 1.0);
         feed_dict = {W:w_i, Lambda:_lambda, c:_c};
         cost_i, _cost_grads, _Z, _T_x, _H, _log_q_z, summary = \
             sess.run([cost, cost_grads, Z, T_x, H, log_q_z, summary_op], feed_dict);
-        
+        print(12)
 
         summary_writer.add_summary(summary, 0);
         log_grads(_cost_grads, cost_grad_vals, 0);
@@ -203,12 +215,15 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             train_step = optimizer.apply_gradients(grads_and_vars);
             initialize_adam_parameters(sess, optimizer, all_params);
 
+            print(12.5)
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1,n,system.D)), 1.0);
                 feed_dict.update({W:w_j});
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict);
                 _R = np.mean(_T_x_mu_centered[0], 0)
+                print(j, _R)
                 norms[j] = np.linalg.norm(_R);
+            print(12.75)
 
             i = 0;
             has_converged = False;
@@ -216,6 +231,7 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
             print('Aug Lag it', k);
 
             while (i < max_iters):
+                print(13)
                 cur_ind = total_its + i;
 
                 if (cur_ind == array_cur_len):
@@ -227,8 +243,10 @@ def train_dsn(system, n, arch_dict, k_max=10, sigma_init=10.0, c_init_order=0, l
 
                 if (np.mod(cur_ind, check_rate)==0):
                     start_time = time.time()
+                print(14)
                 ts, cost_i, _cost_grads, summary, _T_x, _H, _Z = \
                     sess.run([train_step, cost, cost_grads, summary_op, T_x, H, Z], feed_dict);
+                print(15)
                 if (np.mod(cur_ind, check_rate)==0):
                     end_time = time.time()
                     print('iteration took %.4f seconds.' % (end_time-start_time));

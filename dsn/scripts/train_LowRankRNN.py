@@ -40,7 +40,7 @@ model_opts = {'rank':1, 'input_type':'spont'}
 system = LowRankRNN(fixed_params, behavior, model_opts=model_opts, solve_its=25, solve_eps=0.5)
 
 k_max = 10
-batch_size = 1000;
+batch_size = 100;
 lr_order = -3
 min_iters = 1000
 max_iters = 2000

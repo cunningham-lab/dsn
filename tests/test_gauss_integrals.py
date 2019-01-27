@@ -5,11 +5,11 @@ import tensorflow as tf
 from tf_util.stat_util import approx_equal
 
 DTYPE = tf.float64
-EPS = 1e-16
+EPS = 1e-1
 
-mus = np.array([-100.0, -1.0, 1e-6, 0.0, 1e-6, 1.0, 100.0])
-delta0s = np.array([0.0, 1e-6, 1.0, 100.0])
-deltainfs = np.array([0.0, 1e-6, 1.0, 100.0])
+mus = np.array([-50.0, -1.0, 1e-6, 0.0, 1e-6, 1.0, 50.0])
+delta0s = np.array([0.0, 1e-6, 1.0, 50.0])
+deltainfs = np.array([0.0, 1e-6, 1.0, 50.0])
 
 num_mus = mus.shape[0]
 num_delta0s = delta0s.shape[0]
