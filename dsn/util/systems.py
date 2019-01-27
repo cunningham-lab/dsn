@@ -591,8 +591,6 @@ class V1Circuit(system):
                 print('Error: unknown fixed parameter: %s.' % fixed_param)
                 raise NotImplementedError()
 
-            ind += 1
-
         # Gather weights into the dynamics matrix W [K,M,4,4]
         W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
         W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((self.C,M), dtype=tf.float64)], axis=2);
@@ -812,6 +810,245 @@ class V1Circuit(system):
         return SoftPlusFlow([], inputs)
 
         
+
+
+class LowRankRNN(system):
+    """ Low Rank RNNs
+
+        Stuff about LR RNNs
+
+    # Attributes
+        behavior (dict): see LowRankRNN.compute_suff_stats
+        model_opts (dict): TODO (update this for LR RNN) 
+          * model_opts[`'g_FF'`] 
+            * `'c'` (default) $$g_{FF}(c) = c$$ 
+            * `'saturate'` $$g_{FF}(c) = \\frac{c^a}{c_{50}^a + c^a}$$
+          * model_opts[`'g_LAT'`] 
+            * `'linear'` (default) $$g_{LAT}(c,s) = c[s_0 - s]_+$$ 
+            * `'square'` $$g_{LAT}(c,s) = c[s_0^2 - s^2]_+$$
+          * model_opts[`'g_RUN'`] 
+            * `'r'` (default) $$g_{RUN}(r) = r$$ 
+        more attributes...
+    """
+
+    def __init__(self, fixed_params, behavior, \
+                 model_opts={'rank':1, 'input_type':'spont'}, \
+                 solve_its=25, solve_eps=0.8):
+        self.model_opts = model_opts
+        super().__init__(fixed_params, behavior)
+        self.name = "LowRankRNN"
+        self.solve_its = solve_its
+        self.solve_eps = solve_eps
+
+    def get_all_sys_params(self,):
+        """Returns ordered list of all system parameters and individual element labels.
+
+
+         - $$g$$ - strength of the random matrix component
+         - $$M_m$$ - mean value of right connectivity vector
+         - $$M_n$$ - mean value of left connectivity vector
+         - $$\Sigma_m$$ - variance of values in right connectivity vector
+
+        TODO update this to be flexible across additional ranks along the lines of
+         When `model_opts['rank'] == 2`
+         - $$M_{m,2}$$ - blah blah
+
+        # Returns
+            all_params (list): List of strings of all parameters of full system model.
+            all_param_labels (list): List of tex strings for all parameters.
+        """
+        all_params = ['g', 'Mm', 'Mn', 'Sm']
+        all_param_labels = {'g':[r'$g$'], 'Mm':[r'$M_m$'], 'Mn':[r'$M_n$'], 'Sm':[r'$\Sigma_m$']}
+
+
+        return all_params, all_param_labels
+
+    def get_T_x_labels(self,):
+        """Returns `T_x_labels`.
+
+        Behaviors:
+
+        'difference' - $$[d_{E,ss}, d_{P,ss}, d_{S,ss}, d_{V,ss}, d_{E,ss}^2, d_{P,ss}^2, d_{S,ss}^2, d_{V,ss}^2]$$
+        
+        'data' - $$[r_{E,ss}(c,s,r), ...,  r_{E,ss}(c,s,r)^2, ...]$$
+
+        # Returns
+            T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+
+        """
+        if (self.behavior['type'] == 'difference'):
+            all_T_x_labels = [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
+                              r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
+            diff_inds = self.behavior['diff_inds']
+            label_inds = diff_inds + list(map(lambda x : x + 4, diff_inds))
+            T_x_labels = []
+            for i in range(len(label_inds)):
+                T_x_labels.append(all_T_x_labels[label_inds[i]])
+        else:
+            raise NotImplementedError()
+        return T_x_labels;
+
+    def filter_Z(self, z):
+        """Returns the system matrix/vector variables depending free parameter ordering.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            g (tf.tensor): [1,M] Strength of the random matrix component.
+            Mm (tf.tensor): [1,M] Mean value of right connectivity vector.
+            Mn (tf.tensor): [1,M] Mean value of left connectivity vector.
+            Sm (tf.tensor): [1,M] Variance of values in right connectivity vector.
+
+        """
+
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        # read free parameters from z vector
+        ind = 0;
+        for free_param in self.free_params:
+            if (free_param == 'g'):
+                g = z[:, :, ind]
+            elif (free_param == 'Mm'):
+                Mm = z[:, :, ind]
+            elif (free_param == 'Mn'):
+                Mn = z[:, :, ind]
+            elif (free_param == 'Sm'):
+                Sm = z[:, :, ind]
+            else:
+                print('Error: unknown free parameter: %s.' % free_param)
+                raise NotImplementedError()
+            ind += 1
+
+        # load fixed parameters
+        for fixed_param in self.fixed_params.keys():
+            if (fixed_param == 'g'):
+                g = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+            elif (fixed_param == 'Mm'):
+                Mm = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+            elif (fixed_param == 'Mn'):
+                Mn = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+            elif (fixed_param == 'Sm'):
+                Sm = self.fixed_params[fixed_param]*tf.ones((1,M), dtype=tf.float64);
+            else:
+                print('Error: unknown fixed parameter: %s.' % fixed_param)
+                raise NotImplementedError()
+
+        return g, Mm, Mn, Sm
+
+    
+    def compute_suff_stats(self, z):
+        """Compute sufficient statistics of density network samples.
+
+        Behaviors:
+
+        'difference' - 
+
+          The total number of conditions from all of 
+          self,behavior.c_vals, s_vals, and r_vals should be two.  
+          The steady state of the first condition $$(c_1,s_1,r_1)$$ is 
+          subtracted from that of the second condition $$(c_2,s_2,r_2)$$ to get a 
+          difference vector
+          \\begin{equation}
+          d_{\\alpha,ss} = r_{\\alpha,ss}(c_2,s_2,r_2) - r_{\\alpha,ss}(c_1,s_1,r_1)
+          \end{equation}
+        
+          The total constraint vector is
+          \\begin{equation}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} d_{E,ss} \\\\\\\\ d_{P,ss} \\\\\\\\ d_{S,ss} \\\\\\\\ d_{V,ss} \\\\\\\\ d_{E,ss}^2 \\\\\\\\ d_{P,ss}^2 \\\\\\\\ d_{S,ss}^2 \\\\\\\\ d_{V,ss}^2 \end{bmatrix}
+          \end{equation}
+
+        
+        'data' - 
+
+          The user specifies the grid inputs for conditions via 
+          self.behavior.c_vals, s_vals, and r_vals.  The first and second
+          moments of the steady states for these conditions make up the
+          sufficient statistics vector.  Since the index is $$(c,s,r)$$, 
+          values of r are iterated over first, then s, then c (as is 
+          the c-standard) to construct the $$T(x)$$ vector.
+
+          The total constraint vector is
+          \\begin{equation}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} r_{E,ss}(c,s,r) \\\\\\\\ ... \\\\\\\\  r_{E,ss}(c,s,r)^2 \\\\\\\\ ... \end{bmatrix}
+          \end{equation}
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Sufficient statistics of samples.
+
+        """
+
+        if (self.behavior['type'] in ['data', 'difference']):
+            T_x = self.simulation_suff_stats(z)
+        else:
+            raise NotImplementedError();
+        
+        return T_x
+
+    def simulation_suff_stats(self, z):
+        """Compute sufficient statistics that require simulation.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
+        """
+
+        #r1_t, r2_t = self.simulate(z);
+        r_t = self.simulate(z); # [T, C, M, D, 1]
+
+        if (self.behavior['type'] == 'difference'):
+            diff_inds = self.behavior['diff_inds']
+            r1_ss_list = []
+            r2_ss_list = []
+            for ind in diff_inds:
+                r1_ss_list.append(r_t[-1,0,:,ind,0])
+                r2_ss_list.append(r_t[-1,1,:,ind,0])
+            r1_ss = tf.stack(r1_ss_list, axis=1)
+            r2_ss = tf.stack(r2_ss_list, axis=1)
+            diff_ss = tf.expand_dims(r2_ss - r1_ss, 0)
+            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
+
+        elif (self.behavior['type'] == 'data'):
+            r_shape = tf.shape(r_t)
+            M = tf.shape[2]
+            r_ss = tf.transpose(r1_t[-1,:,:,:,0], [1,2,0]) # [M,C,D];
+            r_ss = tf.reshape(r_ss, [M, self.C*self.D])
+            T_x = tf.concat((r_ss, tf.square(r_ss)), 2);
+
+        return T_x
+
+    def compute_mu(self,):
+        """Calculate expected moment constraints given system paramterization.
+
+        # Returns
+            mu (np.array): Expected moment constraints.
+
+        """
+
+        if (self.behavior['type'] == 'difference'): 
+            means = self.behavior['d_mean']
+            variances = self.behavior["d_var"]
+        elif (self.behavior['type'] == 'data'):
+            means = np.reshape(self.behavior['r_mean'], (self.C*self.D,))
+            variances = np.reshape(self.behavior['r_var'], (self.C*self.D,))
+        first_moments = means
+        second_moments = np.square(means) + variances
+        mu = np.concatenate((first_moments, second_moments), axis=0)
+        return mu
+
+    def support_mapping(self, inputs):
+        """TODO add documentation
+
+        """
+        return SoftPlusFlow([], inputs)
 
 
 
