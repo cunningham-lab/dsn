@@ -460,7 +460,7 @@ __Returns__
 ```python
 LowRankRNN(self, fixed_params, behavior, model_opts={'rank': 1, 'input_type': 'spont'}, solve_its=25, solve_eps=0.8)
 ```
-Recent work by ([Matroguisseppe & Ostojic, 2018](#Mastrogiuseppe2018Linking)) allows us to
+Recent work by ([Matrogiusseppe & Ostojic, 2018](#Mastrogiuseppe2018Linking)) allows us to
 derive statistical properties of the behavior of recurrent
 neural networks (RNNs) given a low-rank parameterization of
 their connectivity.  This work builds on dynamic mean field
