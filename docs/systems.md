@@ -236,14 +236,16 @@ are given by:
 \end{equation}
 
 In some cases, these neuron types do not send projections to one of the other
-types.  Additionally, much work has been done to measure the relative magnitudes
-of the synaptic projections between neural types.
+types.  Additionally, much work, such as ([Pfeffer et al. 2013](#Pfeffer2013Inhibition))
+has been done to measure the relative magnitudes of the synaptic projections
+between neural types.
 \begin{equation}
 W = \begin{bmatrix} W_{EE} & -1.0 & -0.54 & 0 \\\\ W_{PE} & -1.01 & -0.33 & 0 \\\\ W_{SE} & 0 & 0 & -0.15 \\\\ W_{VE} & -0.22 & -0.77 & 0 \end{bmatrix}
 \end{equation}
 
 In this model, we are interested in capturing V1 responses across varying
-contrasts $$c$$, stimulus sizes $$s$$, and locomotion $$r$$ conditions.
+contrasts $$c$$, stimulus sizes $$s$$, and locomotion $$r$$ conditions as
+in ([Dipoppa et al. 2018](#Dipoppa2018Vision)).
 
 \begin{equation}
 h = b + g_{FF}(c) h_{FF} + g_{LAT}(c,s) h_{LAT} + g_{RUN}(r) h_{RUN}
@@ -444,30 +446,58 @@ __Returns__
 ```python
 V1Circuit.support_mapping(self, inputs)
 ```
-TODO add documentation
+Maps from real numbers to support of parameters.
 
+__Arguments:__
+
+    inputs (np.array): Input from previous layers of the DSN.
+
+__Returns__
+
+`Z (np.array)`: Samples from the DSN at the final layer.
 
 ## <a name="LowRankRNN"> </a> LowRankRNN
 ```python
 LowRankRNN(self, fixed_params, behavior, model_opts={'rank': 1, 'input_type': 'spont'}, solve_its=25, solve_eps=0.8)
 ```
-Low Rank RNNs
+Recent work by ([Matroguisseppe & Ostojic, 2018](#Mastrogiuseppe2018Linking)) allows us to
+derive statistical properties of the behavior of recurrent
+neural networks (RNNs) given a low-rank parameterization of
+their connectivity.  This work builds on dynamic mean field
+theory (DMFT) for neural networks (Sompolinsky et al. 1988),
+which is exact in the limit of infinite neurons, but has been
+shown to yield accurate approximations for finite size
+networks.
 
-Stuff about LR RNNs
+The network model is
+
+$$\dot{x}_i(t) = -x_i(t) + \sum_{j=1}^N J_{ij} \phi(x_j(t)) + I_i $$
+
+where the connectivity is comprised of a random and structured component:
+
+$$J_{ij} = g \chi_{ij} + P_{ij}$$
+
+The random all-to-all component has elements drawn from
+$$\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$$, and the structured
+component is a sum of $$r$$ unit rank terms:
+
+$$P_{ij} = \sum_{k=1}^r \frac{m_i^{(k)}n_j^{(k)}}{N}$$
+
+The nonlinearity $$\phi$$ is set to $$tanh$$ in this software, but
+the theory is general for many other activation functions.
+
 
 __Attributes__
 
 - `behavior (dict)`: see LowRankRNN.compute_suff_stats
-- `model_opts (dict)`: TODO (update this for LR RNN)
-  * model_opts[`'g_FF'`]
-    * `'c'` (default) $$g_{FF}(c) = c$$
-    * `'saturate'` $$g_{FF}(c) = \frac{c^a}{c_{50}^a + c^a}$$
-  * model_opts[`'g_LAT'`]
-    * `'linear'` (default) $$g_{LAT}(c,s) = c[s_0 - s]_+$$
-    * `'square'` $$g_{LAT}(c,s) = c[s_0^2 - s^2]_+$$
-  * model_opts[`'g_RUN'`]
-    * `'r'` (default) $$g_{RUN}(r) = r$$
-more attributes...
+- `model_opts (dict)`:
+  * model_opts[`'rank'`]
+    * `1` (default) Rank 1 network
+    * `r` any other pos int (TODO)
+  * model_opts[`'input_type'`]
+    * `'spont'` (default) No input.
+- `solve_its (int)`: Number of langevin dynamics simulation steps.
+- `solve_eps (float)`: Langevin dynamics solver step-size.
 
 ### get\_all\_sys\_params
 ```python
@@ -475,15 +505,16 @@ LowRankRNN.get_all_sys_params(self)
 ```
 Returns ordered list of all system parameters and individual element labels.
 
+When `model_opts['rank'] == 1`
 
-- $$g$$ - strength of the random matrix component
-- $$M_m$$ - mean value of right connectivity vector
-- $$M_n$$ - mean value of left connectivity vector
-- $$\Sigma_m$$ - variance of values in right connectivity vector
+ - $$g$$ - strength of the random matrix component
+ - $$M_m$$ - mean value of right connectivity vector
+ - $$M_n$$ - mean value of left connectivity vector
+ - $$\Sigma_m$$ - variance of values in right connectivity vector
 
-TODO update this to be flexible across additional ranks along the lines of
 When `model_opts['rank'] == 2`
-- $$M_{m,2}$$ - blah blah
+
+ - TODO
 
 __Returns__
 
@@ -498,7 +529,7 @@ Returns `T_x_labels`.
 
 Behaviors:
 
-'struct_chaos' - $$[\mu, \delta_{\infty}, (\delta_0 - \delta_{\infty}), \mu^2, \delta_{\infty}^2, (\delta_0 - \delta_{\infty})^2]$$
+'struct_chaos' - $$[\mu, \Delta_{\infty}, (\Delta_0 - \Delta_{\infty}), \mu^2, \Delta_{\infty}^2, (\Delta_0 - \Delta_{\infty})^2]$$
 
 __Returns__
 
@@ -533,14 +564,32 @@ Behaviors:
 
 'struct_chaos' -
 
-  TODO provide description
-  \begin{equation}
-  equations
-  \end{equation}
+  When `model_opts['rank'] == 1` and `model_opts['input_type'] == 'spont'`
+
+  Set constraints on the mean unit activity $$\mu$$, the static variance
+  $$\Delta_{\infty}$$, and the temporal variance $$\Delta_T = \Delta_0 - \Delta_{\infty}$$.
+  $$\mu$$, $$\Delta_0$$, and $$\Delta_{\infty}$$ can be found for a rank-1
+  no-input network by solving the following consistency equations.
+
+  $$\mu = F(\mu, \Delta_0, \Delta_\infty) = M_m M_n \int \mathcal{D}z \phi(\mu + \sqrt{\Delta_0} z)$$
+
+  $$\Delta_0 = G(\mu, \Delta_0, \Delta_\infty) = [\Delta_\infty^2 + 2g^2\{\int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z [\int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x $$
+  $$ + \sqrt{\Delta_\infty}z)]^2\} +M_n^2 \Sigma_m^2 \langle[\phi_i]\rangle^2(\Delta_0 - \Delta_\infty)]^{\frac{1}{2}} $$
+
+  $$\Delta_\infty = H(\mu, \Delta_0, \Delta_\infty) = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty} + \sqrt{\Delta_\infty}z \right]^2 + M_n^2 \Sigma_m^2 \langle [\phi_i] \rangle^2$$
+
+  The solutions are found via a Langevin dynamics simulation with step size
+  `self.solve_eps` and number of iterations `self.solve_its`.
+
+  $$\dot{\mu} = -\mu + F(\mu, \Delta_0, \Delta_\infty)$$
+
+  $$\dot{\Delta_0} = \Delta_0 + G(\mu, \Delta_0, \Delta_\infty)$$
+
+  $$\dot{\Delta_\infty} = -\Delta_\infty + H(\mu, \Delta_0, \Delta_\infty)$$
 
   The total constraint vector is
   \begin{equation}
-  E_{x\sim p(x \mid z)}\left[T(x)\right] = \begin{bmatrix} more \\\\ stuff  \end{bmatrix}
+  E_{x\sim p(x \mid z)}\left[T(x)\right] = \begin{bmatrix} \mu \\\\ \Delta_\infty \\\\ \Delta_0 - \Delta_\infty \\\\ \mu \\\\ \Delta_\infty^2 \\\\ (\Delta_0 - \Delta_\infty)^2 \end{bmatrix}
   \end{equation}
 
 __Arguments__
@@ -567,6 +616,24 @@ __Returns__
 ```python
 LowRankRNN.support_mapping(self, inputs)
 ```
-TODO add documentation
+Maps from real numbers to support of parameters.
+
+__Arguments:__
+
+    inputs (np.array): Input from previous layers of the DSN.
+
+__Returns__
+
+`Z (np.array)`: Samples from the DSN at the final layer.
+
+
+
+# References #
+
+Dipoppa, Mario, et al. *[Vision and locomotion shape the interactions between neuron types in mouse visual cortex](https://www.sciencedirect.com/science/article/pii/S0896627318302435){:target="_blank"}*. Neuron 98.3 (2018): 602-615. <a name="Dipoppa2018Vision"></a>
+
+Pfeffer, Carsten K., et al. [Inhibition of inhibition in visual cortex: the logic of connections between molecularly distinct interneurons](https://www.nature.com/articles/nn.3446){:target="_blank"}*." Nature neuroscience 16.8 (2013): 1068. <a name="Pfeffer2013Inhibition"></a>
+
+Mastrogiuseppe, Francesca, and Srdjan Ostojic. *[Linking connectivity, dynamics, and computations in low-rank recurrent neural networks](https://www.sciencedirect.com/science/article/pii/S0896627318305439){:target="_blank"}*. Neuron 99.3 (2018): 609-623. <a name="Mastrogiuseppe2018Linking"></a>
 
 

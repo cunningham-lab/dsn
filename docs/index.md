@@ -69,18 +69,18 @@ H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = E_{z \sim q_\theta}\l
 
 Deep generative models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network. However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizimg flows ([Rezende & Mohammed 2015](#Rezende2015variational)) -- bijective functions with fast log determinant jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy.  
 
-This repository depends on [tf_util](https://github.com/cunningham-lab/tf_util), which has [code](https://github.com/cunningham-lab/tf_util/blob/master/tf_util/flows.py) for several normalizing flow classes.  Most of our analyses use planar flows, which have proven to be most expressive and efficient in our architecture searches.
+This repository depends on [tf_util](https://github.com/cunningham-lab/tf_util), which has [code](https://github.com/cunningham-lab/tf_util/blob/master/tf_util/normalizing_flows.py) for several normalizing flow classes.  Most of our analyses use planar flows, which have proven to be most expressive and efficient in our architecture searches.
 
-# <a name="linear_2D_example"></a> Example: Oscillating 2-D linear system. #
+# <a name="Linear2D_example"></a> Example: Oscillating 2-D linear system. #
 
 To provide intuition for DSNs to the reader, we discuss degenerate parameterizations of two-dimensional linear dynamical systems, 
 \begin{equation}
 \tau \dot{x} = Ax, A = \begin{bmatrix} a_1 & a_2 \\\\ a_3 & a_4 \end{bmatrix}
 \end{equation}
- that produce a band of oscillations. To train a DSN to learn the maximally entropic distribution of real entries of the dynamics matrix $$z = \left[a_1, a_2, a_3, a_4 \right]^\top$$ that yield a band of oscillations, we choose $$T(x)$$ to contain the first- and second-moments of the oscillatory frequency $$\omega$$ and the primary growth/decay factor $$c$$ of the oscillating system. Let's say we want to learn the distribution of real entries of A that yield a $$c$$ around zero with variance 1.0, and oscillations at 2 Hz with variance 1.0.  We will then constrain the behavior of the DSN to have the following constraints:
+ that produce a band of oscillations. To train a DSN to learn the maximally entropic distribution of real entries of the dynamics matrix $$z = \left[a_1, a_2, a_3, a_4 \right]^\top$$ that yield a band of oscillations, we choose $$T(x)$$ to contain the first- and second-moments of the oscillatory frequency $$\omega$$ and the primary growth/decay factor $$c$$ of the oscillating system. Let's say we want to learn the distribution of real entries of A that yield a $$c$$ around zero with variance 1.0, and oscillations at 1 Hz with variance 1.0.  We will then constrain the behavior of the DSN to have the following constraints:
 
  \begin{equation}
- \mu = E \begin{bmatrix} c \\\\ \omega \\\\ c^2 \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 2.0 \\\\ 1.0 \\\\ 5.0 \end{bmatrix}
+ \mu = E \begin{bmatrix} c \\\\ \omega \\\\ c^2 \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 1.0 \\\\ 1.0 \\\\ 2.0 \end{bmatrix}
  \end{equation} 
 
  We could simuilate system activity $$x$$ from $$z$$ for some finite number of time steps, and estimate $$\omega$$ by e.g. taking the peak of the Discrete Fourier series.  Instead, we can compute that sufficient statistics for this oscillating behavior through a closed form function $$f_{p, T}(z)$$ by taking the eigendecomposition of the dynamics matrix.
@@ -96,23 +96,26 @@ Where $$\lambda_1$$ and $$\lambda_2$$ are eigenvalues of the dynamics matrix ord
 
 First, import the following libraries.
 ```python
+import os
 import numpy as np
 from dsn.train_dsn import train_dsn
-from dsn.util.systems import linear_2D
-from dsn.util.dsn_util import setup_IO
+from dsn.util.systems import Linear2D
+from dsn.util.dsn_util import get_savedir
 from dsn.util.plot_util import assess_constraints, plot_opt, dsn_pairplots
 ```
 
-We choose our deep generative model by specifying 10 layers planar flows preceded by a layer of elementwise multiplication.
+We choose our deep generative model by specifying 10 layers planar flows followed by a layer of elementwise multiplication and shift.
 ```python
 # normalizing flow layer architecture
-flow_type = 'PlanarFlowLayer'
+flow_type = 'PlanarFlow'
 # number of layers
 nlayers = 10
-flow_dict = {'latent_dynamics':None, \
+mult_and_shift = 'post';
+arch_dict = {'D':4, \
+             'latent_dynamics':None, \
+             'mult_and_shift':mult_and_shift, \
              'TIF_flow_type':flow_type, \
-             'repeats':nlayers, \
-             'scale_layer':True}
+             'repeats':nlayers};
 ```
 
 This density network architecture is initialized using random seed 0.  It is then optimized to produce samples from an isotropic gaussian with variance 1.0.  This is done so that we start from a relatively entropic initialization.
@@ -133,15 +136,15 @@ To train a DSN to learn one of the [built in system classes](systems.md), you ca
 fixed_params = {'tau':1.0};
 ``` 
 
- `behavior`: which specifies the type of behavior and associated constraints.  First, the behavioral type is set to 'oscillation'.  The first and second elements of the mean and variance vectors correspond to the real and imaginary components of the first eigenvalue, respectively.  If we want an average oscillatory frequency of 2.0 Hz and 0.0 growth/decay, and variance of 1.0, we do the following:
+ `behavior`: which specifies the type of behavior and associated constraints.  First, the behavioral type is set to 'oscillation'.  The first and second elements of the mean and variance vectors correspond to the real and imaginary components of the first eigenvalue, respectively.  If we want an average oscillatory frequency of 1.0 Hz and 0.0 growth/decay, and variances of 1.0, we do the following:
  ```python
- # Specify desired mean and variance for the real and imaginary
+# Specify desired mean and variance for the real and imaginary
 # components of the first eigenvalue.
 behavior_type = 'oscillation'
-f = 2.0; # 2 Hz
-means = np.array([0.0, 2*np.pi*f])
+omega = 1.0; # 2 Hz
+means = np.array([0.0, 2*np.pi*omega])
 variances = np.array([1.0, 1.0])
-behavior = {'type':behavior_type, 'means':means, 'vars':variances}
+behavior = {'type':behavior_type, 'means':means, 'variances':variances}
  ```
 
 Then, we finally create an instance of the 2D linear system class.
@@ -153,10 +156,10 @@ Finally, we select some optimization hyperparameters, and off we go!
 ```python
 # optimization hyperparams
 batch_size = 1000;
-c_init_order = -5
+c_init_order = 0
 lr_order = -3
 
-train_dsn(system, batch_size, flow_dict, \
+train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, \
           c_init_order=c_init_order, lr_order=lr_order,\
           random_seed=random_seed, min_iters=5000, \
@@ -165,21 +168,20 @@ train_dsn(system, batch_size, flow_dict, \
 ``` 
 
 ## <a name="auglag"> </a> Augmented lagrangian optimization ##
-To optimize $$q_\theta(z)$$, we run the constrained optimization using the augmented Lagrangian method.  We minimize the following objective:
+In general, to optimize $$q_\theta(z)$$, we run the constrained optimization using the augmented Lagrangian method.  We minimize the following objective:
 \begin{equation}
 L(\theta; \lambda, c) = -H(q_\theta) + \lambda^\top R(\theta) + \frac{c}{2}||R(\theta)||^2
 \end{equation}
-where $$\lambda \in \mathcal{R}^m$$ are the Lagrange multipliers and $$c$$ is the penalty coefficient.  For a fixed $$(\lambda, c)$$, we optimize $$\theta$$ with stochastic gradient descent.  We start with a low value of $$c$$ initially, and increase $c$ during each augmented Lagrangian epoch, as well as tune $$\lambda$$ based on the constraint violations.  For the linear 2-dimensional system (Fig. 2) optimization hyperparameters are initialized to $$c_1 = 10^{-5}$$ and $$\lambda_1 = \bf{0}$$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $$E[||R(\theta_{k+1})||] > \gamma E[||R(\theta_{k})||]$$ is computed, and $$c_{k+1}$$ is updated  to $$\beta c_k$$ with probability $$1-p$$.  In general, we use $$\beta = 4.0$$ and $$\gamma = 0.25$$.  The other update rule is $$\lambda_{k+1} = \lambda_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$$.  
+where $$\lambda \in \mathcal{R}^m$$ are the Lagrange multipliers and $$c$$ is the penalty coefficient.  For a fixed $$(\lambda, c)$$, we optimize $$\theta$$ with stochastic gradient descent.  We start with a low value of $$c$$ initially, and increase $$c$$ during each augmented Lagrangian epoch, as well as tune $$\lambda$$ based on the constraint violations.  For the linear 2-dimensional system, optimization hyperparameters were initialized to $$c_1 = 10^{0}$$ and $$\lambda_1 = \bf{0}$$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $$E[||R(\theta_{k+1})||] > \gamma E[||R(\theta_{k})||]$$ is computed, and $$c_{k+1}$$ is updated  to $$\beta c_k$$ with probability $$1-p$$.  In general, we use $$\beta = 4.0$$ and $$\gamma = 0.25$$.  The other update rule is $$\lambda_{k+1} = \lambda_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$$.  
 
 ```python
-from dsn.util.plot_util import assess_constraints, plot_opt, plot_phis
 basedir = os.getcwd()
-savedir = basedir + '/' + setup_IO(system, flow_dict, \
+savedir = basedir + '/' + get_savedir(system, arch_dict, \
                                    sigma_init, lr_order, \
                                    c_init_order, random_seed, 
                                    dir_str='test')
-fname = savedir + 'results.npz'
-plot_opt([fname], [''])
+fname = savedir + 'opt_info.npz'
+figs, AL_final_its, p_values = plot_opt([fname], [''])
 ```
 ![linear system entropy](images/linear2D_H_opt.png)
 ![linear system constraints](images/linear2D_constraints_opt.png)
@@ -188,10 +190,10 @@ Each augmented Lagrangian epoch runs for 50,000 iterations.  We consider the opt
 
 Here, we plot the distribution learned by the DSN.  This is the distribution of $$\phi$$ at the point of the optimization where the constraint satisfaction null hypotheses are accepted (dotted line above).  
 ```python
-alpha = 0.05
-p_values, AL_final_its = assess_constraints([fname], alpha, k_max, mu, system.num_suff_stats)
-labels = [r'$a_1$', r'$a_2$', r'$a_3$', r'$a_4$']
-plot_phis([fname], system.D, labels, [''], AL_final_its, fontsize=20)
+dsn_pairplots([fname], 'Zs', system, system.D, f_str='identity', \
+                c_str='log_q_z', legendstrs=[], AL_final_its=AL_final_its, \
+                fontsize=14, ellipses=False, \
+                pfname='temp1.png')
 ```
 ![oscillating linear systems](images/oscillating_linear_systems.png)
 
@@ -199,10 +201,13 @@ plot_phis([fname], system.D, labels, [''], AL_final_its, fontsize=20)
 
 
 Sean Bittner \\
-January 6, 2018 
+January 6, 2019
 
 # References #
-Sean Bittner and John Cunningham. *[Learning exponential families](https://github.com/cunningham-lab/efn/blob/master/written/EFN_AISTATS2019/Bittner_AIStats_2019.pdf){:target="_blank"}.* (In prep.), ?(?):?-?, 2018. <a name="Bittner2018learning"></a>
+Sean Bittner and John Cunningham. *[Learning exponential families](https://github.com/cunningham-lab/efn/blob/master/written/EFN_AISTATS2019/Bittner_AIStats_2019.pdf){:target="_blank"}.* (In prep.), ?(?):?-?, 2019. <a name="Bittner2018learning"></a>
+
+Mastrogiuseppe, Francesca, and Srdjan Ostojic. *[Linking connectivity, dynamics, and computations in low-rank recurrent neural networks](https://www.sciencedirect.com/science/article/pii/S0896627318305439){:target="_blank"}.*. Neuron 99.3 (2018): 609-623.
+
 
 <a name="Kingma2013autoencoding"></a> Diederik P Kingma and Max Welling. *[Auto-encoding variational bayes](https://arxiv.org/abs/1312.6114){:target="_blank"}.* arXiv preprint arXiv:1312.6114, 2013. 
 
