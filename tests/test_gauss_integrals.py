@@ -6,10 +6,11 @@ from tf_util.stat_util import approx_equal
 
 DTYPE = tf.float64
 EPS = 1e-1
+delt_EPS = 1e-4
 
-mus = np.array([-50.0, -1.0, 1e-6, 0.0, 1e-6, 1.0, 50.0])
-delta0s = np.array([0.0, 1e-6, 1.0, 50.0])
-deltainfs = np.array([0.0, 1e-6, 1.0, 50.0])
+mus = np.array([-50.0, -1.0, 1e-6, 0.0, 1e-6, 1.0, 50.0, 100.0, 150.0])
+delta0s = np.array([0.0, 1e-6, 1e-3, 1.0, 50.0, 100.0, 150.0])
+deltainfs = np.array([0.0, 1e-6, 1e-3-delt_EPS, 1e-3, 1.0, 50.0, 100.0-delt_EPS, 150.0-delt_EPS])
 
 num_mus = mus.shape[0]
 num_delta0s = delta0s.shape[0]
@@ -48,6 +49,7 @@ def eval_nested_gaussian_integral(fct_fun, tf_func):
 
 	y_true = np.zeros((num_mus*num_delta0s*num_deltainfs))
 	ind = 0
+	invalid_inds = []
 	for i in range(num_mus):
 		mu = mus[i]
 		for j in range(num_delta0s):
@@ -57,7 +59,19 @@ def eval_nested_gaussian_integral(fct_fun, tf_func):
 				_mu[ind] = mu
 				_delta0[ind] = delta0
 				_deltainf[ind] = deltainf
-				y_true[ind] = fct_fun(mu, delta0, deltainf)
+				#print('mu', _mu[ind], 'delta_0', _delta0[ind], 'delta_inf', _deltainf[ind])
+				if (deltainf <= delta0):
+					y_true[ind] = fct_fun(mu, delta0, deltainf)
+					if (np.isnan(y_true[ind])):
+						print('**nan**')
+						print('mu', _mu[ind], 'delta_0', _delta0[ind], 'delta_inf', _deltainf[ind])
+						invalid_inds.append(ind)
+					elif (np.isinf(y_true[ind])):
+						print('--inf--')
+						print('mu', _mu[ind], 'delta_0', _delta0[ind], 'delta_inf', _deltainf[ind])
+						invalid_inds.append(ind)
+				else:
+					invalid_inds.append(ind)
 				ind += 1
 
 	mu = tf.placeholder(dtype=DTYPE, shape=(num_mus*num_delta0s*num_deltainfs,))
@@ -69,6 +83,8 @@ def eval_nested_gaussian_integral(fct_fun, tf_func):
 
 	with tf.Session() as sess:
 		_y = sess.run(y, {mu:_mu, delta0:_delta0, deltainf:_deltainf})
+
+	_y[invalid_inds] = 0.0
 
 	assert(approx_equal(y_true, _y, EPS, allow_special=True))
 
@@ -123,18 +139,22 @@ def test_PrimPhi():
 	return None
 
 def test_IntPrimPrim():
+	print('test_IntPrimPrim()')
 	eval_nested_gaussian_integral(fcti.IntPrimPrim, tfi.IntPrimPrim)
 	return None
 
 def test_IntPhiPhi():
+	print('test_IntPhiPhi()')
 	eval_nested_gaussian_integral(fcti.IntPhiPhi, tfi.IntPhiPhi)
 	return None
 
 def test_IntPrimePrime():
+	print('test_IntPrimePrime()')
 	eval_nested_gaussian_integral(fcti.IntPrimePrime, tfi.IntPrimePrime)
 	return None
 
 if __name__ == "__main__":
+	"""
 	test_Prim()
 	test_Phi()
 	test_Prime()
@@ -147,6 +167,7 @@ if __name__ == "__main__":
 	test_PrimPrime()
 	test_PhiSec()
 	test_PrimPhi()
+	"""
 	test_IntPrimPrim()
 	test_IntPhiPhi()
 	test_IntPrimePrime()
