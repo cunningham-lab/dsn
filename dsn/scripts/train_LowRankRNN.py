@@ -28,8 +28,8 @@ arch_dict = {'D':D, \
 fixed_params = {}
 
 behavior_type = 'struct_chaos'
-means = np.array([1.0, 1.0, 0.5]);
-variances = np.array([0.25, 0.25, 0.25]);
+means = np.array([0.5, 0.5, 0.5]);
+variances = np.array([0.01, 0.01, 0.01]);
 behavior = {'type':behavior_type, \
             'means':means, \
             'variances':variances}
@@ -39,11 +39,11 @@ model_opts = {'rank':1, 'input_type':'spont'}
 
 system = LowRankRNN(fixed_params, behavior, model_opts=model_opts, solve_its=25, solve_eps=0.5)
 
-k_max = 10
-batch_size = 100;
+k_max = 40
+batch_size = 1000;
 lr_order = -3
-min_iters = 500
-max_iters = 1000
+min_iters = 1000
+max_iters = 3000
 
 
 train_dsn(system, batch_size, arch_dict, \
