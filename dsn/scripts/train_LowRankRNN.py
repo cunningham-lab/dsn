@@ -43,10 +43,10 @@ k_max = 40
 batch_size = 1000;
 lr_order = -3
 min_iters = 1000
-max_iters = 3000
+max_iters = 2000
 
 
 train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
           random_seed=random_seed, min_iters=min_iters, max_iters=max_iters, \
-          check_rate=100, dir_str='LowRankRNN2')
+          check_rate=100, dir_str='LRRNN')
