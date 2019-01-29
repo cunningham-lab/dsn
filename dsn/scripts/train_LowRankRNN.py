@@ -28,7 +28,7 @@ arch_dict = {'D':D, \
 fixed_params = {}
 
 behavior_type = 'struct_chaos'
-means = np.array([1.0, 1.0, 1.0]);
+means = np.array([1.0, 1.0, 0.5]);
 variances = np.array([0.25, 0.25, 0.25]);
 behavior = {'type':behavior_type, \
             'means':means, \
@@ -42,11 +42,11 @@ system = LowRankRNN(fixed_params, behavior, model_opts=model_opts, solve_its=25,
 k_max = 10
 batch_size = 100;
 lr_order = -3
-min_iters = 1000
-max_iters = 2000
+min_iters = 500
+max_iters = 1000
 
 
 train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
           random_seed=random_seed, min_iters=min_iters, max_iters=max_iters, \
-          check_rate=2, dir_str='LowRankRNN')
+          check_rate=100, dir_str='LowRankRNN2')
