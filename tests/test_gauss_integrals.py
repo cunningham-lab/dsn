@@ -5,25 +5,24 @@ import tensorflow as tf
 from tf_util.stat_util import approx_equal
 
 DTYPE = tf.float64
-EPS = 1e-1
-delt_EPS = 1e-4
+DELT_EPS = 1e-4
 
-mus = np.array([-50.0, -1.0, 1e-6, 0.0, 1e-6, 1.0, 50.0, 100.0, 150.0])
-delta0s = np.array([0.0, 1e-6, 1e-3, 1.0, 50.0, 100.0, 150.0])
-deltainfs = np.array([0.0, 1e-6, 1e-3-delt_EPS, 1e-3, 1.0, 50.0, 100.0-delt_EPS, 150.0-delt_EPS])
+mus = np.array([-150.0, -1e-6, 0.0, 1.0, 1e-6, 150.0])
+delta0s = np.array([0.0, 1e-6, 1.0, 150.0])
+deltainfs = np.array([0.0, 1e-6, 1.0, 150.0-DELT_EPS])
 
 num_mus = mus.shape[0]
 num_delta0s = delta0s.shape[0]
 num_deltainfs = deltainfs.shape[0]
 
-def eval_single_gaussian_integral(fct_fun, tf_func):
+def eval_single_gaussian_integral(np_func, tf_func, np_num_pts, tf_num_pts, EPS):
 
 	y_true = np.zeros((num_mus, num_delta0s))
 	for i in range(num_mus):
 		mu = mus[i]
 		for j in range(num_delta0s):
 			delta0 = delta0s[j]
-			y_true[i,j] = fct_fun(mu, delta0)
+			y_true[i,j] = np_func(mu, delta0, np_num_pts)
 
 	mu = tf.placeholder(dtype=DTYPE, shape=(num_mus*num_delta0s,))
 	delta0 = tf.placeholder(dtype=DTYPE, shape=(num_mus*num_delta0s,))
@@ -32,7 +31,7 @@ def eval_single_gaussian_integral(fct_fun, tf_func):
 	_mu = np.reshape(_mu, (num_mus*num_delta0s,))
 	_delta0 = np.reshape(_delta0, (num_mus*num_delta0s,))
 
-	y = tf_func(mu, delta0)
+	y = tf_func(mu, delta0, tf_num_pts)
 	y = tf.reshape(y, [num_mus, num_delta0s])
 
 	with tf.Session() as sess:
@@ -42,7 +41,7 @@ def eval_single_gaussian_integral(fct_fun, tf_func):
 
 	return None
 
-def eval_nested_gaussian_integral(fct_fun, tf_func):
+def eval_nested_gaussian_integral(np_func, tf_func, np_num_pts, tf_num_pts, EPS):
 	_mu = np.zeros((num_mus*num_delta0s*num_deltainfs,))
 	_delta0 = np.zeros((num_mus*num_delta0s*num_deltainfs,))
 	_deltainf = np.zeros((num_mus*num_delta0s*num_deltainfs,))
@@ -59,9 +58,8 @@ def eval_nested_gaussian_integral(fct_fun, tf_func):
 				_mu[ind] = mu
 				_delta0[ind] = delta0
 				_deltainf[ind] = deltainf
-				#print('mu', _mu[ind], 'delta_0', _delta0[ind], 'delta_inf', _deltainf[ind])
 				if (deltainf <= delta0):
-					y_true[ind] = fct_fun(mu, delta0, deltainf)
+					y_true[ind] = np_func(mu, delta0, deltainf, np_num_pts)
 					if (np.isnan(y_true[ind])):
 						print('**nan**')
 						print('mu', _mu[ind], 'delta_0', _delta0[ind], 'delta_inf', _deltainf[ind])
@@ -78,8 +76,7 @@ def eval_nested_gaussian_integral(fct_fun, tf_func):
 	delta0 = tf.placeholder(dtype=DTYPE, shape=(num_mus*num_delta0s*num_deltainfs,))
 	deltainf = tf.placeholder(dtype=DTYPE, shape=(num_mus*num_delta0s*num_deltainfs,))
 
-	y = tf_func(mu, delta0, deltainf)
-	#y = tf.reshape(y, [num_mus, num_delta0s, num_deltainfs])
+	y = tf_func(mu, delta0, deltainf, tf_num_pts)
 
 	with tf.Session() as sess:
 		_y = sess.run(y, {mu:_mu, delta0:_delta0, deltainf:_deltainf})
@@ -90,71 +87,93 @@ def eval_nested_gaussian_integral(fct_fun, tf_func):
 
 	return None
 
+
+SAME_EPS = 1e-16
+COARSE_EPS = 1e-1
+
+ALL_PTS = 200
+COARSE_PTS = 50
+
 def test_Prim():
-	eval_single_gaussian_integral(fcti.Prim, tfi.Prim)
+	eval_single_gaussian_integral(fcti.Prim, tfi.Prim, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.Prim, tfi.Prim, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_Phi():
-	eval_single_gaussian_integral(fcti.Phi, tfi.Phi)
+	eval_single_gaussian_integral(fcti.Phi, tfi.Phi, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.Phi, tfi.Phi, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_Prime():
-	eval_single_gaussian_integral(fcti.Prime, tfi.Prime)
+	eval_single_gaussian_integral(fcti.Prime, tfi.Prime, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.Prime, tfi.Prime, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_Sec():
-	eval_single_gaussian_integral(fcti.Sec, tfi.Sec)
+	eval_single_gaussian_integral(fcti.Sec, tfi.Sec, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.Sec, tfi.Sec, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_Third():
-	eval_single_gaussian_integral(fcti.Third, tfi.Third)
+	eval_single_gaussian_integral(fcti.Third, tfi.Third, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.Third, tfi.Third, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PrimSq():
-	eval_single_gaussian_integral(fcti.PrimSq, tfi.PrimSq)
+	eval_single_gaussian_integral(fcti.PrimSq, tfi.PrimSq, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PrimSq, tfi.PrimSq, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PhiSq():
-	eval_single_gaussian_integral(fcti.PhiSq, tfi.PhiSq)
+	eval_single_gaussian_integral(fcti.PhiSq, tfi.PhiSq, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PhiSq, tfi.PhiSq, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PrimeSq():
-	eval_single_gaussian_integral(fcti.PrimeSq, tfi.PrimeSq)
+	eval_single_gaussian_integral(fcti.PrimeSq, tfi.PrimeSq, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PrimeSq, tfi.PrimeSq, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PhiPrime():
-	eval_single_gaussian_integral(fcti.PhiPrime, tfi.PhiPrime)
+	eval_single_gaussian_integral(fcti.PhiPrime, tfi.PhiPrime, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PhiPrime, tfi.PhiPrime, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PrimPrime():
-	eval_single_gaussian_integral(fcti.PrimPrime, tfi.PrimPrime)
+	eval_single_gaussian_integral(fcti.PrimPrime, tfi.PrimPrime, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PrimPrime, tfi.PrimPrime, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PhiSec():
-	eval_single_gaussian_integral(fcti.PhiSec, tfi.PhiSec)
+	eval_single_gaussian_integral(fcti.PhiSec, tfi.PhiSec, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PhiSec, tfi.PhiSec, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_PrimPhi():
-	eval_single_gaussian_integral(fcti.PrimPhi, tfi.PrimPhi)
+	eval_single_gaussian_integral(fcti.PrimPhi, tfi.PrimPhi, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_single_gaussian_integral(fcti.PrimPhi, tfi.PrimPhi, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_IntPrimPrim():
 	print('test_IntPrimPrim()')
-	eval_nested_gaussian_integral(fcti.IntPrimPrim, tfi.IntPrimPrim)
+	eval_nested_gaussian_integral(fcti.IntPrimPrim, tfi.IntPrimPrim, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_nested_gaussian_integral(fcti.IntPrimPrim, tfi.IntPrimPrim, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_IntPhiPhi():
 	print('test_IntPhiPhi()')
-	eval_nested_gaussian_integral(fcti.IntPhiPhi, tfi.IntPhiPhi)
+	eval_nested_gaussian_integral(fcti.IntPhiPhi, tfi.IntPhiPhi, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_nested_gaussian_integral(fcti.IntPhiPhi, tfi.IntPhiPhi, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
 def test_IntPrimePrime():
 	print('test_IntPrimePrime()')
-	eval_nested_gaussian_integral(fcti.IntPrimePrime, tfi.IntPrimePrime)
+	eval_nested_gaussian_integral(fcti.IntPrimePrime, tfi.IntPrimePrime, ALL_PTS, ALL_PTS, SAME_EPS)
+	eval_nested_gaussian_integral(fcti.IntPrimePrime, tfi.IntPrimePrime, ALL_PTS, COARSE_PTS, COARSE_EPS)
 	return None
 
+
 if __name__ == "__main__":
-	"""
 	test_Prim()
 	test_Phi()
 	test_Prime()
@@ -167,7 +186,6 @@ if __name__ == "__main__":
 	test_PrimPrime()
 	test_PhiSec()
 	test_PrimPhi()
-	"""
 	test_IntPrimPrim()
 	test_IntPhiPhi()
 	test_IntPrimePrime()
