@@ -82,7 +82,7 @@ class system:
         """
         free_params = []
         for param_str in self.all_params:
-            if (not param_str in self.fixed_params.keys()):
+            if not param_str in self.fixed_params.keys():
                 free_params.append(param_str)
         return free_params
 
@@ -93,7 +93,7 @@ class system:
             z_labels (list): List of tex strings for free parameters.
 
         """
-        z_labels = [];
+        z_labels = []
         for free_param in self.free_params:
             z_labels += self.all_param_labels[free_param]
         return z_labels
@@ -191,9 +191,11 @@ class linear_2D(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        all_params = ['A', 'tau'];
-        all_param_labels = {'A':[r'$a_1$', r'$a_2$', r'$a_3$', r'$a_4$'], \
-                            'tau':[r'$\tau$']}
+        all_params = ["A", "tau"]
+        all_param_labels = {
+            "A": [r"$a_1$", r"$a_2$", r"$a_3$", r"$a_4$"],
+            "tau": [r"$\tau$"],
+        }
         return all_params, all_param_labels
 
     def get_T_x_labels(self,):
@@ -203,12 +205,11 @@ class linear_2D(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if (self.behavior_str == 'oscillation'):
-            T_x_labels = ['1', '2', '3', '4'];
+        if self.behavior_str == "oscillation":
+            T_x_labels = ["1", "2", "3", "4"]
         else:
             raise NotImplementedError()
-        return T_x_labels;
-
+        return T_x_labels
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -235,35 +236,37 @@ class linear_2D(system):
             M = z_shape[1]
 
             # read free parameters from z vector
-            ind = 0;
+            ind = 0
             for free_param in self.free_params:
-                if (free_param == 'A'):
+                if free_param == "A":
                     a1 = z[:, :, ind, :]
-                    a2 = z[:, :, ind+1, :]
-                    a3 = z[:, :, ind+2, :]
-                    a4 = z[:, :, ind+3, :]
+                    a2 = z[:, :, ind + 1, :]
+                    a3 = z[:, :, ind + 2, :]
+                    a4 = z[:, :, ind + 3, :]
                     ind += 4
-                elif (free_param == 'tau'):
+                elif free_param == "tau":
                     tau = z[:, :, ind, :]
                     ind += 1
 
             # load fixed parameters
             for fixed_param in self.fixed_params.keys():
-                if (fixed_param == 'A'):
-                    a1 = self.fixed_params['A'][0]
-                    a2 = self.fixed_params['A'][1]
-                    a3 = self.fixed_params['A'][2]
-                    a4 = self.fixed_params['A'][3]
-                elif (fixed_param == 'tau'):
-                    tau = self.fixed_params['tau']
+                if fixed_param == "A":
+                    a1 = self.fixed_params["A"][0]
+                    a2 = self.fixed_params["A"][1]
+                    a3 = self.fixed_params["A"][2]
+                    a4 = self.fixed_params["A"][3]
+                elif fixed_param == "tau":
+                    tau = self.fixed_params["tau"]
 
-            # C = A / tau are the effective linear dynamics 
+            # C = A / tau are the effective linear dynamics
             c1 = tf.divide(a1, tau)
             c2 = tf.divide(a2, tau)
             c3 = tf.divide(a3, tau)
             c4 = tf.divide(a4, tau)
 
-            beta = tf.complex(tf.square(c1 + c4) - 4 * (c1 * c4 + c2 * c3), np.float64(0.0))
+            beta = tf.complex(
+                tf.square(c1 + c4) - 4 * (c1 * c4 + c2 * c3), np.float64(0.0)
+            )
             beta_sqrt = tf.sqrt(beta)
             real_common = tf.complex(0.5 * (c1 + c4), np.float64(0.0))
 
@@ -339,9 +342,11 @@ class V1_circuit(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        all_params = ['A', 'tau'];
-        all_param_labels = {'A':[r'$a_1$', r'$a_2$', r'$a_3$', r'$a_4$'], \
-                            'tau':[r'$\tau$']}
+        all_params = ["A", "tau"]
+        all_param_labels = {
+            "A": [r"$a_1$", r"$a_2$", r"$a_3$", r"$a_4$"],
+            "tau": [r"$\tau$"],
+        }
         return all_params, all_param_labels
 
     def get_T_x_labels(self,):
@@ -351,11 +356,11 @@ class V1_circuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if (self.behavior_str == 'oscillation'):
-            T_x_labels = ['1', '2', '3', '4'];
+        if self.behavior_str == "oscillation":
+            T_x_labels = ["1", "2", "3", "4"]
         else:
             raise NotImplementedError()
-        return T_x_labels;
+        return T_x_labels
 
     def __init__(self, behavior_str, param_str, T, dt, init_conds):
         super().__init__(behavior_str)
@@ -364,18 +369,33 @@ class V1_circuit(system):
         self.dt = dt
         self.name = "V1_circuit"
         # determine dimensionality and number of constraints
-        self.D = 0;
-        self.num_suff_stats = 0;
+        self.D = 0
+        self.num_suff_stats = 0
 
         self.z_labels = []
         self.T_x_labels = []
 
-        self.z_labels += [r'$h_{E,1}$', r'$h_{P,1}$', r'$h_{S,1}$', r'$h_{V,1}$', \
-                        r'$h_{E,2}$', r'$h_{P,2}$', r'$h_{S,2}$', r'$h_{V,2}$']
+        self.z_labels += [
+            r"$h_{E,1}$",
+            r"$h_{P,1}$",
+            r"$h_{S,1}$",
+            r"$h_{V,1}$",
+            r"$h_{E,2}$",
+            r"$h_{P,2}$",
+            r"$h_{S,2}$",
+            r"$h_{V,2}$",
+        ]
 
-        self.T_x_labels += [r'$d_{E,ss}$', r'$d_{P,ss}$', r'$d_{S,ss}$', r'$d_{V,ss}$', \
-                              r'$d_{E,ss}^2$', r'$d_{P,ss}^2$', r'$d_{S,ss}^2$', r'$d_{V,ss}^2$']
-
+        self.T_x_labels += [
+            r"$d_{E,ss}$",
+            r"$d_{P,ss}$",
+            r"$d_{S,ss}$",
+            r"$d_{V,ss}$",
+            r"$d_{E,ss}^2$",
+            r"$d_{P,ss}^2$",
+            r"$d_{S,ss}^2$",
+            r"$d_{V,ss}^2$",
+        ]
 
         self.init_conds = init_conds
 
@@ -390,95 +410,102 @@ class V1_circuit(system):
 
         """
         # remove trailing dimension
-        z = z[:,:,:,0];
+        z = z[:, :, :, 0]
         z_shape = tf.shape(z)
         K = z_shape[0]
         M = z_shape[1]
 
-        ind = 0;
-        if (self.behavior_str in ['ss_all', 'ss_SV']):
-            if (self.param_str in ['h', 'both']):
-                h1 = tf.expand_dims(z[:,:,0:4], 3);
-                h2 = tf.expand_dims(z[:,:,4:8], 3);
-                ind += 8;
+        ind = 0
+        if self.behavior_str in ["ss_all", "ss_SV"]:
+            if self.param_str in ["h", "both"]:
+                h1 = tf.expand_dims(z[:, :, 0:4], 3)
+                h2 = tf.expand_dims(z[:, :, 4:8], 3)
+                ind += 8
             else:
                 # this would have to be based on a hypothesized input structure
-                h1 = np.ones((4,1));
-                h2 = -np.ones((4,1));
-                raise NotImplementedError();
+                h1 = np.ones((4, 1))
+                h2 = -np.ones((4, 1))
+                raise NotImplementedError()
 
-            if (self.param_str in ['W', 'both']):
-                W_EE = z[:,:,ind];
-                W_EP = z[:,:,ind+1];
-                W_ES = z[:,:,ind+2];
-                W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((K,M))], axis=2);
+            if self.param_str in ["W", "both"]:
+                W_EE = z[:, :, ind]
+                W_EP = z[:, :, ind + 1]
+                W_ES = z[:, :, ind + 2]
+                W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((K, M))], axis=2)
 
-                W_PE = z[:,:,ind+3];
-                W_PP = z[:,:,ind+4];
-                W_PS = z[:,:,ind+5];
-                W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((K,M))], axis=2);
+                W_PE = z[:, :, ind + 3]
+                W_PP = z[:, :, ind + 4]
+                W_PS = z[:, :, ind + 5]
+                W_PX = tf.stack([W_PE, -W_PP, -W_PS, tf.zeros((K, M))], axis=2)
 
-                W_SE = z[:,:,ind+6];
-                W_SV = z[:,:,ind+7];
-                W_SX = tf.stack([W_SE, tf.zeros((K,M)), tf.zeros((K,M)), -W_SV], axis=2);
+                W_SE = z[:, :, ind + 6]
+                W_SV = z[:, :, ind + 7]
+                W_SX = tf.stack(
+                    [W_SE, tf.zeros((K, M)), tf.zeros((K, M)), -W_SV], axis=2
+                )
 
-                W_VE = z[:,:,ind+8];
-                W_VP = z[:,:,ind+9];
-                W_VS = z[:,:,ind+10];
-                W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((K,M))], axis=2);
+                W_VE = z[:, :, ind + 8]
+                W_VP = z[:, :, ind + 9]
+                W_VS = z[:, :, ind + 10]
+                W_VX = tf.stack([W_VE, -W_VP, -W_VS, tf.zeros((K, M))], axis=2)
 
-                W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2);
+                W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2)
 
             else:
                 # Using values from Pfeffer et al. 2013
-                E_pre = 1.0;
-                W_EE = E_pre;
-                W_EP = 1.0;
-                W_ES = 0.54;
+                E_pre = 1.0
+                W_EE = E_pre
+                W_EP = 1.0
+                W_ES = 0.54
 
-                W_PE = E_pre;
-                W_PP = 1.01;
-                W_PS = 0.33;
+                W_PE = E_pre
+                W_PP = 1.01
+                W_PS = 0.33
 
-                W_SE = E_pre;
-                W_SV = 0.15;
+                W_SE = E_pre
+                W_SV = 0.15
 
-                W_VE = E_pre;
-                W_VP = 0.22;
-                W_VS = 0.77;
+                W_VE = E_pre
+                W_VP = 0.22
+                W_VS = 0.77
 
-                W = np.array([[W_EE, -W_EP, -W_ES,   0.0], \
-                   [W_PE, -W_PP, -W_PS,   0.0], \
-                   [W_SE,   0.0,   0.0, -W_SV], \
-                   [W_VE, -W_VP, -W_VS,   0.0]]);
-                W = np.expand_dims(np.expand_dims(W, 0), 0);
-                W = tf.constant(W);
-                W = tf.tile(W, [K,M,1,1]);
+                W = np.array(
+                    [
+                        [W_EE, -W_EP, -W_ES, 0.0],
+                        [W_PE, -W_PP, -W_PS, 0.0],
+                        [W_SE, 0.0, 0.0, -W_SV],
+                        [W_VE, -W_VP, -W_VS, 0.0],
+                    ]
+                )
+                W = np.expand_dims(np.expand_dims(W, 0), 0)
+                W = tf.constant(W)
+                W = tf.tile(W, [K, M, 1, 1])
 
             # initial conditions
-            r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0));
-            r0 = tf.tile(r0, [K,M,1,1]);
+            r0 = tf.constant(np.expand_dims(np.expand_dims(self.init_conds, 0), 0))
+            r0 = tf.tile(r0, [K, M, 1, 1])
 
             # transition function
-            n = 2.0;
+            n = 2.0
+
             def f1(r, t):
-                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h1), n);
-                return tf.clip_by_value(drdt, 1e-3, 1e3);
+                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h1), n)
+                return tf.clip_by_value(drdt, 1e-3, 1e3)
 
             def f2(r, t):
-                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h2), n);
-                return tf.clip_by_value(drdt, 1e-3, 1e3);
+                drdt = -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h2), n)
+                return tf.clip_by_value(drdt, 1e-3, 1e3)
 
             # time axis
-            t = np.arange(0,self.T*self.dt, self.dt);
+            t = np.arange(0, self.T * self.dt, self.dt)
 
-            r1_t = tf.contrib.integrate.odeint_fixed(f1, r0, t, method='rk4')
-            r2_t = tf.contrib.integrate.odeint_fixed(f2, r0, t, method='rk4')
+            r1_t = tf.contrib.integrate.odeint_fixed(f1, r0, t, method="rk4")
+            r2_t = tf.contrib.integrate.odeint_fixed(f2, r0, t, method="rk4")
 
-            return [r1_t, r2_t];
-        
+            return [r1_t, r2_t]
+
         else:
-            raise NotImplementedError();
+            raise NotImplementedError()
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -491,11 +518,11 @@ class V1_circuit(system):
 
         """
 
-        if (self.behavior_str in ["ss_all", "ss_SV"]):
+        if self.behavior_str in ["ss_all", "ss_SV"]:
             T_x = self.simulation_suff_stats(z)
         else:
-            raise NotImplementedError();
-        
+            raise NotImplementedError()
+
         return T_x
 
     def simulation_suff_stats(self, z):
@@ -509,18 +536,18 @@ class V1_circuit(system):
 
         """
 
-        r1_t, r2_t = self.simulate(z);
+        r1_t, r2_t = self.simulate(z)
 
-        if (self.behavior_str in ["ss_all"]):
-            r1_ss = r1_t[-1,:,:,:,0];
-            r2_ss = r2_t[-1,:,:,:,0];
-        elif (self.behavior_str in ["ss_SV"]):
+        if self.behavior_str in ["ss_all"]:
+            r1_ss = r1_t[-1, :, :, :, 0]
+            r2_ss = r2_t[-1, :, :, :, 0]
+        elif self.behavior_str in ["ss_SV"]:
             # extract somatostatin and VIP responses
-            r1_ss = r1_t[-1,:,:,2:,0];  
-            r2_ss = r2_t[-1,:,:,2:,0];
-        diff_ss = r2_ss - r1_ss;
-        T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2);
-        print(r1_ss.shape, diff_ss.shape, T_x.shape);
+            r1_ss = r1_t[-1, :, :, 2:, 0]
+            r2_ss = r2_t[-1, :, :, 2:, 0]
+        diff_ss = r2_ss - r1_ss
+        T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
+        print(r1_ss.shape, diff_ss.shape, T_x.shape)
         return T_x
 
     def compute_mu(self, behavior):
@@ -562,8 +589,6 @@ class V1_circuit(system):
         num_theta_params += count_layer_params(support_layer)
         layers.append(support_layer)
         return layers, num_theta_params
-
-        
 
 
 class R1RNN_input(system):
@@ -746,7 +771,7 @@ class R1RNN_GNG(system):
         self.eps = 0.8
         self.T = T
         self.Ics_0 = Ics_0
-        self.num_suff_stats = 4;
+        self.num_suff_stats = 4
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -776,17 +801,17 @@ class R1RNN_GNG(system):
 
         if self.behavior_str == "gng":
             sol = self.solve(z)
-            print(sol.shape);
+            print(sol.shape)
             sol_shape = tf.shape(sol)
             K = sol_shape[1]
             M = sol_shape[2]
             D = sol_shape[3]
-            print('sol shape');
-            print(sol);
+            print("sol shape")
+            print(sol)
             X = tf.clip_by_value(sol[2, :, :, :], -1e3, 1e3)
             X = tf.expand_dims(tf.reshape(tf.transpose(X, [1, 0, 2]), [M, K * D]), 0)
-            print('X shape');
-            print(X);
+            print("X shape")
+            print(X)
             T_x = tf.concat((X, tf.square(X)), 2)
         return T_x
 
@@ -805,7 +830,7 @@ class R1RNN_GNG(system):
         Mn_tf = z[:, :, 1, :]
         Sim_tf = z[:, :, 2, :]
         Sin_tf = z[:, :, 3, :]
-        g_tf = z[:, :, 4, :];
+        g_tf = z[:, :, 4, :]
 
         Mm_tf = tf.tile(Mm_tf, [2, 1, 1])
         Mn_tf = tf.tile(Mn_tf, [2, 1, 1])
@@ -828,7 +853,10 @@ class R1RNN_GNG(system):
                 Sii = tf.sqrt((Sini / Sin_tf) ** 2 + Sip ** 2)
 
                 mu = Mm_tf * y_3 + Mi
-                new1 = tf.square(g_tf) * tf_integrals.PhiSq(mu, y_2) + Sim_tf ** 2 * y_3 ** 2
+                new1 = (
+                    tf.square(g_tf) * tf_integrals.PhiSq(mu, y_2)
+                    + Sim_tf ** 2 * y_3 ** 2
+                )
                 new1 = new1 + Sii ** 2
                 new2 = Mn_tf * tf_integrals.Phi(mu, y_2) + Sini * tf_integrals.Prime(
                     mu, y_2
@@ -845,7 +873,7 @@ class R1RNN_GNG(system):
             y_out = tf.stack([y_1, y_2, y_3], axis=0)
             return y_out
 
-        Ics = np.expand_dims(self.Ics_0, 2);
+        Ics = np.expand_dims(self.Ics_0, 2)
         Ics = np.tile(Ics, [2, 1, 1, 1])
         sol = consistent_solve(Ics, self.eps, self.T)
 
@@ -885,8 +913,6 @@ class R1RNN_GNG(system):
         num_theta_params += count_layer_params(support_layer)
         layers.append(support_layer)
         return layers, num_theta_params
-
-
 
 
 class damped_harmonic_oscillator(system):
@@ -1030,7 +1056,6 @@ class damped_harmonic_oscillator(system):
         return layers, num_theta_params
 
 
-
 def system_from_str(system_str):
     if system_str in ["linear_2D"]:
         return linear_2D
@@ -1044,4 +1069,3 @@ def system_from_str(system_str):
         return R1RNN_GNG
     elif system_str in ["V1_circuit"]:
         return V1_circuit
-
