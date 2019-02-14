@@ -1,3 +1,0 @@
-[submodule "dsn/lib/LowRank/"] 
-  path = dsn/lib/LowRank/
-  url = https://github.com/fmastrogiuseppe/LowRank
