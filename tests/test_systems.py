@@ -3,8 +3,8 @@ import numpy as np
 import scipy
 from tf_util.stat_util import approx_equal
 from dsn.util.systems import system, Linear2D, V1Circuit, LowRankRNN
-import matplotlib.pyplot as plt
-import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
+#import matplotlib.pyplot as plt
+#import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
 
 DTYPE = tf.float64
 EPS = 1e-16
@@ -263,8 +263,6 @@ def test_Linear2D():
             _T_x_true[i, :] = true_sys.compute_suff_stats(tau[0, i], A[0, i])
         _T_x = sess.run(T_x, {Z: _Z})
         assert approx_equal(_T_x[0, :, :], _T_x_true, EPS)
-
-    print("Linear2D passed.")
     return None
 
 
@@ -278,6 +276,7 @@ def test_V1Circuit():
     Z = tf.placeholder(dtype=DTYPE, shape=(1, M, None))
 
     # difference behavior 1
+    diff_inds = [0,1,2,3]
     c_vals = np.array([0.0])
     s_vals = np.array([1.0])
     r_vals = np.array([0.0, 1.0])
@@ -285,6 +284,7 @@ def test_V1Circuit():
     d_var = np.ones((4,))
     behavior1 = {
         "type": "difference",
+        "diff_inds":diff_inds, 
         "c_vals": c_vals,
         "s_vals": s_vals,
         "r_vals": r_vals,
@@ -499,32 +499,11 @@ def test_V1Circuit():
     for c in range(2):
         for i in range(M):
             if c == 0 and i == 5:
-                print("c", c, "i", i)
-                print("W")
-                print(W_true[i, :, :])
-                print("h")
-                print(h_true[c, i, :, :])
-                print("tau")
-                print(tau_true[c, i, 0, 0])
-                print("n")
-                print(n_true[c, i, 0, 0])
-                print("Wr + h")
                 _r = system.init_conds
                 power_arg = np.dot(W_true[i, :, :], _r) + h_true[c, i, :, :]
-                print(power_arg)
-                print("(Wr+h)+^n")
                 for ii in range(4):
                     if power_arg[ii, 0] < 0:
                         power_arg[ii, 0] = 0.0
-                print(power_arg ** n_true[c, i, 0, 0])
-                print(np.power(power_arg, n_true[c, i, 0, 0]))
-                print("-r + (Wr+h)+^n")
-                print(-_r + np.power(power_arg, n_true[c, i, 0, 0]))
-                print("(1/tau) * (-r + (Wr+h)+^n)")
-                print(
-                    (1.0 / tau_true[c, i, 0, 0])
-                    * (-_r + np.power(power_arg, n_true[c, i, 0, 0]))
-                )
 
             r_t_true[c, i, :, :] = true_sys.simulate(
                 W_true[i, :, :],
@@ -816,8 +795,6 @@ def test_V1Circuit():
     assert approx_equal(_n, n_true, EPS)
     s_0_true = np.expand_dims(_Z[:, :, 15:16], 3)
     assert approx_equal(_s_0, s_0_true, EPS)
-
-    print("V1Circuit passed.")
     return None
 
 
@@ -840,13 +817,13 @@ def test_LowRankRNN():
         assert sys.free_params == ["g", "Mm", "Mn", "Sm"]
         assert sys.z_labels == [r"$g$", r"$M_m$", r"$M_n$", r"$\Sigma_m$"]
         assert sys.T_x_labels == [
-            r"$\mu$",
-            r"$\delta_{\infty}$",
-            r"$\delta_0 - \delta_{\infty}$",
-            r"$\mu^2$",
-            r"$\delta_{\infty}^2$",
-            r"$(\delta_0 - \delta_{\infty})^2$",
-        ]
+                r"$\mu$",
+                r"$\Delta_{\infty}$",
+                r"$\Delta_T$",
+                r"$\mu^2$",
+                r"$\Delta_{\infty}^2$",
+                r"$(\Delta_T)^2$",
+            ]
         assert sys.D == 4
         assert sys.num_suff_stats == 6
 
@@ -858,12 +835,12 @@ def test_LowRankRNN():
         assert sys.free_params == ["g", "Mn", "Sm"]
         assert sys.z_labels == [r"$g$", r"$M_n$", r"$\Sigma_m$"]
         assert sys.T_x_labels == [
-            r"$\mu$",
-            r"$\delta_{\infty}$",
-            r"$\delta_0 - \delta_{\infty}$",
-            r"$\mu^2$",
-            r"$\delta_{\infty}^2$",
-            r"$(\delta_0 - \delta_{\infty})^2$",
+                r"$\mu$",
+                r"$\Delta_{\infty}$",
+                r"$\Delta_T$",
+                r"$\mu^2$",
+                r"$\Delta_{\infty}^2$",
+                r"$(\Delta_T)^2$",
         ]
         assert sys.D == 3
         assert sys.num_suff_stats == 6
@@ -884,16 +861,17 @@ def test_LowRankRNN():
         assert sys.free_params == []
         assert sys.z_labels == []
         assert sys.T_x_labels == [
-            r"$\mu$",
-            r"$\delta_{\infty}$",
-            r"$\delta_0 - \delta_{\infty}$",
-            r"$\mu^2$",
-            r"$\delta_{\infty}^2$",
-            r"$(\delta_0 - \delta_{\infty})^2$",
+                r"$\mu$",
+                r"$\Delta_{\infty}$",
+                r"$\Delta_T$",
+                r"$\mu^2$",
+                r"$\Delta_{\infty}^2$",
+                r"$(\Delta_T)^2$",
         ]
         assert sys.D == 0
         assert sys.num_suff_stats == 6
 
+        """
         # test mu computation
         print("mu testing")
         sys = LowRankRNN({}, behavior1, model_opts=model_opts)
@@ -941,12 +919,11 @@ def test_LowRankRNN():
             plt.show()
 
             # TODO add tests for all of the different parameterizations and behaviors (tasks)
-
-    print("LowRankRNN passed.")
+    """
     return None
 
 
 if __name__ == "__main__":
-    # test_Linear2D()
-    # test_V1Circuit()
+    test_Linear2D()
+    test_V1Circuit()
     test_LowRankRNN()
