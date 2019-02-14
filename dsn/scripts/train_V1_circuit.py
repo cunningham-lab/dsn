@@ -9,11 +9,12 @@ import sys, os
 
 os.chdir("../")
 
-nlayers = int(sys.argv[1]);
-c_init_order = int(sys.argv[2]);
-sigma_init = float(sys.argv[3]);
-random_seed = int(sys.argv[4]);
+nlayers = int(sys.argv[1])
+c_init_order = int(sys.argv[2])
+sigma_init = float(sys.argv[3])
+random_seed = int(sys.argv[4])
 
+<<<<<<< HEAD
 D = 12
 latent_dynamics = None;
 TIF_flow_type = 'PlanarFlow';
@@ -35,8 +36,9 @@ fixed_params = {'h_FFE':0.0, \
                 'n':2.0, \
                 's_0':30};
 
-behavior_type = 'difference'
+behavior_type = "difference"
 diff_inds = [0, 1, 2, 3]
+
 c_vals=np.array([0.0])
 s_vals=np.array([1.0])
 r_vals=np.array([0.0, 1.0])
@@ -51,8 +53,7 @@ behavior = {'type':behavior_type, \
             'd_var':d_vars}
 
 # set model options
-model_opts = {'g_FF':'c', 'g_LAT':'linear', 'g_RUN':'r'}
-
+model_opts = {"g_FF": "c", "g_LAT": "linear", "g_RUN": "r"} 
 T = 40
 dt = 0.25
 init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
@@ -60,6 +61,7 @@ init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
 system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
 k_max = 40
+<<<<<<< HEAD
 batch_size = 1000;
 lr_order = -3
 
@@ -68,3 +70,23 @@ train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
           random_seed=random_seed, min_iters=1000, max_iters=2000, \
           check_rate=100, dir_str='V1Circuit_full1')
+=======
+batch_size = 1000
+lr_order = -3
+
+
+train_dsn(
+    system,
+    batch_size,
+    arch_dict,
+    k_max=k_max,
+    sigma_init=sigma_init,
+    c_init_order=c_init_order,
+    lr_order=lr_order,
+    random_seed=random_seed,
+    min_iters=1000,
+    max_iters=2000,
+    check_rate=100,
+    dir_str="test",
+)
+>>>>>>> 5c11294c33360d29cc33ca5b348dd0e95a0c51c0
