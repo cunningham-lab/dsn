@@ -784,7 +784,7 @@ class V1Circuit(system):
         # construct the input
         def f(r, t):
             drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h), n), tau)
-            return tf.clip_by_value(drdt, -1e6, 1e6)
+            return tf.clip_by_value(drdt, -1e30, 1e30)
 
         # time axis
         t = np.arange(0, self.T * self.dt, self.dt)
