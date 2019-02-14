@@ -14,7 +14,7 @@ c_init_order = int(sys.argv[2]);
 sigma_init = float(sys.argv[3]);
 random_seed = int(sys.argv[4]);
 
-D = 8
+D = 12
 latent_dynamics = None;
 TIF_flow_type = 'PlanarFlow';
 mult_and_shift = 'post';
@@ -25,11 +25,7 @@ arch_dict = {'D':D, \
              'repeats':nlayers};
 
 # create an instance of the V1_circuit system class
-fixed_params = {'W_EE':1.0, \
-                'W_PE':1.0, \
-                'W_SE':1.0, \
-                'W_VE':1.0, \
-                'h_FFE':0.0, \
+fixed_params = {'h_FFE':0.0, \
                 'h_FFP':0.0, \
                 'h_LATE':0.0, \
                 'h_LATP':0.0, \
@@ -44,7 +40,7 @@ diff_inds = [0, 1, 2, 3]
 c_vals=np.array([0.0])
 s_vals=np.array([1.0])
 r_vals=np.array([0.0, 1.0])
-d_mean = np.array([0.25, 0.5, 0.0, 2.5]);
+d_mean = np.array([0.15, 0.5, 0.0, 2.0]);
 d_vars = np.array([.01, .01, 0.01, 0.25]);
 behavior = {'type':behavior_type, \
             'diff_inds':diff_inds, \
@@ -63,12 +59,12 @@ init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
 
 system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
-k_max = 20
+k_max = 40
 batch_size = 1000;
 lr_order = -3
 
 
 train_dsn(system, batch_size, arch_dict, \
           k_max=k_max, sigma_init=sigma_init, c_init_order=c_init_order, lr_order=lr_order,\
-          random_seed=random_seed, min_iters=2000, max_iters=4000, \
-          check_rate=100, dir_str='V1Circuit_full_EPS_inc_V_same')
+          random_seed=random_seed, min_iters=1000, max_iters=2000, \
+          check_rate=100, dir_str='V1Circuit_full1')
