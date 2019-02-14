@@ -786,6 +786,18 @@ class V1Circuit(system):
             drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h), n), tau)
             return tf.clip_by_value(drdt, -1e30, 1e30)
 
+        # worst-case cost is about
+        # time = dt*T = 10 
+        # r_ss = 1e30*time = 1e31
+        # cost second mom term
+        # r_ss2 = r_ss**2 = 1e62
+        # in l2 norm over 1000 batch
+        # cost ~~ 1e3*r_ss2**2 = 1e124*1e3 = 1e127
+
+        # bound should be 1e308
+        # going to 1e45 doesnt work for some reason?
+
+
         # time axis
         t = np.arange(0, self.T * self.dt, self.dt)
 
