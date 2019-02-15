@@ -3,6 +3,7 @@ python:
   - "3.6"
 install:
   - pip install git+https://github.com/cunningham-lab/tf_util.git
+  - pip install git+https://github.com/cunningham-lab/efn.git
   - python setup.py -q install
 script:
   - pytest
