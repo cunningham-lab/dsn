@@ -2,6 +2,7 @@ language: python
 python:
   - "3.6"
 install:
+  - pip install git+https://github.com/cunningham-lab/tf_util.git
   - python setup.py -q install
 script:
   - pytest
