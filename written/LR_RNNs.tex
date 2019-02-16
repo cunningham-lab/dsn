@@ -1,0 +1,203 @@
+% You should title the file with a .tex extension (hw1.tex, for example)
+\documentclass[11pt]{article}
+
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{tikz-qtree}
+\usepackage{tikz-qtree-compat}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usepackage{graphicx}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+
+\oddsidemargin0cm
+\topmargin-2cm     %I recommend adding these three lines to increase the 
+\textwidth16.5cm   %amount of usable space on the page (and save trees)
+\textheight23.5cm  
+
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
+
+\newcommand{\myname}{Sean Bittner}
+\newcommand{\myandrew}{srb2201@columbia.edu}
+\newcommand{\myhwnum}{12}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+ 
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+ %
+\pagestyle{fancyplain}
+\rhead{\fancyplain{}{\myname\\ \myandrew}}
+
+\begin{document}
+
+\medskip                        % Skip a "medium" amount of space
+                                % (latex determines what medium is)
+                                % Also try: \bigskip, \littleskip
+
+\thispagestyle{plain}
+\begin{center}                  % Center the following lines
+{\Large Learning degenerate parameteric distributions of RNNs that solve tasks} \\
+Sean Bittner \\
+February 16, 2019 \\
+\end{center}
+
+\section{Introduction}
+In neuroscientific studies, RNNs are often trained to execute dynamic computations via the performance of some task.  This is done with the intention of comparing the trained system's activity with that measured in the brain. There are a variety of methods used to train RNNs, and how these learning methods bias the learned connectivities (and potentially the implemented algorithm) within the broader solution space remains poorly understood. An assessment of the degenerate parameterizations of RNNs that solve a given task would be valuable for characterizing learning algorithm biases, as well as other analyses.  Recent work by (Matroguisseppe \& Ostojic, 2018) allows us to derive statistical properties of the behavior of recurrent neural networks (RNNs) given a low-rank parameterization of their connectivity.  This work builds on dynamic mean field theory (DMFT) for neural networks (Sompolinsky et al. 1988), which is exact in the limit of infinite neurons, but has been shown to yield accurate approximations for finite size networks.  We provide some brief background regarding DMFT and the recent theoretical advancements that facilitate our examination of the solution space of RNNs performing computations.
+
+\section{Background}
+\subsection{Dynamic mean field theory (DMFT) in neuroscience}
+Mean field theory (MFT) originated as a useful tool for physicists studying many-body problems, particularly interactions of many particles in proximity.  Deriving an equation for the probability of configurations of such systems of particles in equilibrium requires a partition function, which is essentially the normalizing constant of the probability distribution.  The partition function relies on the Hamiltonian, which is an expression for the total energy of the system.  Many body problems in physics are usually pairwise interaction models, resulting in  combinatoric growth issue in the calculation of the Hamiltonian.  A mean field assumption that some degrees of freedom of the system have independent probabilities makes approximations to the Hamilton tractable.  Importantly, when minimizing the free energy of the system (to find the equilibrium state), the mean field assumption allows the derivation of consistency equations.  For a given system parameterization, we can solve the consistency equations using an off-the-shelf nonlinear system of equations solver.
+
+Using the same modeling strategy as MFT, physicists developed dynamic mean field theory (DMFT) to describe dynamics of macroscopic spin glass properties. Later, this same formalism was used to describe dynamic properties of unstructured neural networks (Somp ’88).
+
+Add some text here about how those equations are set up...
+
+\subsection{Low rank RNNs}
+The network dynamics of neuron $i$'s rate $x$ evolve according to:
+\begin{equation}
+\dot{x}_i(t) = -x_i(t) + \sum_{j=1}^N J_{ij} \phi(x_j(t)) + I_i 
+\end{equation}
+where the connectivity is comprised of a random and structured component:
+\begin{equation}
+J_{ij} = g \chi_{ij} + P_{ij}
+\end{equation}
+The random all-to-all component has elements drawn from
+$\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, and the structured
+component is a sum of $r$ unit rank terms:
+\begin{equation}
+P_{ij} = \sum_{k=1}^r \frac{m_i^{(k)}n_j^{(k)}}{N}
+\end{equation}
+We use this theory to compute $T(x)$ when training DSNs to learn maximum entropy distributions of network connectivities that solve a task.  While the theory is currently used to design low-rank solutions to tasks, we are able to learn the full distribution of low-rank RNN parameterizations that solve a given task.
+
+\subsection{Derivation of important DMFT variables}
+
+\section{DMFT solvers}
+
+\subsection{Sponatneous stationary solutions}
+Rank-1 vectors $m$ and $n$ have elements drawn
+\[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
+\[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
+
+\textbf{Parameters:} \\
+\[z = \begin{bmatrix} g & M_m & M_n & \Sigma_m \end{bmatrix}^\top \]
+
+\textbf{Consistency equations:} (eq 83 of M \& O) \\\begin{equation}
+\begin{split}
+\mu = M_m M_n \langle \left[ \phi_i \right] \rangle := F(\mu, \Delta_0) \\
+\Delta_0 = g^2 \langle \left[ \phi_i^2 \right] \rangle + \Sigma_m^2 M_n^2 \langle \left[ \phi_i \right] \rangle^2 := G(\mu, \Delta_0)
+\end{split}
+\end{equation}
+
+\textbf{Solver:}
+\begin{equation}
+\begin{split}
+\dot{\mu}(t) = -\mu(t) + F(\mu(t), \Delta_0(t)) \\
+\dot{\Delta_0}(t) = -\Delta_0(t) + G(\mu(t), \Delta_0(t))
+\end{split}
+\end{equation}
+
+\textbf{Behavior:}
+\[T(x) = \begin{bmatrix} \mu & \Delta_0 & \mu^2 & \Delta_0^2 \end{bmatrix}^\top \]
+
+
+\subsection{Sponatneous chaotic solutions}
+Rank-1 vectors $m$ and $n$ have elements drawn
+\[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
+\[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
+
+\textbf{Parameters:} \\
+\[z = \begin{bmatrix} g & M_m & M_n & \Sigma_m \end{bmatrix}^\top \]
+
+\textbf{Consistency equations:} (eq 86 of M \& O) \\
+\begin{equation}
+\begin{split}
+ \mu = F(\mu, \Delta_0, \Delta_\infty) = M_m M_n \int \mathcal{D}z \phi(\mu + \sqrt{\Delta_0} z) \\
+\Delta_0 = G(\mu, \Delta_0, \Delta_\infty) = [\Delta_\infty^2 + 2g^2\{\int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z)  \\
+- \int \mathcal{D}z [\int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)]^2\} +M_n^2 \Sigma_m^2 \langle[\phi_i]\rangle^2(\Delta_0 - \Delta_\infty)]^{\frac{1}{2}} \\
+\Delta_\infty = H(\mu, \Delta_0, \Delta_\infty) = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty} + \sqrt{\Delta_\infty}z \right]^2 + M_n^2 \Sigma_m^2 \langle [\phi_i] \rangle^2
+\end{split}
+\end{equation}
+
+\textbf{Solver:}
+\begin{equation}
+\begin{split}
+\dot{\mu}(t) = -\mu(t) + F(\mu(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\Delta_0}(t) = \Delta_0(t) + G(\mu(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\Delta_\infty}(t) = -\Delta_\infty(t) + H(\mu(t), \Delta_0(t), \Delta_\infty(t))
+\end{split}
+\end{equation}
+
+\textbf{Behavior:}
+\[\Delta_T = \Delta_0 - \Delta_\infty\]
+\[T(x) = \begin{bmatrix} \mu & \Delta_0 & \Delta_T & \mu^2 & \Delta_0^2 & \Delta_T^2 \end{bmatrix}^\top \]
+
+
+\subsection{Rank-1 chaotic solutions}
+Rank-1 vectors $m$ and $n$ have elements drawn
+\[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
+\[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
+The current has the following statistics:
+\[I = M_I + \frac{\Sigma_{mI}}{\Sigma_m}x_1 + \frac{\Sigma_{nI}}{\Sigma_n}x_2 + \Sigma_\perp h\]
+where $x_1$, $x_2$, and $h$ are standard normal random variables.
+
+\textbf{Parameters:} \\
+\[z = \begin{bmatrix} g & M_m & M_n & M_I & \Sigma_m & \Sigma_n & \Sigma_{mI} & \Sigma_{nI} & \Sigma_\perp \end{bmatrix}^\top \]
+
+(expansion of 98 of M \& O) \\
+The $\ddot{\Delta}$ equation is broken into the equation for $\Delta_0$ and $\Delta_\infty$ by the autocorrelation dynamics assertions.
+\[\ddot{\Delta(\tau)} = - \frac{\partial V}{\partial \Delta} \]
+\[\ddot{\Delta} = \Delta - \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \tau) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace \]
+
+We can write out the potential function by integrating the negated RHS.
+\[V(\Delta, \Delta_0) = \int \mathcal{D} \Delta \frac{\partial V(\Delta, \Delta_0)}{\partial \Delta} + C \]
+\[V(\Delta, \Delta_0) = -\frac{\Delta^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t + \tau) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta + C \]
+ 
+
+We assume that as time goes to infinity, the potential relaxes to a steady state.
+\[\frac{\partial V(\Delta_\infty, \Delta_0)}{\partial \Delta}  = 0 \]
+\[\frac{\partial V(\Delta_\infty, \Delta_0)}{\partial \Delta} = - \Delta + \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \infty) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace = 0\]
+\[\Delta_\infty = g^2 \langle \left[ \phi_i(t) \phi_i(t + \infty) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \]
+\[\Delta_\infty = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \]
+
+Also, we assume that the energy of the system is perserved throughout the entirety of its evolution. 
+\[V(\Delta_0, \Delta_0) = V(\Delta_\infty, \Delta_0)\]
+\[-\frac{\Delta_0^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta_0 + C = -\frac{\Delta_\infty^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta_\infty + C   \]
+\[\frac{\Delta_0^2-\Delta_\infty^2}{2} = g^2 \left( \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle - \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle \right) + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty)\]
+
+\[\frac{\Delta_0^2-\Delta_\infty^2}{2} = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \] 
+\[+ (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty)\]
+
+\textbf{Consistency equations:} \\ 
+\begin{equation}
+\begin{split}
+\mu = F(\mu, \kappa, \Delta_0, \Delta_\infty) = M_m \kappa + M_I \\
+\kappa = G(\mu, \kappa, \Delta_0, \Delta_\infty) = M_n \langle \left[ \phi_i \right] \rangle + \Sigma_{nI} \langle \left[ \phi_i' \right] \rangle \\
+\frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\mu, \kappa, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
++ (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty) \\
+\Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2
+\end{split} 
+\end{equation}
+
+\textbf{Solver:}
+\begin{equation}
+\begin{split}
+x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
+\Delta_0(t) = \sqrt{2x(t) - \Delta_\infty(t)^2} \\
+\dot{\mu}(t) = -\mu(t) + F(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\kappa}(t) = -\kappa + G(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{x}(t) = -x(t) + H(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t))
+\end{split}
+\end{equation}
+
+\end{document}
+
