@@ -82,7 +82,7 @@ We use this theory to compute $T(x)$ when training DSNs to learn maximum entropy
 
 \section{DMFT solvers}
 
-\subsection{Sponatneous stationary solutions}
+\subsection{Rank 1 sponatneous stationary solutions}
 Rank-1 vectors $m$ and $n$ have elements drawn
 \[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
 \[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
@@ -105,11 +105,7 @@ Rank-1 vectors $m$ and $n$ have elements drawn
 \end{split}
 \end{equation}
 
-\textbf{Behavior:}
-\[T(x) = \begin{bmatrix} \mu & \Delta_0 & \mu^2 & \Delta_0^2 \end{bmatrix}^\top \]
-
-
-\subsection{Sponatneous chaotic solutions}
+\subsection{Rank1 sponatneous chaotic solutions}
 Rank-1 vectors $m$ and $n$ have elements drawn
 \[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
 \[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
@@ -136,12 +132,7 @@ Rank-1 vectors $m$ and $n$ have elements drawn
 \end{split}
 \end{equation}
 
-\textbf{Behavior:}
-\[\Delta_T = \Delta_0 - \Delta_\infty\]
-\[T(x) = \begin{bmatrix} \mu & \Delta_0 & \Delta_T & \mu^2 & \Delta_0^2 & \Delta_T^2 \end{bmatrix}^\top \]
-
-
-\subsection{Rank-1 chaotic solutions}
+\subsection{Rank 1 with input chaotic solutions}
 Rank-1 vectors $m$ and $n$ have elements drawn
 \[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
 \[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
@@ -158,7 +149,7 @@ The $\ddot{\Delta}$ equation is broken into the equation for $\Delta_0$ and $\De
 \[\ddot{\Delta} = \Delta - \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \tau) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace \]
 
 We can write out the potential function by integrating the negated RHS.
-\[V(\Delta, \Delta_0) = \int \mathcal{D} \Delta \frac{\partial V(\Delta, \Delta_0)}{\partial \Delta} + C \]
+\[V(\Delta, \Delta_0) = \int \mathcal{D} \Delta \frac{\partial V(\Delta, \Delta_0)}{\partial \Delta}\]
 \[V(\Delta, \Delta_0) = -\frac{\Delta^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t + \tau) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta + C \]
  
 
@@ -198,6 +189,71 @@ x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t))
 \end{split}
 \end{equation}
+
+
+\subsection{Integration of a noisy stimulus}
+\textbf{Parameters:} \\
+\[z = \begin{bmatrix} g & M_m & M_n & M_I & \Sigma_m & \Sigma_n & \Sigma_{mI} & \Sigma_{nI} & \Sigma_\perp \end{bmatrix}^\top \]
+
+\textbf{Behavior:} \\
+\[z = \begin{bmatrix} \kappa(M_{I,low}), \kappa(M_{I,high}), \Delta_T, \kappa(M_{I,low})^2, \kappa(M_{I,high})^2, \Delta_T^2 \end{bmatrix}^\top \]
+
+
+\subsection{Rank 2 networks have the following consistency equations for $\Delta_0$ and $\Delta_\infty$}
+\[\rho_m = \langle m_i^{(1)} m_i^{(2)} \rangle \]
+\begin{equation}
+\begin{split}
+\frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\mu, \kappa, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
++ (2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2} \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2)(\Delta_0 + \Delta_\infty) \\
+\Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + 2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2}  \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2
+\end{split} 
+\end{equation}
+
+\subsection{Context-dependent discrimination}
+\[I(t) = c_A(t)I^A + c_B(t)I^B + \gamma_A I_{ctx,A} + \gamma_B I_{ctx,B}  \]
+\[m^{(1)} = y_A + \rho_m I_{ctx,A} + \beta_m w \]
+\[n^{(1)} = I^A + \rho_n I_{ctx,A} + \beta_n w \]
+\[m^{(2)} = y_B + \rho_m I_{ctx,B} + \beta_m w \]
+\[n^{(2)} = I^B + \rho_n I_{ctx,B} + \beta_n w \]
+\[y(t) = \beta_m (\kappa_1 + \kappa_2) \langle \left[\phi_i' \right] \rangle \]
+\textbf{Parameters:} \\
+\[z = \begin{bmatrix} g & M_m & M_n & \Sigma_m & \Sigma_n & \rho_m & \rho_n & \beta_m & \beta_n \end{bmatrix}^\top \]
+
+\textbf{Consistency equations:} \\ 
+\begin{equation}
+\begin{split}
+\kappa_1(t) = F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) = \rho_m \rho_n \kappa_1 \langle \left[ \phi_i' \right] +\beta_m \beta_n(\kappa_1 + \kappa_2) \langle \left[ \phi_i' \right] \rangle \\
+\kappa_2(t) = F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) = \rho_m \rho_n \kappa_2 \langle \left[ \phi_i' \right] +\beta_m \beta_n(\kappa_1 + \kappa_2) \langle \left[ \phi_i' \right] \rangle \\
+ \frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\mu, \kappa, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
++ (2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2} \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2)(\Delta_0 + \Delta_\infty) \\
+\Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + 2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2}  \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2
+\end{split} 
+\end{equation}
+
+\textbf{Solver:}
+\begin{equation}
+\begin{split}
+x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
+\Delta_0(t) = \sqrt{2x(t) - \Delta_\infty(t)^2} \\
+\dot{\kappa_1}(t) = -\kappa_1 + F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\kappa_2}(t) = -\kappa_2 + G(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{x}(t) = -x(t) + H(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t))
+\end{split}
+\end{equation}
+
+
+\textbf{Behavior:} \\
+\[z = \begin{bmatrix} y_1, y_2, y_3, y_4, \Delta_T, \text{sec moments...} \end{bmatrix}^\top \]
+
+
+
+\subsection{Chaotic limit cycles}
+\[m^{(1)} = \alpha x_1 + \rho y_1\]
+\[n^{(1)} = \alpha x_2 + \rho y_2 \]
+\[m^{(2)} = \alpha x_3 + \rho y_2 + \gamma \rho y_1 \]
+\[n^{(2)} = \alpha x_4 - \rho y_1\]
+
 
 \end{document}
 
