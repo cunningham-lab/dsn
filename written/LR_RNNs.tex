@@ -182,7 +182,7 @@ Also, we assume that the energy of the system is perserved throughout the entire
 \begin{equation}
 \begin{split}
 x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
-\Delta_0(t) = \sqrt{2x(t) - \Delta_\infty(t)^2} \\
+\Delta_0(t) = \sqrt{2x(t) + \Delta_\infty(t)^2} \\
 \dot{\mu}(t) = -\mu(t) + F(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
 \dot{\kappa}(t) = -\kappa + G(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
 \dot{x}(t) = -x(t) + H(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
@@ -204,29 +204,41 @@ x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \begin{equation}
 \begin{split}
 \frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\mu, \kappa, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
-+ (2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2} \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2)(\Delta_0 + \Delta_\infty) \\
++ (2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2} \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2)(\Delta_0 - \Delta_\infty) \\
 \Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + 2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2}  \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2
 \end{split} 
 \end{equation}
 
 \subsection{Context-dependent discrimination}
+\[y_A \sim \mathcal{N}(0, \Sigma_{y_A}=1.2) \]
+\[y_B \sim \mathcal{N}(0, \Sigma_{y_B}=1.2) \]
+\[I_{A} \sim \mathcal{N}(0, \Sigma_{I_A}=1.2) \]
+\[I_{B} \sim \mathcal{N}(0, \Sigma_{I_B}=1.2) \]
+\[I_{ctx,A} \sim \mathcal{N}(0, \Sigma_{I_{ctx,A}}=1) \]
+\[I_{ctx,B} \sim \mathcal{N}(0, \Sigma_{I_{ctx,B}}=1) \]
+
 \[I(t) = c_A(t)I^A + c_B(t)I^B + \gamma_A I_{ctx,A} + \gamma_B I_{ctx,B}  \]
 \[m^{(1)} = y_A + \rho_m I_{ctx,A} + \beta_m w \]
 \[n^{(1)} = I^A + \rho_n I_{ctx,A} + \beta_n w \]
 \[m^{(2)} = y_B + \rho_m I_{ctx,B} + \beta_m w \]
 \[n^{(2)} = I^B + \rho_n I_{ctx,B} + \beta_n w \]
 \[y(t) = \beta_m (\kappa_1 + \kappa_2) \langle \left[\phi_i' \right] \rangle \]
+
+\[\Sigma_I = c_A(t)\Sigma_{I_A} + c_B(t)\Sigma_{I_B} + \gamma_A \Sigma_{I_{ctx,A}} +  \gamma_B \Sigma_{I_{ctx,B}} \]
+\[\Sigma_m^{(1)} = \Sigma_{y_A} + \rho_m \Sigma_{I_{ctx,A}} + \beta_m \Sigma_w \]
+\[\Sigma_m^{(2)} = \Sigma_{y_B} + \rho_m \Sigma_{I_{ctx,B}} + \beta_m \Sigma_w \]
 \textbf{Parameters:} \\
-\[z = \begin{bmatrix} g & M_m & M_n & \Sigma_m & \Sigma_n & \rho_m & \rho_n & \beta_m & \beta_n \end{bmatrix}^\top \]
+\[z = \begin{bmatrix} g  & \rho_m & \rho_n & \beta_m & \beta_n \end{bmatrix}^\top \]
 
 \textbf{Consistency equations:} \\ 
 \begin{equation}
 \begin{split}
-\kappa_1(t) = F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) = \rho_m \rho_n \kappa_1 \langle \left[ \phi_i' \right] +\beta_m \beta_n(\kappa_1 + \kappa_2) \langle \left[ \phi_i' \right] \rangle \\
-\kappa_2(t) = F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) = \rho_m \rho_n \kappa_2 \langle \left[ \phi_i' \right] +\beta_m \beta_n(\kappa_1 + \kappa_2) \langle \left[ \phi_i' \right] \rangle \\
+\kappa_1(t) = F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) = \rho_m \rho_n \kappa_1 \langle \left[ \phi_i' \right] \rangle +\beta_m \beta_n(\kappa_1 + \kappa_2) \langle \left[ \phi_i' \right] \rangle + c_A \Sigma_I^2 + \rho_n \gamma_A \\
+\kappa_2(t) = F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) = \rho_m \rho_n \kappa_2 \langle \left[ \phi_i' \right] \rangle +\beta_m \beta_n(\kappa_1 + \kappa_2) \langle \left[ \phi_i' \right] \rangle + c_B \Sigma_I^2 + \rho_n \gamma_B \\
  \frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\mu, \kappa, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
-+ (2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2} \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2)(\Delta_0 + \Delta_\infty) \\
-\Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + 2 \rho_m \kappa_1 \kappa_2 + \Sigma_m^{(1)^2}  \kappa_1^2 +  \Sigma_m^{(2)^2}  \kappa_2^2 + \Sigma_I^2
++ ((\Sigma_w^2 + \beta_m^2)(\kappa_1^2 + \kappa_2^2) + \Sigma_I^2(c_A^2 + c_B^2) + (\rho_m \kappa_1 + \gamma_A)^2 + (\rho_m \kappa_2 + \gamma_B)^2)(\Delta_0 + \Delta_\infty) \\
+\Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \\
+(\Sigma_w^2 + \beta_m^2)(\kappa_1^2 + \kappa_2^2) + \Sigma_I^2(c_A^2 + c_B^2) + (\rho_m \kappa_1 + \gamma_A)^2 + (\rho_m \kappa_2 + \gamma_B)^2
 \end{split} 
 \end{equation}
 
@@ -234,7 +246,8 @@ x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \begin{equation}
 \begin{split}
 x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
-\Delta_0(t) = \sqrt{2x(t) - \Delta_\infty(t)^2} \\
+\mu = 0 \\
+\Delta_0(t) = \sqrt{2x(t) + \Delta_\infty(t)^2} \\
 \dot{\kappa_1}(t) = -\kappa_1 + F(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) \\
 \dot{\kappa_2}(t) = -\kappa_2 + G(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) \\
 \dot{x}(t) = -x(t) + H(\kappa_1(t), \kappa_2(t), \Delta_0(t), \Delta_\infty(t)) \\
