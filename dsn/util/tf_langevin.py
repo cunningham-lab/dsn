@@ -98,3 +98,33 @@ def langevin_dyn_rank1_input_chaos(f, x0, eps, num_its, db=False):
         return x_i, tf.stack(xs, axis=2)
     else:
         return x_i
+
+# The functions above and below are the same.  Kappas should be bounded by
+# max abs val, while delta0 and deltainf need their nonneg and
+# del0 >= delinf bounds.
+
+def langevin_dyn_rank2_CDD_chaos(f, x0, eps, num_its, db=False):
+    x_i = x0
+    if db:
+        xs = [x0]
+    for i in range(num_its):
+        f_x = f(x_i)
+        x_1 = tf.clip_by_value(
+            (1.0 - eps) * x_i[:, 0] + eps * f_x[:, 0], -MAXVAL, MAXVAL
+        )
+        x_2 = tf.clip_by_value(
+            (1.0 - eps) * x_i[:, 1] + eps * f_x[:, 1], -MAXVAL, MAXVAL
+        )
+        # delta0 should not be negative
+        x_3 = tf.clip_by_value((1.0 - eps) * x_i[:, 2] + eps * f_x[:, 2], 0.0, MAXVAL)
+        # deltainf should not be negative or greater than delta0
+        x_4 = tf.clip_by_value(
+            (1.0 - eps) * x_i[:, 3] + eps * f_x[:, 3], 0.0, x_3 - EPS
+        )
+        x_i = tf.stack([x_1, x_2, x_3, x_4], axis=1)
+        if db:
+            xs.append(x_i)
+    if db:
+        return x_i, tf.stack(xs, axis=2)
+    else:
+        return x_i
