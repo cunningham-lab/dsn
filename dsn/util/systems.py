@@ -22,7 +22,7 @@ import scipy.stats
 from scipy.special import gammaln, psi
 import scipy.io as sio
 from itertools import compress
-from dsn.util.tf_DMFT_solvers import spont_chaotic_solve
+from dsn.util.tf_DMFT_solvers import rank1_spont_chaotic_solve
 
 DTYPE = tf.float64
 
@@ -956,9 +956,10 @@ class LowRankRNN(system):
         model_opts (dict): 
           * model_opts[`'rank'`] 
             * `1` (default) Rank 1 network
-            * `r` any other pos int (TODO)
+            * `2` 
           * model_opts[`'input_type'`] 
             * `'spont'` (default) No input.
+            * `'gaussian'` (default) Gaussian input.
         solve_its (int): Number of langevin dynamics simulation steps.
         solve_eps (float): Langevin dynamics solver step-size.
     """
@@ -995,14 +996,41 @@ class LowRankRNN(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        all_params = ["g", "Mm", "Mn", "Sm"]
-        all_param_labels = {
-            "g": [r"$g$"],
-            "Mm": [r"$M_m$"],
-            "Mn": [r"$M_n$"],
-            "Sm": [r"$\Sigma_m$"],
-        }
 
+        if (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'spont'):
+            all_params = ["g", "Mm", "Mn", "Sm"]
+            all_param_labels = {
+                "g": [r"$g$"],
+                "Mm": [r"$M_m$"],
+                "Mn": [r"$M_n$"],
+                "Sm": [r"$\Sigma_m$"],
+            }
+        elif (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'input'):
+            all_params = ["g", "Mm", "Mn", "MI", "Sm", "Sn", "SmI", "SnI", "Sperp"]
+            all_param_labels = {
+                "g": [r"$g$"],
+                "Mm": [r"$M_m$"],
+                "Mn": [r"$M_n$"],
+                "MI": [r"$M_I$"],
+                "Sm": [r"$\Sigma_m$"],
+                "Sn": [r"$\Sigma_n$"],
+                "SmI": [r"$\Sigma_{m,I}$"],
+                "SnI": [r"$\Sigma_{n,I}$"],
+                "Sperp": [r"$\Sigma_\perp$"],
+            }
+        elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
+            all_params = ["g", "Mm", "Mn", "Sm", "Sn", "rhom", "rhon", "betam", "betan"]
+            all_param_labels = {
+                "g": [r"$g$"],
+                "Mm": [r"$M_m$"],
+                "Mn": [r"$M_n$"],
+                "Sm": [r"$\Sigma_m$"],
+                "Sn": [r"$\Sigma_n$"],
+                "rhom": [r"$\rho_m$"],
+                "rhon": [r"$\rho_n$"],
+                "betam": [r"$\beta_m$"],
+                "betan": [r"$\beta_n$"],
+            }
         return all_params, all_param_labels
 
     def get_T_x_labels(self,):
@@ -1023,6 +1051,28 @@ class LowRankRNN(system):
                 r"$\Delta_T$",
                 r"$\mu^2$",
                 r"$\Delta_{\infty}^2$",
+                r"$(\Delta_T)^2$",
+            ]
+        elif self.behavior["type"] == "ND":
+            T_x_labels = [
+                r"$\kappa_{\text{low}}$",
+                r"$\kappa_{\text{high}}$",
+                r"$\Delta_T$",
+                r"$\kappa_{\text{low}}^2$",
+                r"$\kappa_{\text{high}}^2$",
+                r"$\Delta_T^2$",
+            ]
+        elif self.behavior["type"] == "CDD":
+            T_x_labels = [
+                r"$z_1$",
+                r"$z_2$",
+                r"$z_3$",
+                r"$z_4$",
+                r"$(\Delta_T)$",
+                r"$z_1^2$",
+                r"$z_2^2$",
+                r"$z_3^2$",
+                r"$z_4^2$",
                 r"$(\Delta_T)^2$",
             ]
         else:
@@ -1049,35 +1099,140 @@ class LowRankRNN(system):
 
         # read free parameters from z vector
         ind = 0
-        for free_param in self.free_params:
-            if free_param == "g":
-                g = z[:, :, ind]
-            elif free_param == "Mm":
-                Mm = z[:, :, ind]
-            elif free_param == "Mn":
-                Mn = z[:, :, ind]
-            elif free_param == "Sm":
-                Sm = z[:, :, ind]
-            else:
-                print("Error: unknown free parameter: %s." % free_param)
-                raise NotImplementedError()
-            ind += 1
 
-        # load fixed parameters
-        for fixed_param in self.fixed_params.keys():
-            if fixed_param == "g":
-                g = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-            elif fixed_param == "Mm":
-                Mm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-            elif fixed_param == "Mn":
-                Mn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-            elif fixed_param == "Sm":
-                Sm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-            else:
-                print("Error: unknown fixed parameter: %s." % fixed_param)
-                raise NotImplementedError()
+        if (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'spont'):
+            for free_param in self.free_params:
+                if free_param == "g":
+                    g = z[:, :, ind]
+                elif free_param == "Mm":
+                    Mm = z[:, :, ind]
+                elif free_param == "Mn":
+                    Mn = z[:, :, ind]
+                elif free_param == "Sm":
+                    Sm = z[:, :, ind]
+                else:
+                    print("Error: unknown free parameter: %s." % free_param)
+                    raise NotImplementedError()
+                ind += 1
 
-        return g, Mm, Mn, Sm
+            # load fixed parameters
+            for fixed_param in self.fixed_params.keys():
+                if fixed_param == "g":
+                    g = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Mm":
+                    Mm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Mn":
+                    Mn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Sm":
+                    Sm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                else:
+                    print("Error: unknown fixed parameter: %s." % fixed_param)
+                    raise NotImplementedError()
+
+            return g, Mm, Mn, Sm
+
+        elif (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'input'):
+            for free_param in self.free_params:
+                if free_param == "g":
+                    g = z[:, :, ind]
+                elif free_param == "Mm":
+                    Mm = z[:, :, ind]
+                elif free_param == "Mn":
+                    Mn = z[:, :, ind]
+                elif free_param == "MI":
+                    MI = z[:, :, ind]
+                elif free_param == "Sm":
+                    Sm = z[:, :, ind]
+                elif free_param == "Sn":
+                    Sn = z[:, :, ind]
+                elif free_param == "SmI":
+                    SmI = z[:, :, ind]
+                elif free_param == "SnI":
+                    SnI = z[:, :, ind]
+                elif free_param == "Sperp":
+                    Sperp = z[:, :, ind]
+                else:
+                    print("Error: unknown free parameter: %s." % free_param)
+                    raise NotImplementedError()
+                ind += 1
+
+            # load fixed parameters
+            for fixed_param in self.fixed_params.keys():
+                if fixed_param == "g":
+                    g = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Mm":
+                    Mm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Mn":
+                    Mn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "MI":
+                    MI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Sm":
+                    Sm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Sn":
+                    Sn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "SmI":
+                    SmI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "SnI":
+                    SnI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Sperp":
+                    Sperp = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                else:
+                    print("Error: unknown fixed parameter: %s." % fixed_param)
+                    raise NotImplementedError()
+
+            return g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp
+
+        elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
+            all_params = ["g", "Mm", "Mn", "Sm", "Sn", "rhom", "rhon", "betam", "betan"]
+            for free_param in self.free_params:
+                if free_param == "g":
+                    g = z[:, :, ind]
+                elif free_param == "Mm":
+                    Mm = z[:, :, ind]
+                elif free_param == "Mn":
+                    Mn = z[:, :, ind]
+                elif free_param == "Sm":
+                    Sm = z[:, :, ind]
+                elif free_param == "Sn":
+                    Sn = z[:, :, ind]
+                elif free_param == "rhom":
+                    rhom = z[:, :, ind]
+                elif free_param == "rhon":
+                    rhon = z[:, :, ind]
+                elif free_param == "betam":
+                    betam = z[:, :, ind]
+                elif free_param == "betan":
+                    betan = z[:, :, ind]
+                else:
+                    print("Error: unknown free parameter: %s." % free_param)
+                    raise NotImplementedError()
+                ind += 1
+
+            # load fixed parameters
+            for fixed_param in self.fixed_params.keys():
+                if fixed_param == "g":
+                    g = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Mm":
+                    Mm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Mn":
+                    Mn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Sm":
+                    Sm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "Sn":
+                    Sn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "rhom":
+                    rhom = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "rhon":
+                    rhon = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "betam":
+                    betam = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "betan":
+                    betan = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                else:
+                    print("Error: unknown fixed parameter: %s." % fixed_param)
+                    raise NotImplementedError()
+
+            return g, Mm, Mn, Sm, Sn, rhom, rhon, betam, betan
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -1122,15 +1277,16 @@ class LowRankRNN(system):
 
         """
 
+        M = tf.shape(z)[1]
+
         if self.behavior["type"] == "struct_chaos":
-            M = tf.shape(z)[1]
             if self.model_opts["input_type"] == "spont":
                 g, Mm, Mn, Sm = self.filter_Z(z)
                 mu_init = 50.0 * tf.ones((M,), dtype=DTYPE)
                 delta_0_init = 55.0 * tf.ones((M,), dtype=DTYPE)
                 delta_inf_init = 45.0 * tf.ones((M,), dtype=DTYPE)
 
-                mu, delta_0, delta_inf = spont_chaotic_solve(
+                mu, delta_0, delta_inf = rank1_spont_chaotic_solve(
                     mu_init,
                     delta_0_init,
                     delta_inf_init,
@@ -1156,6 +1312,16 @@ class LowRankRNN(system):
             else:
                 raise NotImplementedError()
 
+        elif self.behavior["type"] == "ND":
+            assert(self.model_opts["input_type"] == "gaussian")
+            g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp = self.filter_Z(z)
+            raise NotImplementedError() 
+                
+        elif self.behavior["type"] == "CDD":
+            assert(self.model_opts["input_type"] == "gaussian")
+            g, Mm, Mn, Sm, Sn, rhom, rhon, betam, betan = self.filter_Z(z)
+            raise NotImplementedError()
+            
         else:
             raise NotImplementedError()
 
@@ -1169,7 +1335,7 @@ class LowRankRNN(system):
 
         """
 
-        if self.behavior["type"] == "struct_chaos":
+        if self.behavior["type"] in ["struct_chaos", "ND", "CDD"]:
             means = self.behavior["means"]
             variances = self.behavior["variances"]
         else:

@@ -1,7 +1,8 @@
 import numpy as np
 import tensorflow as tf
-from dsn.util.tf_langevin import langevin_dyn, langevin_dyn_spont_static, \
-                                 langevin_dyn_spont_chaos, langevin_dyn_rank1_chaos
+from dsn.util.tf_langevin import langevin_dyn, langevin_dyn_rank1_spont_static, \
+                                 langevin_dyn_rank1_spont_chaos, \
+                                 langevin_dyn_rank1_input_chaos
 from tf_util.stat_util import approx_equal
 
 EPS = 1e-16
@@ -58,7 +59,7 @@ def test_langevin_dyn():
 
     return None
 
-def test_langevin_dyn_spont_static():
+def test_langevin_dyn_rank1_spont_static():
     x0 = tf.placeholder(dtype=tf.float64, shape=(n, 2))
 
     def f(x):
@@ -69,7 +70,7 @@ def test_langevin_dyn_spont_static():
     eps = 0.8
     num_its = 30
 
-    x_ss, x = langevin_dyn_spont_static(f, x0, eps, num_its, db=True)
+    x_ss, x = langevin_dyn_rank1_spont_static(f, x0, eps, num_its, db=True)
 
     _x0 = np.random.normal(0.0, 10.0, (n,2))
 
@@ -84,7 +85,7 @@ def test_langevin_dyn_spont_static():
     return None
         
 
-def test_langevin_dyn_spont_chaos():
+def test_langevin_dyn_rank1_spont_chaos():
     x0 = tf.placeholder(dtype=tf.float64, shape=(n, 3))
 
     def f(x):
@@ -96,7 +97,7 @@ def test_langevin_dyn_spont_chaos():
     eps = 0.8
     num_its = 30
 
-    x_ss, x = langevin_dyn_spont_chaos(f, x0, eps, num_its, db=True)
+    x_ss, x = langevin_dyn_rank1_spont_chaos(f, x0, eps, num_its, db=True)
 
     _x0 = np.random.normal(0.0, 10.0, (n,3))
 
@@ -114,7 +115,7 @@ def test_langevin_dyn_spont_chaos():
 
 
 
-def test_langevin_dyn_rank1_chaos():
+def test_langevin_dyn_rank1_input_chaos():
     x0 = tf.placeholder(dtype=tf.float64, shape=(n, 4))
 
     def f(x):
@@ -127,7 +128,7 @@ def test_langevin_dyn_rank1_chaos():
     eps = 0.8
     num_its = 30
 
-    x_ss, x = langevin_dyn_rank1_chaos(f, x0, eps, num_its, db=True)
+    x_ss, x = langevin_dyn_rank1_input_chaos(f, x0, eps, num_its, db=True)
 
     _x0 = np.random.normal(0.0, 10.0, (n,4))
 
@@ -147,6 +148,6 @@ def test_langevin_dyn_rank1_chaos():
 
 if __name__ == "__main__":
     test_langevin_dyn()
-    test_langevin_dyn_spont_static()
-    test_langevin_dyn_spont_chaos()
-    test_langevin_dyn_rank1_chaos()
+    test_langevin_dyn_rank1_spont_static()
+    test_langevin_dyn_rank1_spont_chaos()
+    test_langevin_dyn_rank1_input_chaos()
