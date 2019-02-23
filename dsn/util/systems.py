@@ -22,10 +22,19 @@ import scipy.stats
 from scipy.special import gammaln, psi
 import scipy.io as sio
 from itertools import compress
-from dsn.util.tf_DMFT_solvers import rank1_spont_chaotic_solve
+from dsn.util.tf_DMFT_solvers import rank1_spont_chaotic_solve, \
+                                     rank1_input_chaotic_solve, \
+                                     rank2_CDD_chaotic_solve
 
 DTYPE = tf.float64
 
+def tile_for_conditions(tensor_list, num_conds):
+    num_tensors = len(tensor_list)
+    tiled = []
+    for i in range(num_tensors):
+        tensor_i = tensor_list[i]
+        tiled.append(tf.tile(tensor_i, [1,num_conds]))
+    return tiled
 
 class system:
     """Base class for systems using DSN modeling.
@@ -1006,7 +1015,7 @@ class LowRankRNN(system):
                 "Sm": [r"$\Sigma_m$"],
             }
         elif (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'input'):
-            all_params = ["g", "Mm", "Mn", "MI", "Sm", "Sn", "SmI", "SnI", "Sperp"]
+            all_params = ["g", "Mm", "Mn", "MI", "Sm", "Sn", "SmI", "Sperp"]
             all_param_labels = {
                 "g": [r"$g$"],
                 "Mm": [r"$M_m$"],
@@ -1015,17 +1024,12 @@ class LowRankRNN(system):
                 "Sm": [r"$\Sigma_m$"],
                 "Sn": [r"$\Sigma_n$"],
                 "SmI": [r"$\Sigma_{m,I}$"],
-                "SnI": [r"$\Sigma_{n,I}$"],
                 "Sperp": [r"$\Sigma_\perp$"],
             }
         elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
-            all_params = ["g", "Mm", "Mn", "Sm", "Sn", "rhom", "rhon", "betam", "betan"]
+            all_params = ["g", "rhom", "rhon", "betam", "betan"]
             all_param_labels = {
                 "g": [r"$g$"],
-                "Mm": [r"$M_m$"],
-                "Mn": [r"$M_n$"],
-                "Sm": [r"$\Sigma_m$"],
-                "Sn": [r"$\Sigma_n$"],
                 "rhom": [r"$\rho_m$"],
                 "rhon": [r"$\rho_n$"],
                 "betam": [r"$\beta_m$"],
@@ -1055,12 +1059,10 @@ class LowRankRNN(system):
             ]
         elif self.behavior["type"] == "ND":
             T_x_labels = [
-                r"$\kappa_{\text{low}}$",
-                r"$\kappa_{\text{high}}$",
-                r"$\Delta_T$",
-                r"$\kappa_{\text{low}}^2$",
-                r"$\kappa_{\text{high}}^2$",
-                r"$\Delta_T^2$",
+                r"$\kappa_{HI}  -\kappa_{LO}$",
+                #r"$\Delta_T$",
+                r"$(\kappa_{HI}  -\kappa_{LO})^2$",
+                #r"$\Delta_T^2$",
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
@@ -1147,8 +1149,6 @@ class LowRankRNN(system):
                     Sn = z[:, :, ind]
                 elif free_param == "SmI":
                     SmI = z[:, :, ind]
-                elif free_param == "SnI":
-                    SnI = z[:, :, ind]
                 elif free_param == "Sperp":
                     Sperp = z[:, :, ind]
                 else:
@@ -1172,29 +1172,19 @@ class LowRankRNN(system):
                     Sn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "SmI":
                     SmI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-                elif fixed_param == "SnI":
-                    SnI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "Sperp":
                     Sperp = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError()
 
-            return g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp
+            return g, Mm, Mn, MI, Sm, Sn, SmI, Sperp
 
         elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
             all_params = ["g", "Mm", "Mn", "Sm", "Sn", "rhom", "rhon", "betam", "betan"]
             for free_param in self.free_params:
                 if free_param == "g":
                     g = z[:, :, ind]
-                elif free_param == "Mm":
-                    Mm = z[:, :, ind]
-                elif free_param == "Mn":
-                    Mn = z[:, :, ind]
-                elif free_param == "Sm":
-                    Sm = z[:, :, ind]
-                elif free_param == "Sn":
-                    Sn = z[:, :, ind]
                 elif free_param == "rhom":
                     rhom = z[:, :, ind]
                 elif free_param == "rhon":
@@ -1212,14 +1202,6 @@ class LowRankRNN(system):
             for fixed_param in self.fixed_params.keys():
                 if fixed_param == "g":
                     g = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-                elif fixed_param == "Mm":
-                    Mm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-                elif fixed_param == "Mn":
-                    Mn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-                elif fixed_param == "Sm":
-                    Sm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-                elif fixed_param == "Sn":
-                    Sn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "rhom":
                     rhom = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "rhon":
@@ -1232,7 +1214,7 @@ class LowRankRNN(system):
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError()
 
-            return g, Mm, Mn, Sm, Sn, rhom, rhon, betam, betan
+            return g, rhom, rhon, betam, betan
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -1297,13 +1279,13 @@ class LowRankRNN(system):
                     self.solve_its,
                     self.solve_eps,
                     gauss_quad_pts=50,
-                    db=False,
+                    db=False
                 )
 
                 static_var = delta_inf
-                temporal_var = delta_0 - delta_inf
+                chaotic_var = delta_0 - delta_inf
 
-                first_moments = tf.stack([mu, static_var, temporal_var], axis=1)
+                first_moments = tf.stack([mu, static_var, chaotic_var], axis=1)
                 second_moments = tf.square(first_moments)
                 T_x = tf.expand_dims(
                     tf.concat((first_moments, second_moments), axis=1), 0
@@ -1313,14 +1295,80 @@ class LowRankRNN(system):
                 raise NotImplementedError()
 
         elif self.behavior["type"] == "ND":
-            assert(self.model_opts["input_type"] == "gaussian")
-            g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp = self.filter_Z(z)
-            raise NotImplementedError() 
+            assert(self.model_opts["input_type"] == "input")
+            num_conds = 2
+            c_LO = 0.25
+            c_HI = 0.75
+
+            g, Mm, Mn, MI, Sm, Sn, SmI, Sperp = self.filter_Z(z)
+            g, Mm, Mn, MI, Sm, Sn, SmI, Sperp = tile_for_conditions(
+                [g, Mm, Mn, MI, Sm, Sn, SmI, Sperp], 
+                num_conds)
+
+            mu_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            kappa_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            delta_0_init = 5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+
+            SnI = tf.concat((c_LO*tf.ones((M,), dtype=DTYPE), 
+                             c_HI*tf.ones((M,), dtype=DTYPE)), 
+                            axis=0)
+            
+            mu, kappa, delta_0, delta_inf = rank1_input_chaotic_solve(
+                mu_init,
+                kappa_init,
+                delta_0_init,
+                delta_inf_init,
+                g[0, :],
+                Mm[0, :],
+                Mn[0, :],
+                MI[0, :],
+                Sm[0, :],
+                Sn[0, :],
+                SmI[0, :],
+                SnI,
+                Sperp[0, :],
+                self.solve_its,
+                self.solve_eps,
+                gauss_quad_pts=50,
+                db=False)
+
+            #static_var = delta_inf
+            kappa_LO = kappa[:M]
+            kappa_HI = kappa[M:]
+
+            first_moments = tf.stack([kappa_HI-kappa_LO], axis=1)
+            second_moments = tf.square(first_moments)
+            T_x = tf.expand_dims(
+                tf.concat((first_moments, second_moments), axis=1), 0
+            )
+
                 
         elif self.behavior["type"] == "CDD":
-            assert(self.model_opts["input_type"] == "gaussian")
-            g, Mm, Mn, Sm, Sn, rhom, rhon, betam, betan = self.filter_Z(z)
-            raise NotImplementedError()
+            assert(self.model_opts["input_type"] == "input")
+            g, rhom, rhon, betam, betan = self.filter_Z(z)
+
+            kappa1_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            kappa2_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            delta_0_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            delta_inf_init = 4.0 * tf.ones((M,), dtype=DTYPE)
+
+            kappa1, kappa2, delta_0, delta_inf = rank2_CDD_chaotic_solve(
+                kappa1_init,
+                kappa2_init,
+                delta_0_init,
+                delta_inf_init,
+                # need to handle cA, cB, gammaA, gammaB, etc.
+                g[0, :],
+                rhom[0, :],
+                rhon[0, :],
+                betam[0, :],
+                betan[0, :],
+                self.solve_its,
+                self.solve_eps,
+                gauss_quad_pts=50,
+                db=False,
+            )
             
         else:
             raise NotImplementedError()
