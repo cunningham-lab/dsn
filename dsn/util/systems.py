@@ -1068,16 +1068,10 @@ class LowRankRNN(system):
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
-                r"$z_1$",
-                r"$z_2$",
-                r"$z_3$",
-                r"$z_4$",
-                r"$(\Delta_T)$",
-                r"$z_1^2$",
-                r"$z_2^2$",
-                r"$z_3^2$",
-                r"$z_4^2$",
-                r"$(\Delta_T)^2$",
+                r"$d_{ctx,A}$",
+                r"$d_{ctx,B}$",
+                r"$d_{ctx,A}^2$",
+                r"$d_{ctx,B}^2$",
             ]
         else:
             raise NotImplementedError()
