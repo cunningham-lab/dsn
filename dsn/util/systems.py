@@ -1027,13 +1027,15 @@ class LowRankRNN(system):
                 "Sperp": [r"$\Sigma_\perp$"],
             }
         elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
-            all_params = ["g", "rhom", "rhon", "betam", "betan"]
+            all_params = ["g", "rhom", "rhon", "betam", "betan", "gammaLO", "gammaHI"]
             all_param_labels = {
                 "g": [r"$g$"],
                 "rhom": [r"$\rho_m$"],
                 "rhon": [r"$\rho_n$"],
                 "betam": [r"$\beta_m$"],
                 "betan": [r"$\beta_n$"],
+                "gammaLO": [r"$\gamma_{LO}$"],
+                "gammaHI": [r"$\gamma_{HI}$"],
             }
         return all_params, all_param_labels
 
@@ -1066,16 +1068,10 @@ class LowRankRNN(system):
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
-                r"$z_1$",
-                r"$z_2$",
-                r"$z_3$",
-                r"$z_4$",
-                r"$(\Delta_T)$",
-                r"$z_1^2$",
-                r"$z_2^2$",
-                r"$z_3^2$",
-                r"$z_4^2$",
-                r"$(\Delta_T)^2$",
+                r"$d_{ctx,A}$",
+                r"$d_{ctx,B}$",
+                r"$d_{ctx,A}^2$",
+                r"$d_{ctx,B}^2$",
             ]
         else:
             raise NotImplementedError()
@@ -1181,7 +1177,6 @@ class LowRankRNN(system):
             return g, Mm, Mn, MI, Sm, Sn, SmI, Sperp
 
         elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
-            all_params = ["g", "Mm", "Mn", "Sm", "Sn", "rhom", "rhon", "betam", "betan"]
             for free_param in self.free_params:
                 if free_param == "g":
                     g = z[:, :, ind]
@@ -1193,6 +1188,10 @@ class LowRankRNN(system):
                     betam = z[:, :, ind]
                 elif free_param == "betan":
                     betan = z[:, :, ind]
+                elif free_param == "gammaLO": # negate
+                    gammaLO = -z[:, :, ind]
+                elif free_param == "gammaHI":
+                    gammaHI = z[:, :, ind]
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
                     raise NotImplementedError()
@@ -1210,11 +1209,15 @@ class LowRankRNN(system):
                     betam = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "betan":
                     betan = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "gammaLO":
+                    gammaLO = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif gammaHI == "gammaHI":
+                    gammaB = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError()
 
-            return g, rhom, rhon, betam, betan
+            return g, rhom, rhon, betam, betan, gammaLO, gammaHI
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -1345,31 +1348,71 @@ class LowRankRNN(system):
 
                 
         elif self.behavior["type"] == "CDD":
-            assert(self.model_opts["input_type"] == "input")
-            g, rhom, rhon, betam, betan = self.filter_Z(z)
+            num_conds = 4
+            c_LO = 0.0
+            c_HI = 1.0
 
-            kappa1_init = 5.0 * tf.ones((M,), dtype=DTYPE)
-            kappa2_init = 5.0 * tf.ones((M,), dtype=DTYPE)
-            delta_0_init = 5.0 * tf.ones((M,), dtype=DTYPE)
-            delta_inf_init = 4.0 * tf.ones((M,), dtype=DTYPE)
+            g, rhom, rhon, betam, betan, gammaHI, gammaLO = self.filter_Z(z)
+            gammaHI, gammaLO = tile_for_conditions([gammaHI, gammaLO], 2)
 
-            kappa1, kappa2, delta_0, delta_inf = rank2_CDD_chaotic_solve(
+            g, rhom, rhon, betam, betan = tile_for_conditions(
+                [g, rhom, rhon, betam, betan], 
+                num_conds)
+
+
+            gammaA = tf.concat((gammaHI, gammaLO), axis=1)
+            gammaB = tf.concat((gammaLO, gammaHI), axis=1)
+
+            cA = tf.concat((c_HI*tf.ones((M,), dtype=DTYPE), 
+                             c_LO*tf.ones((M,), dtype=DTYPE),
+                             c_HI*tf.ones((M,), dtype=DTYPE), 
+                             c_LO*tf.ones((M,), dtype=DTYPE)), 
+                             axis=0)
+            cB = tf.concat((c_LO*tf.ones((M,), dtype=DTYPE), 
+                             c_HI*tf.ones((M,), dtype=DTYPE),
+                             c_LO*tf.ones((M,), dtype=DTYPE), 
+                             c_HI*tf.ones((M,), dtype=DTYPE)), 
+                             axis=0)
+
+            
+
+
+            kappa1_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            kappa2_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            delta_0_init = 5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+
+            kappa1, kappa2, delta_0, delta_inf, z = rank2_CDD_chaotic_solve(
                 kappa1_init,
                 kappa2_init,
                 delta_0_init,
                 delta_inf_init,
-                # need to handle cA, cB, gammaA, gammaB, etc.
+                cA,
+                cB,
                 g[0, :],
                 rhom[0, :],
                 rhon[0, :],
                 betam[0, :],
                 betan[0, :],
+                gammaA[0,:],
+                gammaB[0,:],
                 self.solve_its,
                 self.solve_eps,
                 gauss_quad_pts=50,
                 db=False,
             )
-            
+
+            z_ctxA_A = z[:M]
+            z_ctxA_B = z[M:2*M]
+            z_ctxB_A = z[2*M:3*M]
+            z_ctxB_B = z[3*M:4*M]
+
+            first_moments = tf.stack([z_ctxA_A - z_ctxA_B, z_ctxB_B - z_ctxB_A], axis=1)
+            second_moments = tf.square(first_moments)
+            T_x = tf.expand_dims(
+                tf.concat((first_moments, second_moments), axis=1), 0
+            )
+        
         else:
             raise NotImplementedError()
 

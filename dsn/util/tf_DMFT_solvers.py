@@ -139,7 +139,7 @@ def rank1_input_chaotic_solve(
         H = tf.square(g)*(PrimSq - IntPrimPrim) + \
             (tf.square(Sm)*tf.square(kappa) + 2*SmI*kappa + SI_squared)*(delta_0 - delta_inf)
         I = tf.square(g)*IntPhiPhi + tf.square(Sm)*tf.square(kappa) + 2*SmI*kappa + SI_squared
-        
+
         return tf.stack([F, G, H, I], axis=1)
 
     x_init = tf.stack([mu_init, kappa_init, square_diff_init, delta_inf_init], axis=1)
@@ -168,28 +168,30 @@ def rank2_CDD_chaotic_solve(
     delta_inf_init,
     cA,
     cB,
-    gammaA,
-    gammaB,
     g,
     rhom,
     rhon,
     betam,
     betan,
+    gammaA,
+    gammaB,
     num_its,
     eps,
     gauss_quad_pts=50,
     db=False,
 ):
 
-    SyA = 1.2
-    SyB = 1.2
-    SIA = 1.2
-    SIB = 1.2
+    SI = 1.2
+    Sy = 1.2
+
+    SyA = Sy
+    SyB = Sy
+    SIA = SI
+    SIB = SI
     SIctxA = 1.0
     SIctxB = 1.0
     Sw = 1.0
 
-    SI = cA*SIA + cB*SIB + gammaA*SIctxA + gammaB*SIctxB
     Sm1 = SyA + rhom*SIctxA + betam*Sw
     Sm2 = SyB + rhom*SIctxB + betam*Sw
 
@@ -233,12 +235,18 @@ def rank2_CDD_chaotic_solve(
     square_diff = xs_end[:, 2]
     delta_inf = xs_end[:, 3]
 
+    mu = tf.zeros((1,), dtype=DTYPE)
     delta_0 = tf.sqrt(2*square_diff + tf.square(delta_inf))
 
+    Prime = tfi.Prime(mu, delta_0, num_pts=gauss_quad_pts)
+    
+    z = betam*(kappa1+kappa2)*Prime
+
+
     if db:
-        return kappa1, kappa2, delta_0, delta_inf, xs
+        return kappa1, kappa2, delta_0, delta_inf, z, xs
     else:
-        return kappa1, kappa2, delta_0, delta_inf
+        return kappa1, kappa2, delta_0, delta_inf, z
 
 
 
