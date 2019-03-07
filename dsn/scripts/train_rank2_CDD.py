@@ -14,7 +14,7 @@ c_init_order = int(sys.argv[2])
 sigma_init = float(sys.argv[3])
 random_seed = int(sys.argv[4])
 
-D = 5
+D = 2
 latent_dynamics = None
 TIF_flow_type = "PlanarFlow"
 mult_and_shift = "post"
@@ -27,11 +27,11 @@ arch_dict = {
 }
 
 # create an instance of the V1_circuit system class
-fixed_params = {}
+fixed_params = {'g':0.8, 'rhom':3.0, 'rhon':1.38, 'betam':0.6, 'betan':1.0}
 
 behavior_type = "CDD"
-means = np.array([0.5, 0.5])
-variances = np.array([0.01, 0.01])
+means = np.array([0.3, 0.3])
+variances = np.array([0.001, 0.001])
 behavior = {"type": behavior_type, "means": means, "variances": variances}
 
 # set model options
