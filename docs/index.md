@@ -27,7 +27,7 @@ python setup.py install
 ```
 
 ## Dev install<a name="dev-install"></a> ##
-If you intend to [write some tensorflow code for your own system](#)(<- TODO add link for this), then you want to use the development installation.  Clone the git repo, and then go to the base directory and run the development installer.
+If you intend to write some tensorflow code for your own system, then you want to use the development installation.  Clone the git repo, and then go to the base directory and run the development installer.
 ```bash
 git clone https://github.com/cunningham-lab/dsn.git
 cd dsn/
@@ -35,6 +35,9 @@ python setup.py develop
 ```
 
 # Degenerate Solution Networks (DSNs) #
+Oftentimes in theoretical neuroscience, we seek to design models or find parameterizations of models that produce emergent properties of behavior, rather than necessarily a group of data points collected in an experiment.  We have a host of methods from Bayesian machine learning that prescribe how to go from data points through a likelihood model and choice of prior to a posterior distributions on likely parameterizations to have produced such data.  But, how do we condition on emeregent properties of behavior that we prefer to define statistically.  We introduce degenerate solution networks (DSNs), which learn flexible approximations to maximum entropy distributions of model parameterizations, which produce emergent properties of interest.
+
+
 Consider model parameterization $$z$$ and data $$x$$ generated from some generative model of interest with known sampling procedure and likelihood $$p(x \mid z)$$, which may or may not be known.  For example, neural circuit models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function for the neural activity due to the complex nonlinear dynamics. DSNs learn a distribution on parameters $$z$$, that yields a behavior of interest $$\mathcal{B}$$,
 \begin{equation}
 \mathcal{B}: E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
@@ -80,7 +83,7 @@ To provide intuition for DSNs to the reader, we discuss degenerate parameterizat
  that produce a band of oscillations. To train a DSN to learn the maximally entropic distribution of real entries of the dynamics matrix $$z = \left[a_1, a_2, a_3, a_4 \right]^\top$$ that yield a band of oscillations, we choose $$T(x)$$ to contain the first- and second-moments of the oscillatory frequency $$\omega$$ and the primary growth/decay factor $$c$$ of the oscillating system. Let's say we want to learn the distribution of real entries of A that yield a $$c$$ around zero with variance 1.0, and oscillations at 1 Hz with variance 1.0.  We will then constrain the behavior of the DSN to have the following constraints:
 
  \begin{equation}
- \mu = E \begin{bmatrix} c \\\\ \omega \\\\ c^2 \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 1.0 \\\\ 1.0 \\\\ 2.0 \end{bmatrix}
+ \mu = E \begin{bmatrix} c \\\\ \omega \\\\ c^2 \\\\ \omega^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\\\ 1.0 \\\\ 1.0 \\\\ 1.025 \end{bmatrix}
  \end{equation} 
 
  We could simuilate system activity $$x$$ from $$z$$ for some finite number of time steps, and estimate $$\omega$$ by e.g. taking the peak of the Discrete Fourier series.  Instead, we can compute that sufficient statistics for this oscillating behavior through a closed form function $$f_{p, T}(z)$$ by taking the eigendecomposition of the dynamics matrix.
@@ -188,7 +191,7 @@ figs, AL_final_its, p_values = plot_opt([fname], [''])
 
 Each augmented Lagrangian epoch runs for 50,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of the DSN optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy may decrease, and structural pathologies in the distribution may be introduced.
 
-Here, we plot the distribution learned by the DSN.  This is the distribution of $$\phi$$ at the point of the optimization where the constraint satisfaction null hypotheses are accepted (dotted line above).  
+Here, we plot the distribution learned by the DSN.  This is the distribution of $$z$$ at the point of the optimization where the constraint satisfaction null hypotheses are accepted (dotted line above).  
 ```python
 dsn_pairplots([fname], 'Zs', system, system.D, f_str='identity', \
                 c_str='log_q_z', legendstrs=[], AL_final_its=AL_final_its, \
