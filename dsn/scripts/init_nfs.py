@@ -4,24 +4,25 @@ import sys, os
 os.chdir("../")
 
 D = int(sys.argv[1])
-nlayers = int(sys.argv[2])
-sigma_init = float(sys.argv[3])
-random_seed = int(sys.argv[4])
+num_masks = int(sys.argv[2])
+nlayers = int(sys.argv[3])
+upl = int(sys.argv[4])
+sigma_init = float(sys.argv[5])
+random_seed = int(sys.argv[6])
 
-latent_dynamics = None
-TIF_flow_type = "PlanarFlowLayer"
-scale_layer = True
+real_nvp_arch = {"num_masks":num_masks,
+                 "nlayers":nlayers,
+                 "upl":upl}
 
-flow_dict = {
-    "latent_dynamics": latent_dynamics,
-    "TIF_flow_type": TIF_flow_type,
-    "repeats": nlayers,
-    "scale_layer": scale_layer,
+arch_dict = {
+	"D":D,
+	"mult_and_shift":None,
+    "latent_dynamics": None,
+    "TIF_flow_type": "RealNVP",
+    "repeats": 1,
+    "real_nvp_arch":real_nvp_arch
 }
 
-if sigma_init > 10:
-    min_iters = 200000
-else:
-    min_iters = 50000
+min_iters = 50000
 
-initialize_nf(D, flow_dict, sigma_init, random_seed, min_iters)
+initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters)
