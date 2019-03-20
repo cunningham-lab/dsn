@@ -1,14 +1,14 @@
 #!/bin/bash
 
-for nlayers in 10
+for num_masks in 2 4
 do
-  for c_order in -10 -5 0
+  for nlayers in 1 2 4
   do
-    for sigma_init in 1 10
+    for upl in 5 10 20
     do
       for rs in {1..5}
       do
-        sbatch train_linear_2D.sh $nlayers $c_order $sigma_init $rs
+        sbatch train_linear_2D.sh $num_masks $nlayers $upl $rs
       done
     done
   done
