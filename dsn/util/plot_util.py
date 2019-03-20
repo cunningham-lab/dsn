@@ -43,7 +43,6 @@ def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
     n_fnames = len(fnames)
     p_values = np.zeros((n_fnames, k_max + 1, n_suff_stats))
     for i in range(n_fnames):
-        print(i)
         fname = fnames[i]
         npzfile = np.load(fname)
         mu = npzfile["mu"]
@@ -119,7 +118,7 @@ def plot_opt(
     plotR2=False,
     fontsize=14,
 ):
-    max_legendstrs = 5
+    max_legendstrs = 10
     n_fnames = len(fnames)
     # read optimization diagnostics from files
     costs_list = []
@@ -169,14 +168,12 @@ def plot_opt(
     figs = []
 
     # plot cost, entropy and r^2
-    print("entropy")
     num_panels = 3 if plotR2 else 2
     figsize = (num_panels * 4, 4)
     fig, axs = plt.subplots(1, num_panels, figsize=figsize)
     figs.append(fig)
     ax = axs[0]
     for i in range(n_fnames):
-        print("i")
         costs = costs_list[i]
         ax.plot(iterations[:last_ind], costs[:last_ind], label=legendstrs[i])
     ax.set_xlabel("iterations", fontsize=fontsize)
@@ -186,7 +183,6 @@ def plot_opt(
 
     ax = axs[1]
     for i in range(n_fnames):
-        print(i)
         Hs = Hs_list[i]
         epoch_inds = epoch_inds_list[i]
         last_ind = last_inds[i]
@@ -232,7 +228,6 @@ def plot_opt(
     plt.tight_layout()
     plt.show()
 
-    print("constraints")
     # plot constraints throughout optimization
     yscale_fac = 5
     n_cols = 4
@@ -243,7 +238,6 @@ def plot_opt(
         axs = [axs]
     figs.append(fig)
     for i in range(n_suff_stats):
-        print("con", i)
         ax = axs[i // n_cols][i % n_cols]
         # make ylim 2* mean abs error of last 50% of optimization
         median_abs_errors = np.zeros((n_fnames,))
@@ -354,7 +348,7 @@ def coloring_from_str(c_str, system, npzfile, AL_final_it):
     cm = plt.cm.get_cmap("viridis")
     if c_str == "log_q_z":
         c = npzfile["log_q_zs"][AL_final_it]
-        c_label_str = r"$log(q_\theta)$"
+        c_label_str = r"$log(q(z))$"
     elif c_str == "real part":
         c = npzfile["T_xs"][AL_final_it, :, 0]
         cm = plt.cm.get_cmap("Reds")
@@ -466,7 +460,7 @@ def plot_var_ellipse(ax, x, y):
 
 
 def plot_target_ellipse(ax, i, j, system, mu):
-    if system.name == "linear_2D":
+    if system.name == "Linear2D":
         if system.behavior["type"] == "oscillation":
             mean_x = mu[j]
             mean_y = mu[i]
@@ -559,7 +553,7 @@ def dsn_pairplots(
     if len(AL_final_its) == 0:
         AL_final_its = n_fnames * [-1]
 
-    figsize = (12, 12)
+    figsize = (6, 6)
     figs = []
     for k in range(n_fnames):
         fname = fnames[k]
@@ -571,13 +565,17 @@ def dsn_pairplots(
         dist, dist_label_strs = dist_from_str(
             dist_str, f_str, system, npzfile, AL_final_it
         )
+
         c, c_label_str, cm = coloring_from_str(c_str, system, npzfile, AL_final_it)
         plot_inds, below_inds, over_inds = filter_outliers(c, outlier_stds)
         if tri:
             fig, axs = plt.subplots(D - 1, D - 1, figsize=figsize)
             for i in range(D - 1):
                 for j in range(1, D):
-                    ax = axs[i, j - 1]
+                    if (D == 2):
+                        ax = plt.gca()
+                    else:
+                        ax = axs[i, j - 1]
                     if j > i:
                         ax.scatter(
                             dist[below_inds, j],
@@ -672,10 +670,10 @@ def dsn_pairplots(
             fig.subplots_adjust(right=0.90)
             cbar_ax = fig.add_axes([0.92, 0.15, 0.04, 0.7])
             clb = fig.colorbar(h, cax=cbar_ax)
-            a = (0.8 / (D - 1)) / (0.9 / (D - 1))
+            a = (0.8 / (D - 1)) / (0.95 / (D - 1))
             b = (D - 1) * 1.15
             cbar_ax.text(
-                a, b, c_label_str, {"fontsize": fontsize + 2}, transform=ax.transAxes
+                a, b-.1, c_label_str, {"fontsize": fontsize + 2}, transform=ax.transAxes
             )
             # clb.ax.set_ylabel(c_label_str, rotation=270, fontsize=fontsize);
         plt.suptitle(legendstrs[k], fontsize=(fontsize + 4))
@@ -712,7 +710,10 @@ def pairplot(
     for i in range(num_dims - 1):
         dim_i = dims[i]
         for j in range(1, num_dims):
-            ax = axs[i, j - 1]
+            if (num_dims == 2):
+                ax = plt.gca()
+            else:
+                ax = axs[i, j - 1]
             if j > i:
                 dim_j = dims[j]
                 if (xlims is not None) and (ylims is not None) and origin:
@@ -743,7 +744,7 @@ def pairplot(
                     )
                 else:
                     h = ax.scatter(
-                        Z[:, dim_j], Z[:, dim_i], edgecolors="k", linewidths=0.25
+                        Z[:, dim_j], Z[:, dim_i], edgecolors="k", linewidths=0.25, s=2
                     )
                 if i + 1 == j:
                     ax.set_xlabel(labels[j], fontsize=fontsize)
@@ -770,7 +771,7 @@ def pairplot(
         a = (1.01 / (num_dims - 1)) / (0.9 / (num_dims - 1))
         b = (num_dims - 1) * 1.15
         plt.text(a, b, c_label, {"fontsize": fontsize}, transform=ax.transAxes)
-    plt.savefig(pfname)
+    #plt.savefig(pfname)
     plt.show()
     return fig
 
