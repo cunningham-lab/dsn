@@ -78,10 +78,6 @@ def train_dsn(
     # Learn a single (K=1) distribution with a DSN.
     K = 1
 
-    # Since optimization may converge early, we dynamically allocate space to record
-    # model diagnostics as optimization progresses.
-    OPT_COMPRESS_FAC = 128
-
     # set initialization of AL parameter c and learning rate
     lr = 10 ** lr_order
     c_init = 10 ** c_init_order
@@ -163,11 +159,10 @@ def train_dsn(
 
     summary_op = tf.summary.merge_all()
 
-    # Dynamically extend logging of parameter gradients.
-    array_init_len = int(np.ceil((max_iters * k_max) / OPT_COMPRESS_FAC))
+    # Cyclically record gradients in a 2*COST_GRAD_LAG logger
+    COST_GRAD_LOG_LEN = 2*COST_GRAD_LAG
     nparam_vals = count_params(all_params)
-    cost_grad_vals = np.zeros((array_init_len, nparam_vals))
-    array_cur_len = array_init_len
+    cost_grad_vals = np.zeros((2*COST_GRAD_LOG_LEN, nparam_vals))
 
     # Keep track of cost, entropy, and constraint violation throughout training.
     num_diagnostic_checks = k_max * (max_iters // check_rate) + 1
@@ -238,21 +233,12 @@ def train_dsn(
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
                 _R = np.mean(_T_x_mu_centered[0], 0)
                 norms[j] = np.linalg.norm(_R)
-            print(12.75)
 
             i = 0
             has_converged = False
             convergence_it = 0
-            print("Aug Lag it", k)
-
             while i < max_iters:
                 cur_ind = total_its + i
-
-                if cur_ind == array_cur_len:
-                    cost_grad_vals = memory_extension([cost_grad_vals], array_cur_len)[
-                        0
-                    ]
-                    array_cur_len = 2 * array_cur_len
 
                 w_i = np.random.normal(np.zeros((K, n, system.D)), 1.0)
                 feed_dict = {W: w_i, Lambda: _lambda, c: _c}
@@ -266,7 +252,7 @@ def train_dsn(
                     end_time = time.time()
                     print("iteration took %.4f seconds." % (end_time - start_time))
 
-                log_grads(_cost_grads, cost_grad_vals, cur_ind)
+                log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
                 if np.mod(cur_ind, TB_SAVE_EVERY) == 0:
                     summary_writer.add_summary(summary, cur_ind)
@@ -293,7 +279,7 @@ def train_dsn(
 
                     if stop_early:
                         has_converged = check_convergence(
-                            cost_grad_vals, cur_ind, COST_GRAD_LAG, ALPHA
+                            cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN, COST_GRAD_LAG, ALPHA
                         )
 
                     if has_converged:
@@ -419,7 +405,7 @@ def initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters=50000):
         n = 1000
         lr_order = -3
         check_rate = 100
-        max_iters = 1000000
+        max_iters = 5000
         train_nf(
             family,
             params,

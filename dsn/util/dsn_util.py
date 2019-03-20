@@ -145,7 +145,11 @@ def initialize_adam_parameters(sess, optimizer, all_params):
 
 
 def check_convergence(cost_grad_vals, cur_ind, lag, alpha):
-    last_grads = cost_grad_vals[(cur_ind - lag) : cur_ind, :]
+    logger_len = cost_grad_vals.shape[0]
+    if (cur_ind < lag):
+        last_grads = np.concatenate((cost_grad_vals[-(lag-cur_ind):, :], cost_grad_vals[:cur_ind, :]), 0)
+    else:
+        last_grads = cost_grad_vals[(cur_ind - lag) : cur_ind, :]
     nvars = last_grads.shape[1]
     has_converged = True
     for i in range(nvars):
