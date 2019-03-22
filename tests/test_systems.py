@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import scipy
 from tf_util.stat_util import approx_equal
-from dsn.util.systems import system, Linear2D, V1Circuit, LowRankRNN
+from dsn.util.systems import system, Linear2D, V1Circuit, SCCircuit, LowRankRNN
 #import matplotlib.pyplot as plt
 #import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
 
@@ -118,6 +118,66 @@ class v1_circuit:
 
         return y
 
+class sc_circuit():
+    def __init__(self,):
+        # time course for task
+        self.t_cue_delay = 1.2
+        self.t_choice = 0.6
+        t_total = self.t_cue_delay + self.t_choice
+        self.dt = 0.024
+        self.t = np.arange(0.0, t_total, self.dt)
+        self.T = self.t.shape[0]
+
+
+    def simulate(self, W, Evals, w):
+        # declare params
+        dt = 0.024
+        theta = 0.05
+        beta = 0.5
+        tau = 0.09
+        sigma = 0.3
+        
+        # make inputs
+        E_constant, E_Pbias, E_Prule, E_Arule, E_choice, E_light = Evals
+
+        I_constant = np.tile(E_constant*np.array([[1, 1, 1, 1]]), (self.T, 1))
+
+        I_Pbias = np.zeros((self.T,4))
+        I_Pbias[self.t < 1.2] = E_Pbias*np.array([1, 0, 0, 1])
+
+        I_Prule = np.zeros((self.T,4))
+        I_Prule[self.t < 1.2] = E_Prule*np.array([1, 0, 0, 1])
+
+        I_Arule = np.zeros((self.T,4))
+        I_Arule[self.t < 1.2] = E_Arule*np.array([0, 1, 1, 0])
+
+        I_choice = np.zeros((self.T,4))
+        I_choice[self.t > 1.2] = E_choice*np.array([1, 1, 1, 1])
+
+        I_lightL = np.zeros((self.T,4))
+        I_lightL[self.t > 1.2] = E_light*np.array([1, 1, 0, 0])
+
+        I_lightR = np.zeros((self.T,4))
+        I_lightR[self.t > 1.2] = E_light*np.array([0, 0, 1, 1])
+
+        I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
+
+        u = np.zeros((self.T, 4))
+        v = np.zeros((self.T, 4))
+
+        # initialization
+        v0 = np.array([0.1, 0.1, 0.1, 0.1])
+        u0 = beta*np.arctanh(2*v0 - 1) - theta
+
+        v[0] = v0
+        u[0] = u0
+        for i in range(1,self.T):
+            du = (dt/tau) * (-u[i-1] + np.dot(W, v[i-1]) + I_LP[i] + sigma*w[i])
+            u[i] = u[i-1]+du
+            v[i] = 0.5*np.tanh((u[i] - theta)/beta) + 0.5
+
+        return v
+
 
 class low_rank_rnn:
     def __init__(self,):
@@ -171,9 +231,9 @@ def test_Linear2D():
         assert sys.z_labels == ["$a_1$", "$a_2$", "$a_3$", "$a_4$", "$\\tau$"]
         assert sys.T_x_labels == [
             r"real($\lambda_1$)",
-            r"imag($\lambda_1$)",
+            r"$\frac{imag(\lambda_1)}{2 \pi}$",
             r"real$(\lambda_1)^2$",
-            r"imag$(\lambda_1)^2$",
+            r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
         ]
         assert sys.D == 5
         assert sys.num_suff_stats == 4
@@ -187,9 +247,9 @@ def test_Linear2D():
         assert sys.z_labels == ["$a_1$", "$a_2$", "$a_3$", "$a_4$"]
         assert sys.T_x_labels == [
             r"real($\lambda_1$)",
-            r"imag($\lambda_1$)",
+            r"$\frac{imag(\lambda_1)}{2 \pi}$",
             r"real$(\lambda_1)^2$",
-            r"imag$(\lambda_1)^2$",
+            r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
         ]
         assert sys.D == 4
         assert sys.num_suff_stats == 4
@@ -205,9 +265,9 @@ def test_Linear2D():
         assert sys.z_labels == ["$\\tau$"]
         assert sys.T_x_labels == [
             r"real($\lambda_1$)",
-            r"imag($\lambda_1$)",
+            r"$\frac{imag(\lambda_1)}{2 \pi}$",
             r"real$(\lambda_1)^2$",
-            r"imag$(\lambda_1)^2$",
+            r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
         ]
         assert sys.D == 1
         assert sys.num_suff_stats == 4
@@ -224,9 +284,9 @@ def test_Linear2D():
         assert sys.z_labels == []
         assert sys.T_x_labels == [
             r"real($\lambda_1$)",
-            r"imag($\lambda_1$)",
+            r"$\frac{imag(\lambda_1)}{2 \pi}$",
             r"real$(\lambda_1)^2$",
-            r"imag$(\lambda_1)^2$",
+            r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
         ]
         assert sys.D == 0
         assert sys.num_suff_stats == 4
@@ -493,7 +553,7 @@ def test_V1Circuit():
         )
     assert approx_equal(_h, h_true, EPS)
 
-    # Test simulation
+    # test simulation
     r_t = system.simulate(Z)
     r_t_true = np.zeros((2, M, 4, system.T))
     for c in range(2):
@@ -798,6 +858,142 @@ def test_V1Circuit():
     return None
 
 
+def test_SCCircuit():
+    EPS = 1e-12
+    DTYPE = tf.float64
+
+    np.random.seed(0)
+    M = 100
+    sess = tf.Session()
+    #true_sys = v1_circuit(T=T, dt=dt)
+    Z = tf.placeholder(dtype=DTYPE, shape=(1, M, None))
+
+    # difference behavior 1
+    p = 0.8
+    pvar = 0.01
+    means = np.array([p, p*(1-p)])
+    variances = np.array([pvar, pvar])
+    behavior1 = {
+        "type": "standard",
+        "means": means,
+        "variances": variances,
+    }
+
+    # ****************************************
+    # One random fixed param
+    # ****************************************
+
+    fixed_params = {"E_constant": 0.0}
+    system = SCCircuit(fixed_params, behavior1)
+    assert system.name == "SCCircuit"
+    assert approx_equal(system.behavior["means"], means, EPS)
+    assert approx_equal(system.behavior["variances"], variances, EPS)
+    assert system.fixed_params["E_constant"] == 0.0
+    assert len(system.fixed_params.keys()) == 1
+    assert system.all_params == [
+        "sW",
+        "vW",
+        "dW",
+        "hW",
+        "E_constant",
+        "E_Pbias",
+        "E_Prule",
+        "E_Arule",
+        "E_choice",
+        "E_light",
+    ]
+    assert system.free_params == [
+        "sW",
+        "vW",
+        "dW",
+        "hW",
+        "E_Pbias",
+        "E_Prule",
+        "E_Arule",
+        "E_choice",
+        "E_light",
+    ]
+    assert system.z_labels == [
+        r"$sW$",
+        r"$vW$",
+        r"$dW$",
+        r"$hW$",
+        r"$E_{P,bias}$",
+        r"$E_{P,rule}$",
+        r"$E_{A,rule}$",
+        r"$E_{choice}$",
+        r"$E_{light}$",
+    ]
+    assert system.T_x_labels == [
+        r"$E_{\partial W}left[ {V_{LP},L} \right]$",
+        r"$Var_{\partial W}left[ {V_{LP},L} \right]$",
+        r"$E_{\partial W}left[ {V_{LP},L} \right]^2$",
+        r"$Var_{\partial W}left[ {V_{LP},L} \right]^2$",
+    ]
+    assert system.D == 9
+    assert system.num_suff_stats == 4
+
+    p = 0.8
+    pvar = 0.01
+    means = np.array([p, p*(1-p)])
+    variances = np.array([pvar, pvar])
+    behavior = {
+        "type": "standard",
+        "means": means,
+        "variances": variances,
+    }
+
+    # ****************************************
+    # One random fixed param
+    # ****************************************
+    E_constant = 0.0
+    E_Pbias = 0.1
+    E_Prule = 0.5
+    E_Arule = 0.5
+    E_choice = -0.2
+    E_light = 0.1
+
+    fixed_params = {"E_constant":E_constant, \
+                    "E_Pbias":E_Pbias, \
+                    "E_Prule":E_Prule, \
+                    "E_Arule":E_Arule, \
+                    "E_choice":E_choice, \
+                    "E_light":E_light, \
+                   }
+
+    system = SCCircuit(fixed_params, behavior)
+
+    _Z = np.random.normal(0.0, 1.0, (1, M, 4))
+
+    # Test simulation
+    r_t = system.simulate(Z)
+    _r_t = sess.run(r_t, {Z:_Z})
+
+    true_sys = sc_circuit()
+
+    _sW = _Z[0,:,0]
+    _vW = _Z[0,:,1]
+    _dW = _Z[0,:,2]
+    _hW = _Z[0,:,3]
+    W = np.array([[_sW, _vW, _dW, _hW], 
+                  [_vW, _sW, _hW, _dW], 
+                  [_dW, _hW, _sW, _vW], 
+                  [_hW, _dW, _vW, _sW]])
+    W = np.transpose(W, [2, 0, 1])
+
+    Es = [E_constant, E_Pbias, E_Prule, E_Arule, E_choice, E_light]
+    _w = system.w
+    N = _w.shape[4]
+
+    r_t_true = np.zeros((system.T, 1, M, 4, system.N))
+    for i in range(M):
+        for j in range(N):
+            _r_t_true_ij = true_sys.simulate(W[i], Es, _w[:,0,0,:,j])
+            r_t_true[:,0,i,:,j] = _r_t_true_ij
+    assert(approx_equal(_r_t, r_t_true, EPS))
+    return None
+
+
 def test_LowRankRNN():
     n = 30
     with tf.Session() as sess:
@@ -926,4 +1122,5 @@ def test_LowRankRNN():
 if __name__ == "__main__":
     test_Linear2D()
     test_V1Circuit()
+    test_SCCircuit()
     test_LowRankRNN()
