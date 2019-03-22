@@ -209,9 +209,9 @@ class Linear2D(system):
         if self.behavior["type"] == "oscillation":
             T_x_labels = [
                 r"real($\lambda_1$)",
-                r"imag($\lambda_1$)",
+                r"$\frac{imag(\lambda_1)}{2 \pi}$",
                 r"real$(\lambda_1)^2$",
-                r"imag$(\lambda_1)^2$",
+                r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
             ]
         else:
             raise NotImplementedError()
@@ -665,7 +665,7 @@ class V1Circuit(system):
                 print("Error: unknown fixed parameter: %s." % fixed_param)
                 raise NotImplementedError()
 
-        # Gather weights into the dynamics matrix W [K,M,4,4]
+        # Gather weights into the dynamics matrix W [C,M,4,4]
         W_EX = tf.stack(
             [W_EE, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
@@ -930,6 +930,361 @@ class V1Circuit(system):
             Z (np.array): Samples from the DSN at the final layer.
         """
         return SoftPlusFlow([], inputs)
+
+
+class SCCircuit(system):
+    """ 4-neuron SC circuit.
+
+        This is a 4-neuron rate model of SC activity across two hemispheres
+         - LP: Left, Pro
+         - LA: Left, Anti
+         - RA: Right, Anti
+         - RP: Right, Pro
+
+         [include a graphic of the circuit connectivity]
+
+         [add equations]
+
+    # Attributes
+        behavior (dict): see SCCircuit.compute_suff_stats
+    """
+
+    def __init__(
+        self,
+        fixed_params,
+        behavior,
+    ):
+        super().__init__(fixed_params, behavior)
+        self.name = "SCCircuit"
+        self.N = 100 # number of frozen noises to average over
+
+        if (behavior["type"] == "standard"):
+            self.C = 1
+
+    def get_all_sys_params(self,):
+        """Returns ordered list of all system parameters and individual element labels.
+
+         - $$sW$$ - strength of self connections
+         - $$vW$$ - strength of vertical connections
+         - $$dW$$ - strength of diagonal connections
+         - $$hW$$ - strength of horizontal connections
+         - $$E_constant$$ - constant input
+         - $$E_Pbias$$ - bias input to Pro units
+         - $$E_Prule$$ - input to Pro units in Pro condition
+         - $$E_Arule$$ - input to Anti units in Anti condition
+         - $$E_choice$$ - input during choice period
+         - $$E_light$$ - input due to light stimulus
+
+
+        # Returns
+            all_params (list): List of strings of all parameters of full system model.
+            all_param_labels (list): List of tex strings for all parameters.
+        """
+        all_params = [
+            "sW",
+            "vW",
+            "dW",
+            "hW",
+            "E_constant",
+            "E_Pbias",
+            "E_Prule",
+            "E_Arule",
+            "E_choice",
+            "E_light",
+        ]
+        all_param_labels = {
+            "sW": [r"$sW$"],
+            "vW": [r"$vW$"],
+            "dW": [r"$dW$"],
+            "hW": [r"$hW$"],
+            "E_constant": [r"$E_{constant}$"],
+            "E_Pbias": [r"$E_{P,bias}$"],
+            "E_Prule": [r"$E_{P,rule}$"],
+            "E_Arule": [r"$E_{A,rule}$"],
+            "E_choice": [r"$E_{choice}$"],
+            "E_light": [r"$E_{light}$"],
+        }
+
+        return all_params, all_param_labels
+
+    def get_T_x_labels(self,):
+        """Returns `T_x_labels`.
+
+        Behaviors:
+
+        # Returns
+            T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+
+        """
+        if self.behavior["type"] == "standard":
+            all_T_x_labels = [
+                r"$E_{\partial W}left[ {V_{LP},L} \right]$",
+                r"$E_{\partial W}left[ {V_{LP},L} \right]^2$",
+            ]
+        else:
+            raise NotImplementedError()
+        return T_x_labels
+
+    def filter_Z(self, z):
+        """Returns the system matrix/vector variables depending free parameter ordering.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            W (tf.tensor): [C,M,4,4] Dynamics matrices.
+            I (tf.tensor): [C,M,4,1] Static inputs.
+
+        """
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        # read free parameters from z vector
+        ind = 0
+        for free_param in self.free_params:
+            if free_param == "sW":
+                sW = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "vW":
+                vW = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "dW":
+                dW = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "hW":
+                hW = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "E_constant":
+                E_constant = tf.tile(z[:, :, ind], [1, 1])
+            elif free_param == "E_Pbias":
+                E_Pbias = tf.tile(z[:, :, ind], [1, 1])
+            elif free_param == "E_Prule":
+                E_Prule = tf.tile(z[:, :, ind], [1, 1])
+            elif free_param == "E_Arule":
+                E_Arule = tf.tile(z[:, :, ind], [1, 1])
+            elif free_param == "E_choice":
+                E_choice = tf.tile(z[:, :, ind], [1, 1])
+            elif free_param == "E_light":
+                E_light = tf.tile(z[:, :, ind], [1, 1])
+
+            else:
+                print("Error: unknown free parameter: %s." % free_param)
+                raise NotImplementedError()
+            ind += 1
+
+        # load fixed parameters
+        for fixed_param in self.fixed_params.keys():
+            if fixed_param == "sW":
+                sW = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "vW":
+                vW = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "dW":
+                dW = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "hW":
+                hW = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "E_constant":
+                E_constant = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+            elif fixed_param == "E_Pbias":
+                E_Pbias = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+            elif fixed_param == "E_Prule":
+                E_Prule = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+            elif fixed_param == "E_Arule":
+                E_Arule = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+            elif fixed_param == "E_choice":
+                E_choice = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+            elif fixed_param == "E_light":
+                E_light = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+
+            else:
+                print("Error: unknown fixed parameter: %s." % fixed_param)
+                raise NotImplementedError()
+
+        # Gather weights into the dynamics matrix W [C,M,4,4]
+        Wrow1 = tf.stack([sW, vW, dW, hW], axis=2)
+        Wrow2 = tf.stack([vW, sW, hW, dW], axis=2)
+        Wrow3 = tf.stack([dW, hW, sW, vW], axis=2)
+        Wrow4 = tf.stack([hW, dW, vW, sW], axis=2)
+        W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
+
+        # Gather inputs into I [C,M,4,1]
+        
+        # construct input I
+
+        return W, I
+
+
+    def simulate(self, z):
+        """Simulate the V1 4-neuron circuit given parameters z.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            g(z) (tf.tensor): Simulated system activity.
+
+        """
+
+        # get number of batch samples
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        W, b, h_FF, h_LAT, h_RUN, tau, n, s_0, a, c_50 = self.filter_Z(z)
+        h = self.compute_h(b, h_FF, h_LAT, h_RUN, s_0, a, c_50)
+
+        # initial conditions
+        r0 = tf.constant(
+            np.expand_dims(np.expand_dims(self.init_conds, 0), 0), dtype=DTYPE
+        )
+        r0 = tf.tile(r0, [self.C, M, 1, 1])
+        # [K,M,4,1]
+
+        # construct the input
+        def f(r, t):
+            drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h), n), tau)
+            return tf.clip_by_value(drdt, -1e30, 1e30)
+
+        # worst-case cost is about
+        # time = dt*T = 10 
+        # r_ss = 1e30*time = 1e31
+        # cost second mom term
+        # r_ss2 = r_ss**2 = 1e62
+        # in l2 norm over 1000 batch
+        # cost ~~ 1e3*r_ss2**2 = 1e124*1e3 = 1e127
+
+        # bound should be 1e308
+        # going to 1e45 doesnt work for some reason?
+
+
+        # time axis
+        t = np.arange(0, self.T * self.dt, self.dt)
+
+        # simulate ODE
+        r_t = tf.contrib.integrate.odeint_fixed(f, r0, t, method="rk4")
+        return r_t
+
+    def compute_suff_stats(self, z):
+        """Compute sufficient statistics of density network samples.
+
+        Behaviors:
+
+        'difference' - 
+
+          The total number of conditions from all of 
+          self,behavior.c_vals, s_vals, and r_vals should be two.  
+          The steady state of the first condition $$(c_1,s_1,r_1)$$ is 
+          subtracted from that of the second condition $$(c_2,s_2,r_2)$$ to get a 
+          difference vector
+          \\begin{equation}
+          d_{\\alpha,ss} = r_{\\alpha,ss}(c_2,s_2,r_2) - r_{\\alpha,ss}(c_1,s_1,r_1)
+          \end{equation}
+        
+          The total constraint vector is
+          \\begin{equation}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} d_{E,ss} \\\\\\\\ d_{P,ss} \\\\\\\\ d_{S,ss} \\\\\\\\ d_{V,ss} \\\\\\\\ d_{E,ss}^2 \\\\\\\\ d_{P,ss}^2 \\\\\\\\ d_{S,ss}^2 \\\\\\\\ d_{V,ss}^2 \end{bmatrix}
+          \end{equation}
+
+        
+        'data' - 
+
+          The user specifies the grid inputs for conditions via 
+          self.behavior.c_vals, s_vals, and r_vals.  The first and second
+          moments of the steady states for these conditions make up the
+          sufficient statistics vector.  Since the index is $$(c,s,r)$$, 
+          values of r are iterated over first, then s, then c (as is 
+          the c-standard) to construct the $$T(x)$$ vector.
+
+          The total constraint vector is
+          \\begin{equation}
+          E_{x\\sim p(x \\mid z)}\\left[T(x)\\right] = \\begin{bmatrix} r_{E,ss}(c,s,r) \\\\\\\\ ... \\\\\\\\  r_{E,ss}(c,s,r)^2 \\\\\\\\ ... \end{bmatrix}
+          \end{equation}
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Sufficient statistics of samples.
+
+        """
+
+        if self.behavior["type"] in ["data", "difference"]:
+            T_x = self.simulation_suff_stats(z)
+        else:
+            raise NotImplementedError()
+
+        return T_x
+
+    def simulation_suff_stats(self, z):
+        """Compute sufficient statistics that require simulation.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
+        """
+
+        # r1_t, r2_t = self.simulate(z);
+        r_t = self.simulate(z)
+        # [T, C, M, D, 1]
+
+        if self.behavior["type"] == "difference":
+            diff_inds = self.behavior["diff_inds"]
+            r1_ss_list = []
+            r2_ss_list = []
+            for ind in diff_inds:
+                r1_ss_list.append(r_t[-1, 0, :, ind, 0])
+                r2_ss_list.append(r_t[-1, 1, :, ind, 0])
+            r1_ss = tf.stack(r1_ss_list, axis=1)
+            r2_ss = tf.stack(r2_ss_list, axis=1)
+            diff_ss = tf.expand_dims(r2_ss - r1_ss, 0)
+            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
+
+        elif self.behavior["type"] == "data":
+            r_shape = tf.shape(r_t)
+            M = tf.shape[2]
+            r_ss = tf.transpose(r1_t[-1, :, :, :, 0], [1, 2, 0])  # [M,C,D];
+            r_ss = tf.reshape(r_ss, [M, self.C * self.D])
+            T_x = tf.concat((r_ss, tf.square(r_ss)), 2)
+
+        return T_x
+
+    def compute_mu(self,):
+        """Calculate expected moment constraints given system paramterization.
+
+        # Returns
+            mu (np.array): Expected moment constraints.
+
+        """
+
+        if self.behavior["type"] == "difference":
+            means = self.behavior["d_mean"]
+            variances = self.behavior["d_var"]
+        elif self.behavior["type"] == "data":
+            means = np.reshape(self.behavior["r_mean"], (self.C * self.D,))
+            variances = np.reshape(self.behavior["r_var"], (self.C * self.D,))
+        first_moments = means
+        second_moments = np.square(means) + variances
+        mu = np.concatenate((first_moments, second_moments), axis=0)
+        return mu
+
+    def support_mapping(self, inputs):
+        """Maps from real numbers to support of parameters.
+
+        # Arguments:
+            inputs (np.array): Input from previous layers of the DSN.
+
+        # Returns
+            Z (np.array): Samples from the DSN at the final layer.
+        """
+        return SoftPlusFlow([], inputs)
+
 
 
 class LowRankRNN(system):
