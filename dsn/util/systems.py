@@ -76,6 +76,7 @@ class system:
         self.T_x_labels = self.get_T_x_labels()
         self.D = len(self.z_labels)
         self.num_suff_stats = len(self.T_x_labels)
+        self.support_mapping = None
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
