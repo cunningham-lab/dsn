@@ -34,8 +34,10 @@ fixed_params = {'E_constant':0.0, \
 
 p = 0.8
 pvar = 0.01
-means = np.array([p, p*(1-p)])
-variances = np.array([pvar, pvar])
+#means = np.array([p, p*(1-p)])
+#variances = np.array([pvar, pvar])
+means = np.array([p])
+variances = np.array([pvar])
 behavior = {
     "type": "standard",
     "means": means,

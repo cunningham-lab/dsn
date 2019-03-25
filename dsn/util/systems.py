@@ -1033,10 +1033,10 @@ class SCCircuit(system):
         """
         if self.behavior["type"] == "standard":
             T_x_labels = [
-                r"$E_{\partial W}left[ {V_{LP},L} \right]$",
-                r"$Var_{\partial W}left[ {V_{LP},L} \right]$",
-                r"$E_{\partial W}left[ {V_{LP},L} \right]^2$",
-                r"$Var_{\partial W}left[ {V_{LP},L} \right]^2$",
+                r"$E_{\partial W}[{V_{LP},L}]$",
+                #r"$Var_{\partial W}[{V_{LP},L}]$",
+                r"$E_{\partial W}[ {V_{LP},L}]^2$",
+                #r"$Var_{\partial W}[ {V_{LP},L}]^2$",
             ]
         else:
             raise NotImplementedError()
@@ -1258,13 +1258,17 @@ class SCCircuit(system):
         if self.behavior["type"] == "standard":
             v_LP = v_t[-1, 0, :, 0, :] # we're looking at LP in the standard L Pro condition
             E_v_LP = tf.reduce_mean(v_LP, 1)
-            Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 1)), 1)
+            #Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 1)), 1)
 
             # Add leading dimension
             E_v_LP = tf.expand_dims(E_v_LP, 0)
-            Var_v_LP = tf.expand_dims(Var_v_LP, 0)
+            #Var_v_LP = tf.expand_dims(Var_v_LP, 0)
 
-            T_x = tf.stack((E_v_LP, Var_v_LP, tf.square(E_v_LP), tf.square(Var_v_LP)), 2)
+            T_x = tf.stack((E_v_LP, \
+                            #Var_v_LP, \
+                            tf.square(E_v_LP), \
+                            #tf.square(Var_v_LP)
+                            ), 2)
 
         return T_x
 
