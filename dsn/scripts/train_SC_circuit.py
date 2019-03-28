@@ -32,12 +32,11 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
+
 p = 0.8
 pvar = 0.01
-#means = np.array([p, p*(1-p)])
-#variances = np.array([pvar, pvar])
-means = np.array([p])
-variances = np.array([pvar])
+means = np.array([p, 0.0])
+variances = np.array([pvar, 0.0])
 behavior = {
     "type": "standard",
     "means": means,
@@ -64,5 +63,5 @@ train_dsn(
     min_iters=1000,
     max_iters=2000,
     check_rate=100,
-    dir_str="SCCircuit",
+    dir_str="SCCircuit_test",
 )
