@@ -979,7 +979,9 @@ class SCCircuit(system):
         self,
         fixed_params,
         behavior,
+        model_opts={"params":"reduced"}
     ):
+        self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
         self.name = "SCCircuit"
 
@@ -1020,30 +1022,66 @@ class SCCircuit(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        all_params = [
-            "sW",
-            "vW",
-            "dW",
-            "hW",
-            "E_constant",
-            "E_Pbias",
-            "E_Prule",
-            "E_Arule",
-            "E_choice",
-            "E_light",
-        ]
-        all_param_labels = {
-            "sW": [r"$sW$"],
-            "vW": [r"$vW$"],
-            "dW": [r"$dW$"],
-            "hW": [r"$hW$"],
-            "E_constant": [r"$E_{constant}$"],
-            "E_Pbias": [r"$E_{P,bias}$"],
-            "E_Prule": [r"$E_{P,rule}$"],
-            "E_Arule": [r"$E_{A,rule}$"],
-            "E_choice": [r"$E_{choice}$"],
-            "E_light": [r"$E_{light}$"],
-        }
+        if (self.model_opts["params"] == "full"):
+            all_params = [
+                "sW_P",
+                "sW_A",
+                "vW_PA",
+                "vW_AP",
+                "dW_PA",
+                "dW_AP",
+                "hW_P",
+                "hW_A",
+                "E_constant",
+                "E_Pbias",
+                "E_Prule",
+                "E_Arule",
+                "E_choice",
+                "E_light",
+            ]
+            all_param_labels = {
+                "sW_P": [r"$sW_{P}$"],
+                "sW_A": [r"$sW_{A}$"],
+                "vW_PA": [r"$vW_{PA}$"],
+                "vW_AP": [r"$vW_{AP}$"],
+                "dW_PA": [r"$dW_{PA}$"],
+                "dW_AP": [r"$dW_{AP}$"],
+                "hW_P": [r"$hW_{P}$"],
+                "hW_A": [r"$hW_{A}$"],
+                "E_constant": [r"$E_{constant}$"],
+                "E_Pbias": [r"$E_{P,bias}$"],
+                "E_Prule": [r"$E_{P,rule}$"],
+                "E_Arule": [r"$E_{A,rule}$"],
+                "E_choice": [r"$E_{choice}$"],
+                "E_light": [r"$E_{light}$"],
+            }
+        elif (self.model_opts["params"] == "reduced"):
+            all_params = [
+                "sW",
+                "vW",
+                "dW",
+                "hW",
+                "E_constant",
+                "E_Pbias",
+                "E_Prule",
+                "E_Arule",
+                "E_choice",
+                "E_light",
+            ]
+            all_param_labels = {
+                "sW": [r"$sW$"],
+                "vW": [r"$vW$"],
+                "dW": [r"$dW$"],
+                "hW": [r"$hW$"],
+                "E_constant": [r"$E_{constant}$"],
+                "E_Pbias": [r"$E_{P,bias}$"],
+                "E_Prule": [r"$E_{P,rule}$"],
+                "E_Arule": [r"$E_{A,rule}$"],
+                "E_choice": [r"$E_{choice}$"],
+                "E_light": [r"$E_{light}$"],
+            }
+        else:
+            raise NotImplementedError()
 
         return all_params, all_param_labels
 
@@ -1083,75 +1121,170 @@ class SCCircuit(system):
         M = z_shape[1]
 
         # read free parameters from z vector
-        ind = 0
-        for free_param in self.free_params:
-            if free_param == "sW":
-                sW = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "vW":
-                vW = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "dW":
-                dW = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "hW":
-                hW = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "E_constant":
-                E_constant = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
-            elif free_param == "E_Pbias":
-                E_Pbias = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
-            elif free_param == "E_Prule":
-                E_Prule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
-            elif free_param == "E_Arule":
-                E_Arule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
-            elif free_param == "E_choice":
-                E_choice = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
-            elif free_param == "E_light":
-                E_light = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+        if (self.model_opts["params"] == "full"):
+            ind = 0
+            for free_param in self.free_params:
+                if free_param == "sW_P":
+                    sW_P = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "sW_A":
+                    sW_A = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "vW_PA":
+                    vW_PA = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "vW_AP":
+                    vW_AP = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "dW_PA":
+                    dW_PA = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "dW_AP":
+                    dW_AP = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "hW_P":
+                    hW_P = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "hW_A":
+                    hW_A = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "E_constant":
+                    E_constant = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_Pbias":
+                    E_Pbias = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_Prule":
+                    E_Prule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_Arule":
+                    E_Arule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_choice":
+                    E_choice = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_light":
+                    E_light = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
 
-            else:
-                print("Error: unknown free parameter: %s." % free_param)
-                raise NotImplementedError()
-            ind += 1
+                else:
+                    print("Error: unknown free parameter: %s." % free_param)
+                    raise NotImplementedError()
+                ind += 1
 
-        # load fixed parameters
-        for fixed_param in self.fixed_params.keys():
-            if fixed_param == "sW":
-                sW = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            elif fixed_param == "vW":
-                vW = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            elif fixed_param == "dW":
-                dW = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            elif fixed_param == "hW":
-                hW = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            elif fixed_param == "E_constant":
-                E_constant = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
-            elif fixed_param == "E_Pbias":
-                E_Pbias = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
-            elif fixed_param == "E_Prule":
-                E_Prule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
-            elif fixed_param == "E_Arule":
-                E_Arule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
-            elif fixed_param == "E_choice":
-                E_choice = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
-            elif fixed_param == "E_light":
-                E_light = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+            # load fixed parameters
+            for fixed_param in self.fixed_params.keys():
+                if fixed_param == "sW_P":
+                    sW_P = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "sW_A":
+                    sW_A = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "vW_PA":
+                    vW_PA = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "vW_AP":
+                    vW_AP = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "dW_PA":
+                    dW_PA = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "dW_AP":
+                    dW_AP = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "hW_P":
+                    hW_P = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "hW_A":
+                    hW_A = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "E_constant":
+                    E_constant = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_Pbias":
+                    E_Pbias = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_Prule":
+                    E_Prule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_Arule":
+                    E_Arule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_choice":
+                    E_choice = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_light":
+                    E_light = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
 
-            else:
-                print("Error: unknown fixed parameter: %s." % fixed_param)
-                raise NotImplementedError()
+                else:
+                    print("Error: unknown fixed parameter: %s." % fixed_param)
+                    raise NotImplementedError()
 
-        # Gather weights into the dynamics matrix W [C,M,4,4]
-        Wrow1 = tf.stack([sW, vW, dW, hW], axis=2)
-        Wrow2 = tf.stack([vW, sW, hW, dW], axis=2)
-        Wrow3 = tf.stack([dW, hW, sW, vW], axis=2)
-        Wrow4 = tf.stack([hW, dW, vW, sW], axis=2)
-        W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
+            # Gather weights into the dynamics matrix W [C,M,4,4]
+            Wrow1 = tf.stack([sW_P,  vW_PA, dW_PA, hW_P], axis=2)
+            Wrow2 = tf.stack([vW_AP, sW_A,  hW_A,  dW_AP], axis=2)
+            Wrow3 = tf.stack([dW_AP, hW_P,  sW_A,  vW_AP], axis=2)
+            Wrow4 = tf.stack([hW_A,  dW_PA, vW_PA, sW_P], axis=2)
+            W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
+        elif (self.model_opts["params"] == "reduced"):
+            ind = 0
+            for free_param in self.free_params:
+                if free_param == "sW":
+                    sW = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "vW":
+                    vW = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "dW":
+                    dW = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "hW":
+                    hW = tf.tile(z[:, :, ind], [self.C, 1])
+                elif free_param == "E_constant":
+                    E_constant = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_Pbias":
+                    E_Pbias = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_Prule":
+                    E_Prule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_Arule":
+                    E_Arule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_choice":
+                    E_choice = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                elif free_param == "E_light":
+                    E_light = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+
+                else:
+                    print("Error: unknown free parameter: %s." % free_param)
+                    raise NotImplementedError()
+                ind += 1
+
+            # load fixed parameters
+            for fixed_param in self.fixed_params.keys():
+                if fixed_param == "sW":
+                    sW = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "vW":
+                    vW = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "dW":
+                    dW = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "hW":
+                    hW = self.fixed_params[fixed_param] * tf.ones(
+                        (self.C, M), dtype=DTYPE
+                    )
+                elif fixed_param == "E_constant":
+                    E_constant = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_Pbias":
+                    E_Pbias = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_Prule":
+                    E_Prule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_Arule":
+                    E_Arule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_choice":
+                    E_choice = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                elif fixed_param == "E_light":
+                    E_light = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+
+                else:
+                    print("Error: unknown fixed parameter: %s." % fixed_param)
+                    raise NotImplementedError()
+
+            # Gather weights into the dynamics matrix W [C,M,4,4]
+            Wrow1 = tf.stack([sW, vW, dW, hW], axis=2)
+            Wrow2 = tf.stack([vW, sW, hW, dW], axis=2)
+            Wrow3 = tf.stack([dW, hW, sW, vW], axis=2)
+            Wrow4 = tf.stack([hW, dW, vW, sW], axis=2)
+            W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
 
         # input current time courses
         I_constant = E_constant*tf.ones((self.T, 1, 1, 4, 1), dtype=DTYPE)
@@ -1188,7 +1321,6 @@ class SCCircuit(system):
 
         # Gather inputs into I [T,C,1,4,1]
         if self.behavior["type"] == "standard":
-
             I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
             I = I_LP
 

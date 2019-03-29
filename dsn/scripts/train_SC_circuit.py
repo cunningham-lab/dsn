@@ -32,8 +32,8 @@ behavior = {
     "means": means,
     "variances": variances,
 }
-
-system = SCCircuit(fixed_params, behavior)
+model_opts = {"params":"full"}
+system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
 latent_dynamics = None;
@@ -64,5 +64,5 @@ train_dsn(
     min_iters=1000,
     max_iters=2000,
     check_rate=100,
-    dir_str="SCCircuit_test",
+    dir_str="SCCircuit",
 )
