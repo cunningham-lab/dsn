@@ -37,12 +37,24 @@ nlayers = int(sys.argv[2])
 upl = int(sys.argv[3])
 random_seed = int(sys.argv[4])
 
+
+fixed_params = {"tau": 1.0}
+
+omega = 1
+mu = np.array([0.0, 2 * np.pi * omega])
+Sigma = np.array([1.0, 1.0])
+behavior = {"type": "oscillation", "means": mu, "variances": Sigma}
+
+system = Linear2D(fixed_params, behavior)
+
 real_nvp_arch = {"num_masks":num_masks,
                  "nlayers":nlayers,
                  "upl":upl}
 
+
+# set up DSN architecture
 arch_dict = {
-    "D":D,
+    "D":system.D,
     "mult_and_shift":None,
     "latent_dynamics": None,
     "TIF_flow_type": "RealNVP",
@@ -60,15 +72,6 @@ check_rate = 100
 dist_seed = 0
 dir_str = "Linear2D/1Hz/d"
 
-
-fixed_params = {"tau": 1.0}
-
-omega = 1
-mu = np.array([0.0, 2 * np.pi * omega])
-Sigma = np.array([1.0, 1.0])
-behavior = {"type": "oscillation", "means": mu, "variances": Sigma}
-
-system = Linear2D(fixed_params, behavior)
 
 np.random.seed(dist_seed)
 cost, z = train_dsn(

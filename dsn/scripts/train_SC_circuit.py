@@ -14,16 +14,6 @@ c_init_order = int(sys.argv[2])
 sigma_init = float(sys.argv[3])
 random_seed = int(sys.argv[4])
 
-D = 4
-latent_dynamics = None;
-TIF_flow_type = 'PlanarFlow';
-mult_and_shift = 'post';
-arch_dict = {'D':D, \
-             'latent_dynamics':latent_dynamics, \
-             'mult_and_shift':mult_and_shift, \
-             'TIF_flow_type':TIF_flow_type, \
-             'repeats':nlayers};
-
 # create an instance of the V1_circuit system class
 fixed_params = {'E_constant':0.0, \
                 'E_Pbias':0.1, \
@@ -44,6 +34,17 @@ behavior = {
 }
 
 system = SCCircuit(fixed_params, behavior)
+
+# set up DSN architecture
+latent_dynamics = None;
+TIF_flow_type = 'PlanarFlow';
+mult_and_shift = 'post';
+arch_dict = {'D':system.D, \
+             'latent_dynamics':latent_dynamics, \
+             'mult_and_shift':mult_and_shift, \
+             'TIF_flow_type':TIF_flow_type, \
+             'repeats':nlayers};
+
 
 k_max = 40
 

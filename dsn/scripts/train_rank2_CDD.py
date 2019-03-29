@@ -14,18 +14,6 @@ c_init_order = int(sys.argv[2])
 sigma_init = float(sys.argv[3])
 random_seed = int(sys.argv[4])
 
-D = 2
-latent_dynamics = None
-TIF_flow_type = "PlanarFlow"
-mult_and_shift = "post"
-arch_dict = {
-    "D": D,
-    "latent_dynamics": latent_dynamics,
-    "mult_and_shift": mult_and_shift,
-    "TIF_flow_type": TIF_flow_type,
-    "repeats": nlayers,
-}
-
 # create an instance of the V1_circuit system class
 fixed_params = {'g':0.8, 'rhom':3.0, 'rhon':1.38, 'betam':0.6, 'betan':1.0}
 
@@ -40,6 +28,18 @@ model_opts = {"rank": 2, "input_type": "input"}
 system = LowRankRNN(
     fixed_params, behavior, model_opts=model_opts, solve_its=25, solve_eps=0.5
 )
+
+# set up DSN architecture
+latent_dynamics = None
+TIF_flow_type = "PlanarFlow"
+mult_and_shift = "post"
+arch_dict = {
+    "D": system.D,
+    "latent_dynamics": latent_dynamics,
+    "mult_and_shift": mult_and_shift,
+    "TIF_flow_type": TIF_flow_type,
+    "repeats": nlayers,
+}
 
 k_max = 40
 batch_size = 1000

@@ -14,16 +14,6 @@ c_init_order = int(sys.argv[2])
 sigma_init = float(sys.argv[3])
 random_seed = int(sys.argv[4])
 
-D = 12
-latent_dynamics = None;
-TIF_flow_type = 'PlanarFlow';
-mult_and_shift = 'post';
-arch_dict = {'D':D, \
-             'latent_dynamics':latent_dynamics, \
-             'mult_and_shift':mult_and_shift, \
-             'TIF_flow_type':TIF_flow_type, \
-             'repeats':nlayers};
-
 # create an instance of the V1_circuit system class
 fixed_params = {'h_FFE':0.0, \
                 'h_FFP':0.0, \
@@ -58,6 +48,17 @@ dt = 0.25
 init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
 
 system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+
+# set up DSN architecture
+latent_dynamics = None;
+TIF_flow_type = 'PlanarFlow';
+mult_and_shift = 'post';
+arch_dict = {'D':system.D, \
+             'latent_dynamics':latent_dynamics, \
+             'mult_and_shift':mult_and_shift, \
+             'TIF_flow_type':TIF_flow_type, \
+             'repeats':nlayers};
+
 
 k_max = 40
 
