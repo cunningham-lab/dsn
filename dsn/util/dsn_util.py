@@ -37,13 +37,12 @@ def get_savedir(
         for i in range(1, num_free_params):
             sysparams += "_%s" % system.free_params[i]
 
-    savedir = resdir + "%s_%s_%s_flow=%s_sigma=%.2f_lr_order=%d_c=%d_rs=%d/" % (
+    savedir = resdir + "%s_%s_%s_flow=%s_sigma=%.2f_c=%d_rs=%d/" % (
         system.name,
         sysparams,
-        system.behavior["type"],
+        system.behavior_str,
         archstring,
         sigma_init,
-        lr_order,
         c_init_order,
         random_seed,
     )

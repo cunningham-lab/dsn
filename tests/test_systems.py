@@ -225,6 +225,7 @@ def test_Linear2D():
         # no fixed parameters
         sys = Linear2D({}, behavior1)
         assert sys.name == "Linear2D"
+        assert sys.behavior_str == "oscillation_mu=0.00E+00_1.26E+01_1.00E+00_1.59E+02"
         assert not sys.fixed_params  # empty dict evaluates to False
         assert sys.all_params == ["A", "tau"]
         assert sys.free_params == ["A", "tau"]
@@ -361,6 +362,7 @@ def test_V1Circuit():
     system = V1Circuit(fixed_params, behavior1, T=T, dt=dt)
     # Test free/fixed parameter handling
     assert system.name == "V1Circuit"
+    assert system.behavior_str == "difference_mu=0.00E+00_0.00E+00_0.00E+00_0.00E+00_1.00E+00_1.00E+00_1.00E+00_1.00E+00"
     # assert(system.T == 40)
     # assert(system.dt == 0.25)
     assert approx_equal(system.init_conds, np.array([[1.0], [1.1], [1.2], [1.3]]), EPS)
@@ -886,6 +888,7 @@ def test_SCCircuit():
     fixed_params = {"E_constant": 0.0}
     system = SCCircuit(fixed_params, behavior1)
     assert system.name == "SCCircuit"
+    assert system.behavior_str == "standard_mu=8.00E-01_1.60E-01_6.50E-01_3.56E-02"
     assert approx_equal(system.behavior["means"], means, EPS)
     assert approx_equal(system.behavior["variances"], variances, EPS)
     assert system.fixed_params["E_constant"] == 0.0
@@ -925,10 +928,10 @@ def test_SCCircuit():
         r"$E_{light}$",
     ]
     assert system.T_x_labels == [
-        r"$E_{\partial W}left[ {V_{LP},L} \right]$",
-        r"$Var_{\partial W}left[ {V_{LP},L} \right]$",
-        r"$E_{\partial W}left[ {V_{LP},L} \right]^2$",
-        r"$Var_{\partial W}left[ {V_{LP},L} \right]^2$",
+        r"$E_{\partial W}[{V_{LP},L}]$",
+        r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
+        r"$E_{\partial W}[ {V_{LP},L}]^2$",
+        r"$(Var_{\partial W}[ {V_{LP},L}] - p(1-p))^2$",
     ]
     assert system.D == 9
     assert system.num_suff_stats == 4
@@ -1008,6 +1011,7 @@ def test_LowRankRNN():
         # no fixed parameters
         sys = LowRankRNN({}, behavior1, model_opts=model_opts)
         assert sys.name == "LowRankRNN"
+        assert sys.behavior_str == "struct_chaos_mu=1.00E+00_1.00E+00_1.00E+00_1.10E+00_1.10E+00_1.10E+00"
         assert not sys.fixed_params  # empty dict evaluates to False
         assert sys.all_params == ["g", "Mm", "Mn", "Sm"]
         assert sys.free_params == ["g", "Mm", "Mn", "Sm"]

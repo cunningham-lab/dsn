@@ -76,6 +76,7 @@ class system:
         self.T_x_labels = self.get_T_x_labels()
         self.D = len(self.z_labels)
         self.num_suff_stats = len(self.T_x_labels)
+        self.behavior_str = self.get_behavior_str()
         self.support_mapping = None
 
     def get_all_sys_params(self,):
@@ -111,6 +112,15 @@ class system:
         for free_param in self.free_params:
             z_labels += self.all_param_labels[free_param]
         return z_labels
+
+    def get_behavior_str(self,):
+        """Returns `behavior_str`.
+
+        # Returns
+            behavior_str (str): String for DSN filenaming.
+
+        """
+        raise NotImplementedError()
 
     def get_T_x_labels(self,):
         """Returns `T_x_labels`.
@@ -154,6 +164,21 @@ class system:
         
         """
         return T_x - np.expand_dims(np.expand_dims(self.mu, 0), 1)
+
+    def get_behavior_str(self,):
+        """Returns `behavior_str`.
+
+        # Returns
+            behavior_str (str): String for DSN filenaming.
+
+        """
+        type_str = self.behavior["type"]
+        behavior_str = type_str + "_mu="
+        for i in range(self.num_suff_stats):
+            if (i > 0):
+                behavior_str += "_"
+            behavior_str += '%.2E' % self.mu[i]
+        return behavior_str
 
 
 class Linear2D(system):
