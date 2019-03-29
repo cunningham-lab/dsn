@@ -24,7 +24,8 @@ import scipy.io as sio
 from itertools import compress
 from dsn.util.tf_DMFT_solvers import rank1_spont_chaotic_solve, \
                                      rank1_input_chaotic_solve, \
-                                     rank2_CDD_chaotic_solve
+                                     rank2_CDD_chaotic_solve, \
+                                     rank2_CDD_static_solve
 
 DTYPE = tf.float64
 
@@ -1896,13 +1897,14 @@ class LowRankRNN(system):
             kappa1_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
             kappa2_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
             delta_0_init = 5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            #delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
 
-            kappa1, kappa2, delta_0, delta_inf, z = rank2_CDD_chaotic_solve(
+            # TODO delta_0 should be written square diff in commented out?
+            #kappa1, kappa2, delta_0, delta_inf, z = rank2_CDD_chaotic_solve(
+            kappa1, kappa2, delta_0, z = rank2_CDD_static_solve(
                 kappa1_init,
                 kappa2_init,
                 delta_0_init,
-                delta_inf_init,
                 cA,
                 cB,
                 g[0, :],
@@ -1977,3 +1979,5 @@ def system_from_str(system_str):
         return R1RNN_GNG
     elif system_str in ["V1Circuit"]:
         return V1Circuit
+    elif system_str in ["SCCircuit"]:
+        return SCCircuit

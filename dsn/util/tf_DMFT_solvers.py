@@ -19,7 +19,8 @@ import dsn.util.tf_integrals as tfi
 from dsn.util.tf_langevin import langevin_dyn_rank1_spont_static, \
                                  langevin_dyn_rank1_spont_chaos, \
                                  langevin_dyn_rank1_input_chaos, \
-                                 langevin_dyn_rank2_CDD_chaos
+                                 langevin_dyn_rank2_CDD_chaos, \
+                                 langevin_dyn_rank2_CDD_static
 
 DTYPE = tf.float64
 
@@ -160,6 +161,83 @@ def rank1_input_chaotic_solve(
         return mu, kappa, delta_0, delta_inf, xs
     else:
         return mu, kappa, delta_0, delta_inf
+
+def rank2_CDD_static_solve(
+    kappa1_init,
+    kappa2_init,
+    delta_0_init,
+    cA,
+    cB,
+    g,
+    rhom,
+    rhon,
+    betam,
+    betan,
+    gammaA,
+    gammaB,
+    num_its,
+    eps,
+    gauss_quad_pts=50,
+    db=False,
+):
+    # Use equations 159 and 160 from M&O 2018
+
+    SI = 1.2
+    Sy = 1.2
+
+    SyA = Sy
+    SyB = Sy
+    SIA = SI
+    SIB = SI
+    SIctxA = 1.0
+    SIctxB = 1.0
+    Sw = 1.0
+
+    Sm1 = SyA + rhom*SIctxA + betam*Sw
+    Sm2 = SyB + rhom*SIctxB + betam*Sw
+
+
+    # convergence equations used for langevin-like dynamimcs solver
+    def f(x):
+        kappa1 = x[:, 0]
+        kappa2 = x[:, 1]
+        delta_0 = x[:, 2]
+
+        mu = tf.zeros((1,), dtype=DTYPE)
+
+        Prime = tfi.Prime(mu, delta_0, num_pts=gauss_quad_pts)
+        PhiSq = tfi.PhiSq(mu, delta_0, num_pts=gauss_quad_pts)
+
+        F = (rhom*rhon*kappa1 + betam*betan*(kappa1+kappa2) + cA*SI + rhon*gammaA)*Prime
+        G = (rhom*rhon*kappa2 + betam*betan*(kappa1+kappa2) + cB*SI + rhon*gammaB)*Prime
+        H = (g**2)*PhiSq
+        H += (Sw+tf.square(betam))*(tf.square(kappa1) + tf.square(kappa2))
+        H += SI*(cA**2 + cB**2) + tf.square(rhom*kappa1 + gammaA) + tf.square(rhom*kappa2 + gammaB)
+
+        return tf.stack([F, G, H], axis=1)
+
+    x_init = tf.stack([kappa1_init, kappa2_init, delta_0_init], axis=1)
+
+    if db:
+        xs_end, xs = langevin_dyn_rank2_CDD_static(f, x_init, eps, num_its, db=db)
+    else:
+        xs_end = langevin_dyn_rank2_CDD_static(f, x_init, eps, num_its, db=db)
+
+    kappa1 = xs_end[:, 0]
+    kappa2 = xs_end[:,1]
+    delta_0 = xs_end[:, 2]
+
+    mu = tf.zeros((1,), dtype=DTYPE)
+
+    Prime = tfi.Prime(mu, delta_0, num_pts=gauss_quad_pts)
+    
+    z = betam*(kappa1+kappa2)*Prime
+
+
+    if db:
+        return kappa1, kappa2, delta_0, z, xs
+    else:
+        return kappa1, kappa2, delta_0, z
 
 def rank2_CDD_chaotic_solve(
     kappa1_init,
