@@ -44,7 +44,7 @@ arch_dict = {
 }
 
 k_max = 40
-batch_size = 1000
+batch_size = 100
 lr_order = -3
 min_iters = 1000
 max_iters = 2000
@@ -61,6 +61,6 @@ train_dsn(
     random_seed=random_seed,
     min_iters=min_iters,
     max_iters=max_iters,
-    check_rate=1,
+    check_rate=200,
     dir_str="test",
 )
