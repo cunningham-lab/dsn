@@ -1729,7 +1729,7 @@ class LowRankRNN(system):
                 elif fixed_param == "gammaLO":
                     gammaLO = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif gammaHI == "gammaHI":
-                    gammaB = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                    gammaHI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError()
@@ -1869,7 +1869,7 @@ class LowRankRNN(system):
             c_LO = 0.0
             c_HI = 1.0
 
-            g, rhom, rhon, betam, betan, gammaHI, gammaLO = self.filter_Z(z)
+            g, rhom, rhon, betam, betan, gammaLO, gammaHI = self.filter_Z(z)
             gammaHI, gammaLO = tile_for_conditions([gammaHI, gammaLO], 2)
 
             g, rhom, rhon, betam, betan = tile_for_conditions(
