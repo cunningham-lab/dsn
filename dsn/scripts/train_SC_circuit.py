@@ -28,9 +28,8 @@ pvar = 0.01
 means = np.array([p, 0.0])
 variances = np.array([pvar, 0.0])
 behavior = {
-    "type": "standard",
+    "type": "means",
     "means": means,
-    "variances": variances,
 }
 model_opts = {"params":"full"}
 system = SCCircuit(fixed_params, behavior, model_opts)
@@ -64,5 +63,5 @@ train_dsn(
     min_iters=1000,
     max_iters=2000,
     check_rate=100,
-    dir_str="SCCircuit",
+    dir_str="SCCircuit_test",
 )
