@@ -9,10 +9,13 @@ import sys, os
 
 os.chdir("../")
 
-nlayers = int(sys.argv[1])
-c_init_order = int(sys.argv[2])
-sigma_init = float(sys.argv[3])
+p = float(sys.argv[1])
+param_str = str(sys.argv[2])
+c_init_order = int(sys.argv[3])
 random_seed = int(sys.argv[4])
+
+nlayers = 10
+sigma_init = 1.0
 
 # create an instance of the V1_circuit system class
 fixed_params = {'E_constant':0.0, \
@@ -23,8 +26,7 @@ fixed_params = {'E_constant':0.0, \
                 'E_light':0.1};
 
 
-p = 0.8
-pvar = 0.01
+pvar = 0.0001
 means = np.array([p, 0.0])
 variances = np.array([pvar, 0.0])
 behavior = {
@@ -32,7 +34,7 @@ behavior = {
     "means": means,
     "variances": variances,
 }
-model_opts = {"params":"full"}
+model_opts = {"params":param_str}
 system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture

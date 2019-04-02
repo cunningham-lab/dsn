@@ -2,7 +2,7 @@
 
 for num_masks in 2 4
 do
-  for nlayers in 1 2 4
+  for nlayers in 2 4
   do
     for upl in 5 10 20
     do

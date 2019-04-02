@@ -3,7 +3,7 @@ for nlayers in 10
 do
   for sigma_init in 1.0
   do
-    for c_init in -15 -10 -5 0
+    for c_init in 2
     do
       for rs in {1..5}
       do
