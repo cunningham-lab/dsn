@@ -46,8 +46,8 @@ arch_dict = {
 k_max = 40
 batch_size = 100
 lr_order = -3
-min_iters = 1000
-max_iters = 2000
+min_iters = 2500
+max_iters = 5000
 
 
 train_dsn(

@@ -1,9 +1,9 @@
 #!/bin/bash
-for nlayers in 15
+for nlayers in 10
 do
   for sigma_init in 1.0
   do
-    for c_init in 5
+    for c_init in 0 5
     do
       for rs in {1..10}
       do
