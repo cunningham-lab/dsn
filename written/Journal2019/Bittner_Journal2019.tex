@@ -1,0 +1,79 @@
+% You should title the file with a .tex extension (hw1.tex, for example)
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{tikz-qtree}
+\usepackage{tikz-qtree-compat}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usepackage{graphicx}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+
+\oddsidemargin0cm
+\topmargin-2cm     %I recommend adding these three lines to increase the 
+\textwidth16.5cm   %amount of usable space on the page (and save trees)
+\textheight23.5cm  
+
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
+
+\newcommand{\myname}{Anonymous Authors}
+\newcommand{\myhwnum}{12}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+ 
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+
+\pagestyle{fancyplain}
+
+\begin{document}
+
+\medskip                        % Skip a "medium" amount of space
+                                % (latex determines what medium is)
+                                % Also try: \bigskip, \littleskip
+
+\thispagestyle{plain}
+\begin{center}                  % Center the following lines
+{\LARGE DSN Journal paper outline} \\
+\end{center}
+
+
+{\Large \textbf{Title:} Enhancing theoretical neuroscience with implicit model inversion} \\
+
+\textbf{Abstract}: \\
+Theoretical neuroscientists design and test models of neural computation, assessing a model’s quality by its recapitulation of experimentally recorded neural activity.  In idealized practice of theory, scientists analytically derive the model parameterizations that produce the emergent properties signifying a neural computation.  However, the nonlinear dynamical nature of most neural models prohibits such convenient analyses, resulting in the prevalence of simulation analyses in theoretical neuroscience.  These mathematical challenges are exacerbated by the trending growth in model complexity as neuroscientists study increasingly complex behaviors.  To invert these complex “implicit” models, which lack an explicit likelihood function, we introduce a novel machine learning methodology, $<$method$>$ which learns full (maximum entropy) parameter distributions conditioned on theoretician-defined emergent properties. {\color{red} Note SB: I think we should expand on context of $<$method$>$ in bayesian ML in introduction} We demonstrate how $<$method$>$ facilitates exploratory analyses, scientific hypothesis testing, and experimental design beyond modern practices in models of the stomatogastric ganglion (STG), primary visual cortex (V1), superior colliculus (SC), and recurrent neural networks (RNNs).
+
+\textit{Some extra boilerplate:} \\
+Idealized theoretical neuroscience entails analytical derivations of how model parameters govern system activity. So naturally, emergent property definition and model design are guided by the interest of analytic convenience.  Even so, as theorists work to explain neural computations of increasing complexity, the models become necessarily more complex, and key model properties become analytically intractable with respect to the parameterization.
+To invert these complex “implicit” models, which lack an explicit likelihood function, we leverage recent machine learning research enabling likelihood-free inference,
+
+\textbf{Introduction}: \\
+\textit{Theory is great and has been useful to neuroscience because of its adoption of technology.}
+\begin{itemize} 
+\item $<$2-3 nice statements about the contribution of theory to neuroscience with references to Abbott 2008 (review) and the major contributions. $>$ 
+\item Developing a theory for a particular neural computation involves a.) mathematically defining the emergent properties of the neural activity that signify the computation, b.) designing a parameterized model of the brain area(s) executing the computation, and then c.) characterizing the model parameters that produce these emergent properties. 
+\item Talk about workflow of theoretical neuroscience
+\item Reference historic adoption of tools to improve practice
+\item Last sentence suggests there are current challenges we can get around with modern ML.
+\end{itemize}
+
+\textit{Inference para}
+\begin{itemize} 
+\item test
+\end{itemize}
+
+
+
+\bibliography{dsn}
+\bibliographystyle{unsrt}
+
+\end{document}
+
