@@ -49,7 +49,7 @@ arch_dict = {'D':system.D, \
 
 k_max = 40
 
-batch_size = 100
+batch_size = 1000
 lr_order = -3
 
 
@@ -65,5 +65,5 @@ train_dsn(
     min_iters=1000,
     max_iters=2000,
     check_rate=100,
-    dir_str="SCCircuit_test",
+    dir_str="SCCircuit",
 )
