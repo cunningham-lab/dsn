@@ -1,0 +1,29 @@
+\begin{thebibliography}{1}
+
+\bibitem{loaiza2017maximum}
+Gabriel Loaiza-Ganem, Yuanjun Gao, and John~P Cunningham.
+\newblock Maximum entropy flow networks.
+\newblock {\em arXiv preprint arXiv:1701.03504}, 2017.
+
+\bibitem{bittner2019learning}
+Sean Bittner and John Cunningham.
+\newblock Learning exponential families.
+\newblock {\em (In Prep)}, ?(?):?--?, 2019.
+
+\bibitem{kingma2013auto}
+Diederik~P Kingma and Max Welling.
+\newblock Auto-encoding variational bayes.
+\newblock {\em arXiv preprint arXiv:1312.6114}, 2013.
+
+\bibitem{ranganath2014black}
+Rajesh Ranganath, Sean Gerrish, and David Blei.
+\newblock Black box variational inference.
+\newblock In {\em Artificial Intelligence and Statistics}, pages 814--822,
+  2014.
+
+\bibitem{bertsekas2014constrained}
+Dimitri~P Bertsekas.
+\newblock {\em Constrained optimization and Lagrange multiplier methods}.
+\newblock Academic press, 2014.
+
+\end{thebibliography}
