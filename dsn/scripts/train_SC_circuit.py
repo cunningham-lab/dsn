@@ -25,14 +25,25 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
+behavior_type = "pvar"
 
-pvar = 0.0001
-means = np.array([p, 0.0])
-variances = np.array([pvar, 0.0])
-behavior = {
-    "type": "means",
-    "means": means,
-}
+if (behavior_type == "means"):
+    #pvar = 0.0001
+    means = np.array([p, 0.0])
+    #variances = np.array([pvar, 0.0])
+    behavior = {
+        "type": behavior_type,
+        "means": means,
+    }
+elif (behavior_type == "pvar"):
+    pvar = 0.0001
+    means = np.array([p, 0.0])
+    behavior = {
+        "type": behavior_type,
+        "means": means,
+        "pvar":pvar,
+    }
+
 model_opts = {"params":param_str}
 system = SCCircuit(fixed_params, behavior, model_opts)
 

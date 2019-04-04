@@ -1001,7 +1001,7 @@ class SCCircuit(system):
         # C and M are broadcast dimensions.
         self.w = np.random.normal(0.0, 1.0, (self.T,1,1,4,self.N))
 
-        if (behavior["type"]in ["standard", "means"]):
+        if (behavior["type"]in ["standard", "means", "pvar"]):
             self.C = 1
 
     def get_all_sys_params(self,):
@@ -1106,6 +1106,12 @@ class SCCircuit(system):
             T_x_labels = [
                 r"$E_{\partial W}[{V_{LP},L}]$",
                 r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$"
+            ]
+        elif self.behavior["type"] == "pvar":
+            T_x_labels = [
+                r"$E_{\partial W}[{V_{LP},L}]$",
+                r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
+                r"$E_{\partial W}[ {V_{LP},L}]^2$",
             ]
         else:
             raise NotImplementedError()
@@ -1326,7 +1332,7 @@ class SCCircuit(system):
         I_lightR = E_light*tf.constant(I_lightR)
 
         # Gather inputs into I [T,C,1,4,1]
-        if self.behavior["type"]in ["standard", "means"]:
+        if self.behavior["type"]in ["standard", "means", "pvar"]:
             I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
             I = I_LP
 
@@ -1397,7 +1403,7 @@ class SCCircuit(system):
 
         """
 
-        if self.behavior["type"] in ["standard", "means"]:
+        if self.behavior["type"] in ["standard", "means", "pvar"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError()
@@ -1438,6 +1444,11 @@ class SCCircuit(system):
             T_x = tf.stack((E_v_LP, \
                             Bern_Var_Err
                             ), 2)
+        elif self.behavior["type"] == "pvar":
+            T_x = tf.stack((E_v_LP, \
+                            Bern_Var_Err, \
+                            tf.square(E_v_LP)
+                            ), 2)
         else:
             raise NotImplementedError()
 
@@ -1459,6 +1470,10 @@ class SCCircuit(system):
             mu = np.concatenate((first_moments, second_moments), axis=0)
         elif self.behavior["type"] == "means":
             mu = first_moments
+        elif self.behavior["type"] == "pvar":
+            pvar = self.behavior["pvar"]
+            p_hat_second_moment = np.square(np.array([means[0]])) + pvar
+            mu = np.concatenate((first_moments, p_hat_second_moment), axis=0)
         return mu
 
 
