@@ -230,9 +230,9 @@ def plot_opt(
 
     # plot constraints throughout optimization
     yscale_fac = 5
-    n_cols = 4
+    n_cols = min(n_suff_stats, 4)
     n_rows = int(np.ceil(n_suff_stats / n_cols))
-    figsize = (n_cols * 3, n_rows * 3)
+    figsize = (n_cols * 4, n_rows * 4)
     fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
     if n_rows == 1:
         axs = [axs]
@@ -315,7 +315,7 @@ def plot_opt(
     print("p values")
     n_cols = 4
     n_rows = int(np.ceil(n_fnames / n_cols))
-    figsize = (n_cols * 3, n_rows * 3)
+    figsize = (n_cols * 4, n_rows * 4)
     fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
     figs.append(fig)
     for i in range(n_fnames):
@@ -460,31 +460,39 @@ def plot_var_ellipse(ax, x, y):
 
 
 def plot_target_ellipse(ax, i, j, system, mu):
+    mean_only = False
     if system.name == "Linear2D":
         if system.behavior["type"] == "oscillation":
             mean_x = mu[j]
             mean_y = mu[i]
             std_x = np.sqrt(mu[j + system.num_suff_stats // 2] - mu[j] ** 2)
             std_y = np.sqrt(mu[i + system.num_suff_stats // 2] - mu[i] ** 2)
-    elif system.name in ["V1Circuit", "LowRankRNN"]:
-        if system.behavior["type"] in ["difference", "struct_chaos"]:
+    elif system.name in ["V1Circuit", "SCCircuit", "LowRankRNN"]:
+        if system.behavior["type"] in ["difference", "standard", "struct_chaos"]:
             mean_x = mu[j]
             mean_y = mu[i]
             std_x = np.sqrt(mu[j + system.num_suff_stats // 2] - mu[j] ** 2)
             std_y = np.sqrt(mu[i + system.num_suff_stats // 2] - mu[i] ** 2)
+        elif (system.behavior["type"]):
+            mean_x = mu[j]
+            mean_y = mu[i]
+            mean_only = True
+            std_x = None
+            std_y = None
         else:
             raise NotImplementedError()
     else:
         raise NotImplementedError()
-    plot_ellipse(ax, mean_x, mean_y, std_x, std_y, "r")
+    plot_ellipse(ax, mean_x, mean_y, std_x, std_y, "r", mean_only)
 
 
-def plot_ellipse(ax, mean_x, mean_y, std_x, std_y, c):
+def plot_ellipse(ax, mean_x, mean_y, std_x, std_y, c, mean_only=False):
     t = np.arange(0, 1, 0.01)
-    ax.plot(mean_x, mean_y, c=c, marker="+", ms=20)
-    rx_t = std_x * np.cos(2 * np.pi * t) + mean_x
-    ry_t = std_y * np.sin(2 * np.pi * t) + mean_y
-    h = ax.plot(rx_t, ry_t, c)
+    h = ax.plot(mean_x, mean_y, c=c, marker="+", ms=20)
+    if (not mean_only):
+        rx_t = std_x * np.cos(2 * np.pi * t) + mean_x
+        ry_t = std_y * np.sin(2 * np.pi * t) + mean_y
+        h = ax.plot(rx_t, ry_t, c)
     return h
 
 
@@ -531,20 +539,24 @@ def dsn_pairplots(
     tri=True,
     ellipses=False,
     outlier_stds=2,
-    pfname="images/temp.png",
+    pfnames=None,
 ):
     n_fnames = len(fnames)
 
     # make sure D is greater than 1
-    if D < 2:
-        print("Warning: D must be at least 2. Setting D = 2.")
-        D = 2
+    #if D < 2:
+    #    print("Warning: D must be at least 2. Setting D = 2.")
+    #    D = 2
         # If plotting ellipses, make sure D <= |T(x)|
-    if ellipses and D > system.num_suff_stats // 2:
-        print("Warning: When plotting elipses, can only pairplot first moments.")
-        print("Assuming T(x) = [first moments, second moments].")
-        print("Setting D = |T(x)|/2.")
-        D = system.num_suff_stats // 2
+    if (system.behavior["type"] == "means"):
+        if (ellipses and D > system.num_suff_stats):
+            D = system.num_suff_stats
+    else:
+        if ellipses and D > system.num_suff_stats // 2:
+            print("Warning: When plotting elipses, can only pairplot first moments.")
+            print("Assuming T(x) = [first moments, second moments].")
+            print("Setting D = |T(x)|/2.")
+            D = system.num_suff_stats // 2
 
         # make all the legendstrs empty if no input
     if len(legendstrs) == 0:
@@ -555,6 +567,7 @@ def dsn_pairplots(
 
     figsize = (6, 6)
     figs = []
+    dists = []
     for k in range(n_fnames):
         fname = fnames[k]
         AL_final_it = AL_final_its[k]
@@ -565,6 +578,9 @@ def dsn_pairplots(
         dist, dist_label_strs = dist_from_str(
             dist_str, f_str, system, npzfile, AL_final_it
         )
+        dists.append(dist)
+        if (D == 1):
+            continue
 
         c, c_label_str, cm = coloring_from_str(c_str, system, npzfile, AL_final_it)
         plot_inds, below_inds, over_inds = filter_outliers(c, outlier_stds)
@@ -676,12 +692,13 @@ def dsn_pairplots(
                 a, b-.1, c_label_str, {"fontsize": fontsize + 2}, transform=ax.transAxes
             )
             # clb.ax.set_ylabel(c_label_str, rotation=270, fontsize=fontsize);
+
         plt.suptitle(legendstrs[k], fontsize=(fontsize + 4))
-        plt.savefig(pfname)
-        plt.show()
+        if (pfnames is not None and len(pfnames) > (k)):
+            plt.savefig(pfnames[k])
         figs.append(fig)
 
-    return figs
+    return dists
 
 
 def pairplot(
