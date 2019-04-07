@@ -4,6 +4,10 @@ import numpy as np
 import tensorflow as tf
 from tf_util.stat_util import approx_equal
 
+# Checks tensorflow implementation (and coarser approximations)
+# against original numpy code from M&0 2018
+# https://www.sciencedirect.com/science/article/pii/S0896627318305439#app2
+
 DTYPE = tf.float64
 DELT_EPS = 1e-4
 mus = np.array([-150.0, -1e-6, 0.0, 1.0, 1e-6, 150.0])
