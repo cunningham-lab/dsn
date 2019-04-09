@@ -14,7 +14,7 @@ param_str = str(sys.argv[2])
 c_init_order = int(sys.argv[3])
 random_seed = int(sys.argv[4])
 
-nlayers = 10
+nlayers = 5
 sigma_init = 1.0
 
 # create an instance of the V1_circuit system class
@@ -49,7 +49,7 @@ arch_dict = {'D':system.D, \
              'repeats':nlayers};
 
 
-k_max = 1
+k_max = 4
 
 batch_size = 100
 lr_order = -3
@@ -64,8 +64,8 @@ train_dsn(
     c_init_order=c_init_order,
     lr_order=lr_order,
     random_seed=random_seed,
-    min_iters=2000,
-    max_iters=100000,
-    check_rate=1,
+    min_iters=500,
+    max_iters=2000,
+    check_rate=100,
     dir_str='logbarrier',
 )

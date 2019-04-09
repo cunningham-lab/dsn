@@ -24,6 +24,9 @@ from tf_util.flows import (
 from tf_util.tf_util import count_layer_params, get_archstring
 import scipy.linalg
 
+from tf_util.families import family_from_str
+from efn.train_nf import train_nf
+
 
 def get_savedir(
     system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str
@@ -684,3 +687,39 @@ def rvs(dim):
 
         K = tf.convert_to_tensor(K_rows)
         return K
+
+
+def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir):
+    fam_class = family_from_str("normal")
+    family = fam_class(D)
+    params = {
+        "mu": np.zeros((D,)),
+        "Sigma": np.square(sigma_init) * np.eye(D),
+        "dist_seed": 0,
+    }
+    n = 1000
+    lr_order = -3
+    check_rate = 100
+    min_iters = 5000
+    max_iters = 10000
+    converged = False
+    while (not converged):
+        converged = train_nf(
+            family,
+            params,
+            arch_dict,
+            n,
+            lr_order,
+            random_seed,
+            min_iters,
+            max_iters,
+            check_rate,
+            None,
+            profile=False,
+            savedir=gauss_initdir,
+        )
+        if converged:
+            print("done initializing gaussian NF")
+        else:
+            max_iters = 5*max_iters
+    return converged

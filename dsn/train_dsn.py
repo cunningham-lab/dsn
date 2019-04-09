@@ -42,11 +42,9 @@ from tf_util.tf_util import (
     memory_extension,
     get_initdir,
     check_init,
-    initialize_gauss_nf,
     load_nf_init,
 )
-from tf_util.families import family_from_str
-from efn.train_nf import train_nf
+from dsn.util.dsn_util import initialize_gauss_nf
 
 
 def train_dsn(
@@ -431,7 +429,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
     else:
         initialized = check_init(initdir)
         if (not initialized):
-            initialize_gauss_nf(system.D, arch_dist, sigma_init, random_seed, gauss_initdir)
+            initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, initdir)
     return initdir
 
 
@@ -448,7 +446,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
             # If not bounded init, check for gaussian first-stage init
             gauss_initialized = check_init(gauss_initdir)
             if (not gauss_initialized):
-                initialize_gauss_nf(system.D, arch_dist, sigma_init, random_seed, \
+                initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, \
                                                 gauss_initdir)
             
 
@@ -456,6 +454,6 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
         gauss_initdir = initdir_list[0]
         gauss_initialized = check_init(gauss_initdir)
         if (not gauss_initialized):
-            initialize_gauss_nf(system.D, arch_dist, sigma_init, random_seed, gauss_initdir)
+            initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, gauss_initdir)
         return gauss_initdir
 """
