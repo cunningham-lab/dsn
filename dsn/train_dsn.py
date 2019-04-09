@@ -41,6 +41,8 @@ from tf_util.tf_util import (
     AL_cost,
     memory_extension,
     get_initdir,
+    check_init,
+    initialize_gauss_nf,
     load_nf_init,
 )
 from tf_util.families import family_from_str
@@ -60,6 +62,8 @@ def train_dsn(
     max_iters=5000,
     check_rate=100,
     dir_str="general",
+    savedir=None,
+    entropy=True
 ):
     """Trains a degenerate solution network (DSN).
 
@@ -95,7 +99,7 @@ def train_dsn(
     ALPHA = 0.05
 
     # Look for model initialization.  If not found, optimize the init.
-    initdir = initialize_nf(system.D, arch_dict, sigma_init, random_seed)
+    initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
 
     # Reset tf graph, and set random seeds.
     tf.reset_default_graph()
@@ -108,9 +112,10 @@ def train_dsn(
     base_log_q_z = tf.log(p0)
 
     # Create model save directory if doesn't exist.
-    savedir = get_savedir(
-        system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str
-    )
+    if (savedir is None):
+        savedir = get_savedir(
+            system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str
+        )
     if not os.path.exists(savedir):
         print("Making directory %s" % savedir)
         os.makedirs(savedir)
@@ -138,7 +143,7 @@ def train_dsn(
 
     # Augmented Lagrangian cost function.
     print("Setting up augmented lagrangian gradient graph.")
-    cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, all_params)
+    cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, all_params, entropy=entropy)
 
     # Compute gradient of density network params (theta) wrt cost.
     grads_and_vars = []
@@ -356,6 +361,15 @@ def train_dsn(
             # save the model
             print("saving to", savedir)
             saver.save(sess, savedir + "model")
+
+        final_thetas = {};
+        for i in range(nparams):
+            final_thetas.update({all_params[i].name:sess.run(all_params[i])});
+
+        np.savez(
+                savedir + "theta.npz",
+                theta=final_thetas
+            )
     np.savez(
         savedir + "opt_info.npz",
         costs=costs,
@@ -375,50 +389,73 @@ def train_dsn(
         check_rate=check_rate,
         epoch_inds=epoch_inds,
     )
+
     return costs, _Z
 
 
-def initialize_nf(D, arch_dict, sigma_init, random_seed, min_iters=50000):
-    initdir = get_initdir(D, arch_dict, sigma_init, random_seed)
+def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
+    initdir = get_initdir(system, arch_dict, sigma_init, random_seed)
 
-    initfname = initdir + "theta.npz"
-    resfname = initdir + "opt_info.npz"
+    # Inequality case: Start in the feasible set of the bounds.
+    if ("bounds" in system.behavior.keys()):
+        # Check for feasible set initialization first
+        initialized = check_init(initdir)
+        if (not initialized):
+            feasible_behavior = {"type":"feasible", \
+                                 "means":system.behavior["feasible_means"], \
+                                 "variances":system.behavior["feasible_variances"]
+                                }
+            system.behavior = feasible_behavior
+            min_iters = 5000
+            max_iters = 200000
+            k_max = 1
+            c_init_order = 0
+            _, _ = train_dsn(system,
+                             n,
+                             arch_dict,
+                             k_max,
+                             sigma_init,
+                             c_init_order,
+                             lr_order,
+                             random_seed,
+                             min_iters,
+                             max_iters,
+                             check_rate,
+                             dir_str=None,
+                             savedir=initdir,
+                             entropy=False
+                             )
 
-    if os.path.exists(initfname):
-
-        resfile = np.load(resfname)
-        if not resfile["converged"]:
-            print(
-                "Error: Found initialization file, but optimiation has not converged."
-            )
-            print("Tip: Consider adjusting approximation architecture or min_iters.")
-            exit()
+            
 
     else:
-        fam_class = family_from_str("normal")
-        family = fam_class(D)
-        params = {
-            "mu": np.zeros((D,)),
-            "Sigma": np.square(sigma_init) * np.eye(D),
-            "dist_seed": 0,
-        }
-        n = 1000
-        lr_order = -3
-        check_rate = 100
-        max_iters = 5000
-        train_nf(
-            family,
-            params,
-            arch_dict,
-            n,
-            lr_order,
-            random_seed,
-            min_iters,
-            max_iters,
-            check_rate,
-            None,
-            profile=False,
-            savedir=initdir,
-        )
-        print("done initializing NF")
+        initialized = check_init(initdir)
+        if (not initialized):
+            initialize_gauss_nf(system.D, arch_dist, sigma_init, random_seed, gauss_initdir)
     return initdir
+
+
+
+"""def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
+    initdir_list = get_initdir(system, arch_dict, sigma_init, random_seed)
+
+    # Inequality case: Start in the feasible set of the bounds.
+    if ("bounds" in system.behavior.keys()):
+        gauss_initdir, bound_initdir = initdir_list
+        # Check for feasible set initialization first
+        bound_initialized = check_init(bound_initdir)
+        if (not bound_initialized):
+            # If not bounded init, check for gaussian first-stage init
+            gauss_initialized = check_init(gauss_initdir)
+            if (not gauss_initialized):
+                initialize_gauss_nf(system.D, arch_dist, sigma_init, random_seed, \
+                                                gauss_initdir)
+            
+
+    else:
+        gauss_initdir = initdir_list[0]
+        gauss_initialized = check_init(gauss_initdir)
+        if (not gauss_initialized):
+            initialize_gauss_nf(system.D, arch_dist, sigma_init, random_seed, gauss_initdir)
+        return gauss_initdir
+"""

@@ -1001,7 +1001,7 @@ class SCCircuit(system):
         # C and M are broadcast dimensions.
         self.w = np.random.normal(0.0, 1.0, (self.T,1,1,4,self.N))
 
-        if (behavior["type"]in ["standard", "means", "pvar"]):
+        if (behavior["type"] in ["standard", "means", "pvar", "feasible"]):
             self.C = 1
 
     def get_all_sys_params(self,):
@@ -1112,6 +1112,11 @@ class SCCircuit(system):
                 r"$E_{\partial W}[{V_{LP},L}]$",
                 r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
                 r"$E_{\partial W}[ {V_{LP},L}]^2$",
+            ]
+        if self.behavior["type"] == "feasible":
+            T_x_labels = [
+                r"$Var_{\partial W}[{V_{LP},L}]$",
+                r"$Var_{\partial W}[ {V_{LP},L}]^2$",
             ]
         else:
             raise NotImplementedError()
@@ -1332,7 +1337,7 @@ class SCCircuit(system):
         I_lightR = E_light*tf.constant(I_lightR)
 
         # Gather inputs into I [T,C,1,4,1]
-        if self.behavior["type"]in ["standard", "means", "pvar"]:
+        if self.behavior["type"] in ["standard", "means", "pvar", "feasible"]:
             I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
             I = I_LP
 
@@ -1403,7 +1408,7 @@ class SCCircuit(system):
 
         """
 
-        if self.behavior["type"] in ["standard", "means", "pvar"]:
+        if self.behavior["type"] in ["standard", "means", "pvar", "feasible"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError()
@@ -1449,6 +1454,10 @@ class SCCircuit(system):
                             Bern_Var_Err, \
                             tf.square(E_v_LP)
                             ), 2)
+        if self.behavior["type"] == "feasible":
+            T_x = tf.stack((Var_v_LP, \
+                            tf.square(Var_v_LP)
+                            ), 2)
         else:
             raise NotImplementedError()
 
@@ -1464,7 +1473,7 @@ class SCCircuit(system):
 
         means = self.behavior["means"]
         first_moments = means
-        if self.behavior["type"] == "standard":
+        if self.behavior["type"] in ["standard", "feasible"]:
             variances = self.behavior["variances"]
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
