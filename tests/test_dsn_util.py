@@ -8,6 +8,7 @@ EPS = 1e-16
 
 
 def test_check_convergence():
+    np.random.seed(0)
     array_len = 1000
     converge_ind = 500
 

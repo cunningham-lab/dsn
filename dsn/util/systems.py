@@ -1113,7 +1113,7 @@ class SCCircuit(system):
                 r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
                 r"$E_{\partial W}[ {V_{LP},L}]^2$",
             ]
-        if self.behavior["type"] == "feasible":
+        elif self.behavior["type"] == "feasible":
             T_x_labels = [
                 r"$Var_{\partial W}[{V_{LP},L}]$",
                 r"$Var_{\partial W}[ {V_{LP},L}]^2$",
