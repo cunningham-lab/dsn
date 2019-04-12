@@ -185,17 +185,6 @@ def rank2_CDD_static_solve(
     SI = 1.2
     Sy = 1.2
 
-    SyA = Sy
-    SyB = Sy
-    SIA = SI
-    SIB = SI
-    SIctxA = 1.0
-    SIctxB = 1.0
-    Sw = 1.0
-
-    Sm1 = SyA + rhom*SIctxA + betam*Sw
-    Sm2 = SyB + rhom*SIctxB + betam*Sw
-
 
     # convergence equations used for langevin-like dynamimcs solver
     def f(x):
@@ -208,11 +197,11 @@ def rank2_CDD_static_solve(
         Prime = tfi.Prime(mu, delta_0, num_pts=gauss_quad_pts)
         PhiSq = tfi.PhiSq(mu, delta_0, num_pts=gauss_quad_pts)
 
-        F = (rhom*rhon*kappa1 + betam*betan*(kappa1+kappa2) + cA*SI + rhon*gammaA)*Prime
-        G = (rhom*rhon*kappa2 + betam*betan*(kappa1+kappa2) + cB*SI + rhon*gammaB)*Prime
+        F = (rhom*rhon*kappa1 + betam*betan*(kappa1+kappa2) + cA*(SI**2) + rhon*gammaA)*Prime
+        G = (rhom*rhon*kappa2 + betam*betan*(kappa1+kappa2) + cB*(SI**2) + rhon*gammaB)*Prime
         H = (g**2)*PhiSq
-        H += (Sw+tf.square(betam))*(tf.square(kappa1) + tf.square(kappa2))
-        H += SI*(cA**2 + cB**2) + tf.square(rhom*kappa1 + gammaA) + tf.square(rhom*kappa2 + gammaB)
+        H += ((Sy**2)+tf.square(betam))*(tf.square(kappa1) + tf.square(kappa2))
+        H += (SI**2)*(cA**2 + cB**2) + tf.square(rhom*kappa1 + gammaA) + tf.square(rhom*kappa2 + gammaB)
 
         return tf.stack([F, G, H], axis=1)
 
