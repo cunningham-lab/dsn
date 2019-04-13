@@ -15,18 +15,18 @@ sigma_init = float(sys.argv[3])
 random_seed = int(sys.argv[4])
 
 # create an instance of the V1_circuit system class
-fixed_params = {'g':0.2, 'betam':0.6, 'betan':1.0}
+fixed_params = {'g':0.8, 'gammaLO':-0.14, 'gammaHI':0.08}
 
 behavior_type = "CDD"
-means = np.array([0.3, 0.3])
-variances = np.array([0.001, 0.001])
+means = np.array([0.25, -0.25])
+variances = np.array([0.0001, 0.0001])
 behavior = {"type": behavior_type, "means": means, "variances": variances}
 
 # set model options
 model_opts = {"rank": 2, "input_type": "input"}
 
-solve_its = 100
-solve_eps = 0.2
+solve_its = 200
+solve_eps = 0.5
 system = LowRankRNN(
     fixed_params, behavior, model_opts=model_opts, solve_its=solve_its, solve_eps=solve_eps
 )

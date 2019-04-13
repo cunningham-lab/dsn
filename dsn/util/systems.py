@@ -1623,10 +1623,10 @@ class LowRankRNN(system):
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
-                r"$d_{ctx,A}$",
-                r"$d_{ctx,B}$",
-                r"$d_{ctx,A}^2$",
-                r"$d_{ctx,B}^2$",
+                r"$z_{ctxA,A}$",
+                r"$z_{ctxA,B}$",
+                r"$z_{ctxA,A}^2$",
+                r"$z_{ctxA,B}^2$",
             ]
         else:
             raise NotImplementedError()
@@ -1766,7 +1766,7 @@ class LowRankRNN(system):
                     betan = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "gammaLO":
                     gammaLO = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
-                elif gammaHI == "gammaHI":
+                elif fixed_param == "gammaHI":
                     gammaHI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
@@ -1903,7 +1903,7 @@ class LowRankRNN(system):
 
                 
         elif self.behavior["type"] == "CDD":
-            num_conds = 4
+            num_conds = 2
             c_LO = 0.0
             c_HI = 1.0
 
@@ -1915,18 +1915,14 @@ class LowRankRNN(system):
                 num_conds)
 
 
-            gammaA = tf.concat((gammaHI, gammaLO), axis=1)
-            gammaB = tf.concat((gammaLO, gammaHI), axis=1)
+            gammaA = gammaHI
+            gammaB = gammaLO
 
             cA = tf.concat((c_HI*tf.ones((M,), dtype=DTYPE), 
-                             c_LO*tf.ones((M,), dtype=DTYPE),
-                             c_HI*tf.ones((M,), dtype=DTYPE), 
-                             c_LO*tf.ones((M,), dtype=DTYPE)), 
+                             c_LO*tf.ones((M,), dtype=DTYPE)),
                              axis=0)
             cB = tf.concat((c_LO*tf.ones((M,), dtype=DTYPE), 
-                             c_HI*tf.ones((M,), dtype=DTYPE),
-                             c_LO*tf.ones((M,), dtype=DTYPE), 
-                             c_HI*tf.ones((M,), dtype=DTYPE)), 
+                             c_HI*tf.ones((M,), dtype=DTYPE)),
                              axis=0)
 
             
@@ -1960,10 +1956,8 @@ class LowRankRNN(system):
 
             z_ctxA_A = z[:M]
             z_ctxA_B = z[M:2*M]
-            z_ctxB_A = z[2*M:3*M]
-            z_ctxB_B = z[3*M:4*M]
 
-            first_moments = tf.stack([z_ctxA_A - z_ctxA_B, z_ctxB_B - z_ctxB_A], axis=1)
+            first_moments = tf.stack([z_ctxA_A, z_ctxA_B], axis=1)
             second_moments = tf.square(first_moments)
             T_x = tf.expand_dims(
                 tf.concat((first_moments, second_moments), axis=1), 0
