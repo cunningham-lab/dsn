@@ -18,8 +18,8 @@ random_seed = int(sys.argv[4])
 fixed_params = {'g':0.8, 'gammaLO':-0.14, 'gammaHI':0.08}
 
 behavior_type = "CDD"
-means = np.array([0.25, -0.25])
-variances = np.array([0.0001, 0.0001])
+means = np.array([0.5])
+variances = np.array([0.0001])
 behavior = {"type": behavior_type, "means": means, "variances": variances}
 
 # set model options

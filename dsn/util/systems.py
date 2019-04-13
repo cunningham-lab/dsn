@@ -1623,10 +1623,8 @@ class LowRankRNN(system):
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
-                r"$z_{ctxA,A}$",
-                r"$z_{ctxA,B}$",
-                r"$z_{ctxA,A}^2$",
-                r"$z_{ctxA,B}^2$",
+                r"$z_{ctxA,A} - z_{ctxA,B}$",
+                r"$(z_{ctxA,A} - z_{ctxA,B})^2$",
             ]
         else:
             raise NotImplementedError()
@@ -1957,7 +1955,7 @@ class LowRankRNN(system):
             z_ctxA_A = z[:M]
             z_ctxA_B = z[M:2*M]
 
-            first_moments = tf.stack([z_ctxA_A, z_ctxA_B], axis=1)
+            first_moments = tf.stack([z_ctxA_A - z_ctxA_B], axis=1)
             second_moments = tf.square(first_moments)
             T_x = tf.expand_dims(
                 tf.concat((first_moments, second_moments), axis=1), 0
