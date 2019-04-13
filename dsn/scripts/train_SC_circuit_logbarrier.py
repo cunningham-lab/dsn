@@ -14,7 +14,7 @@ param_str = str(sys.argv[2])
 c_init_order = int(sys.argv[3])
 random_seed = int(sys.argv[4])
 
-nlayers = 5
+nlayers = 10
 sigma_init = 1.0
 
 # create an instance of the V1_circuit system class
@@ -27,12 +27,18 @@ fixed_params = {'E_constant':0.0, \
 
 behavior_type = "feasible"
 
-means = np.array([0.1])
-variances = np.array([0.0002])
+def is_feasible(T_xs):
+    var_threshold = 0.05
+    num_violating = np.sum(T_xs[:,0] < var_threshold)
+    return num_violating == 0 
+
+means = np.array([0.25])
+variances = np.array([0.0000])
 behavior = {
     "type": behavior_type,
     "means": means,
     "variances":variances,
+    "is_feasible":is_feasible
 }
 
 model_opts = {"params":param_str}
@@ -49,9 +55,9 @@ arch_dict = {'D':system.D, \
              'repeats':nlayers};
 
 
-k_max = 4
+k_max = 40
 
-batch_size = 100
+batch_size = 1000
 lr_order = -3
 
 
@@ -64,8 +70,9 @@ train_dsn(
     c_init_order=c_init_order,
     lr_order=lr_order,
     random_seed=random_seed,
-    min_iters=500,
-    max_iters=2000,
+    min_iters=2500,
+    max_iters=5000,
     check_rate=100,
-    dir_str='logbarrier',
+    dir_str='test',
+    entropy=False,
 )

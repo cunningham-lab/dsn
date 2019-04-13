@@ -328,6 +328,27 @@ def train_dsn(
             _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c * _R
 
+            # save all the hyperparams
+            if not os.path.exists(savedir):
+                print("Making directory %s" % savedir)
+                os.makedirs(savedir)
+            # saveParams(params, savedir);
+            # save the model
+            print("saving to", savedir)
+            saver.save(sess, savedir + "model")
+
+            total_its += i
+            epoch_inds.append(total_its - 1)
+
+
+            # If optimizing for feasible set and on f.s., quit.
+            if (system.behavior["type"] == "feasible"):
+                if system.behavior["is_feasible"](_T_x[0]):
+                    print('On the feasible set.  Initialization complete.')
+                    break
+                else:
+                    print('Not on safe part of feasible set yet.')
+
             # do the hypothesis test to figure out whether or not we should update c
             feed_dict = {Lambda: _lambda, c: _c}
 
@@ -348,18 +369,6 @@ def train_dsn(
             else:
                 print(u, "same c")
 
-            total_its += i
-            epoch_inds.append(total_its - 1)
-
-            # save all the hyperparams
-            if not os.path.exists(savedir):
-                print("Making directory %s" % savedir)
-                os.makedirs(savedir)
-            # saveParams(params, savedir);
-            # save the model
-            print("saving to", savedir)
-            saver.save(sess, savedir + "model")
-
         final_thetas = {};
         for i in range(nparams):
             final_thetas.update({all_params[i].name:sess.run(all_params[i])});
@@ -368,6 +377,7 @@ def train_dsn(
                 savedir + "theta.npz",
                 theta=final_thetas
             )
+
     np.savez(
         savedir + "opt_info.npz",
         costs=costs,
@@ -401,7 +411,8 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
         if (not initialized):
             feasible_behavior = {"type":"feasible", \
                                  "means":system.behavior["feasible_means"], \
-                                 "variances":system.behavior["feasible_variances"]
+                                 "variances":system.behavior["feasible_variances"], \
+                                 "is_feasible":system.behavior["is_feasible"]
                                 }
             system.behavior = feasible_behavior
             min_iters = 5000
