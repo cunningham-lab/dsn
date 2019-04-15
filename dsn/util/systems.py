@@ -15,7 +15,7 @@
 # ==============================================================================
 import tensorflow as tf
 import numpy as np
-from tf_util.tf_util import count_layer_params
+from tf_util.tf_util import count_layer_params, min_barrier, max_barrier
 from tf_util.normalizing_flows import SoftPlusFlow
 from tf_util.flows import SoftPlusLayer, IntervalFlowLayer
 import scipy.stats
@@ -1122,6 +1122,10 @@ class SCCircuit(system):
             raise NotImplementedError()
         return T_x_labels
 
+    def get_v_t(self, z):
+        self.v_t = self.simulate(z)
+        return self.v_t
+
     def filter_Z(self, z):
         """Returns the system matrix/vector variables depending free parameter ordering.
 
@@ -1346,6 +1350,19 @@ class SCCircuit(system):
 
         return W, I
 
+    def compute_I_x(self, z, T_x):
+        # Not efficient (repeated computation) 
+        # but convenient modularization for now
+        bounds = self.behavior["bounds"]
+        # [T, C, M, D, trials]
+        v_LP = self.v_t[-1, 0, :, 0, :]
+        E_v_LP = tf.reduce_mean(v_LP, 1)
+        Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 1)), 1)
+        # t = 1.0
+        I_x = min_barrier(Var_v_LP, bounds[0], 1.0)
+        I_x = tf.expand_dims(tf.expand_dims(I_x, 0), 2)
+        return I_x
+
 
     def simulate(self, z):
         """Simulate the V1 4-neuron circuit given parameters z.
@@ -1426,10 +1443,8 @@ class SCCircuit(system):
 
         """
 
-        v_t = self.simulate(z)
-        # [T, C, M, D, 1]
-
-        
+        v_t = self.get_v_t(z)
+        # [T, C, M, D, trials]
         v_LP = v_t[-1, 0, :, 0, :] # we're looking at LP in the standard L Pro condition
         E_v_LP = tf.reduce_mean(v_LP, 1)
         Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 1)), 1)
@@ -1454,7 +1469,7 @@ class SCCircuit(system):
                             Bern_Var_Err, \
                             tf.square(E_v_LP)
                             ), 2)
-        if self.behavior["type"] == "feasible":
+        elif self.behavior["type"] == "feasible":
             T_x = tf.stack((Var_v_LP, \
                             tf.square(Var_v_LP)
                             ), 2)

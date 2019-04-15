@@ -25,20 +25,26 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
-behavior_type = "feasible"
-
+behavior_type = "means"
+means = np.array([p, 0.0])
+#variances = np.array([0.0000])
+bounds = np.array([0.0])
 def is_feasible(T_xs):
     var_threshold = 0.05
     num_violating = np.sum(T_xs[:,0] < var_threshold)
     return num_violating == 0 
+feasible_means = np.array([0.25])
+feasible_variances = np.array([0.0000])
 
-means = np.array([0.25])
-variances = np.array([0.0000])
+
 behavior = {
     "type": behavior_type,
     "means": means,
-    "variances":variances,
-    "is_feasible":is_feasible
+    #"variances":variances,
+    "bounds":bounds,
+    "is_feasible":is_feasible,
+    "feasible_means":feasible_means,
+    "feasible_variances":feasible_variances,
 }
 
 model_opts = {"params":param_str}

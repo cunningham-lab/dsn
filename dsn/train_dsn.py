@@ -128,10 +128,17 @@ def train_dsn(
     all_params = tf.trainable_variables()
     nparams = len(all_params)
 
-    # Compute family-specific sufficient statistics and log base measure on samples.
+    # Compute system-specific sufficient statistics and log base measure on samples.
     T_x = system.compute_suff_stats(Z)
     mu = system.compute_mu()
     T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
+
+    # If there is an inequality constraint for the behavior, calculate it.
+    # I_x is None otherwise.
+    if ("bounds" in system.behavior.keys()):
+        I_x = system.compute_I_x(Z, T_x)
+    else:
+        I_x = None
 
     R2 = compute_R2(log_q_z, None, T_x)
 
@@ -141,7 +148,8 @@ def train_dsn(
 
     # Augmented Lagrangian cost function.
     print("Setting up augmented lagrangian gradient graph.")
-    cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, all_params, entropy=entropy)
+    cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, \
+                                  all_params, entropy=entropy, I_x=I_x)
 
     # Compute gradient of density network params (theta) wrt cost.
     grads_and_vars = []
@@ -343,7 +351,8 @@ def train_dsn(
 
             # If optimizing for feasible set and on f.s., quit.
             if (system.behavior["type"] == "feasible"):
-                if system.behavior["is_feasible"](_T_x[0]):
+                is_feasible = system.behavior["is_feasible"](_T_x[0])
+                if is_feasible:
                     print('On the feasible set.  Initialization complete.')
                     break
                 else:
@@ -398,45 +407,52 @@ def train_dsn(
         epoch_inds=epoch_inds,
     )
 
-    return costs, _Z
+    if (system.behavior["type"] == "feasible"):
+        return costs, _Z, is_feasible
+    else:
+        return costs, _Z
 
 
 def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
-    initdir = get_initdir(system, arch_dict, sigma_init, random_seed)
-
     # Inequality case: Start in the feasible set of the bounds.
     if ("bounds" in system.behavior.keys()):
         # Check for feasible set initialization first
-        initialized = check_init(initdir)
-        if (not initialized):
-            feasible_behavior = {"type":"feasible", \
+        behavior = system.behavior
+        feasible_behavior = {"type":"feasible", \
                                  "means":system.behavior["feasible_means"], \
                                  "variances":system.behavior["feasible_variances"], \
                                  "is_feasible":system.behavior["is_feasible"]
-                                }
-            system.behavior = feasible_behavior
-            min_iters = 5000
-            max_iters = 200000
-            k_max = 1
+                            }
+        system.behavior = feasible_behavior
+        initdir = get_initdir(system, arch_dict, sigma_init, random_seed)
+        
+        print(initdir)
+        initialized = check_init(initdir)
+        if (not initialized):
+            min_iters = 2500
+            max_iters = 5000
+            k_max = 20
             c_init_order = 0
-            _, _ = train_dsn(system,
-                             n,
-                             arch_dict,
-                             k_max,
-                             sigma_init,
-                             c_init_order,
-                             lr_order,
-                             random_seed,
-                             min_iters,
-                             max_iters,
-                             check_rate,
-                             dir_str=None,
-                             savedir=initdir,
-                             entropy=False
-                             )
+            is_feasible = False
+            while (not is_feasible):
+                _, _, is_feasible = train_dsn(system,
+                                              n,
+                                              arch_dict,
+                                              k_max,
+                                              sigma_init,
+                                              c_init_order,
+                                              lr_order,
+                                              random_seed,
+                                              min_iters,
+                                              max_iters,
+                                              check_rate,
+                                              dir_str=None,
+                                              savedir=initdir,
+                                              entropy=False
+                                              )
+                max_iters = 2*max_iters
 
-            
-
+        system.behavior = behavior
     else:
         initialized = check_init(initdir)
         if (not initialized):
@@ -445,26 +461,4 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
 
 
 
-"""def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
-    initdir_list = get_initdir(system, arch_dict, sigma_init, random_seed)
 
-    # Inequality case: Start in the feasible set of the bounds.
-    if ("bounds" in system.behavior.keys()):
-        gauss_initdir, bound_initdir = initdir_list
-        # Check for feasible set initialization first
-        bound_initialized = check_init(bound_initdir)
-        if (not bound_initialized):
-            # If not bounded init, check for gaussian first-stage init
-            gauss_initialized = check_init(gauss_initdir)
-            if (not gauss_initialized):
-                initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, \
-                                                gauss_initdir)
-            
-
-    else:
-        gauss_initdir = initdir_list[0]
-        gauss_initialized = check_init(gauss_initdir)
-        if (not gauss_initialized):
-            initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, gauss_initdir)
-        return gauss_initdir
-"""
