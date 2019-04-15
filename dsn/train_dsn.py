@@ -454,6 +454,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
 
         system.behavior = behavior
     else:
+        initdir = get_initdir(system, arch_dict, sigma_init, random_seed)
         initialized = check_init(initdir)
         if (not initialized):
             initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, initdir)
