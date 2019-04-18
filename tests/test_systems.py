@@ -129,7 +129,7 @@ class sc_circuit():
         self.T = self.t.shape[0]
 
 
-    def simulate(self, W, Evals, w):
+    def simulate(self, W, Evals, w, eta):
         # declare params
         dt = 0.024
         theta = 0.05
@@ -174,7 +174,7 @@ class sc_circuit():
         for i in range(1,self.T):
             du = (dt/tau) * (-u[i-1] + np.dot(W, v[i-1]) + I_LP[i] + sigma*w[i])
             u[i] = u[i-1]+du
-            v[i] = 0.5*np.tanh((u[i] - theta)/beta) + 0.5
+            v[i] = eta[i] * (0.5*np.tanh((u[i] - theta)/beta) + 0.5)
 
         return v
 
@@ -872,13 +872,10 @@ def test_SCCircuit():
 
     # difference behavior 1
     p = 0.8
-    pvar = 0.01
-    means = np.array([p, p*(1-p)])
-    variances = np.array([pvar, pvar])
+    means = np.array([p, 0.0])
     behavior1 = {
-        "type": "standard",
+        "type": "inforoute",
         "means": means,
-        "variances": variances,
     }
 
     # ****************************************
@@ -888,9 +885,8 @@ def test_SCCircuit():
     fixed_params = {"E_constant": 0.0}
     system = SCCircuit(fixed_params, behavior1)
     assert system.name == "SCCircuit"
-    assert system.behavior_str == "standard_mu=8.00E-01_1.60E-01_6.50E-01_3.56E-02"
+    assert system.behavior_str == "inforoute_mu=8.00E-01_0.00E+00"
     assert approx_equal(system.behavior["means"], means, EPS)
-    assert approx_equal(system.behavior["variances"], variances, EPS)
     assert system.fixed_params["E_constant"] == 0.0
     assert len(system.fixed_params.keys()) == 1
     assert system.all_params == [
@@ -928,27 +924,21 @@ def test_SCCircuit():
         r"$E_{light}$",
     ]
     assert system.T_x_labels == [
-        r"$E_{\partial W}[{V_{LP},L}]$",
-        r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
-        r"$E_{\partial W}[ {V_{LP},L}]^2$",
-        r"$(Var_{\partial W}[ {V_{LP},L}] - p(1-p))^2$",
+        r"$E_{\partial W}[{V_{LP},L,NI}]$",
+        r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
     ]
     assert system.D == 9
-    assert system.num_suff_stats == 4
+    assert system.num_suff_stats == 2
 
+    ## info route, C=1, reduced
+    print('c = 1')
     p = 0.8
-    pvar = 0.01
-    means = np.array([p, p*(1-p)])
-    variances = np.array([pvar, pvar])
+    means = np.array([p, 0.0])
     behavior = {
-        "type": "standard",
+        "type": "inforoute",
         "means": means,
-        "variances": variances,
     }
 
-    # ****************************************
-    # One random fixed param
-    # ****************************************
     E_constant = 0.0
     E_Pbias = 0.1
     E_Prule = 0.5
@@ -988,11 +978,82 @@ def test_SCCircuit():
     _w = system.w
     N = _w.shape[4]
 
+    eta_NI = np.ones((system.T,))
+
     r_t_true = np.zeros((system.T, 1, M, 4, system.N))
     for i in range(M):
         for j in range(N):
-            _r_t_true_ij = true_sys.simulate(W[i], Es, _w[:,0,0,:,j])
+            _r_t_true_ij = true_sys.simulate(W[i], Es, _w[:,0,0,:,j], eta_NI)
             r_t_true[:,0,i,:,j] = _r_t_true_ij
+    assert(approx_equal(_r_t, r_t_true, EPS))
+
+
+    ## info route, C=2, full
+    print('c = 2')
+    p_NI = 0.8
+    p_DI = 0.2
+
+    means = np.array([p_NI, p_DI, 0.0, 0.0])
+    behavior = {
+        "type": "inforoute",
+        "means": means,
+    }
+
+    E_constant = 0.0
+    E_Pbias = 0.1
+    E_Prule = 0.5
+    E_Arule = 0.5
+    E_choice = -0.2
+    E_light = 0.1
+
+    fixed_params = {"E_constant":E_constant, \
+                    "E_Pbias":E_Pbias, \
+                    "E_Prule":E_Prule, \
+                    "E_Arule":E_Arule, \
+                    "E_choice":E_choice, \
+                    "E_light":E_light, \
+                   }
+
+    model_opts = {"params":"full", "C":2}
+
+    system = SCCircuit(fixed_params, behavior, model_opts)
+
+    _Z = np.random.normal(0.0, 1.0, (1, M, 8))
+
+    # Test simulation
+    r_t = system.simulate(Z)
+    _r_t = sess.run(r_t, {Z:_Z})
+
+    true_sys = sc_circuit()
+
+    _sW_P  = _Z[0,:,0]
+    _sW_A  = _Z[0,:,1]
+    _vW_PA = _Z[0,:,2]
+    _vW_AP = _Z[0,:,3]
+    _dW_PA = _Z[0,:,4]
+    _dW_AP = _Z[0,:,5]
+    _hW_P  = _Z[0,:,6]
+    _hW_A  = _Z[0,:,7]
+    W = np.array([[_sW_P,  _vW_PA, _dW_PA, _hW_P], 
+                  [_vW_AP,  _sW_A,  _hW_A, _dW_AP], 
+                  [_dW_AP,  _hW_A,  _sW_A, _vW_AP], 
+                  [_hW_P,  _dW_PA, _vW_PA, _sW_P]])
+    W = np.transpose(W, [2, 0, 1])
+
+    Es = [E_constant, E_Pbias, E_Prule, E_Arule, E_choice, E_light]
+    _w = system.w
+    N = _w.shape[4]
+
+    eta_NI = np.ones((system.T,))
+    eta_DI = np.ones((system.T,))
+    eta_DI[np.logical_and(0.8 <= system.t, system.t <= 1.2)] = 0.0
+
+    r_t_true = np.zeros((system.T, 2, M, 4, system.N))
+    for i in range(M):
+        for j in range(N):
+            r_t_true[:,0,i,:,j] = true_sys.simulate(W[i], Es, _w[:,0,0,:,j], eta_NI)
+            r_t_true[:,1,i,:,j] = true_sys.simulate(W[i], Es, _w[:,0,0,:,j], eta_DI)
+
     assert(approx_equal(_r_t, r_t_true, EPS))
     return None
 

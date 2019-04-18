@@ -980,7 +980,7 @@ class SCCircuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"params":"reduced"}
+        model_opts={"params":"reduced", "C":1}
     ):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
@@ -1001,8 +1001,7 @@ class SCCircuit(system):
         # C and M are broadcast dimensions.
         self.w = np.random.normal(0.0, 1.0, (self.T,1,1,4,self.N))
 
-        if (behavior["type"] in ["standard", "means", "pvar", "feasible"]):
-            self.C = 1
+        self.C = self.model_opts["C"]
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -1095,29 +1094,37 @@ class SCCircuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if self.behavior["type"] == "standard":
-            T_x_labels = [
-                r"$E_{\partial W}[{V_{LP},L}]$",
-                r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
-                r"$E_{\partial W}[ {V_{LP},L}]^2$",
-                r"$(Var_{\partial W}[ {V_{LP},L}] - p(1-p))^2$",
-            ]
-        elif self.behavior["type"] == "means":
-            T_x_labels = [
-                r"$E_{\partial W}[{V_{LP},L}]$",
-                r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$"
-            ]
-        elif self.behavior["type"] == "pvar":
-            T_x_labels = [
-                r"$E_{\partial W}[{V_{LP},L}]$",
-                r"$Var_{\partial W}[{V_{LP},L}] - p(1-p)$",
-                r"$E_{\partial W}[ {V_{LP},L}]^2$",
-            ]
+        C = self.model_opts["C"]
+        if self.behavior["type"] == "inforoute":
+            if (C==1):
+                T_x_labels = [
+                    r"$E_{\partial W}[{V_{LP},L,NI}]$",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
+                ]
+            elif (C==2):
+                T_x_labels = [
+                    r"$E_{\partial W}[{V_{LP},L,NI}]$",
+                    r"$E_{\partial W}[{V_{LP},L,DI}]$",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
+                    r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$"
+                ]
+            else:
+                raise NotImplementedError()
         elif self.behavior["type"] == "feasible":
-            T_x_labels = [
-                r"$Var_{\partial W}[{V_{LP},L}]$",
-                r"$Var_{\partial W}[ {V_{LP},L}]^2$",
-            ]
+            if (C==1):
+                T_x_labels = [
+                    r"$Var_{\partial W}[{V_{LP},L,NI}]$",
+                    r"$Var_{\partial W}[ {V_{LP},L,NI}]^2$",
+                ]
+            elif (C==2):
+                T_x_labels = [
+                    r"$Var_{\partial W}[{V_{LP},L,NI}]$",
+                    r"$Var_{\partial W}[{V_{LP},L,DI}]$",
+                    r"$Var_{\partial W}[ {V_{LP},L,NI}]^2$",
+                    r"$Var_{\partial W}[ {V_{LP},L,DI}]^2$",
+                ]
+            else:
+                raise NotImplementedError()
         else:
             raise NotImplementedError()
         return T_x_labels
@@ -1134,7 +1141,8 @@ class SCCircuit(system):
 
         # Returns
             W (tf.tensor): [C,M,4,4] Dynamics matrices.
-            I (tf.tensor): [C,M,4,1] Static inputs.
+            I (tf.tensor): [T,C,1,4,1] Static inputs.
+            eta (tf.tensor): [T,C] Inactivations.
 
         """
         z_shape = tf.shape(z)
@@ -1233,8 +1241,8 @@ class SCCircuit(system):
             # Gather weights into the dynamics matrix W [C,M,4,4]
             Wrow1 = tf.stack([sW_P,  vW_PA, dW_PA, hW_P], axis=2)
             Wrow2 = tf.stack([vW_AP, sW_A,  hW_A,  dW_AP], axis=2)
-            Wrow3 = tf.stack([dW_AP, hW_P,  sW_A,  vW_AP], axis=2)
-            Wrow4 = tf.stack([hW_A,  dW_PA, vW_PA, sW_P], axis=2)
+            Wrow3 = tf.stack([dW_AP, hW_A,  sW_A,  vW_AP], axis=2)
+            Wrow4 = tf.stack([hW_P,  dW_PA, vW_PA, sW_P], axis=2)
             W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
         elif (self.model_opts["params"] == "reduced"):
             ind = 0
@@ -1341,26 +1349,39 @@ class SCCircuit(system):
         I_lightR = E_light*tf.constant(I_lightR)
 
         # Gather inputs into I [T,C,1,4,1]
-        if self.behavior["type"] in ["standard", "means", "pvar", "feasible"]:
+        if self.behavior["type"] in ["inforoute", "feasible"]:
             I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
-            I = I_LP
+            # this is just a stepping stone, will implement full resps
+            if (self.C==1):
+                I = I_LP
+            elif (self.C==2):
+                I = tf.concat((I_LP, I_LP), axis=1)
+            else:
+                raise NotImplementedError()
 
         
-        # construct input I
+        # put eta together (just NI and DI for C=2) TODO
+        eta = np.ones((self.T, self.C, 1, 1, 1), dtype=np.float64)
+        if (self.C==2):
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = 0.0
+        eta = tf.constant(eta, dtype=DTYPE)
 
-        return W, I
+        return W, I, eta
 
     def compute_I_x(self, z, T_x):
         # Not efficient (repeated computation) 
         # but convenient modularization for now
         bounds = self.behavior["bounds"]
         # [T, C, M, D, trials]
-        v_LP = self.v_t[-1, 0, :, 0, :]
-        E_v_LP = tf.reduce_mean(v_LP, 1)
-        Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 1)), 1)
-        # t = 1.0
-        I_x = min_barrier(Var_v_LP, bounds[0], 1.0)
-        I_x = tf.expand_dims(tf.expand_dims(I_x, 0), 2)
+        v_LP = self.v_t[-1, :, :, 0, :]
+        E_v_LP = tf.reduce_mean(v_LP, 2)
+        Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 2)), 2)
+        barriers = []
+        for i in range(self.C):
+            barriers.append(min_barrier(Var_v_LP[i], bounds[i], 1.0))
+        I_x = tf.stack(barriers, axis=1)
+        I_x = tf.expand_dims(I_x, 0)
+        print('I_x', I_x)
         return I_x
 
 
@@ -1388,7 +1409,7 @@ class SCCircuit(system):
 
 
         # obtain weights and inputs from parameterization
-        W, I = self.filter_Z(z)
+        W, I, eta = self.filter_Z(z)
 
         # initial conditions
         v0 = 0.1*tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
@@ -1401,7 +1422,7 @@ class SCCircuit(system):
         for i in range(1,self.T):
             du = (self.dt /tau) * (-u + tf.matmul(W, v) + I[i] + sigma*self.w[i])
             u = u + du
-            v = 0.5*tf.tanh((u - theta)/beta) + 0.5
+            v = eta[i] * (0.5*tf.tanh((u - theta)/beta) + 0.5)
             v_t_list.append(v)
             u_t_list.append(u)
 
@@ -1425,7 +1446,7 @@ class SCCircuit(system):
 
         """
 
-        if self.behavior["type"] in ["standard", "means", "pvar", "feasible"]:
+        if self.behavior["type"] in ["inforoute", "feasible"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError()
@@ -1445,29 +1466,15 @@ class SCCircuit(system):
 
         v_t = self.get_v_t(z)
         # [T, C, M, D, trials]
-        v_LP = v_t[-1, 0, :, 0, :] # we're looking at LP in the standard L Pro condition
-        E_v_LP = tf.reduce_mean(v_LP, 1)
-        Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 1)), 1)
+        v_LP = v_t[-1, :, :, 0, :] # we're looking at LP in the standard L Pro condition
+        E_v_LP = tf.reduce_mean(v_LP, 2)
+        Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 2)), 2)
 
-        # Add leading dimension
-        E_v_LP = tf.expand_dims(E_v_LP, 0)
-        Var_v_LP = tf.expand_dims(Var_v_LP, 0)
-        Bern_Var_Err = Var_v_LP - (E_v_LP*(1-E_v_LP))
+        Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
 
-        if self.behavior["type"] == "standard":
-            T_x = tf.stack((E_v_LP, \
-                            Bern_Var_Err, \
-                            tf.square(E_v_LP), \
-                            tf.square(Bern_Var_Err)
-                            ), 2)
-        elif self.behavior["type"] == "means":
+        if self.behavior["type"] == "inforoute":
             T_x = tf.stack((E_v_LP, \
                             Bern_Var_Err
-                            ), 2)
-        elif self.behavior["type"] == "pvar":
-            T_x = tf.stack((E_v_LP, \
-                            Bern_Var_Err, \
-                            tf.square(E_v_LP)
                             ), 2)
         elif self.behavior["type"] == "feasible":
             T_x = tf.stack((Var_v_LP, \
@@ -1488,16 +1495,14 @@ class SCCircuit(system):
 
         means = self.behavior["means"]
         first_moments = means
-        if self.behavior["type"] in ["standard", "feasible"]:
+        if self.behavior["type"] in ["feasible"]:
             variances = self.behavior["variances"]
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
-        elif self.behavior["type"] == "means":
+        elif self.behavior["type"] == "inforoute":
             mu = first_moments
-        elif self.behavior["type"] == "pvar":
-            pvar = self.behavior["pvar"]
-            p_hat_second_moment = np.square(np.array([means[0]])) + pvar
-            mu = np.concatenate((first_moments, p_hat_second_moment), axis=0)
+        else:
+            raise NotImplementedError()
         return mu
 
 

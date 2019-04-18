@@ -9,10 +9,9 @@ import sys, os
 
 os.chdir("../")
 
-p = float(sys.argv[1])
-param_str = str(sys.argv[2])
-c_init_order = int(sys.argv[3])
-random_seed = int(sys.argv[4])
+param_str = str(sys.argv[1])
+c_init_order = int(sys.argv[2])
+random_seed = int(sys.argv[3])
 
 nlayers = 10
 sigma_init = 1.0
@@ -25,22 +24,24 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
-behavior_type = "means"
-means = np.array([p, 0.0])
-#variances = np.array([0.0000])
-bounds = np.array([0.0])
+p_NI = 0.8
+p_DI = 0.2
+
+behavior_type = "inforoute"
+means = np.array([p_NI, p_DI, 0.0, 0.0])
+bounds = np.array([0.0, 0.0])
 def is_feasible(T_xs):
     var_threshold = 0.05
     num_violating = np.sum(T_xs[:,0] < var_threshold)
+    num_violating += np.sum(T_xs[:,1] < var_threshold)
     return num_violating == 0 
-feasible_means = np.array([0.25])
-feasible_variances = np.array([0.0000])
+feasible_means = np.array([0.25, 0.25])
+feasible_variances = np.array([0.0000, 0.0000])
 
 
 behavior = {
     "type": behavior_type,
     "means": means,
-    #"variances":variances,
     "bounds":bounds,
     "is_feasible":is_feasible,
     "feasible_means":feasible_means,
@@ -79,6 +80,6 @@ train_dsn(
     min_iters=2500,
     max_iters=5000,
     check_rate=100,
-    dir_str='test',
+    dir_str='SCCircuit',
     entropy=False,
 )
