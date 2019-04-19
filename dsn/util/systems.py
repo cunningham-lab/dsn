@@ -332,6 +332,336 @@ class Linear2D(system):
         return mu
 
 
+class STGCircuit(system):
+    """ 5-neuron STG circuit.
+
+        Describe model
+
+         [include a graphic of the circuit connectivity]
+
+         [add equations]
+
+    # Attributes
+        behavior (dict): see STGCircuit.compute_suff_stats
+    """
+
+    def __init__(
+        self,
+        fixed_params,
+        behavior,
+        model_opts={"dt":0.025, "T":2400, "fft_start":400}
+    ):
+        self.model_opts = model_opts
+        super().__init__(fixed_params, behavior)
+        self.name = "STGCircuit"
+
+        # simulation parameters
+        self.dt = model_opts['dt']
+        self.T = model_opts['T']
+        self.fft_start = model_opts['fft_start']
+
+    def get_all_sys_params(self,):
+        """Returns ordered list of all system parameters and individual element labels.
+
+         - $$g_{el}$$ - electrical coupling conductance
+         - $$g_{synA}$$ - synaptic strength A
+         - $$g_{synB}$$ - synaptic strength B
+
+        # Returns
+            all_params (list): List of strings of all parameters of full system model.
+            all_param_labels (list): List of tex strings for all parameters.
+        """
+        all_params = [
+            "g_el",
+            "g_synA",
+            "g_synB",
+        ]
+        all_param_labels = {
+            "g_el": [r"$g_{el}$"],
+            "g_synA": [r"$g_{synA}$"],
+            "g_synB": [r"$g_{synB}$"]
+        }
+
+        return all_params, all_param_labels
+
+    def get_T_x_labels(self,):
+        """Returns `T_x_labels`.
+
+        Behaviors:
+
+        # Returns
+            T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+
+        """
+        if self.behavior["type"] == "hubfreq":
+            T_x_labels = [
+                r"$f_{h}$",
+                r"$f_{h}^2$"
+            ]
+        else:
+            raise NotImplementedError()
+        return T_x_labels
+
+    def filter_Z(self, z):
+        """Returns the system matrix/vector variables depending free parameter ordering.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            W (tf.tensor): [C,M,4,4] Dynamics matrices.
+            I (tf.tensor): [T,C,1,4,1] Static inputs.
+            eta (tf.tensor): [T,C] Inactivations.
+
+        """
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        # read free parameters from z vector
+        ind = 0
+        for free_param in self.free_params:
+            if free_param == "g_el":
+                g_el = z[0, :, ind]
+            elif free_param == "g_synA":
+                g_synA = z[0, :, ind]
+            elif free_param == "g_synB":
+                g_synB = z[0, :, ind]
+            else:
+                print("Error: unknown free parameter: %s." % free_param)
+                raise NotImplementedError()
+            ind += 1
+
+        # load fixed parameters
+        for fixed_param in self.fixed_params.keys():
+            if fixed_param == "g_el":
+                g_el = self.fixed_params[fixed_param] * tf.ones(
+                    (M,), dtype=DTYPE
+                )
+            elif fixed_param == "g_synA":
+                g_synA = self.fixed_params[fixed_param] * tf.ones(
+                    (M,), dtype=DTYPE
+                )
+            elif fixed_param == "g_synB":
+                g_synB = self.fixed_params[fixed_param] * tf.ones(
+                    (M,), dtype=DTYPE
+                )
+            else:
+                print("Error: unknown fixed parameter: %s." % fixed_param)
+                raise NotImplementedError()
+
+        return g_el, g_synA, g_synB
+
+    def simulate(self, z):
+        """Simulate the V1 4-neuron circuit given parameters z.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            g(z) (tf.tensor): Simulated system activity.
+
+        """
+
+        # get number of batch samples
+        z_shape = tf.shape(z)
+        K = z_shape[0]
+        M = z_shape[1]
+
+        # Set constant parameters.
+        # conductances
+        C_m = 1.0e-9
+
+        # volatages
+        V_leak = -40.0e-3 # 40 mV
+        V_Ca = 100.0e-3 # 100mV
+        V_k = -80.0e-3 # -80mV
+        V_h = -20.0e-3 # -20mV
+        V_syn = -75.0e-3 # -75mV
+
+        v_1 = 0.0 # 0mV
+        v_2 = 20.0e-3 # 20mV
+        v_3 = 0.0 # 0mV
+        v_4 = 15.0e-3 # 15mV
+        v_5 = 78.3e-3 # 78.3mV
+        v_6 = 10.5e-3 # 10.5mV
+        v_7 = -42.2e-3 # -42.2mV
+        v_8 = 87.3e-3 # 87.3mV
+        v_9 = 5.0e-3  # 5.0mV
+
+        v_th = -25.0e-3 # -25mV
+
+        # neuron specific conductances
+        g_Ca_f = 1.9e-2 * (1e-6) # 1.9e-2 \mu S
+        g_Ca_h = 1.7e-2 * (1e-6) # 1.7e-2 \mu S
+        g_Ca_s = 8.5e-3 * (1e-6) # 8.5e-3 \mu S
+
+        g_k_f  = 3.9e-2 * (1e-6) # 3.9e-2 \mu S
+        g_k_h  = 1.9e-2 * (1e-6) # 1.9e-2 \mu S
+        g_k_s  = 1.5e-2 * (1e-6) # 1.5e-2 \mu S
+
+        g_h_f  = 2.5e-2 * (1e-6) # 2.5e-2 \mu S
+        g_h_h  = 8.0e-3 * (1e-6) # 8.0e-3 \mu S
+        g_h_s  = 1.0e-2 * (1e-6) # 1.0e-2 \mu S
+
+        g_Ca = np.array([g_Ca_f, g_Ca_f, g_Ca_h, g_Ca_s, g_Ca_s])
+        g_k = np.array([g_k_f, g_k_f, g_k_h, g_k_s, g_k_s])
+        g_h = np.array([g_h_f, g_h_f, g_h_h, g_h_s, g_h_s])
+
+        g_leak = 1.0e-4 * (1e-6) # 1e-4 \mu S
+
+        phi_N = 2 # 0.002 ms^-1
+
+
+        # obtain weights and inputs from parameterization
+        g_el, g_synA, g_synB = self.filter_Z(z)
+
+        def f(x, g_el, g_synA, g_synB):
+            # x contains
+            V_m = x[:,:5]
+            N = x[:,5:10]
+            H = x[:,10:]
+            
+            M_inf = 0.5*(1.0 + tf.tanh((V_m - v_1)/ v_2))
+            N_inf = 0.5*(1.0 + tf.tanh((V_m - v_3)/v_4))
+            H_inf = 1.0 / (1.0 + tf.exp((V_m + v_5)/v_6))
+                           
+            S_inf = 1.0 / (1.0 + tf.exp((v_th - V_m) / v_9))
+            
+            I_leak = g_leak*(V_m - V_leak)
+            I_Ca = g_Ca*M_inf*(V_m - V_Ca)
+            I_k = g_k*N*(V_m - V_k)
+            I_h = g_h*H*(V_m - V_h)
+                           
+            I_elec = tf.stack([tf.zeros((M,), dtype=DTYPE), 
+                               g_el*(V_m[:,1]-V_m[:,2]),
+                               g_el*(V_m[:,2]-V_m[:,1] + V_m[:,2]-V_m[:,4]),
+                               tf.zeros((M,), dtype=DTYPE),
+                               g_el*(V_m[:,4]-V_m[:,2])], 
+                               axis=1)
+                           
+            I_syn = tf.stack([g_synB*S_inf[:,1]*(V_m[:,0] - V_syn),
+                                g_synB*S_inf[:,0]*(V_m[:,1] - V_syn),
+                                g_synA*S_inf[:,0]*(V_m[:,2] - V_syn) + g_synA*S_inf[:,3]*(V_m[:,2] - V_syn),
+                                g_synB*S_inf[:,4]*(V_m[:,3] - V_syn),
+                                g_synB*S_inf[:,3]*(V_m[:,4] - V_syn)], 
+                                axis=1)
+
+            I_total = I_leak + I_Ca + I_k + I_h + I_elec + I_syn    
+            
+            lambda_N = (phi_N)*tf.math.cosh((V_m - v_3)/(2*v_4))
+            tau_h = (272.0 - (-1499.0 / (1.0 + tf.exp((-V_m + v_7) / v_8)))) / 1000.0
+            
+            dVmdt = (1.0 / C_m)*(-I_total)
+            dNdt = lambda_N*(N_inf - N)
+            dHdt = (H_inf - H) / tau_h
+            
+            dxdt = tf.concat((dVmdt, dNdt, dHdt), axis=1)
+            return dxdt
+
+        # initial conditions
+        V_m0 = -65.0e-3*np.ones((5,))
+        N_0 = 0.25*np.ones((5,))
+        H_0 = 0.1*np.ones((5,))
+        x0_np = np.concatenate((V_m0, N_0, H_0), axis=0)
+
+        x0 = tf.tile(tf.expand_dims(x0_np, 0), [M, 1])
+
+        x = x0
+        xs = [x]
+        for i in range(self.T):
+            dxdt = f(x, g_el, g_synA, g_synB)
+            x = x + dxdt*self.dt
+            xs.append(x)
+
+        x_t = tf.stack(xs, axis=0)
+        return x_t
+
+    # TODO finish writing the remaining functions!!!
+    def compute_suff_stats(self, z):
+        """Compute sufficient statistics of density network samples.
+
+        Behaviors:
+
+        'standard' - 
+
+          Add a description.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Sufficient statistics of samples.
+
+        """
+
+        if self.behavior["type"] in ["hubfreq"]:
+            T_x = self.simulation_suff_stats(z)
+        else:
+            raise NotImplementedError()
+
+        return T_x
+
+    def simulation_suff_stats(self, z):
+        """Compute sufficient statistics that require simulation.
+
+        # Arguments
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
+
+        """
+        w = 5
+        N = self.T - self.fft_start + 1 - (w-1)
+        freqs = tf.constant((np.fft.fftfreq(N) / self.dt)[:N//2], dtype=DTYPE)
+        alpha = 100
+
+        avg_filter = (1.0 / w)*tf.ones((w,1,1), dtype=DTYPE)
+
+        # [T, M, D]
+        x_t = self.simulate(z)
+        print('0', x_t.shape)
+
+        if self.behavior["type"] == "hubfreq":
+            v_h = tf.transpose(x_t[self.fft_start:, :, 2]) # [M,N]
+            v_h_rect = tf.expand_dims(tf.nn.relu(v_h), 2) # [M,T,C=1]
+            v_h_rect_LPF = tf.nn.conv1d(v_h_rect, avg_filter, stride=1, padding='VALID')
+            v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
+            v_fft = tf.fft(tf.cast(v_h_rect_LPF, tf.complex128))[:,:N//2]
+
+            v_fft_pow = tf.pow(tf.abs(v_fft), alpha)
+            freq_id = v_fft_pow / tf.expand_dims(tf.reduce_sum(v_fft_pow, 1), 1)
+
+            f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id))
+            T_x = tf.stack((f_h, \
+                            tf.square(f_h)
+                            ), 2)
+        else:
+            raise NotImplementedError()
+
+        return T_x
+
+    def compute_mu(self,):
+        """Calculate expected moment constraints given system paramterization.
+
+        # Returns
+            mu (np.array): Expected moment constraints.
+
+        """
+
+        mean = self.behavior["mean"]
+        variance = self.behavior["variance"]
+        first_moment = mean
+        second_moment = mean**2 + variance
+        if self.behavior["type"] == "hubfreq":
+            mu = np.array([first_moment, second_moment])
+        else:
+            raise NotImplementedError()
+        return mu
+
+
+
 class V1Circuit(system):
     """ 4-neuron V1 circuit.
 
@@ -1105,7 +1435,7 @@ class SCCircuit(system):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
                     r"$E_{\partial W}[{V_{LP},L,DI}]$",
-                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
                     r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$"
                 ]
             else:
@@ -1413,7 +1743,7 @@ class SCCircuit(system):
 
         # initial conditions
         v0 = 0.1*tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
-        u0 = beta*tf.atanh(2*v0-1) - theta
+        u0 = beta*tf.math.atanh(2*v0-1) - theta
 
         v = v0
         u = u0
@@ -1472,16 +1802,12 @@ class SCCircuit(system):
 
         Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
 
-        E_v_LP = tf.expand_dims(tf.transpose(E_v_LP), 0) 
-        Var_v_LP = tf.expand_dims(tf.transpose(Var_v_LP), 0) 
-        Bern_Var_Err = tf.expand_dims(tf.transpose(Bern_Var_Err), 0) 
-
         if self.behavior["type"] == "inforoute":
-            T_x = tf.concat((E_v_LP, \
+            T_x = tf.stack((E_v_LP, \
                             Bern_Var_Err
                             ), 2)
         elif self.behavior["type"] == "feasible":
-            T_x = tf.concat((Var_v_LP, \
+            T_x = tf.stack((Var_v_LP, \
                             tf.square(Var_v_LP)
                             ), 2)
         else:
@@ -1508,7 +1834,6 @@ class SCCircuit(system):
         else:
             raise NotImplementedError()
         return mu
-
 
 
 class LowRankRNN(system):
@@ -2034,4 +2359,7 @@ def system_from_str(system_str):
     elif system_str in ["V1Circuit"]:
         return V1Circuit
     elif system_str in ["SCCircuit"]:
-        return SCCircuit
+        return 
+    elif system_str in ["STGircuit"]:
+        return STGCircuit
+

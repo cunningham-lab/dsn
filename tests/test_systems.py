@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import scipy
 from tf_util.stat_util import approx_equal
-from dsn.util.systems import system, Linear2D, V1Circuit, SCCircuit, LowRankRNN
+from dsn.util.systems import system, Linear2D, STGCircuit, V1Circuit, SCCircuit, LowRankRNN
 #import matplotlib.pyplot as plt
 #import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
 
@@ -40,6 +40,141 @@ class linear_2D:
             [lambda_1_real, lambda_1_imag, lambda_1_real ** 2, lambda_1_imag ** 2]
         )
         return T_x
+
+
+class stg_circuit:
+    def __init__(self, dt=0.025, T=2400, fft_start=400, w=40):
+        self.dt = dt
+        self.T = T
+        self.fft_start = fft_start
+        self.w = w
+        V_m0 = -65.0e-3*np.ones((5,))
+        N_0 = 0.25*np.ones((5,))
+        H_0 = 0.1*np.ones((5,))
+        self.init_conds = np.concatenate((V_m0, N_0, H_0), axis=0)
+
+    def simulate(self, g_el, g_synA, g_synB):
+        # define fixed parameters
+
+        #conductances
+        C_m = 1.0e-9
+
+        # volatages
+        V_leak = -40.0e-3 # 40 mV
+        V_Ca = 100.0e-3 # 100mV
+        V_k = -80.0e-3 # -80mV
+        V_h = -20.0e-3 # -20mV
+        V_syn = -75.0e-3 # -75mV
+
+        v_1 = 0.0 # 0mV
+        v_2 = 20.0e-3 # 20mV
+        v_3 = 0.0 # 0mV
+        v_4 = 15.0e-3 # 15mV
+        v_5 = 78.3e-3 # 78.3mV
+        v_6 = 10.5e-3 # 10.5mV
+        v_7 = -42.2e-3 # -42.2mV
+        v_8 = 87.3e-3 # 87.3mV
+        v_9 = 5.0e-3  # 5.0mV
+
+        v_th = -25.0e-3 # -25mV
+
+        # neuron specific conductances
+        g_Ca_f = 1.9e-2 * (1e-6) # 1.9e-2 \mu S
+        g_Ca_h = 1.7e-2 * (1e-6) # 1.7e-2 \mu S
+        g_Ca_s = 8.5e-3 * (1e-6) # 8.5e-3 \mu S
+
+        g_k_f  = 3.9e-2 * (1e-6) # 3.9e-2 \mu S
+        g_k_h  = 1.9e-2 * (1e-6) # 1.9e-2 \mu S
+        g_k_s  = 1.5e-2 * (1e-6) # 1.5e-2 \mu S
+
+        g_h_f  = 2.5e-2 * (1e-6) # 2.5e-2 \mu S
+        g_h_h  = 8.0e-3 * (1e-6) # 8.0e-3 \mu S
+        g_h_s  = 1.0e-2 * (1e-6) # 1.0e-2 \mu S
+
+        g_Ca = np.array([g_Ca_f, g_Ca_f, g_Ca_h, g_Ca_s, g_Ca_s])
+        g_k = np.array([g_k_f, g_k_f, g_k_h, g_k_s, g_k_s])
+        g_h = np.array([g_h_f, g_h_f, g_h_h, g_h_s, g_h_s])
+
+        g_leak = 1.0e-4 * (1e-6) # 1e-4 \mu S
+
+        phi_N = 2 # 0.002 ms^-1
+
+        def f(x, g_el, g_synA, g_synB):
+            # x contains
+            V_m = x[:5]
+            N = x[5:10]
+            H = x[10:]
+            
+            M_inf = 0.5*(1.0 + np.tanh((V_m - v_1)/ v_2))
+            N_inf = 0.5*(1.0 + np.tanh((V_m - v_3)/v_4))
+            H_inf = 1.0 / (1.0 + np.exp((V_m + v_5)/v_6))
+                           
+            S_inf = 1.0 / (1.0 + np.exp((v_th - V_m) / v_9))
+            
+            I_leak = g_leak*(V_m - V_leak)
+            I_Ca = g_Ca*M_inf*(V_m - V_Ca)
+            I_k = g_k*N*(V_m - V_k)
+            I_h = g_h*H*(V_m - V_h)
+                           
+            I_elec = np.array([0.0, 
+                               g_el*(V_m[1]-V_m[2]),
+                               g_el*(V_m[2]-V_m[1] + V_m[2]-V_m[4]),
+                               0.0,
+                               g_el*(V_m[4]-V_m[2])])
+                           
+            I_syn = np.array([g_synB*S_inf[1]*(V_m[0] - V_syn),
+                                g_synB*S_inf[0]*(V_m[1] - V_syn),
+                                g_synA*S_inf[0]*(V_m[2] - V_syn) + g_synA*S_inf[3]*(V_m[2] - V_syn),
+                                g_synB*S_inf[4]*(V_m[3] - V_syn),
+                                g_synB*S_inf[3]*(V_m[4] - V_syn)])
+
+            I_total = I_leak + I_Ca + I_k + I_h + I_elec + I_syn    
+            
+            lambda_N = (phi_N)*np.cosh((V_m - v_3)/(2*v_4))
+            tau_h = (272.0 - (-1499.0 / (1.0 + np.exp((-V_m + v_7) / v_8)))) / 1000.0
+            
+            dVmdt = (1.0 / C_m)*(-I_total)
+            dNdt = lambda_N*(N_inf - N)
+            dHdt = (H_inf - H) / tau_h
+            
+            dxdt = np.concatenate((dVmdt, dNdt, dHdt), axis=0)
+            return dxdt
+
+        x = self.init_conds
+        xs = [x]
+        for t in range(self.T):
+            dxdt = f(x, g_el, g_synA, g_synB)
+            x = dxdt*self.dt + x
+            xs.append(x)
+        X = np.array(xs)
+
+        return X
+
+    def T_x(self, g_el, g_synA, g_synB):
+        def moving_average(a, n=3) :
+            ret = np.cumsum(a, dtype=float)
+            ret[n:] = ret[n:] - ret[:-n]
+            return ret[n - 1:] / n
+
+        N = self.T - self.fft_start + 1 - (self.w-1)
+        freqs = (np.fft.fftfreq(N) / self.dt)[:N//2]
+
+        alpha = 100
+
+        X = self.simulate(g_el, g_synA, g_synB)
+        X_end = X[self.fft_start:,2]
+        X_rect = np.maximum(X_end, 0.0)
+        X_rect_LPF = moving_average(X_rect, self.w)
+        X_rect_LPF = X_rect_LPF - np.mean(X_rect_LPF)
+        Xfft = np.abs(np.fft.fft(X_rect_LPF))[:N//2]
+        Xfft_pow = np.power(Xfft, alpha)
+        freq_id = Xfft_pow / np.sum(Xfft_pow)
+
+        freq = np.dot(freqs, freq_id)
+        T_x = np.array([freq, np.square(freq)])
+        return T_x
+
+                
 
 
 class v1_circuit:
@@ -324,6 +459,81 @@ def test_Linear2D():
             _T_x_true[i, :] = true_sys.compute_suff_stats(tau[0, i], A[0, i])
         _T_x = sess.run(T_x, {Z: _Z})
         assert approx_equal(_T_x[0, :, :], _T_x_true, EPS)
+    return None
+
+
+def test_STGCircuit():
+    M = 10
+
+    dt = 0.025
+    T = 100
+    fft_start = 40
+    w = 10
+
+    true_sys = stg_circuit(dt, T, fft_start)
+
+    mean = 0.55
+    variance = 0.0001
+    fixed_params = {}
+    behavior = {"type":"hubfreq",
+                "mean":mean,
+                "variance":variance}
+    model_opts = {"dt":dt,
+                  "T":T,
+                  "fft_start":fft_start
+                 }
+    system = STGCircuit(fixed_params, behavior, model_opts)
+    assert system.name == "STGCircuit"
+    assert system.behavior_str == "hubfreq_mu=5.50E-01_3.03E-01"
+    assert approx_equal(system.behavior["mean"], 0.55, EPS)
+    assert system.all_params == [
+        "g_el",
+        "g_synA",
+        "g_synB",
+    ]
+    assert system.free_params == [
+        "g_el",
+        "g_synA",
+        "g_synB"
+    ]
+    assert system.z_labels == [
+        r"$g_{el}$",
+        r"$g_{synA}$",
+        r"$g_{synB}$"
+    ]
+    assert system.T_x_labels == [
+        r"$f_{h}$",
+        r"$f_{h}^2$"
+    ]
+    assert system.D == 3
+    assert system.num_suff_stats == 2
+
+    Z = tf.placeholder(dtype=DTYPE, shape=(1,M,3))
+    _Z = np.random.uniform(0.01, 8.0, (1,M,3)) * 1e-9
+    x_true = np.zeros((M,15,T+1))
+    T_x_true = np.zeros((M,2))
+    for i in range(M):
+        g_el = _Z[0,i,0]
+        g_synA = _Z[0,i,1]
+        g_synB = _Z[0,i,2]
+        x_true[i,:,:] = true_sys.simulate(g_el, g_synA, g_synB).T
+        T_x_true[i,:] = true_sys.T_x(g_el, g_synA, g_synB)
+
+    print('T_x_true')
+    print(T_x_true)
+
+    print('graph for T_x')
+    T_x = system.compute_suff_stats(Z)
+    print('setting up simulaton graph')
+    x_t = system.simulate(Z)
+    with tf.Session() as sess:
+        _x_t, _T_x = sess.run([x_t, T_x], {Z:_Z})
+
+    print('_T_x[0]')
+    print(_T_x[0])
+    assert(approx_equal(np.transpose(_x_t, [1,2,0]), x_true, EPS))
+    assert(approx_equal(_T_x[0], T_x_true, EPS))
+
     return None
 
 
@@ -1185,7 +1395,8 @@ def test_LowRankRNN():
 
 
 if __name__ == "__main__":
-    test_Linear2D()
-    test_V1Circuit()
-    test_SCCircuit()
-    test_LowRankRNN()
+    #test_Linear2D()
+    test_STGCircuit()
+    #test_V1Circuit()
+    #test_SCCircuit()
+    #test_LowRankRNN()
