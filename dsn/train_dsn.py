@@ -132,13 +132,14 @@ def train_dsn(
     T_x = system.compute_suff_stats(Z)
     mu = system.compute_mu()
     T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
+    I_x = None
 
     # If there is an inequality constraint for the behavior, calculate it.
-    # I_x is None otherwise.
-    if ("bounds" in system.behavior.keys()):
-        I_x = system.compute_I_x(Z, T_x)
-    else:
-        I_x = None
+    #$ I_x is None otherwise.
+    #if ("bounds" in system.behavior.keys()):
+    #    I_x = system.compute_I_x(Z, T_x)
+    #else:
+    #    I_x = None
 
     R2 = compute_R2(log_q_z, None, T_x)
 

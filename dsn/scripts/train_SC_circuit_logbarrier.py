@@ -48,7 +48,7 @@ behavior = {
     "feasible_variances":feasible_variances,
 }
 
-model_opts = {"params":param_str}
+model_opts = {"params":param_str, "C":2}
 system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
@@ -81,5 +81,5 @@ train_dsn(
     max_iters=5000,
     check_rate=100,
     dir_str='SCCircuit',
-    entropy=False,
+    entropy=True,
 )

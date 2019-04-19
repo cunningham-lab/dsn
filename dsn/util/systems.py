@@ -1105,7 +1105,7 @@ class SCCircuit(system):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
                     r"$E_{\partial W}[{V_{LP},L,DI}]$",
-                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
                     r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$"
                 ]
             else:
@@ -1413,7 +1413,7 @@ class SCCircuit(system):
 
         # initial conditions
         v0 = 0.1*tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
-        u0 = beta*tf.math.atanh(2*v0-1) - theta
+        u0 = beta*tf.atanh(2*v0-1) - theta
 
         v = v0
         u = u0
@@ -1472,12 +1472,16 @@ class SCCircuit(system):
 
         Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
 
+        E_v_LP = tf.expand_dims(tf.transpose(E_v_LP), 0) 
+        Var_v_LP = tf.expand_dims(tf.transpose(Var_v_LP), 0) 
+        Bern_Var_Err = tf.expand_dims(tf.transpose(Bern_Var_Err), 0) 
+
         if self.behavior["type"] == "inforoute":
-            T_x = tf.stack((E_v_LP, \
+            T_x = tf.concat((E_v_LP, \
                             Bern_Var_Err
                             ), 2)
         elif self.behavior["type"] == "feasible":
-            T_x = tf.stack((Var_v_LP, \
+            T_x = tf.concat((Var_v_LP, \
                             tf.square(Var_v_LP)
                             ), 2)
         else:
