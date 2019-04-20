@@ -119,9 +119,13 @@ def train_dsn(
         os.makedirs(savedir)
 
     # Construct density network parameters.
-    print(system.name, system.support_mapping)
+    if (system.has_support_map):
+        support_mapping = system.support_mapping
+    else:
+        support_mapping = None
+    print(system.name, support_mapping)
     Z, sum_log_det_jacobian, flow_layers = density_network(
-        W, arch_dict, system.support_mapping, initdir=initdir
+        W, arch_dict, support_mapping, initdir=initdir
     )
     log_q_z = base_log_q_z - sum_log_det_jacobian
 

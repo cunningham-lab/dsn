@@ -78,7 +78,7 @@ class system:
         self.D = len(self.z_labels)
         self.num_suff_stats = len(self.T_x_labels)
         self.behavior_str = self.get_behavior_str()
-        self.support_mapping = None
+        self.has_support_map = False
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -203,7 +203,7 @@ class Linear2D(system):
     def __init__(self, fixed_params, behavior):
         super().__init__(fixed_params, behavior)
         self.name = "Linear2D"
-        self.support_mapping = None
+        self.has_support_map = False
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -360,6 +360,7 @@ class STGCircuit(system):
         self.T = model_opts['T']
         self.fft_start = model_opts['fft_start']
         self.w = model_opts['w']
+        self.has_support_map = True
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -766,6 +767,7 @@ class V1Circuit(system):
         num_s = self.behavior["s_vals"].shape[0]
         num_r = self.behavior["r_vals"].shape[0]
         self.C = num_c * num_s * num_r
+        self.has_support_map = True
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -1356,6 +1358,7 @@ class SCCircuit(system):
         # Rates are stored as (T, C, M, 4, N).
         # C and M are broadcast dimensions.
         self.w = np.random.normal(0.0, 1.0, (self.T,1,1,4,self.N))
+        self.has_support_map = False
 
 
     def get_all_sys_params(self,):
@@ -1919,6 +1922,7 @@ class LowRankRNN(system):
         self.name = "LowRankRNN"
         self.solve_its = solve_its
         self.solve_eps = solve_eps
+        self.has_support_map = True
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
