@@ -454,7 +454,7 @@ class STGCircuit(system):
 
         return g_el, g_synA, g_synB
 
-    def simulate(self, z):
+    def simulate(self, z, db=False):
         """Simulate the V1 4-neuron circuit given parameters z.
 
         # Arguments
@@ -551,7 +551,11 @@ class STGCircuit(system):
 
             I_total = I_leak + I_Ca + I_k + I_h + I_elec + I_syn    
             
-            lambda_N = (phi_N)*tf.math.cosh((V_m - v_3)/(2*v_4))
+            # I have to use 1.11 on habanero with their cuda versions
+            if (tf.__version__ == '1.11.0'):
+                lambda_N = (phi_N)*tf.cosh((V_m - v_3)/(2*v_4))
+            else:
+                lambda_N = (phi_N)*tf.math.cosh((V_m - v_3)/(2*v_4))
             tau_h = (272.0 - (-1499.0 / (1.0 + tf.exp((-V_m + v_7) / v_8)))) / 1000.0
             
             dVmdt = (1.0 / C_m)*(-I_total)
@@ -570,13 +574,23 @@ class STGCircuit(system):
         x0 = tf.tile(tf.expand_dims(x0_np, 0), [M, 1])
 
         x = x0
-        xs = [x]
+        if (db):
+            xs = [x]
+        else:
+            v_hs = [x[:,2]]
         for i in range(self.T):
             dxdt = f(x, g_el, g_synA, g_synB)
             x = x + dxdt*self.dt
-            xs.append(x)
+            if (db):
+                xs.append(x)
+            else:
+                v_hs.append(x[:,2])
 
-        x_t = tf.stack(xs, axis=0)
+        if (db):
+            x_t = tf.stack(xs, axis=0)
+        else:
+            x_t = tf.stack(v_hs, axis=0)
+
         return x_t
 
     # TODO finish writing the remaining functions!!!
@@ -621,11 +635,11 @@ class STGCircuit(system):
 
         avg_filter = (1.0 / self.w)*tf.ones((self.w,1,1), dtype=DTYPE)
 
-        # [T, M, D]
-        x_t = self.simulate(z)
+        # [T, M]
+        x_t = self.simulate(z, db=False)
 
         if self.behavior["type"] == "hubfreq":
-            v_h = tf.transpose(x_t[self.fft_start:, :, 2]) # [M,N]
+            v_h = tf.transpose(x_t[self.fft_start:, :]) # [M,N]
             v_h_rect = tf.expand_dims(tf.nn.relu(v_h), 2) # [M,T,C=1]
             v_h_rect_LPF = tf.nn.conv1d(v_h_rect, avg_filter, stride=1, padding='VALID')
             v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
@@ -1754,7 +1768,11 @@ class SCCircuit(system):
 
         # initial conditions
         v0 = 0.1*tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
-        u0 = beta*tf.math.atanh(2*v0-1) - theta
+        # I have to use 1.11 on habanero with their cuda versions
+        if (tf.__version__ == '1.11.0'): 
+            u0 = beta*tf.atanh(2*v0-1) - theta
+        else:
+            u0 = beta*tf.math.atanh(2*v0-1) - theta
 
         v = v0
         u = u0

@@ -522,7 +522,7 @@ def test_STGCircuit():
         T_x_true[i,:] = true_sys.T_x(g_el, g_synA, g_synB)
 
     T_x = system.compute_suff_stats(Z)
-    x_t = system.simulate(Z)
+    x_t = system.simulate(Z, db=True)
     with tf.Session() as sess:
         # inputs to DSN are scaled to nS
         _x_t, _T_x = sess.run([x_t, T_x], {Z:_Z/1.0e-9})
