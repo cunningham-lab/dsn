@@ -551,8 +551,8 @@ class STGCircuit(system):
 
             I_total = I_leak + I_Ca + I_k + I_h + I_elec + I_syn    
             
-            # I have to use 1.11 on habanero with their cuda versions
-            if (tf.__version__ == '1.11.0'):
+            # I have to use 1.9 on habanero with their cuda versions
+            if (tf.__version__ == '1.9.0'):
                 lambda_N = (phi_N)*tf.cosh((V_m - v_3)/(2*v_4))
             else:
                 lambda_N = (phi_N)*tf.math.cosh((V_m - v_3)/(2*v_4))
@@ -1768,8 +1768,8 @@ class SCCircuit(system):
 
         # initial conditions
         v0 = 0.1*tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
-        # I have to use 1.11 on habanero with their cuda versions
-        if (tf.__version__ == '1.11.0'): 
+        # I have to use 1.9 on habanero with their cuda versions
+        if (tf.__version__ == '1.9.0'): 
             u0 = beta*tf.atanh(2*v0-1) - theta
         else:
             u0 = beta*tf.math.atanh(2*v0-1) - theta
