@@ -1,0 +1,80 @@
+% You should title the file with a .tex extension (hw1.tex, for example)
+\documentclass[11pt]{article}
+
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{tikz-qtree}
+\usepackage{tikz-qtree-compat}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usepackage{graphicx}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+
+\oddsidemargin0cm
+\topmargin-2cm     %I recommend adding these three lines to increase the 
+\textwidth16.5cm   %amount of usable space on the page (and save trees)
+\textheight23.5cm  
+
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
+
+\newcommand{\myname}{Sean Bittner}
+\newcommand{\myandrew}{srb2201@columbia.edu}
+\newcommand{\myhwnum}{12}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+ 
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+ %
+\pagestyle{fancyplain}
+\rhead{\fancyplain{}{\myname\\ \myandrew}}
+
+\begin{document}
+
+\medskip                        % Skip a "medium" amount of space
+                                % (latex determines what medium is)
+                                % Also try: \bigskip, \littleskip
+
+\thispagestyle{plain}
+\begin{center}                  % Center the following lines
+{\Large DSNing the stomatogastric ganglion (STG)} \\
+Sean Bittner \\
+April 20, 2019 \\
+\end{center}
+
+\section{Introduction}
+
+Here, I want to cover choices made in order to gain a differentiable measurement of the STG hub neuron frequency.
+
+1. Write out the model.
+
+2. Describe the behavior that we want to measure.
+
+2.5 We want decent resolution in frequency.  Go over nyquist-shannon.  We can either increase time-step or number of samples.  There's a maximum time-step that still results in the write membrane potential traces.  How many samples do we need for say .01Hz resolution with an fft?  Do we actually want to deviate from fft and focus on a particular band of interest?
+
+3. Show how the peak of the fft is not always at the firing frequency.
+
+4. Show that there is high frequency content when we remove sub-zero activity.
+
+5. Show that different degrees of low-pass filtering allow us to measure the firing frequency.
+
+6. How can all of this be made differentiable?
+a.) fft - fine 
+b.) Select max freq?  Use the power div sum powers then dot product trick.
+
+\section{Github}
+{\color{blue} \href{https://cunningham-lab.github.io/dsn/}{https://cunningham-lab.github.io/dsn/}} \\
+
+\bibliography{dsn}
+\bibliographystyle{unsrt}
+
+\end{document}
+
