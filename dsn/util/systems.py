@@ -421,13 +421,14 @@ class STGCircuit(system):
 
         # read free parameters from z vector
         ind = 0
+        # convert DSN emissions to nS
         for free_param in self.free_params:
             if free_param == "g_el":
-                g_el = z[0, :, ind]
+                g_el = 1e-9 * z[0, :, ind]
             elif free_param == "g_synA":
-                g_synA = z[0, :, ind]
+                g_synA = 1e-9 * z[0, :, ind]
             elif free_param == "g_synB":
-                g_synB = z[0, :, ind]
+                g_synB = 1e-9 * z[0, :, ind]
             else:
                 print("Error: unknown free parameter: %s." % free_param)
                 raise NotImplementedError()
@@ -660,6 +661,16 @@ class STGCircuit(system):
             raise NotImplementedError()
         return mu
 
+    def support_mapping(self, inputs):
+        """Maps from real numbers to support of parameters.
+
+        # Arguments:
+            inputs (np.array): Input from previous layers of the DSN.
+
+        # Returns
+            Z (np.array): Samples from the DSN at the final layer.
+        """
+        return SoftPlusFlow([], inputs)
 
 
 class V1Circuit(system):

@@ -524,7 +524,8 @@ def test_STGCircuit():
     T_x = system.compute_suff_stats(Z)
     x_t = system.simulate(Z)
     with tf.Session() as sess:
-        _x_t, _T_x = sess.run([x_t, T_x], {Z:_Z})
+        # inputs to DSN are scaled to nS
+        _x_t, _T_x = sess.run([x_t, T_x], {Z:_Z/1.0e-9})
 
     assert(approx_equal(np.transpose(_x_t, [1,2,0]), x_true, EPS))
     assert(approx_equal(_T_x[0], T_x_true, EPS, allow_special=True))
