@@ -468,9 +468,9 @@ def test_STGCircuit():
     dt = 0.025
     T = 100
     fft_start = 40
-    w = 10
+    w = 5
 
-    true_sys = stg_circuit(dt, T, fft_start)
+    true_sys = stg_circuit(dt, T, fft_start, w=w)
 
     mean = 0.55
     variance = 0.0001
@@ -480,7 +480,8 @@ def test_STGCircuit():
                 "variance":variance}
     model_opts = {"dt":dt,
                   "T":T,
-                  "fft_start":fft_start
+                  "fft_start":fft_start,
+                  "w":w
                  }
     system = STGCircuit(fixed_params, behavior, model_opts)
     assert system.name == "STGCircuit"
@@ -519,20 +520,13 @@ def test_STGCircuit():
         x_true[i,:,:] = true_sys.simulate(g_el, g_synA, g_synB).T
         T_x_true[i,:] = true_sys.T_x(g_el, g_synA, g_synB)
 
-    print('T_x_true')
-    print(T_x_true)
-
-    print('graph for T_x')
     T_x = system.compute_suff_stats(Z)
-    print('setting up simulaton graph')
     x_t = system.simulate(Z)
     with tf.Session() as sess:
         _x_t, _T_x = sess.run([x_t, T_x], {Z:_Z})
 
-    print('_T_x[0]')
-    print(_T_x[0])
     assert(approx_equal(np.transpose(_x_t, [1,2,0]), x_true, EPS))
-    assert(approx_equal(_T_x[0], T_x_true, EPS))
+    assert(approx_equal(_T_x[0], T_x_true, EPS, allow_special=True))
 
     return None
 

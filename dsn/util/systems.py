@@ -349,7 +349,7 @@ class STGCircuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"dt":0.025, "T":2400, "fft_start":400}
+        model_opts={"dt":0.025, "T":2400, "fft_start":400, "w":40}
     ):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
@@ -359,6 +359,7 @@ class STGCircuit(system):
         self.dt = model_opts['dt']
         self.T = model_opts['T']
         self.fft_start = model_opts['fft_start']
+        self.w = 40
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -612,16 +613,15 @@ class STGCircuit(system):
             T_x (tf.tensor): Simulation-derived sufficient statistics of samples.
 
         """
-        w = 5
-        N = self.T - self.fft_start + 1 - (w-1)
+
+        N = self.T - self.fft_start + 1 - (self.w-1)
         freqs = tf.constant((np.fft.fftfreq(N) / self.dt)[:N//2], dtype=DTYPE)
         alpha = 100
 
-        avg_filter = (1.0 / w)*tf.ones((w,1,1), dtype=DTYPE)
+        avg_filter = (1.0 / self.w)*tf.ones((self.w,1,1), dtype=DTYPE)
 
         # [T, M, D]
         x_t = self.simulate(z)
-        print('0', x_t.shape)
 
         if self.behavior["type"] == "hubfreq":
             v_h = tf.transpose(x_t[self.fft_start:, :, 2]) # [M,N]
@@ -1313,6 +1313,7 @@ class SCCircuit(system):
         model_opts={"params":"reduced", "C":1}
     ):
         self.model_opts = model_opts
+        self.C = self.model_opts["C"]
         super().__init__(fixed_params, behavior)
         self.name = "SCCircuit"
 
@@ -1331,7 +1332,6 @@ class SCCircuit(system):
         # C and M are broadcast dimensions.
         self.w = np.random.normal(0.0, 1.0, (self.T,1,1,4,self.N))
 
-        self.C = self.model_opts["C"]
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -1435,7 +1435,7 @@ class SCCircuit(system):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
                     r"$E_{\partial W}[{V_{LP},L,DI}]$",
-                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
                     r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$"
                 ]
             else:
