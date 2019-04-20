@@ -1391,8 +1391,8 @@ def test_LowRankRNN():
 
 
 if __name__ == "__main__":
-    #test_Linear2D()
+    test_Linear2D()
     test_STGCircuit()
-    #test_V1Circuit()
-    #test_SCCircuit()
-    #test_LowRankRNN()
+    test_V1Circuit()
+    test_SCCircuit()
+    test_LowRankRNN()
