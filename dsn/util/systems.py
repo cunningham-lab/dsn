@@ -359,7 +359,7 @@ class STGCircuit(system):
         self.dt = model_opts['dt']
         self.T = model_opts['T']
         self.fft_start = model_opts['fft_start']
-        self.w = 40
+        self.w = model_opts['w']
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.

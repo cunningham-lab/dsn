@@ -463,6 +463,7 @@ def test_Linear2D():
 
 
 def test_STGCircuit():
+    np.random.seed(0)
     M = 10
 
     dt = 0.025
