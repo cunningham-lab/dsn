@@ -18,7 +18,7 @@ random_seed = int(sys.argv[4])
 fixed_params = {'g':0.8, 'gammaLO':-0.14, 'gammaHI':0.08}
 
 behavior_type = "CDD"
-means = np.array([0.5])
+means = np.array([0.3])
 variances = np.array([0.0001])
 behavior = {"type": behavior_type, "means": means, "variances": variances}
 
@@ -26,7 +26,7 @@ behavior = {"type": behavior_type, "means": means, "variances": variances}
 model_opts = {"rank": 2, "input_type": "input"}
 
 solve_its = 200
-solve_eps = 0.5
+solve_eps = 0.2
 system = LowRankRNN(
     fixed_params, behavior, model_opts=model_opts, solve_its=solve_its, solve_eps=solve_eps
 )
@@ -43,11 +43,11 @@ arch_dict = {
     "repeats": nlayers,
 }
 
-k_max = 40
-batch_size = 100
+k_max = 20
+batch_size = 1000
 lr_order = -3
-min_iters = 2500
-max_iters = 5000
+min_iters = 1000
+max_iters = 2000
 
 
 train_dsn(
@@ -61,6 +61,6 @@ train_dsn(
     random_seed=random_seed,
     min_iters=min_iters,
     max_iters=max_iters,
-    check_rate=200,
-    dir_str="test",
+    check_rate=100,
+    dir_str="LowRankRNN",
 )
