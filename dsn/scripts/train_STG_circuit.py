@@ -17,9 +17,9 @@ random_seed = int(sys.argv[4])
 behavior_type = "hubfreq"
 
 dt = 0.025
-T = 100
+T = 290
 fft_start = 40
-w = 5
+w = 40
 
 mean = 0.55
 variance = 0.0001

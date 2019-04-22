@@ -630,8 +630,26 @@ class STGCircuit(system):
 
         """
 
-        N = self.T - self.fft_start + 1 - (self.w-1)
-        freqs = tf.constant((np.fft.fftfreq(N) / self.dt)[:N//2], dtype=DTYPE)
+        # sampling frequency
+        Fs  = 1.0 / self.dt 
+        # num samples for freq measurement
+        N = self.T - self.fft_start + 1 - (self.w-1) 
+
+        min_freq = 0.0
+        max_freq = 1.0
+        num_freqs = 101
+        freqs = np.linspace(min_freq, max_freq, num_freqs)
+
+        ns = np.arange(0,N)
+        phis = []
+        for i in range(num_freqs):
+            k = N*freqs[i] / Fs
+            phi = np.cos(2*np.pi*k*ns/N) - 1j * np.sin(2*np.pi*k*ns/N)
+            phis.append(phi)
+
+        # [T, K]
+        Phi = tf.constant(np.array(phis).T, dtype=tf.complex128)
+
         alpha = 100
 
         avg_filter = (1.0 / self.w)*tf.ones((self.w,1,1), dtype=DTYPE)
@@ -644,10 +662,10 @@ class STGCircuit(system):
             v_h_rect = tf.expand_dims(tf.nn.relu(v_h), 2) # [M,T,C=1]
             v_h_rect_LPF = tf.nn.conv1d(v_h_rect, avg_filter, stride=1, padding='VALID')
             v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
-            v_fft = tf.fft(tf.cast(v_h_rect_LPF, tf.complex128))[:,:N//2]
+            V_h = tf.matmul(tf.cast(v_h_rect_LPF, tf.complex128), Phi)
 
-            v_fft_pow = tf.pow(tf.abs(v_fft), alpha)
-            freq_id = v_fft_pow / tf.expand_dims(tf.reduce_sum(v_fft_pow, 1), 1)
+            V_h_pow = tf.pow(tf.abs(V_h), alpha)
+            freq_id = V_h_pow / tf.expand_dims(tf.reduce_sum(V_h_pow, 1), 1)
 
             f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id))
             T_x = tf.stack((f_h, \

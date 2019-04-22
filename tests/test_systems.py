@@ -156,19 +156,36 @@ class stg_circuit:
             ret[n:] = ret[n:] - ret[:-n]
             return ret[n - 1:] / n
 
-        N = self.T - self.fft_start + 1 - (self.w-1)
-        freqs = (np.fft.fftfreq(N) / self.dt)[:N//2]
+        # sampling frequency
+        Fs  = 1.0 / self.dt 
+        # num samples for freq measurement
+        N = self.T - self.fft_start + 1 - (self.w-1) 
+        
+        min_freq = 0.0
+        max_freq = 1.0
+        num_freqs = 101
+        freqs = np.linspace(min_freq, max_freq, num_freqs)
+
+        ns = np.arange(0,N)
+        phis = []
+        for i in range(num_freqs):
+            k = N*freqs[i] / Fs
+            phi = np.cos(2*np.pi*k*ns/N) - 1j * np.sin(2*np.pi*k*ns/N)
+            phis.append(phi)
+
+        Phi = np.array(phis)
 
         alpha = 100
 
         X = self.simulate(g_el, g_synA, g_synB)
-        X_end = X[self.fft_start:,2]
-        X_rect = np.maximum(X_end, 0.0)
-        X_rect_LPF = moving_average(X_rect, self.w)
-        X_rect_LPF = X_rect_LPF - np.mean(X_rect_LPF)
-        Xfft = np.abs(np.fft.fft(X_rect_LPF))[:N//2]
-        Xfft_pow = np.power(Xfft, alpha)
-        freq_id = Xfft_pow / np.sum(Xfft_pow)
+        v_h = X[self.fft_start:,2]
+        v_h_rect = np.maximum(v_h, 0.0)
+        v_h_rect_LPF = moving_average(v_h_rect, self.w)
+        v_h_rect_LPF = v_h_rect_LPF - np.mean(v_h_rect_LPF)
+        
+        V_h = np.abs(np.dot(Phi, v_h_rect_LPF))
+        V_h_pow = np.power(V_h, alpha)
+        freq_id = V_h_pow / np.sum(V_h_pow)
 
         freq = np.dot(freqs, freq_id)
         T_x = np.array([freq, np.square(freq)])
