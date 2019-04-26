@@ -49,7 +49,12 @@ by making a deep generative approximation $$q_\theta(z)$$ to $$p(z \mid \mathcal
 
 ![degenerate solution network](images/DSN.png)
 
-Given a generative model $$p(x \mid z)$$ and some behavior of interest $$\mathcal{B}$$, DSNs are trained by optimizing the deep generative parameters $$\theta$$ to find the optimal approximation $$q_{\theta}^*$$ within the deep generative variational family $$Q$$ to $$p(z \mid \mathcal{B})$$. This procedure is loosely equivalent to variational inference (VI) using a deep generative variational family with respect to the likelihood of the mean sufficient statistics rather than the data itself ([Loaiza-Ganem et al. 2017](#Loaiza-Ganem2017maximum), [Bittner & Cunningham 2018](#Bittner2018learning))  In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $$p(T(x) \mid z)$$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes ([Kingma & Welling 2013](#Kingma2013autoencoding)) or black box variational inference ([Ranganath et al. 2014](#Ranganeth2014black)). Instead, DSNs are optimized with the following objective for a given generative model and statistical constraints on its produced activity:
+Given a generative model $$p(x \mid z)$$ and some behavior of interest $$\mathcal{B}$$, DSNs are trained by optimizing
+the deep generative parameters $$\theta$$ to find the optimal approximation $$q_{\theta}^*$$ within the deep generative
+variational family $$Q$$ to $$p(z \mid \mathcal{B})$$. This procedure is loosely equivalent to variational inference
+(VI) using a deep generative variational family with respect to the likelihood of the mean sufficient statistics rather
+than the data itself ([Loaiza-Ganem et al. 2017](#Loaiza-Ganem2017maximum), [Bittner & Cunningham
+2018](#Bittner2018approximating))  In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $$p(T(x) \mid z)$$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes ([Kingma & Welling 2013](#Kingma2013autoencoding)) or black box variational inference ([Ranganath et al. 2014](#Ranganeth2014black)). Instead, DSNs are optimized with the following objective for a given generative model and statistical constraints on its produced activity:
 
 \begin{equation}
 q_\theta^*(z) = \mathop{\arg\,\max}\limits_{q_\theta \in Q} H(q_\theta(z))
@@ -207,7 +212,8 @@ Sean Bittner \\
 January 6, 2019
 
 # References #
-Sean Bittner and John Cunningham. *[Learning exponential families](https://github.com/cunningham-lab/efn/blob/master/written/EFN_AISTATS2019/Bittner_AIStats_2019.pdf){:target="_blank"}.* (In prep.), ?(?):?-?, 2019. <a name="Bittner2018learning"></a>
+Bittner, Sean R., and John P. Cunningham. *[Approximating exponential family models (not single distributions) with a
+two-network architecture."](https://arxiv.org/abs/1903.07515){:target="_blank"}*. <a name="Bittner2018approximating"></a> arXiv preprint arXiv:1903.07515 (2019).
 
 <a name="Kingma2013autoencoding"></a> Diederik P Kingma and Max Welling. *[Auto-encoding variational bayes](https://arxiv.org/abs/1312.6114){:target="_blank"}.* arXiv preprint arXiv:1312.6114, 2013. 
 
