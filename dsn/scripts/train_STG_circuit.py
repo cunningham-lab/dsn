@@ -17,9 +17,13 @@ random_seed = int(sys.argv[4])
 behavior_type = "hubfreq"
 
 dt = 0.025
-T = 290
-fft_start = 40
-w = 40
+#T = 120
+#fft_start = 40
+#w = 40
+
+T = 100
+fft_start = 2
+w = 2
 
 mean = 0.55
 variance = 0.0001
@@ -64,5 +68,5 @@ train_dsn(
     min_iters=100,
     max_iters=200,
     check_rate=1,
-    dir_str="test_STG",
+    dir_str="STGCircuit",
 )

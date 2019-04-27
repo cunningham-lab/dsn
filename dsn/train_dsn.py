@@ -106,8 +106,6 @@ def train_dsn(
 
     # Load nf initialization
     W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
-    p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
-    base_log_q_z = tf.log(p0)
 
     # Create model save directory if doesn't exist.
     if (savedir is None):
@@ -123,38 +121,44 @@ def train_dsn(
         support_mapping = system.support_mapping
     else:
         support_mapping = None
-    print(system.name, support_mapping)
+
     Z, sum_log_det_jacobian, flow_layers = density_network(
         W, arch_dict, support_mapping, initdir=initdir
     )
-    log_q_z = base_log_q_z - sum_log_det_jacobian
+
+    with tf.name_scope("Entropy"):
+        p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
+        base_log_q_z = tf.log(p0)
+        log_q_z = base_log_q_z - sum_log_det_jacobian
+        H = -tf.reduce_mean(log_q_z)
+        tf.summary.scalar("H", H)
 
     all_params = tf.trainable_variables()
     nparams = len(all_params)
 
-    # Compute system-specific sufficient statistics and log base measure on samples.
-    T_x = system.compute_suff_stats(Z)
-    mu = system.compute_mu()
-    T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
-    I_x = None
+    with tf.name_scope("system"):
+        # Compute system-specific sufficient statistics and log base measure on samples.
+        T_x = system.compute_suff_stats(Z)
+        mu = system.compute_mu()
+        T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
+        I_x = None
 
-    # If there is an inequality constraint for the behavior, calculate it.
-    #$ I_x is None otherwise.
-    #if ("bounds" in system.behavior.keys()):
-    #    I_x = system.compute_I_x(Z, T_x)
-    #else:
-    #    I_x = None
-
-    R2 = compute_R2(log_q_z, None, T_x)
+    #with tf.name_scope("r2"):
+    #    R2 = compute_R2(log_q_z, None, T_x)
 
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
-    Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
-    c = tf.placeholder(dtype=tf.float64, shape=())
+    with tf.name_scope("AugLagCoeffs"):
+        Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
+        c = tf.placeholder(dtype=tf.float64, shape=())
 
     # Augmented Lagrangian cost function.
     print("Setting up augmented lagrangian gradient graph.")
-    cost, cost_grads, H = AL_cost(log_q_z, T_x_mu_centered, Lambda, c, \
-                                  all_params, entropy=entropy, I_x=I_x)
+    with tf.name_scope("AugLagCost"):
+        cost, cost_grads, R_x = AL_cost(H, T_x_mu_centered, Lambda, c, \
+                                      all_params, entropy=entropy, I_x=I_x)
+        tf.summary.scalar("cost", cost)
+        for i in range(system.num_suff_stats):
+            tf.summary.scalar('R_%d' % (i+1), R_x[i])
 
     # Compute gradient of density network params (theta) wrt cost.
     grads_and_vars = []
@@ -166,14 +170,16 @@ def train_dsn(
     tf.add_to_collection("Z", Z)
     saver = tf.train.Saver()
 
-    # Tensorboard logging.
+    # Tensorboard logging
     summary_writer = tf.summary.FileWriter(savedir)
-    tf.summary.scalar("H", -tf.reduce_mean(log_q_z))
-    tf.summary.scalar("cost", cost)
     if tb_save_params:
         setup_param_logging(all_params)
 
     summary_op = tf.summary.merge_all()
+
+    config = tf.ConfigProto(log_device_placement=True)
+    # Allow the full trace to be stored at run time.
+    run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
     # Cyclically record gradients in a 2*COST_GRAD_LAG logger
     COST_GRAD_LOG_LEN = 2*COST_GRAD_LAG
@@ -206,10 +212,11 @@ def train_dsn(
     _c = c_init
     _lambda = np.zeros((system.num_suff_stats,))
     check_it = 0
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
         print("training DSN for %s" % system.name)
         init_op = tf.global_variables_initializer()
         sess.run(init_op)
+        summary_writer.add_graph(sess.graph)
 
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((K, nsamps, system.D)), 1.0)
@@ -231,6 +238,9 @@ def train_dsn(
         log_q_zs[0, :] = _log_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
 
+        optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr)
+        train_step = optimizer.apply_gradients(grads_and_vars)
+
         total_its = 1
         for k in range(k_max):
             print("AL iteration %d" % (k + 1))
@@ -239,8 +249,6 @@ def train_dsn(
 
             # Reset the optimizer so momentum from previous epoch of AL optimization
             # does not effect optimization in the next epoch.
-            optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr)
-            train_step = optimizer.apply_gradients(grads_and_vars)
             initialize_adam_parameters(sess, optimizer, all_params)
 
             for j in range(num_norms):
@@ -251,6 +259,7 @@ def train_dsn(
                 norms[j] = np.linalg.norm(_R)
 
             i = 0
+            wrote_graph = False
             has_converged = False
             convergence_it = 0
             while i < max_iters:
@@ -259,19 +268,35 @@ def train_dsn(
                 w_i = np.random.normal(np.zeros((K, n, system.D)), 1.0)
                 feed_dict = {W: w_i, Lambda: _lambda, c: _c}
 
+
                 if np.mod(cur_ind, check_rate) == 0:
                     start_time = time.time()
-                ts, cost_i, _cost_grads, summary, _T_x, _H, _Z = sess.run(
-                    [train_step, cost, cost_grads, summary_op, T_x, H, Z], feed_dict
-                )
+
+                if np.mod(cur_ind, TB_SAVE_EVERY) == 0:
+                    # Create a fresh metadata object:
+                    run_metadata = tf.RunMetadata()
+                    ts, cost_i, _cost_grads, summary = sess.run([train_step, cost, cost_grads, summary_op], 
+                                       feed_dict,
+                                       options=run_options,
+                                       run_metadata=run_metadata)
+                    summary_writer.add_summary(summary, cur_ind)
+                    if (not wrote_graph and i>20): # In case a GPU needs to warm up for optims
+                        assert(min_iters >= 20 and TB_SAVE_EVERY >= 20)
+                        print("writing graph stuff for AL iteration %d" % (k+1))
+                        summary_writer.add_run_metadata(run_metadata, 
+                                                        "train_step_{}".format(cur_ind),
+                                                        cur_ind)
+                        wrote_graph = True
+                else:
+                    ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
+
                 if np.mod(cur_ind, check_rate) == 0:
                     end_time = time.time()
                     print("iteration took %.4f seconds." % (end_time - start_time))
 
                 log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
-                if np.mod(cur_ind, TB_SAVE_EVERY) == 0:
-                    summary_writer.add_summary(summary, cur_ind)
+
 
                 if np.mod(i, MODEL_SAVE_EVERY) == 0:
                     print("saving model at iter", i)
