@@ -280,8 +280,9 @@ def train_dsn(
                                        options=run_options,
                                        run_metadata=run_metadata)
                     summary_writer.add_summary(summary, cur_ind)
-                    if (not wrote_graph and i>100): # In case a GPU needs to warm up for optims
-                        assert(min_iters >= 200 and TB_SAVE_EVERY >= 50)
+                    if (not wrote_graph and i>20): # In case a GPU needs to warm up for optims
+                        assert(min_iters >= 20 and TB_SAVE_EVERY >= 20)
+                        print("writing graph stuff for AL iteration %d" % (k+1))
                         summary_writer.add_run_metadata(run_metadata, 
                                                         "train_step_{}".format(cur_ind),
                                                         cur_ind)
