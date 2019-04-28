@@ -21,9 +21,9 @@ dt = 0.025
 #fft_start = 40
 #w = 40
 
-T = 100
-fft_start = 2
-w = 2
+T = 280
+fft_start = 40
+w = 40
 
 mean = 0.55
 variance = 0.0001
