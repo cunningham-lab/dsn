@@ -519,6 +519,8 @@ class STGCircuit(system):
         # obtain weights and inputs from parameterization
         g_el, g_synA, g_synB = self.filter_Z(z)
 
+        _zeros = tf.zeros((M,), dtype=DTYPE)
+                           
         def f(x, g_el, g_synA, g_synB):
             # x contains
             V_m = x[:,:5]
@@ -535,11 +537,11 @@ class STGCircuit(system):
             I_Ca = g_Ca*M_inf*(V_m - V_Ca)
             I_k = g_k*N*(V_m - V_k)
             I_h = g_h*H*(V_m - V_h)
-                           
-            I_elec = tf.stack([tf.zeros((M,), dtype=DTYPE), 
+
+            I_elec = tf.stack([_zeros, 
                                g_el*(V_m[:,1]-V_m[:,2]),
                                g_el*(V_m[:,2]-V_m[:,1] + V_m[:,2]-V_m[:,4]),
-                               tf.zeros((M,), dtype=DTYPE),
+                               _zeros,
                                g_el*(V_m[:,4]-V_m[:,2])], 
                                axis=1)
                            
@@ -570,7 +572,7 @@ class STGCircuit(system):
         V_m0 = -65.0e-3*np.ones((5,))
         N_0 = 0.25*np.ones((5,))
         H_0 = 0.1*np.ones((5,))
-        x0_np = np.concatenate((V_m0, N_0, H_0), axis=0)
+        x0_np = tf.constant(np.concatenate((V_m0, N_0, H_0), axis=0))
 
         x0 = tf.tile(tf.expand_dims(x0_np, 0), [M, 1])
 
@@ -594,7 +596,6 @@ class STGCircuit(system):
 
         return x_t
 
-    # TODO finish writing the remaining functions!!!
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
 
