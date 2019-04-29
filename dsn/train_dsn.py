@@ -177,7 +177,7 @@ def train_dsn(
 
     summary_op = tf.summary.merge_all()
 
-    config = tf.ConfigProto(log_device_placement=True)
+    config = tf.ConfigProto()
     # Allow the full trace to be stored at run time.
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
