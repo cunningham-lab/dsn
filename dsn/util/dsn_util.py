@@ -689,11 +689,20 @@ def rvs(dim):
         return K
 
 
-def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir):
-    fam_class = family_from_str("normal")
-    family = fam_class(D)
+def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu=None, bounds=None):
+    if (bounds is not None):
+        # make this more flexible for single bounds
+        fam_class = family_from_str("truncated_normal")
+        family = fam_class(D, a=bounds[0], b=bounds[1])
+    else:
+        fam_class = family_from_str("normal")
+        family = fam_class(D)
+
+    if (mu is None):
+        mu = np.zeros((D,))
+
     params = {
-        "mu": np.zeros((D,)),
+        "mu": mu,
         "Sigma": np.square(sigma_init) * np.eye(D),
         "dist_seed": 0,
     }

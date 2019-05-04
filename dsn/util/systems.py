@@ -16,8 +16,7 @@
 import tensorflow as tf
 import numpy as np
 from tf_util.tf_util import count_layer_params, min_barrier, max_barrier
-from tf_util.normalizing_flows import SoftPlusFlow
-from tf_util.flows import SoftPlusLayer, IntervalFlowLayer
+from tf_util.normalizing_flows import SoftPlusFlow, IntervalFlow
 import scipy.stats
 from scipy.special import gammaln, psi
 import scipy.io as sio
@@ -58,6 +57,7 @@ class system:
         all_param_labels (list): List of tex strings for all parameters.
         z_labels (list): List of tex strings for free parameters.
         T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+        has_support_map (bool): True if there is a support transformation.
     """
 
     def __init__(self, fixed_params, behavior):
@@ -79,6 +79,8 @@ class system:
         self.num_suff_stats = len(self.T_x_labels)
         self.behavior_str = self.get_behavior_str()
         self.has_support_map = False
+        self.density_network_init_mu = np.zeros((self.D,))
+        self.density_network_bounds = None
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -349,7 +351,7 @@ class STGCircuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"dt":0.025, "T":2400, "fft_start":400, "w":40}
+        model_opts={"dt":0.025, "T":280, "fft_start":40, "w":40}
     ):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
@@ -361,6 +363,8 @@ class STGCircuit(system):
         self.fft_start = model_opts['fft_start']
         self.w = model_opts['w']
         self.has_support_map = True
+        self.density_network_init_mu = np.array([4.0, 4.0])
+        self.density_network_bounds = [0.0, 20.0]
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -704,7 +708,8 @@ class STGCircuit(system):
         # Returns
             Z (np.array): Samples from the DSN at the final layer.
         """
-        return SoftPlusFlow([], inputs)
+        a, b = self.density_network_bounds
+        return IntervalFlow([], inputs, np.array([a]), np.array([b]))
 
 
 class V1Circuit(system):

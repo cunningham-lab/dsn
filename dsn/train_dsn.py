@@ -443,7 +443,8 @@ def train_dsn(
         return costs, _Z
 
 
-def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
+def initialize_nf(system, arch_dict, sigma_init, random_seed, 
+                  min_iters=50000):
     # Inequality case: Start in the feasible set of the bounds.
     if ("bounds" in system.behavior.keys()):
         # Check for feasible set initialization first
@@ -454,7 +455,12 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
                                  "is_feasible":system.behavior["is_feasible"]
                             }
         system.behavior = feasible_behavior
-        initdir = get_initdir(system, arch_dict, sigma_init, random_seed)
+
+        initdir = get_initdir(system, 
+                              arch_dict, 
+                              system.density_network_init_mu,
+                              sigma_init, 
+                              random_seed)
         
         print(initdir)
         initialized = check_init(initdir)
@@ -484,10 +490,19 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed, min_iters=50000):
 
         system.behavior = behavior
     else:
-        initdir = get_initdir(system, arch_dict, sigma_init, random_seed)
+        initdir = get_initdir(system, 
+                              arch_dict, 
+                              sigma_init, 
+                              random_seed)
         initialized = check_init(initdir)
         if (not initialized):
-            initialize_gauss_nf(system.D, arch_dict, sigma_init, random_seed, initdir)
+            initialize_gauss_nf(system.D, 
+                                arch_dict, 
+                                sigma_init,
+                                random_seed, 
+                                initdir,
+                                mu=system.density_network_init_mu,
+                                bounds=system.density_network_bounds)
     return initdir
 
 

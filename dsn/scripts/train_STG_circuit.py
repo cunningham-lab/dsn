@@ -17,10 +17,6 @@ random_seed = int(sys.argv[4])
 behavior_type = "hubfreq"
 
 dt = 0.025
-#T = 120
-#fft_start = 40
-#w = 40
-
 T = 280
 fft_start = 40
 w = 40
