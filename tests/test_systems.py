@@ -3,7 +3,7 @@ import numpy as np
 import scipy
 from tf_util.stat_util import approx_equal
 from dsn.util.systems import system, Linear2D, STGCircuit, V1Circuit, SCCircuit, LowRankRNN
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 #import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
 
 DTYPE = tf.float64
@@ -179,6 +179,7 @@ class stg_circuit:
 
         X = self.simulate(g_el, g_synA, g_synB)
         v_h = X[self.fft_start:,2]
+
         v_h_rect = np.maximum(v_h, 0.0)
         v_h_rect_LPF = moving_average(v_h_rect, self.w)
         v_h_rect_LPF = v_h_rect_LPF - np.mean(v_h_rect_LPF)
@@ -481,12 +482,12 @@ def test_Linear2D():
 
 def test_STGCircuit():
     np.random.seed(0)
-    M = 10
+    M = 100
 
     dt = 0.025
-    T = 100
+    T = 280
     fft_start = 40
-    w = 5
+    w = 40
 
     true_sys = stg_circuit(dt, T, fft_start, w=w)
 
@@ -528,7 +529,9 @@ def test_STGCircuit():
     assert system.num_suff_stats == 2
 
     Z = tf.placeholder(dtype=DTYPE, shape=(1,M,3))
-    _Z = np.random.uniform(0.01, 8.0, (1,M,3)) * 1e-9
+    _Z = np.random.uniform(0.01, 20.0, (1,M,2)) * 1e-9
+    synB = 5e-9
+    _Z = np.concatenate((_Z, synB*np.ones((1,M, 1))), axis=2)
     x_true = np.zeros((M,15,T+1))
     T_x_true = np.zeros((M,2))
     for i in range(M):
