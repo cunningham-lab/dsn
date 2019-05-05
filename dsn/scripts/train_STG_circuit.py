@@ -17,9 +17,9 @@ random_seed = int(sys.argv[4])
 behavior_type = "hubfreq"
 
 dt = 0.025
-T = 280
-fft_start = 40
-w = 40
+T = 210
+fft_start = 10
+w = 20
 
 mean = 0.55
 variance = 0.0001
@@ -46,9 +46,9 @@ arch_dict = {'D':system.D, \
              'repeats':nlayers};
 
 
-k_max = 10
+k_max = 20
 
-batch_size = 10
+batch_size = 1000
 lr_order = -3
 
 
@@ -61,8 +61,8 @@ train_dsn(
     c_init_order=c_init_order,
     lr_order=lr_order,
     random_seed=random_seed,
-    min_iters=100,
-    max_iters=200,
-    check_rate=1,
+    min_iters=1000,
+    max_iters=2000,
+    check_rate=100,
     dir_str="STGCircuit",
 )

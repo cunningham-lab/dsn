@@ -573,10 +573,13 @@ class STGCircuit(system):
             return dxdt
 
         # initial conditions
-        V_m0 = -65.0e-3*np.ones((5,))
+        """V_m0 = -65.0e-3*np.ones((5,))
         N_0 = 0.25*np.ones((5,))
         H_0 = 0.1*np.ones((5,))
-        x0_np = tf.constant(np.concatenate((V_m0, N_0, H_0), axis=0))
+        x0_np = tf.constant(np.concatenate((V_m0, N_0, H_0), axis=0))"""
+	x0_np = np.array([-0.03140991, -0.03494656, -0.00886472, -0.06851396,  0.00570002,
+                          0.00375753, 0.11949047, 0.57696811, 0.02869717, 0.5140996,
+                          0.07868617, 0.04647705, 0.0502322, 0.09902459, 0.0524811])
 
         x0 = tf.tile(tf.expand_dims(x0_np, 0), [M, 1])
 
