@@ -48,10 +48,13 @@ class stg_circuit:
         self.T = T
         self.fft_start = fft_start
         self.w = w
-        V_m0 = -65.0e-3*np.ones((5,))
+        """V_m0 = -65.0e-3*np.ones((5,))
         N_0 = 0.25*np.ones((5,))
         H_0 = 0.1*np.ones((5,))
-        self.init_conds = np.concatenate((V_m0, N_0, H_0), axis=0)
+        self.init_conds = np.concatenate((V_m0, N_0, H_0), axis=0)"""
+        self.init_conds = np.array([-0.03140991, -0.03494656, -0.00886472, -0.06851396,  0.00570002,
+                                     0.00375753, 0.11949047, 0.57696811, 0.02869717, 0.5140996,
+                                     0.07868617, 0.04647705, 0.0502322, 0.09902459, 0.0524811])
 
     def simulate(self, g_el, g_synA, g_synB):
         # define fixed parameters
@@ -482,12 +485,12 @@ def test_Linear2D():
 
 def test_STGCircuit():
     np.random.seed(0)
-    M = 100
+    M = 400 
 
     dt = 0.025
-    T = 280
-    fft_start = 40
-    w = 40
+    T = 210
+    fft_start = 10
+    w = 20
 
     true_sys = stg_circuit(dt, T, fft_start, w=w)
 
@@ -529,17 +532,24 @@ def test_STGCircuit():
     assert system.num_suff_stats == 2
 
     Z = tf.placeholder(dtype=DTYPE, shape=(1,M,3))
-    _Z = np.random.uniform(0.01, 20.0, (1,M,2)) * 1e-9
+    _Z = np.random.uniform(0.0, 20.0, (1,M,2)) * 1e-9
     synB = 5e-9
     _Z = np.concatenate((_Z, synB*np.ones((1,M, 1))), axis=2)
     x_true = np.zeros((M,15,T+1))
     T_x_true = np.zeros((M,2))
     for i in range(M):
+        if (np.mod(i, 200) == 0):
+          print('it', i)
         g_el = _Z[0,i,0]
         g_synA = _Z[0,i,1]
         g_synB = _Z[0,i,2]
         x_true[i,:,:] = true_sys.simulate(g_el, g_synA, g_synB).T
         T_x_true[i,:] = true_sys.T_x(g_el, g_synA, g_synB)
+
+    print('T_x')
+    print(T_x_true[:,0])
+    print('nan', np.sum(np.isnan(T_x_true)))
+    print('inf', np.sum(np.isinf(T_x_true)))
 
     T_x = system.compute_suff_stats(Z)
     x_t = system.simulate(Z, db=True)
@@ -547,6 +557,11 @@ def test_STGCircuit():
         # inputs to DSN are scaled to nS
         _x_t, _T_x = sess.run([x_t, T_x], {Z:_Z/1.0e-9})
 
+    print('T_x')
+    print(_T_x)
+    print('nan', np.sum(np.isnan(_T_x)))
+    print('inf', np.sum(np.isinf(_T_x)))
+    
     assert(approx_equal(np.transpose(_x_t, [1,2,0]), x_true, EPS))
     assert(approx_equal(_T_x[0], T_x_true, EPS, allow_special=True))
 
