@@ -290,6 +290,16 @@ def train_dsn(
                 else:
                     ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
 
+                if (np.isnan(cost_i)):
+                    print(cur_ind, 'cost is nan!', cost_i)
+                else:
+                    print(cur_ind, 'cost', cost_i)
+
+                print('grads')
+                for gradind in range(len(_cost_grads)):
+                    print(_cost_grads[gradind])
+                    
+
                 if np.mod(cur_ind, check_rate) == 0:
                     end_time = time.time()
                     print("iteration took %.4f seconds." % (end_time - start_time))
