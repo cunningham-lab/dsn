@@ -61,7 +61,8 @@ def train_dsn(
     check_rate=100,
     dir_str="general",
     savedir=None,
-    entropy=True
+    entropy=True,
+    db=False,
 ):
     """Trains a degenerate solution network (DSN).
 
@@ -143,9 +144,6 @@ def train_dsn(
         T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
         I_x = None
 
-    #with tf.name_scope("r2"):
-    #    R2 = compute_R2(log_q_z, None, T_x)
-
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     with tf.name_scope("AugLagCoeffs"):
         Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
@@ -181,13 +179,18 @@ def train_dsn(
     # Allow the full trace to be stored at run time.
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
-    # Cyclically record gradients in a 2*COST_GRAD_LAG logger
-    COST_GRAD_LOG_LEN = 2*COST_GRAD_LAG
-    nparam_vals = count_params(all_params)
-    cost_grad_vals = np.zeros((2*COST_GRAD_LOG_LEN, nparam_vals))
-
-    # Keep track of cost, entropy, and constraint violation throughout training.
     num_diagnostic_checks = k_max * (max_iters // check_rate) + 1
+    nparam_vals = count_params(all_params)
+    if (db):
+        COST_GRAD_LOG_LEN = num_diagnostic_checks
+        param_vals = np.zeros((COST_GRAD_LOG_LEN, nparam_vals))
+    else:
+        COST_GRAD_LOG_LEN = 2*COST_GRAD_LAG
+        param_vals = None
+
+    # Cyclically record gradients in a 2*COST_GRAD_LAG logger
+    cost_grad_vals = np.zeros((COST_GRAD_LOG_LEN, nparam_vals))
+    # Keep track of cost, entropy, and constraint violation throughout training.
     costs = np.zeros((num_diagnostic_checks,))
     Hs = np.zeros((num_diagnostic_checks,))
     R2s = np.zeros((num_diagnostic_checks,))
@@ -227,10 +230,12 @@ def train_dsn(
 
         summary_writer.add_summary(summary, 0)
         log_grads(_cost_grads, cost_grad_vals, 0)
+        if (db):
+            _params = sess.run(all_params)
+            log_grads(_params, param_vals, 0)
 
         mean_T_xs[0, :] = np.mean(_T_x[0], 0)
         Hs[0] = _H
-        # R2s[0] = _R2;
         costs[0] = cost_i
         check_it += 1
 
@@ -306,6 +311,9 @@ def train_dsn(
 
                 log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
+                if (db):
+                    _params = sess.run(all_params)
+                    log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
 
 
                 if np.mod(i, MODEL_SAVE_EVERY) == 0:
@@ -319,12 +327,12 @@ def train_dsn(
                     print(42 * "*")
                     print("it = %d " % (cur_ind + 1))
                     print("H", _H)
-                    # print('R2', _R2);
                     print("cost", cost_i)
                     sys.stdout.flush()
-
+                    
+                    print('Hs shape', Hs.shape)
+                    print(check_it)
                     Hs[check_it] = _H
-                    # R2s[check_it] = _R2;
                     costs[check_it] = cost_i
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0)
 
@@ -343,6 +351,8 @@ def train_dsn(
                     np.savez(
                         savedir + "opt_info.npz",
                         costs=costs,
+                        cost_grad_vals=cost_grad_vals,
+                        param_vals=param_vals,
                         Hs=Hs,
                         R2s=R2s,
                         mean_T_xs=mean_T_xs,
@@ -430,6 +440,8 @@ def train_dsn(
     np.savez(
         savedir + "opt_info.npz",
         costs=costs,
+        cost_grad_vals=cost_grad_vals,
+        param_vals=param_vals,
         Hs=Hs,
         R2s=R2s,
         mean_T_xs=mean_T_xs,
