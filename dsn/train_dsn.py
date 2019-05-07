@@ -78,6 +78,8 @@ def train_dsn(
             random_seed (int): Tensorflow random seed for initialization.
 
         """
+    print('train_dsn start')
+    print(system.behavior)
     # Learn a single (K=1) distribution with a DSN.
     K = 1
 
@@ -99,6 +101,7 @@ def train_dsn(
 
     # Look for model initialization.  If not found, optimize the init.
     initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
+    print('done initializing', initdir)
 
     # Reset tf graph, and set random seeds.
     tf.reset_default_graph()
@@ -141,6 +144,8 @@ def train_dsn(
         # Compute system-specific sufficient statistics and log base measure on samples.
         T_x = system.compute_suff_stats(Z)
         mu = system.compute_mu()
+        print('T_x', T_x)
+        print('mu', mu)
         T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
         I_x = None
 
@@ -149,6 +154,14 @@ def train_dsn(
         Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
         c = tf.placeholder(dtype=tf.float64, shape=())
 
+    print('system.num_suff_stats')
+    print(system.num_suff_stats)
+    print('Lambda')
+    print(Lambda)
+    print('T_x')
+    print(T_x.shape)
+    print('I_x')
+    print(I_x)
     # Augmented Lagrangian cost function.
     print("Setting up augmented lagrangian gradient graph.")
     with tf.name_scope("AugLagCost"):
@@ -356,14 +369,14 @@ def train_dsn(
                     ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
                 costs[check_it] = cost_i
 
-                if (np.isnan(cost_i)):
-                    print(cur_ind, 'cost is nan!', cost_i)
-                else:
-                    print(cur_ind, 'cost', cost_i)
+                #if (np.isnan(cost_i)):
+                #    print(cur_ind, 'cost is nan!', cost_i)
+                #else:
+                #    print(cur_ind, 'cost', cost_i)
 
-                print('grads')
-                for gradind in range(len(_cost_grads)):
-                    print(_cost_grads[gradind])
+                #print('grads')
+                #for gradind in range(len(_cost_grads)):
+                #    print(_cost_grads[gradind])
                     
 
                 if np.mod(cur_ind, check_rate) == 0:
@@ -476,30 +489,38 @@ def train_dsn(
 
 def initialize_nf(system, arch_dict, sigma_init, random_seed, 
                   min_iters=50000):
+
+    print('init nf start', system.behavior["type"])
     # Inequality case: Start in the feasible set of the bounds.
     if ("bounds" in system.behavior.keys()):
         # Check for feasible set initialization first
         behavior = system.behavior
         feasible_behavior = {"type":"feasible", \
-                                 "means":system.behavior["feasible_means"], \
-                                 "variances":system.behavior["feasible_variances"], \
-                                 "is_feasible":system.behavior["is_feasible"]
+                             "means":system.behavior["feasible_means"], \
+                             "variances":system.behavior["feasible_variances"], \
+                             "is_feasible":system.behavior["is_feasible"]
                             }
         system.behavior = feasible_behavior
+        system.mu = system.compute_mu()
+        system.T_x_labels = system.get_T_x_labels()
+        system.num_suff_stats = len(system.T_x_labels)
+        system.behavior_str = system.get_behavior_str()
 
         initdir = get_initdir(system, 
                               arch_dict, 
-                              system.density_network_init_mu,
                               sigma_init, 
-                              random_seed)
+                              random_seed,
+                              init_type="feas")
         
-        print(initdir)
         initialized = check_init(initdir)
         if (not initialized):
+            n = 1000
+            k_max = 20
             min_iters = 2500
             max_iters = 5000
-            k_max = 20
+            lr_order=-3
             c_init_order = 0
+            check_rate = 100
             is_feasible = False
             while (not is_feasible):
                 _, _, is_feasible = train_dsn(system,

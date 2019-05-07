@@ -1485,6 +1485,7 @@ class SCCircuit(system):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
                     r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
+                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$"
                 ]
             elif (C==2):
                 T_x_labels = [
@@ -1499,7 +1500,7 @@ class SCCircuit(system):
             if (C==1):
                 T_x_labels = [
                     r"$Var_{\partial W}[{V_{LP},L,NI}]$",
-                    r"$Var_{\partial W}[ {V_{LP},L,NI}]^2$",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}]^2$",
                 ]
             elif (C==2):
                 T_x_labels = [
@@ -1861,11 +1862,18 @@ class SCCircuit(system):
 
         Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
 
+        v_RP = v_t[-1, :, :, 3, :] # we're looking at LP in the standard L Pro condition
+
+        square_diff = tf.reduce_mean(tf.square(v_LP - v_RP), axis=2)
+
         if self.behavior["type"] == "inforoute":
+            print('HERE 1')
             T_x = tf.stack((E_v_LP, \
-                            Bern_Var_Err
+                            Bern_Var_Err,
+                            square_diff
                             ), 2)
         elif self.behavior["type"] == "feasible":
+            print('HERE 2')
             T_x = tf.stack((Var_v_LP, \
                             tf.square(Var_v_LP)
                             ), 2)

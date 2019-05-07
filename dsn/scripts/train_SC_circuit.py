@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from dsn.util.systems import SCCircuit
@@ -9,10 +8,9 @@ import sys, os
 
 os.chdir("../")
 
-p = float(sys.argv[1])
-param_str = str(sys.argv[2])
-c_init_order = int(sys.argv[3])
-random_seed = int(sys.argv[4])
+param_str = str(sys.argv[1])
+c_init_order = int(sys.argv[2])
+random_seed = int(sys.argv[3])
 
 nlayers = 10
 sigma_init = 1.0
@@ -25,26 +23,30 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
-behavior_type = "pvar"
+p = 0.8
 
-if (behavior_type == "means"):
-    #pvar = 0.0001
-    means = np.array([p, 0.0])
-    #variances = np.array([pvar, 0.0])
-    behavior = {
-        "type": behavior_type,
-        "means": means,
-    }
-elif (behavior_type == "pvar"):
-    pvar = 0.0001
-    means = np.array([p, 0.0])
-    behavior = {
-        "type": behavior_type,
-        "means": means,
-        "pvar":pvar,
-    }
+behavior_type = "inforoute"
+means = np.array([p, 0.0, 1.0])
+bounds = np.array([0.0])
+def is_feasible(T_xs):
+    var_threshold = 0.05
+    num_violating = np.sum(T_xs[:,0] < var_threshold)
+    #num_violating += np.sum(T_xs[:,1] < var_threshold)
+    return num_violating == 0 
+feasible_means = np.array([0.25])
+feasible_variances = np.array([0.0000])
 
-model_opts = {"params":param_str}
+
+behavior = {
+    "type": behavior_type,
+    "means": means,
+    "bounds":bounds,
+    "is_feasible":is_feasible,
+    "feasible_means":feasible_means,
+    "feasible_variances":feasible_variances,
+}
+
+model_opts = {"params":param_str, "C":1}
 system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
@@ -73,8 +75,9 @@ train_dsn(
     c_init_order=c_init_order,
     lr_order=lr_order,
     random_seed=random_seed,
-    min_iters=1000,
-    max_iters=2000,
+    min_iters=2500,
+    max_iters=5000,
     check_rate=100,
-    dir_str="SCCircuit",
+    dir_str='SCCircuit',
+    entropy=True,
 )
