@@ -65,4 +65,5 @@ train_dsn(
     max_iters=2000,
     check_rate=100,
     dir_str="STGCircuit",
+    db=True,
 )
