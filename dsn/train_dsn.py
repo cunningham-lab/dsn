@@ -273,55 +273,7 @@ def train_dsn(
                 w_i = np.random.normal(np.zeros((K, n, system.D)), 1.0)
                 feed_dict = {W: w_i, Lambda: _lambda, c: _c}
 
-
-                if np.mod(cur_ind, check_rate) == 0:
-                    start_time = time.time()
-
-                if np.mod(cur_ind, TB_SAVE_EVERY) == 0:
-                    # Create a fresh metadata object:
-                    run_metadata = tf.RunMetadata()
-                    ts, cost_i, _cost_grads, summary = sess.run([train_step, cost, cost_grads, summary_op], 
-                                       feed_dict,
-                                       options=run_options,
-                                       run_metadata=run_metadata)
-                    summary_writer.add_summary(summary, cur_ind)
-                    if (not wrote_graph and i>20): # In case a GPU needs to warm up for optims
-                        assert(min_iters >= 20 and TB_SAVE_EVERY >= 20)
-                        print("writing graph stuff for AL iteration %d" % (k+1))
-                        summary_writer.add_run_metadata(run_metadata, 
-                                                        "train_step_{}".format(cur_ind),
-                                                        cur_ind)
-                        wrote_graph = True
-                else:
-                    ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
-
-                if (np.isnan(cost_i)):
-                    print(cur_ind, 'cost is nan!', cost_i)
-                else:
-                    print(cur_ind, 'cost', cost_i)
-
-                print('grads')
-                for gradind in range(len(_cost_grads)):
-                    print(_cost_grads[gradind])
-                    
-
-                if np.mod(cur_ind, check_rate) == 0:
-                    end_time = time.time()
-                    print("iteration took %.4f seconds." % (end_time - start_time))
-
-                log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
-
-                if (db):
-                    _params = sess.run(all_params)
-                    log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
-
-
-                if np.mod(i, MODEL_SAVE_EVERY) == 0:
-                    print("saving model at iter", i)
-                    saver.save(sess, savedir + "model")
-
                 if np.mod(cur_ind + 1, check_rate) == 0:
-                    w_i = np.random.normal(np.zeros((K, n, system.D)), 1.0)
                     feed_dict = {W: w_i, Lambda: _lambda, c: _c}
                     _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
                     print(42 * "*")
@@ -333,7 +285,6 @@ def train_dsn(
                     print('Hs shape', Hs.shape)
                     print(check_it)
                     Hs[check_it] = _H
-                    costs[check_it] = cost_i
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0)
 
                     if stop_early:
@@ -372,6 +323,53 @@ def train_dsn(
 
                     print(42 * "*")
                     check_it += 1
+
+                if np.mod(cur_ind, check_rate) == 0:
+                    start_time = time.time()
+
+                if np.mod(cur_ind, TB_SAVE_EVERY) == 0:
+                    # Create a fresh metadata object:
+                    run_metadata = tf.RunMetadata()
+                    ts, cost_i, _cost_grads, summary = sess.run([train_step, cost, cost_grads, summary_op], 
+                                       feed_dict,
+                                       options=run_options,
+                                       run_metadata=run_metadata)
+                    summary_writer.add_summary(summary, cur_ind)
+                    if (not wrote_graph and i>20): # In case a GPU needs to warm up for optims
+                        assert(min_iters >= 20 and TB_SAVE_EVERY >= 20)
+                        print("writing graph stuff for AL iteration %d" % (k+1))
+                        summary_writer.add_run_metadata(run_metadata, 
+                                                        "train_step_{}".format(cur_ind),
+                                                        cur_ind)
+                        wrote_graph = True
+                else:
+                    ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
+                costs[check_it] = cost_i
+
+                if (np.isnan(cost_i)):
+                    print(cur_ind, 'cost is nan!', cost_i)
+                else:
+                    print(cur_ind, 'cost', cost_i)
+
+                print('grads')
+                for gradind in range(len(_cost_grads)):
+                    print(_cost_grads[gradind])
+                    
+
+                if np.mod(cur_ind, check_rate) == 0:
+                    end_time = time.time()
+                    print("iteration took %.4f seconds." % (end_time - start_time))
+
+                log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
+
+                if (db):
+                    _params = sess.run(all_params)
+                    log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
+
+
+                if np.mod(i, MODEL_SAVE_EVERY) == 0:
+                    print("saving model at iter", i)
+                    saver.save(sess, savedir + "model")
 
                 sys.stdout.flush()
                 i += 1
