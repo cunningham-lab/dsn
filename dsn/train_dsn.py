@@ -203,9 +203,14 @@ def train_dsn(
 
     # Take snapshots of z and log density throughout training.
     nsamps = 1000
-    Zs = np.zeros((k_max + 1, nsamps, system.D))
-    log_q_zs = np.zeros((k_max + 1, nsamps))
-    T_xs = np.zeros((k_max + 1, nsamps, system.num_suff_stats))
+    if (db):
+        Zs = np.zeros((num_diagnostic_checks, nsamps, system.D))
+        log_q_zs = np.zeros((num_diagnostic_checks, nsamps))
+        T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
+    else:
+        Zs = np.zeros((k_max + 1, nsamps, system.D))
+        log_q_zs = np.zeros((k_max + 1, nsamps))
+        T_xs = np.zeros((k_max + 1, nsamps, system.num_suff_stats))
 
     gamma = 0.25
     num_norms = 100
@@ -286,6 +291,11 @@ def train_dsn(
                     print(check_it)
                     Hs[check_it] = _H
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0)
+
+                    if (db):
+                        Zs[check_it, :, :] = _Z[0, :, :]
+                        log_q_zs[check_it, :] = _log_q_z[0, :]
+                        T_xs[check_it, :, :] = _T_x[0]
 
                     if stop_early:
                         has_converged = check_convergence(
@@ -377,9 +387,10 @@ def train_dsn(
             feed_dict = {W: w_k, Lambda: _lambda, c: _c}
             _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
 
-            Zs[k + 1, :, :] = _Z[0, :, :]
-            log_q_zs[k + 1, :] = _log_q_z[0, :]
-            T_xs[k + 1, :, :] = _T_x[0]
+            if (not db):
+                Zs[k + 1, :, :] = _Z[0, :, :]
+                log_q_zs[k + 1, :] = _log_q_z[0, :]
+                T_xs[k + 1, :, :] = _T_x[0]
             _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
             _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c * _R
