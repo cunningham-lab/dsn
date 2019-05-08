@@ -183,7 +183,7 @@ class stg_circuit:
         X = self.simulate(g_el, g_synA, g_synB)
         v_h = X[self.fft_start:,2]
 
-        v_h_rect = np.maximum(v_h, 0.0)
+        v_h_rect = np.maximum(v_h, -0.01)
         v_h_rect_LPF = moving_average(v_h_rect, self.w)
         v_h_rect_LPF = v_h_rect_LPF - np.mean(v_h_rect_LPF)
         
