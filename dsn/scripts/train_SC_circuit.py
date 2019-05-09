@@ -27,23 +27,11 @@ p = 0.8
 
 behavior_type = "inforoute"
 means = np.array([p, 0.0, 1.0])
-bounds = np.array([0.0])
-def is_feasible(T_xs):
-    var_threshold = 0.05
-    num_violating = np.sum(T_xs[:,0] < var_threshold)
-    #num_violating += np.sum(T_xs[:,1] < var_threshold)
-    return num_violating == 0 
-feasible_means = np.array([0.25])
-feasible_variances = np.array([0.0000])
 
 
 behavior = {
     "type": behavior_type,
     "means": means,
-    "bounds":bounds,
-    "is_feasible":is_feasible,
-    "feasible_means":feasible_means,
-    "feasible_variances":feasible_variances,
 }
 
 model_opts = {"params":param_str, "C":1}

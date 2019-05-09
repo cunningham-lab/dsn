@@ -78,8 +78,6 @@ def train_dsn(
             random_seed (int): Tensorflow random seed for initialization.
 
         """
-    print('train_dsn start')
-    print(system.behavior)
     # Learn a single (K=1) distribution with a DSN.
     K = 1
 
@@ -144,8 +142,6 @@ def train_dsn(
         # Compute system-specific sufficient statistics and log base measure on samples.
         T_x = system.compute_suff_stats(Z)
         mu = system.compute_mu()
-        print('T_x', T_x)
-        print('mu', mu)
         T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
         I_x = None
 

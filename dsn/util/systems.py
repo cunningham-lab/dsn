@@ -1484,7 +1484,7 @@ class SCCircuit(system):
             if (C==1):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
-                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$"
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
                     r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$"
                 ]
             elif (C==2):
