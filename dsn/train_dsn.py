@@ -291,17 +291,15 @@ def train_dsn(
                 w_i = np.random.normal(np.zeros((K, n, system.D)), 1.0)
                 feed_dict = {W: w_i, Lambda: _lambda, c: _c}
 
+                # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind + 1, check_rate) == 0:
                     feed_dict = {W: w_i, Lambda: _lambda, c: _c}
                     _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
                     print(42 * "*")
                     print("it = %d " % (cur_ind + 1))
-                    print("H", _H)
-                    print("cost", cost_i)
+                    print("H", _H, "cost", cost_i)
                     sys.stdout.flush()
                     
-                    print('Hs shape', Hs.shape)
-                    print(check_it)
                     Hs[check_it] = _H
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0)
 
@@ -317,10 +315,9 @@ def train_dsn(
 
                     if has_converged:
                         print("has converged!!!!!!")
+                        sys.stdout.flush()
                         convergence_it = cur_ind
                         break
-
-                    print("saving to %s  ..." % savedir)
 
                     np.savez(
                         savedir + "opt_info.npz",
@@ -345,7 +342,6 @@ def train_dsn(
                     )
 
                     print(42 * "*")
-                    check_it += 1
 
                 if np.mod(cur_ind, check_rate) == 0:
                     start_time = time.time()
@@ -367,17 +363,9 @@ def train_dsn(
                         wrote_graph = True
                 else:
                     ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
-                costs[check_it] = cost_i
-
-                #if (np.isnan(cost_i)):
-                #    print(cur_ind, 'cost is nan!', cost_i)
-                #else:
-                #    print(cur_ind, 'cost', cost_i)
-
-                #print('grads')
-                #for gradind in range(len(_cost_grads)):
-                #    print(_cost_grads[gradind])
-                    
+                if np.mod(cur_ind + 1, check_rate) == 0:
+                    costs[check_it] = cost_i
+                    check_it += 1
 
                 if np.mod(cur_ind, check_rate) == 0:
                     end_time = time.time()
@@ -459,6 +447,9 @@ def train_dsn(
                 theta=final_thetas
             )
 
+    print("saving to %s  ..." % savedir)
+    sys.stdout.flush()
+                    
     np.savez(
         savedir + "opt_info.npz",
         costs=costs,
