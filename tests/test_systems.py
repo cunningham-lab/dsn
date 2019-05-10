@@ -52,9 +52,9 @@ class stg_circuit:
         N_0 = 0.25*np.ones((5,))
         H_0 = 0.1*np.ones((5,))
         self.init_conds = np.concatenate((V_m0, N_0, H_0), axis=0)"""
-        self.init_conds = np.array([-0.03140991, -0.03494656, -0.00886472, -0.06851396,  0.00570002,
-                                     0.00375753, 0.11949047, 0.57696811, 0.02869717, 0.5140996,
-                                     0.07868617, 0.04647705, 0.0502322, 0.09902459, 0.0524811])
+        self.init_conds = np.array([-0.04169771, -0.04319491,  0.00883992, -0.06879824,  0.03048103,
+                                     0.00151316, 0.19784773, 0.56514935, 0.12214069, 0.35290397,
+                                     0.08614699, 0.04938177, 0.05568701, 0.07007949, 0.05790969])
 
     def simulate(self, g_el, g_synA, g_synB):
         # define fixed parameters
@@ -1429,5 +1429,5 @@ if __name__ == "__main__":
     test_Linear2D()
     test_STGCircuit()
     test_V1Circuit()
-    test_SCCircuit()
+    #test_SCCircuit()
     test_LowRankRNN()

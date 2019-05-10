@@ -1,18 +1,3 @@
-# Copyright 2018 Sean Bittner, Columbia University
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# ==============================================================================
 import tensorflow as tf
 import numpy as np
 from tf_util.tf_util import count_layer_params, min_barrier, max_barrier
@@ -577,9 +562,9 @@ class STGCircuit(system):
         N_0 = 0.25*np.ones((5,))
         H_0 = 0.1*np.ones((5,))
         x0_np = tf.constant(np.concatenate((V_m0, N_0, H_0), axis=0))"""
-        x0_np = np.array([-0.03140991, -0.03494656, -0.00886472, -0.06851396,  0.00570002,
-                          0.00375753, 0.11949047, 0.57696811, 0.02869717, 0.5140996,
-                          0.07868617, 0.04647705, 0.0502322, 0.09902459, 0.0524811])
+        x0_np = np.array([-0.04169771, -0.04319491,  0.00883992, -0.06879824,  0.03048103,
+                           0.00151316, 0.19784773, 0.56514935, 0.12214069, 0.35290397,
+                           0.08614699, 0.04938177, 0.05568701, 0.07007949, 0.05790969])
         
         x0 = tf.tile(tf.expand_dims(x0_np, 0), [M, 1])
 
