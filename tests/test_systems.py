@@ -183,7 +183,7 @@ class stg_circuit:
         X = self.simulate(g_el, g_synA, g_synB)
         v_h = X[self.fft_start:,2]
 
-        v_h_rect = np.maximum(v_h+0.01, 0.00)
+        v_h_rect = np.maximum(v_h, -0.01)
         v_h_rect_LPF = moving_average(v_h_rect, self.w)
         #v_h_rect_LPF = v_h_rect_LPF - np.mean(v_h_rect_LPF)
         
@@ -489,7 +489,7 @@ def test_STGCircuit():
 
     dt = 0.025
     T = 210
-    fft_start = 10
+    fft_start = 0
     w = 20
 
     true_sys = stg_circuit(dt, T, fft_start, w=w)
@@ -1426,8 +1426,8 @@ def test_LowRankRNN():
 
 
 if __name__ == "__main__":
-    test_Linear2D()
+    #test_Linear2D()
     test_STGCircuit()
-    test_V1Circuit()
+    #test_V1Circuit()
     #test_SCCircuit()
-    test_LowRankRNN()
+    #test_LowRankRNN()

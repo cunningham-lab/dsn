@@ -652,7 +652,8 @@ class STGCircuit(system):
 
         if self.behavior["type"] == "hubfreq":
             v_h = tf.transpose(x_t[self.fft_start:, :]) # [M,N]
-            v_h_rect = tf.expand_dims(tf.nn.relu(v_h+0.01), 2) # [M,T,C=1]
+            th = 0.01
+            v_h_rect = tf.expand_dims(tf.nn.relu(v_h+th)-th, 2) # [M,T,C=1]
             v_h_rect_LPF = tf.nn.conv1d(v_h_rect, avg_filter, stride=1, padding='VALID')[:,:,0]
             #v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
             V_h = tf.matmul(tf.cast(v_h_rect_LPF, tf.complex128), Phi)
