@@ -1476,9 +1476,11 @@ class SCCircuit(system):
             elif (C==2):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
-                    r"$E_{\partial W}[{V_{LP},L,DI}]$",
                     r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
-                    r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$"
+                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
+                    r"$E_{\partial W}[{V_{LP},L,DI}]$",
+                    r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$",
+                    r"$E_{\partial W}[{V_{LP},L,DI}-{V_{RP},L,DI}]$"
                 ]
             else:
                 raise NotImplementedError()
@@ -1851,15 +1853,19 @@ class SCCircuit(system):
         v_RP = v_t[-1, :, :, 3, :] # we're looking at LP in the standard L Pro condition
 
         square_diff = tf.reduce_mean(tf.square(v_LP - v_RP), axis=2)
+        
+        # suff stats are all [C, M].  Make [1, M, C]
+        E_v_LP = tf.expand_dims(tf.transpose(E_v_LP), 0)
+        Bern_Var_Err = tf.expand_dims(tf.transpose(Bern_Var_Err), 0)
+        square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "inforoute":
-            print('HERE 1')
-            T_x = tf.stack((E_v_LP, \
+            T_x = tf.concat((E_v_LP, \
                             Bern_Var_Err,
                             square_diff
                             ), 2)
         elif self.behavior["type"] == "feasible":
-            print('HERE 2')
+            # this won't work
             T_x = tf.stack((Var_v_LP, \
                             tf.square(Var_v_LP)
                             ), 2)
@@ -1878,12 +1884,12 @@ class SCCircuit(system):
 
         means = self.behavior["means"]
         first_moments = means
-        if self.behavior["type"] in ["feasible"]:
+        if self.behavior["type"] == "inforoute":
+            mu = first_moments
+        elif self.behavior["type"] in ["feasible"]:
             variances = self.behavior["variances"]
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
-        elif self.behavior["type"] == "inforoute":
-            mu = first_moments
         else:
             raise NotImplementedError()
         return mu
