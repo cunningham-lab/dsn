@@ -1476,11 +1476,24 @@ class SCCircuit(system):
             elif (C==2):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
-                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
-                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
                     r"$E_{\partial W}[{V_{LP},L,DI}]$",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
                     r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$",
+                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
                     r"$E_{\partial W}[{V_{LP},L,DI}-{V_{RP},L,DI}]$"
+                ]
+            elif (C==4):
+                T_x_labels = [
+                    "err_inc_P",
+                    "err_inc_A",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},A,NI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},A,DI}] - p(1-p)$",
+                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
+                    r"$E_{\partial W}[{V_{LP},L,DI}-{V_{RP},L,DI}]$",
+                    r"$E_{\partial W}[{V_{LP},A,NI}-{V_{RP},A,NI}]$",
+                    r"$E_{\partial W}[{V_{LP},A,DI}-{V_{RP},A,DI}]$",
                 ]
             else:
                 raise NotImplementedError()
@@ -1725,11 +1738,14 @@ class SCCircuit(system):
         # Gather inputs into I [T,C,1,4,1]
         if self.behavior["type"] in ["inforoute", "feasible"]:
             I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
+            I_LA = I_constant + I_Pbias + I_Arule + I_choice + I_lightL
             # this is just a stepping stone, will implement full resps
             if (self.C==1):
                 I = I_LP
             elif (self.C==2):
                 I = tf.concat((I_LP, I_LP), axis=1)
+            elif (self.C==4):
+                I = tf.concat((I_LP, I_LP, I_LA, I_LA), axis=1)
             else:
                 raise NotImplementedError()
 
@@ -1738,6 +1754,9 @@ class SCCircuit(system):
         eta = np.ones((self.T, self.C, 1, 1, 1), dtype=np.float64)
         if (self.C==2):
             eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = 0.0
+        elif (self.C==4):
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = 0.0
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),3,:,:,:] = 0.0
         eta = tf.constant(eta, dtype=DTYPE)
 
         return W, I, eta
@@ -1851,19 +1870,36 @@ class SCCircuit(system):
         Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
 
         v_RP = v_t[-1, :, :, 3, :] # we're looking at LP in the standard L Pro condition
+        E_v_RP = tf.reduce_mean(v_RP, 2)
 
         square_diff = tf.reduce_mean(tf.square(v_LP - v_RP), axis=2)
         
         # suff stats are all [C, M].  Make [1, M, C]
         E_v_LP = tf.expand_dims(tf.transpose(E_v_LP), 0)
+        E_v_RP = tf.expand_dims(tf.transpose(E_v_RP), 0)
         Bern_Var_Err = tf.expand_dims(tf.transpose(Bern_Var_Err), 0)
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "inforoute":
-            T_x = tf.concat((E_v_LP, \
-                            Bern_Var_Err,
-                            square_diff
-                            ), 2)
+            if (self.C==4): # actually do the percent difference thing
+                err_rate_P_NI = 1 - E_v_LP[:,:,0]
+                err_rate_P_DI = 1 - E_v_LP[:,:,1]
+                err_rate_inc_P = tf.divide(err_rate_P_DI, err_rate_P_NI) - 1.0
+
+                err_rate_A_NI = 1 - E_v_RP[:,:,2]
+                err_rate_A_DI = 1 - E_v_RP[:,:,3]
+                err_rate_inc_A = tf.divide(err_rate_A_DI, err_rate_A_NI) - 1.0
+                
+                err_rate_incs = tf.stack((err_rate_inc_P, err_rate_inc_A), 2)
+                T_x = tf.concat((err_rate_incs, \
+                                Bern_Var_Err,
+                                square_diff
+                                ), 2)
+            else:
+                T_x = tf.concat((E_v_LP, \
+                                Bern_Var_Err,
+                                square_diff
+                                ), 2)
         elif self.behavior["type"] == "feasible":
             # this won't work
             T_x = tf.stack((Var_v_LP, \

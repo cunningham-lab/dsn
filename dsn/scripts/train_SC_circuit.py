@@ -23,19 +23,25 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
-p_NI = 0.8
-p_DI = 0.6
+C = 4
 
-behavior_type = "inforoute"
-means = np.array([p_NI, p_DI, 0.0, 0.0, 1.0, 1.0])
-
+if (C==2):
+    p_NI = 0.8
+    p_DI = 0.6
+    behavior_type = "inforoute"
+    means = np.array([p_NI, p_DI, 0.0, 0.0, 1.0, 1.0])
+elif (C==4):
+    err_inc_P = 0.05
+    err_inc_A = 0.2
+    behavior_type = "inforoute"
+    means = np.array([err_inc_P, err_inc_A, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0])
 
 behavior = {
     "type": behavior_type,
     "means": means,
 }
 
-model_opts = {"params":param_str, "C":2}
+model_opts = {"params":param_str, "C":C}
 system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
