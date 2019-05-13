@@ -9,16 +9,29 @@ import sys, os
 
 os.chdir("../")
 
-nlayers = int(sys.argv[1])
-c_init_order = int(sys.argv[2])
-sigma_init = float(sys.argv[3])
-random_seed = int(sys.argv[4])
+freq = str(sys.argv[1])
+T = int(sys.argv[2])
+nlayers = int(sys.argv[3])
+c_init_order = int(sys.argv[4])
+sigma_init = float(sys.argv[5])
+random_seed = int(sys.argv[6])
 
 behavior_type = "hubfreq"
 
+if (freq == "high"):
+    T = 500 
+    mean = 0.725
+    variance = (.025)**2
+elif (freq == "med"):
+    T = 200
+    mean = 0.525
+    variance = (.025)**2
+else:
+    print('Error: freq not med or high.')
+    exit()
+
 dt = 0.025
-T = 210
-fft_start = 10
+fft_start = 0
 w = 20
 
 mean = 0.55
