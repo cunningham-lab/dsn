@@ -1882,13 +1882,14 @@ class SCCircuit(system):
 
         if self.behavior["type"] == "inforoute":
             if (self.C==4): # actually do the percent difference thing
+                err_eps = 1.0e-8
                 err_rate_P_NI = 1 - E_v_LP[:,:,0]
                 err_rate_P_DI = 1 - E_v_LP[:,:,1]
-                err_rate_inc_P = tf.divide(err_rate_P_DI, err_rate_P_NI) - 1.0
+                err_rate_inc_P = tf.divide(err_rate_P_DI, err_rate_P_NI + err_eps) - 1.0
 
                 err_rate_A_NI = 1 - E_v_RP[:,:,2]
                 err_rate_A_DI = 1 - E_v_RP[:,:,3]
-                err_rate_inc_A = tf.divide(err_rate_A_DI, err_rate_A_NI) - 1.0
+                err_rate_inc_A = tf.divide(err_rate_A_DI, err_rate_A_NI + err_eps) - 1.0
                 
                 err_rate_incs = tf.stack((err_rate_inc_P, err_rate_inc_A), 2)
                 T_x = tf.concat((err_rate_incs, \
