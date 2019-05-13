@@ -1,11 +1,9 @@
 #!/bin/bash
-for p in 0.8
+for c_init in 0 3 4 5
 do
-  for c_init in 5 15
+  for rs in {1..4}
   do
-    for rs in {1..5}
-    do
-      sbatch train_SC_circuit.sh $p full $c_init $rs
-    done
+    sbatch train_SC_circuit.sh full $c_init $rs
+    sbatch train_SC_circuit.sh reduced $c_init $rs
   done
 done

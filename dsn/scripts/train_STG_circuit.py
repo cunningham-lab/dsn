@@ -10,11 +10,10 @@ import sys, os
 os.chdir("../")
 
 freq = str(sys.argv[1])
-T = int(sys.argv[2])
-nlayers = int(sys.argv[3])
-c_init_order = int(sys.argv[4])
-sigma_init = float(sys.argv[5])
-random_seed = int(sys.argv[6])
+nlayers = int(sys.argv[2])
+c_init_order = int(sys.argv[3])
+sigma_init = float(sys.argv[4])
+random_seed = int(sys.argv[5])
 
 behavior_type = "hubfreq"
 
