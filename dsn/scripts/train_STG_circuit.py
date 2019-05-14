@@ -66,16 +66,17 @@ lr_order = -3
 
 train_dsn(
     system,
-    batch_size,
     arch_dict,
+    batch_size,
     k_max=k_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
-    lr_order=lr_order,
-    random_seed=random_seed,
+    AL_fac=4.0,
     min_iters=1000,
     max_iters=2000,
+    random_seed=random_seed,
+    lr_order=lr_order,
     check_rate=100,
     dir_str="STGCircuit",
-    db=True,
+    db=False,
 )
