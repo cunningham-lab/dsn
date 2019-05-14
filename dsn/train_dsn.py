@@ -16,22 +16,13 @@
 import tensorflow as tf
 import numpy as np
 import time
-import csv
-from datetime import datetime
 import scipy.stats
-import sys
 import os
-import datetime
 import io
-from sklearn.metrics import pairwise_distances
 from dsn.util.dsn_util import (
     setup_param_logging,
     initialize_adam_parameters,
-    computeMoments,
-    getEtas,
-    approxKL,
     get_savedir,
-    compute_R2,
     check_convergence,
 )
 from tf_util.tf_util import (
@@ -39,7 +30,6 @@ from tf_util.tf_util import (
     log_grads,
     count_params,
     AL_cost,
-    memory_extension,
     get_initdir,
     check_init,
     load_nf_init,
@@ -49,15 +39,16 @@ from dsn.util.dsn_util import initialize_gauss_nf
 
 def train_dsn(
     system,
-    n,
     arch_dict,
+    n=1000,
     k_max=10,
-    sigma_init=10.0,
+    sigma_init=1.0,
     c_init_order=0,
-    lr_order=-3,
-    random_seed=0,
+    AL_fac=4.0,
     min_iters=1000,
     max_iters=5000,
+    random_seed=0,
+    lr_order=-3,
     check_rate=100,
     dir_str="general",
     savedir=None,
@@ -68,24 +59,28 @@ def train_dsn(
 
         Args:
             system (obj): Instance of tf_util.systems.system.
-            n (int): Batch size.
             arch_dict (dict): Specifies structure of approximating density network.
+            n (int): Batch size.
             k_max (int): Number of augmented Lagrangian iterations.
-            c_init (float): Augmented Lagrangian trade-off parameter initialization.
+            sigma_init (float): Gaussian initialization standard deviation.
+            c_init_order (float): Augmented Lagrangian trade-off parameter initialization.
+            min_iters (int): Minimum number of training iterations per AL epoch.
+            max_iters (int): Maximum number of training iterations per AL epoch.
+            random_seed (int): Tensorflow random seed for initialization.
             lr_order (float): Adam learning rate is 10^(lr_order).
             check_rate (int): Log diagonstics at every check_rate iterations.
-            max_iters (int): Maximum number of training iterations.
-            random_seed (int): Tensorflow random seed for initialization.
+            dir_str (str): Save directory name.
+            entropy (bool): Include entropy in the cost function.
+            db (bool): Record DSN samples on every diagnostic check.
 
         """
-    # Learn a single (K=1) distribution with a DSN.
-    K = 1
-
     # set initialization of AL parameter c and learning rate
     lr = 10 ** lr_order
     c_init = 10 ** c_init_order
 
     # save tensorboard summary in intervals
+    TB_SAVE = False
+    MODEL_SAVE = False
     TB_SAVE_EVERY = 50
     MODEL_SAVE_EVERY = 5000
     tb_save_params = False
@@ -98,8 +93,10 @@ def train_dsn(
     ALPHA = 0.05
 
     # Look for model initialization.  If not found, optimize the init.
+    print('Initializing...')
     initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
-    print('done initializing', initdir)
+    print('initdir = ', initdir)
+    print('done.')
 
     # Reset tf graph, and set random seeds.
     tf.reset_default_graph()
@@ -115,7 +112,7 @@ def train_dsn(
             system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str
         )
     if not os.path.exists(savedir):
-        print("Making directory %s" % savedir)
+        print("Making directory %s ." % savedir)
         os.makedirs(savedir)
 
     # Construct density network parameters.
@@ -150,14 +147,6 @@ def train_dsn(
         Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
         c = tf.placeholder(dtype=tf.float64, shape=())
 
-    print('system.num_suff_stats')
-    print(system.num_suff_stats)
-    print('Lambda')
-    print(Lambda)
-    print('T_x')
-    print(T_x.shape)
-    print('I_x')
-    print(I_x)
     # Augmented Lagrangian cost function.
     print("Setting up augmented lagrangian gradient graph.")
     with tf.name_scope("AugLagCost"):
@@ -236,7 +225,7 @@ def train_dsn(
         summary_writer.add_graph(sess.graph)
 
         # Log initial state of the DSN.
-        w_i = np.random.normal(np.zeros((K, nsamps, system.D)), 1.0)
+        w_i = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
         feed_dict = {W: w_i, Lambda: _lambda, c: _c}
         cost_i, _cost_grads, _Z, _T_x, _H, _log_q_z, summary = sess.run(
             [cost, cost_grads, Z, T_x, H, log_q_z, summary_op], feed_dict
@@ -284,7 +273,7 @@ def train_dsn(
             while i < max_iters:
                 cur_ind = total_its + i
 
-                w_i = np.random.normal(np.zeros((K, n, system.D)), 1.0)
+                w_i = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict = {W: w_i, Lambda: _lambda, c: _c}
 
                 # Log diagnostics for W draw before gradient step
@@ -335,6 +324,12 @@ def train_dsn(
                         convergence_it=convergence_it,
                         check_rate=check_rate,
                         epoch_inds=epoch_inds,
+                        n=n,
+                        sigma_init=sigma_init,
+                        c_init_order=c_init_order,
+                        AL_fac=AL_fac,
+                        min_iters=min_iters,
+                        max_iters=max_iters,
                     )
 
                     print(42 * "*")
@@ -342,7 +337,7 @@ def train_dsn(
                 if np.mod(cur_ind, check_rate) == 0:
                     start_time = time.time()
 
-                if np.mod(cur_ind, TB_SAVE_EVERY) == 0:
+                if (TB_SAVE and np.mod(cur_ind, TB_SAVE_EVERY)) == 0:
                     # Create a fresh metadata object:
                     run_metadata = tf.RunMetadata()
                     ts, cost_i, _cost_grads, summary = sess.run([train_step, cost, cost_grads, summary_op], 
@@ -352,7 +347,7 @@ def train_dsn(
                     summary_writer.add_summary(summary, cur_ind)
                     if (not wrote_graph and i>20): # In case a GPU needs to warm up for optims
                         assert(min_iters >= 20 and TB_SAVE_EVERY >= 20)
-                        print("writing graph stuff for AL iteration %d" % (k+1))
+                        print("Writing graph stuff for AL iteration %d." % (k+1))
                         summary_writer.add_run_metadata(run_metadata, 
                                                         "train_step_{}".format(cur_ind),
                                                         cur_ind)
@@ -365,7 +360,7 @@ def train_dsn(
 
                 if np.mod(cur_ind, check_rate) == 0:
                     end_time = time.time()
-                    print("iteration took %.4f seconds." % (end_time - start_time))
+                    print("Iteration took %.4f seconds." % (end_time - start_time))
 
                 log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
@@ -374,13 +369,13 @@ def train_dsn(
                     log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
 
 
-                if np.mod(i, MODEL_SAVE_EVERY) == 0:
-                    print("saving model at iter", i)
+                if (MODEL_SAVE and np.mod(i, MODEL_SAVE_EVERY)) == 0:
+                    print("Saving model at iter %d." % i)
                     saver.save(sess, savedir + "model")
 
                 sys.stdout.flush()
                 i += 1
-            w_k = np.random.normal(np.zeros((K, nsamps, system.D)), 1.0)
+            w_k = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
             feed_dict = {W: w_k, Lambda: _lambda, c: _c}
             _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
 
@@ -430,7 +425,7 @@ def train_dsn(
             print("t", t, "p", p)
             if u < 1 - p / 2.0 and t > 0:
                 print(u, "not enough! c updated")
-                _c = 4 * _c
+                _c = AL_fac * _c
             else:
                 print(u, "same c")
 
@@ -466,6 +461,12 @@ def train_dsn(
         convergence_it=convergence_it,
         check_rate=check_rate,
         epoch_inds=epoch_inds,
+        n=n,
+        sigma_init=sigma_init,
+        c_init_order=c_init_order,
+        AL_fac=AL_fac,
+        min_iters=min_iters,
+        max_iters=max_iters,
     )
 
     if (system.behavior["type"] == "feasible"):
@@ -476,8 +477,6 @@ def train_dsn(
 
 def initialize_nf(system, arch_dict, sigma_init, random_seed, 
                   min_iters=50000):
-
-    print('init nf start', system.behavior["type"])
     # Inequality case: Start in the feasible set of the bounds.
     if ("bounds" in system.behavior.keys()):
         # Check for feasible set initialization first

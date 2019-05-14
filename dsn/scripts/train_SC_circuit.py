@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+from dsn.util.dsn_util import get_savedir
 from dsn.util.systems import SCCircuit
 from dsn.train_dsn import train_dsn
 import pandas as pd
@@ -9,11 +10,34 @@ import sys, os
 os.chdir("../")
 
 param_str = str(sys.argv[1])
-c_init_order = int(sys.argv[2])
+randsearch = int(sys.argv[2])
 random_seed = int(sys.argv[3])
+if (len(sys.argv) > 4):
+    c_init_order = int(sys.argv[4])
+
+k_max = 40
+
+dir_str = 'SC_test'
+if (randsearch == 1): 
+    np.random.seed(random_seed)
+    dir_str = dir_str + '_randsearch'
+    sigma_init =  np.around(np.random.uniform(1.0, 6.0), 2)
+    batch_size = np.random.randint(200, 1000)
+    c_init_order =  np.random.uniform(1.0, 10.0)
+    AL_fac = np.random.uniform(2.0, 10.0)
+    max_iters = np.random.randint(5000, 20000)
+    min_iters = max_iters
+elif (randsearch == 0):
+    batch_size = 1000
+    sigma_init = 1.0
+    AL_fac = 4.0
+    min_iters=2500
+    max_iters=5000
+else:
+    print('Error: randsearch must be 0 or 1.')
+    exit()
 
 nlayers = 10
-sigma_init = 1.0
 
 # create an instance of the V1_circuit system class
 fixed_params = {'E_constant':0.0, \
@@ -54,25 +78,43 @@ arch_dict = {'D':system.D, \
              'TIF_flow_type':TIF_flow_type, \
              'repeats':nlayers};
 
-
-k_max = 40
-
-batch_size = 1000
 lr_order = -3
 
+savedir = get_savedir(system, 
+                      arch_dict, 
+                      sigma_init, 
+                      lr_order, 
+                      c_init_order, 
+                      random_seed, 
+                      dir_str, 
+                      randsearch=randsearch
+                      )
+
+
+print('-- Hyperparameters --')
+print('batch_size:', batch_size)
+print('sigma_init:', sigma_init)
+print('c_init_order:', c_init_order)
+print('AL_fac:', AL_fac)
+print('epoch iters:', max_iters)
 
 train_dsn(
     system,
-    batch_size,
     arch_dict,
+    batch_size,
     k_max=k_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
-    lr_order=lr_order,
+    AL_fac=AL_fac,
+    min_iters=min_iters,
+    max_iters=max_iters,
     random_seed=random_seed,
-    min_iters=2500,
-    max_iters=5000,
+    lr_order=lr_order,
     check_rate=100,
-    dir_str='SCCircuit',
+    dir_str=None,
+    savedir=savedir,
     entropy=True,
+    db=False,
 )
+
+

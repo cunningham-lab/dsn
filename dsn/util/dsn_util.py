@@ -29,7 +29,7 @@ from efn.train_nf import train_nf
 
 
 def get_savedir(
-    system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str
+    system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str, randsearch=False
 ):
     # set file I/O stuff
     resdir = "models/" + dir_str + "/"
@@ -40,15 +40,24 @@ def get_savedir(
         for i in range(1, num_free_params):
             sysparams += "_%s" % system.free_params[i]
 
-    savedir = resdir + "%s_%s_%s_flow=%s_sigma=%.2f_c=%d_rs=%d/" % (
-        system.name,
-        sysparams,
-        system.behavior_str,
-        archstring,
-        sigma_init,
-        c_init_order,
-        random_seed,
-    )
+    if (randsearch):
+        savedir = resdir + "%s_%s_%s_flow=%s_rs=%d/" % (
+            system.name,
+            sysparams,
+            system.behavior_str,
+            archstring,
+            random_seed,
+        )
+    else:
+        savedir = resdir + "%s_%s_%s_flow=%s_sigma=%.2f_c=%d_rs=%d/" % (
+            system.name,
+            sysparams,
+            system.behavior_str,
+            archstring,
+            sigma_init,
+            c_init_order,
+            random_seed,
+        )
     return savedir
 
 
