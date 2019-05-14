@@ -3,6 +3,7 @@
 #SBATCH --job-name=SC_DSN
 #SBATCH -c 1
 #SBATCH --gres=gpu
+#SBATCH --constraint=p100
 #SBATCH --time=11:59:00
 #SBATCH --mem-per-cpu=5gb
 

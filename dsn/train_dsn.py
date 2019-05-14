@@ -18,6 +18,7 @@ import numpy as np
 import time
 import scipy.stats
 import os
+import sys
 import io
 from dsn.util.dsn_util import (
     setup_param_logging,
@@ -337,7 +338,7 @@ def train_dsn(
                 if np.mod(cur_ind, check_rate) == 0:
                     start_time = time.time()
 
-                if (TB_SAVE and np.mod(cur_ind, TB_SAVE_EVERY)) == 0:
+                if (TB_SAVE and np.mod(cur_ind, TB_SAVE_EVERY) == 0):
                     # Create a fresh metadata object:
                     run_metadata = tf.RunMetadata()
                     ts, cost_i, _cost_grads, summary = sess.run([train_step, cost, cost_grads, summary_op], 
@@ -369,7 +370,7 @@ def train_dsn(
                     log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
 
 
-                if (MODEL_SAVE and np.mod(i, MODEL_SAVE_EVERY)) == 0:
+                if (MODEL_SAVE and np.mod(i, MODEL_SAVE_EVERY) == 0):
                     print("Saving model at iter %d." % i)
                     saver.save(sess, savedir + "model")
 
