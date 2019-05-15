@@ -33,8 +33,6 @@ dt = 0.025
 fft_start = 0
 w = 20
 
-mean = 0.55
-variance = 0.0001
 fixed_params = {'g_synB':5e-9}
 behavior = {"type":"hubfreq",
             "mean":mean,
