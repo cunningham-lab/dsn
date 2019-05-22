@@ -623,6 +623,13 @@ def test_V1Circuit():
         "W_PE",
         "W_SE",
         "W_VE",
+        "W_EP",
+        "W_PP",
+        "W_VP",
+        "W_ES",
+        "W_PS",
+        "W_VS",
+        "W_SV",
         "b_E",
         "b_P",
         "b_S",
@@ -646,6 +653,13 @@ def test_V1Circuit():
         "W_PE",
         "W_SE",
         "W_VE",
+        "W_EP",
+        "W_PP",
+        "W_VP",
+        "W_ES",
+        "W_PS",
+        "W_VS",
+        "W_SV",
         "b_E",
         "b_P",
         "b_V",
@@ -668,6 +682,13 @@ def test_V1Circuit():
         r"$W_{PE}$",
         r"$W_{SE}$",
         r"$W_{VE}$",
+        r"$W_{EP}$",
+        r"$W_{PP}$",
+        r"$W_{VP}$",
+        r"$W_{ES}$",
+        r"$W_{PS}$",
+        r"$W_{VS}$",
+        r"$W_{SV}$",
         r"$b_{E}$",
         r"$b_{P}$",
         r"$b_{V}$",
@@ -695,7 +716,7 @@ def test_V1Circuit():
         r"$d_{S,ss}^2$",
         r"$d_{V,ss}^2$",
     ]
-    assert system.D == 20
+    assert system.D == 27
     assert system.num_suff_stats == 8
 
     # Test density network output filtering
@@ -705,8 +726,8 @@ def test_V1Circuit():
     assert c_50 is None
 
     _Z = np.random.normal(0.0, 1.0, (1, M, system.D))
-    _Z[:, :, :4] = np.abs(_Z[:, :, :4])
-    _Z[:, :, 17:19] = np.abs(_Z[:, :, 17:19])
+    _Z[:, :, :11] = np.abs(_Z[:, :, :11])
+    _Z[:, :, 24:26] = np.abs(_Z[:, :, 24:26])
     _W, _b, _h_FF, _h_LAT, _h_RUN, _tau, _n, _s_0 = sess.run(
         [W, b, h_FF, h_LAT, h_RUN, tau, n, s_0], {Z: _Z}
     )

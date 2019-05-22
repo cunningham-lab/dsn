@@ -720,11 +720,10 @@ class V1Circuit(system):
         \end{equation}
 
         In some cases, these neuron types do not send projections to one of the other 
-        types.  Additionally, much work, such as ([Pfeffer et al. 2013](#Pfeffer2013Inhibition)) 
-        has been done to measure the relative magnitudes of the synaptic projections 
-        between neural types.
+        types.
         \\begin{equation}
-        W = \\begin{bmatrix} W_{EE} & -1.0 & -0.54 & 0 \\\\\\\\ W_{PE} & -1.01 & -0.33 & 0 \\\\\\\\ W_{SE} & 0 & 0 & -0.15 \\\\\\\\ W_{VE} & -0.22 & -0.77 & 0 \end{bmatrix}
+        W = \\begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\\\\\\\ W_{PE} & W_{PP} & W_{PS} & 0 \\\\\\\\ W_{SE} & 0 & 0
+        & W_{SV} \\\\\\\\ W_{VE} & W_{VP} & W_{VS} & W_{VV} \end{bmatrix}
         \end{equation}
 
         In this model, we are interested in capturing V1 responses across varying 
@@ -774,7 +773,8 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-
+        self.density_network_init_mu = 0.2*np.ones((self.D,))
+        self.density_network_bounds = [0.0, 1.0]
         # compute number of conditions C
         num_c = self.behavior["c_vals"].shape[0]
         num_s = self.behavior["s_vals"].shape[0]
@@ -789,6 +789,13 @@ class V1Circuit(system):
          - $$W_{PE}$$ - strength of excitatory-to-parvalbumin projection 
          - $$W_{SE}$$ - strength of excitatory-to-somatostatin projection 
          - $$W_{VE}$$ - strength of excitatory-to-VIP projection
+         - $$W_{EP}$$ - strength of parvalbumin-to-excitatory projection
+         - $$W_{PP}$$ - strength of parvalbumin-to-parvalbumin projection 
+         - $$W_{VP}$$ - strength of parvalbumin-to-VIP projection
+         - $$W_{ES}$$ - strength of somatostatin-to-excitatory projection
+         - $$W_{PS}$$ - strength of somatostatin-to-parvalbumin projection 
+         - $$W_{VS}$$ - strength of somatostatin-to-VIP projection
+         - $$W_{SV}$$ - strength of VIP-to-somatostatin projection
          - $$b_{E}$$ - constant input to excitatory population 
          - $$b_{P}$$ - constant input to parvalbumin population 
          - $$b_{S}$$ - constant input to somatostatin population 
@@ -820,6 +827,13 @@ class V1Circuit(system):
             "W_PE",
             "W_SE",
             "W_VE",
+            "W_EP",
+            "W_PP",
+            "W_VP",
+            "W_ES",
+            "W_PS",
+            "W_VS",
+            "W_SV",
             "b_E",
             "b_P",
             "b_S",
@@ -843,6 +857,13 @@ class V1Circuit(system):
             "W_PE": [r"$W_{PE}$"],
             "W_SE": [r"$W_{SE}$"],
             "W_VE": [r"$W_{VE}$"],
+            "W_EP": [r"$W_{EP}$"],
+            "W_PP": [r"$W_{PP}$"],
+            "W_VP": [r"$W_{VP}$"],
+            "W_ES": [r"$W_{ES}$"],
+            "W_PS": [r"$W_{PS}$"],
+            "W_VS": [r"$W_{VS}$"],
+            "W_SV": [r"$W_{SV}$"],
             "b_E": [r"$b_{E}$"],
             "b_P": [r"$b_{P}$"],
             "b_S": [r"$b_{S}$"],
@@ -924,6 +945,7 @@ class V1Circuit(system):
         K = z_shape[0]
         M = z_shape[1]
 
+        """
         # Assumed parameters
         W_EP = 1.0 * tf.ones((self.C, M), dtype=DTYPE)
         W_ES = 0.54 * tf.ones((self.C, M), dtype=DTYPE)
@@ -935,10 +957,12 @@ class V1Circuit(system):
 
         W_VP = 0.22 * tf.ones((self.C, M), dtype=DTYPE)
         W_VS = 0.77 * tf.ones((self.C, M), dtype=DTYPE)
+        """
 
         # read free parameters from z vector
         ind = 0
         for free_param in self.free_params:
+            # W_XE column
             if free_param == "W_EE":
                 W_EE = tf.tile(z[:, :, ind], [self.C, 1])
             elif free_param == "W_PE":
@@ -947,6 +971,26 @@ class V1Circuit(system):
                 W_SE = tf.tile(z[:, :, ind], [self.C, 1])
             elif free_param == "W_VE":
                 W_VE = tf.tile(z[:, :, ind], [self.C, 1])
+
+            # W_XP column
+            elif free_param == "W_EP":
+                W_EP = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_PP":
+                W_PP = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_VP":
+                W_VP = tf.tile(z[:, :, ind], [self.C, 1])
+
+            # W_XS column
+            elif free_param == "W_ES":
+                W_ES = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_PS":
+                W_PS = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_VS":
+                W_VS = tf.tile(z[:, :, ind], [self.C, 1])
+
+            # W_XV column
+            elif free_param == "W_SV":
+                W_SV = tf.tile(z[:, :, ind], [self.C, 1])
 
             elif free_param == "b_E":
                 b_E = tf.tile(z[:, :, ind], [1, 1])
@@ -1012,6 +1056,37 @@ class V1Circuit(system):
                 )
             elif fixed_param == "W_VE":
                 W_VE = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+
+            elif fixed_param == "W_EP":
+                W_EP = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_PP":
+                W_PP = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_VP":
+                W_VP = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+
+            elif fixed_param == "W_ES":
+                W_ES = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_PS":
+                W_PS = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_VS":
+                W_VS = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+
+            elif fixed_param == "W_SV":
+                W_SV = self.fixed_params[fixed_param] * tf.ones(
                     (self.C, M), dtype=DTYPE
                 )
 

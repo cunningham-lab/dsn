@@ -31,8 +31,9 @@ diff_inds = [0, 1, 2, 3]
 c_vals=np.array([0.0])
 s_vals=np.array([1.0])
 r_vals=np.array([0.0, 1.0])
-d_mean = np.array([0.15, 0.5, 0.0, 2.0]);
-d_vars = np.array([.01, .01, 0.01, 0.25]);
+d_mean = np.array([0.7151, 0.1784, 0.4961, 0.2511]);
+d_stds = np.array([0.0646, 0.0914, 0.0423, 0.0381]);
+d_vars = np.square(d_stds)
 behavior = {'type':behavior_type, \
             'diff_inds':diff_inds, \
             'c_vals':c_vals, \
@@ -64,19 +65,20 @@ k_max = 40
 
 batch_size = 1000
 lr_order = -3
-
+AL_fac = 4.0
 
 train_dsn(
     system,
-    batch_size,
     arch_dict,
+    batch_size,
     k_max=k_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
-    lr_order=lr_order,
-    random_seed=random_seed,
+    AL_fac=AL_fac, 
     min_iters=1000,
     max_iters=2000,
+    random_seed=random_seed,
+    lr_order=lr_order,
     check_rate=100,
     dir_str="test",
 )
