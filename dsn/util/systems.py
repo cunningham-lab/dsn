@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tf_util.tf_util import count_layer_params, min_barrier, max_barrier
 from tf_util.normalizing_flows import SoftPlusFlow, IntervalFlow
+from tf_util.stat_util import approx_equal
 import scipy.stats
 from scipy.special import gammaln, psi
 import scipy.io as sio
@@ -55,12 +56,12 @@ class system:
 		"""
         self.fixed_params = fixed_params
         self.behavior = behavior
-        self.mu = self.compute_mu()
         self.all_params, self.all_param_labels = self.get_all_sys_params()
         self.free_params = self.get_free_params()
         self.z_labels = self.get_z_labels()
         self.T_x_labels = self.get_T_x_labels()
         self.D = len(self.z_labels)
+        self.mu = self.compute_mu()
         self.num_suff_stats = len(self.T_x_labels)
         self.behavior_str = self.get_behavior_str()
         self.has_support_map = False
@@ -719,28 +720,6 @@ class V1Circuit(system):
         \\tau \\frac{dr}{dt} = -r + [Wr + h]_+^n
         \end{equation}
 
-        In some cases, these neuron types do not send projections to one of the other 
-        types.
-        \\begin{equation}
-        W = \\begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\\\\\\\ W_{PE} & W_{PP} & W_{PS} & 0 \\\\\\\\ W_{SE} & 0 & 0
-        & W_{SV} \\\\\\\\ W_{VE} & W_{VP} & W_{VS} & W_{VV} \end{bmatrix}
-        \end{equation}
-
-        In this model, we are interested in capturing V1 responses across varying 
-        contrasts $$c$$, stimulus sizes $$s$$, and locomotion $$r$$ conditions as
-        in ([Dipoppa et al. 2018](#Dipoppa2018Vision)).
-
-        \\begin{equation} 
-        h = b + g_{FF}(c) h_{FF} + g_{LAT}(c,s) h_{LAT} + g_{RUN}(r) h_{RUN}
-        \end{equation}
-
-        \\begin{equation} \\begin{bmatrix} h_E \\\\\\\\ h_P \\\\\\\\ h_S \\\\\\\\ h_V \end{bmatrix}
-         = \\begin{bmatrix} b_E \\\\\\\\ b_P \\\\\\\\ b_S \\\\\\\\ b_V \end{bmatrix} + g_{FF}(c) \\begin{bmatrix} h_{FF,E} \\\\\\\\ h_{FF,P} \\\\\\\\ 0 \\\\\\\\ 0 \end{bmatrix} + g_{LAT}(c,s) \\begin{bmatrix} h_{LAT,E} \\\\\\\\ h_{LAT,P} \\\\\\\\ h_{LAT,S} \\\\\\\\ h_{LAT,V} \end{bmatrix} + g_{RUN}(r) \\begin{bmatrix} h_{RUN,E} \\\\\\\\ h_{RUN,P} \\\\\\\\ h_{RUN,S} \\\\\\\\ h_{RUN,V} \end{bmatrix}
-        \end{equation}
-
-        where $$g_{FF}(c)$$, $$g_{LAT}(c,s)$$, and $$g_{FF}(r)$$ modulate the input
-        parmeterization $$h$$ according to condition.  See initialization argument
-        `model_opts` on how to set the form of these functions. 
 
     # Attributes
         behavior (dict): see V1Circuit.compute_suff_stats
@@ -749,8 +728,8 @@ class V1Circuit(system):
             * `'c'` (default) $$g_{FF}(c) = c$$ 
             * `'saturate'` $$g_{FF}(c) = \\frac{c^a}{c_{50}^a + c^a}$$
           * model_opts[`'g_LAT'`] 
-            * `'linear'` (default) $$g_{LAT}(c,s) = c[s_0 - s]_+$$ 
-            * `'square'` $$g_{LAT}(c,s) = c[s_0^2 - s^2]_+$$
+            * `'linear'` (default) $$g_{LAT}(c,s) = c[s - s_0]_+$$ 
+            * `'square'` $$g_{LAT}(c,s) = c[s^2 - s_0^2]_+$$
           * model_opts[`'g_RUN'`] 
             * `'r'` (default) $$g_{RUN}(r) = r$$ 
         T (int): Number of simulation time points.
@@ -768,6 +747,10 @@ class V1Circuit(system):
         init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1),
     ):
         self.model_opts = model_opts
+        num_c = behavior["c_vals"].shape[0]
+        num_s = behavior["s_vals"].shape[0]
+        num_r = behavior["r_vals"].shape[0]
+        self.C = num_c * num_s * num_r
         super().__init__(fixed_params, behavior)
         self.name = "V1Circuit"
         self.T = T
@@ -776,10 +759,6 @@ class V1Circuit(system):
         self.density_network_init_mu = 0.2*np.ones((self.D,))
         self.density_network_bounds = [0.0, 1.0]
         # compute number of conditions C
-        num_c = self.behavior["c_vals"].shape[0]
-        num_s = self.behavior["s_vals"].shape[0]
-        num_r = self.behavior["r_vals"].shape[0]
-        self.C = num_c * num_s * num_r
         self.has_support_map = True
 
     def get_all_sys_params(self,):
@@ -894,15 +873,15 @@ class V1Circuit(system):
 
         Behaviors:
 
-        'difference' - $$[d_{E,ss}, d_{P,ss}, d_{S,ss}, d_{V,ss}, d_{E,ss}^2, d_{P,ss}^2, d_{S,ss}^2, d_{V,ss}^2]$$
+        'old_difference' - $$[d_{E,ss}, d_{P,ss}, d_{S,ss}, d_{V,ss}, d_{E,ss}^2, d_{P,ss}^2, d_{S,ss}^2, d_{V,ss}^2]$$
         
-        'data' - $$[r_{E,ss}(c,s,r), ...,  r_{E,ss}(c,s,r)^2, ...]$$
+        'difference' - $$[r_{E,ss}(c,s,r), ...,  r_{E,ss}(c,s,r)^2, ...]$$
 
         # Returns
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if self.behavior["type"] == "difference":
+        if self.behavior["type"] == "old_difference":
             all_T_x_labels = [
                 r"$d_{E,ss}$",
                 r"$d_{P,ss}$",
@@ -918,6 +897,29 @@ class V1Circuit(system):
             T_x_labels = []
             for i in range(len(label_inds)):
                 T_x_labels.append(all_T_x_labels[label_inds[i]])
+        elif self.behavior["type"] == "difference":
+            num_c = len(self.behavior["c_vals"])
+            num_s = len(self.behavior["s_vals"])
+            num_r = len(self.behavior["r_vals"])
+            assert(num_c == 1)
+            assert(num_r == 2)
+            mean_T_x_labels = []
+            square_T_x_labels = []
+            for i in range(num_s):
+                s_i = self.behavior["s_vals"][i]
+                mean_T_x_labels += [
+                                    r"$d_{E,ss}(s=%d)$" % int(s_i),
+                                    r"$d_{P,ss}(s=%d)$" % int(s_i),
+                                    r"$d_{S,ss}(s=%d)$" % int(s_i),
+                                    r"$d_{V,ss}(s=%d)$" % int(s_i),
+                                   ]
+                square_T_x_labels += [
+                                    r"$d_{E,ss}(s=%d)^2$" % int(s_i),
+                                    r"$d_{P,ss}(s=%d)^2$" % int(s_i),
+                                    r"$d_{S,ss}(s=%d)^2$" % int(s_i),
+                                    r"$d_{V,ss}(s=%d)^2$" % int(s_i),
+                                   ]
+            T_x_labels = mean_T_x_labels + square_T_x_labels
         else:
             raise NotImplementedError()
         return T_x_labels
@@ -1214,7 +1216,7 @@ class V1Circuit(system):
                 if self.model_opts["g_LAT"] == "linear":
                     g_LAT = tf.multiply(c, tf.nn.relu(s - s_0))
                 elif self.model_opts["g_LAT"] == "square":
-                    g_LAT = tf.multiply(c, tf.nn.relu(tf.square(s) - tf.square(s_0)))
+                    g_LAT = tf.multiply(c, tf.nn.relu(np.square(s) - tf.square(s_0)))
                 else:
                     raise NotImplementedError()
 
@@ -1352,7 +1354,7 @@ class V1Circuit(system):
         r_t = self.simulate(z)
         # [T, C, M, D, 1]
 
-        if self.behavior["type"] == "difference":
+        if self.behavior["type"] == "old_difference":
             diff_inds = self.behavior["diff_inds"]
             r1_ss_list = []
             r2_ss_list = []
@@ -1364,12 +1366,18 @@ class V1Circuit(system):
             diff_ss = tf.expand_dims(r2_ss - r1_ss, 0)
             T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
 
-        elif self.behavior["type"] == "data":
+        elif self.behavior["type"] == "difference":
+            D = 4 
             r_shape = tf.shape(r_t)
-            M = tf.shape[2]
-            r_ss = tf.transpose(r1_t[-1, :, :, :, 0], [1, 2, 0])  # [M,C,D];
-            r_ss = tf.reshape(r_ss, [M, self.C * self.D])
-            T_x = tf.concat((r_ss, tf.square(r_ss)), 2)
+            M = r_shape[2]
+            r_ss = r_t[-1] # C x M x D x 1
+            r_ss = tf.transpose(r_ss, [1, 2, 0, 3]) # M x D x C x 1
+            r_ss = tf.reshape(r_ss, (M, D, self.C//2, 2)) # stationary, locomotion in last dim
+            diff_ss = r_ss[:,:,:,1] - r_ss[:,:,:,0] # M x D x C//2
+            diff_ss = tf.reshape(tf.transpose(diff_ss, [0, 2, 1]), (M, D*(self.C//2))) # (M, CD)
+            diff_ss = tf.expand_dims(diff_ss, 0)
+
+            T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
 
         return T_x
 
@@ -1381,12 +1389,26 @@ class V1Circuit(system):
 
         """
 
-        if self.behavior["type"] == "difference":
+        if self.behavior["type"] == "old_difference":
             means = self.behavior["d_mean"]
             variances = self.behavior["d_var"]
-        elif self.behavior["type"] == "data":
-            means = np.reshape(self.behavior["r_mean"], (self.C * self.D,))
-            variances = np.reshape(self.behavior["r_var"], (self.C * self.D,))
+        elif self.behavior["type"] == "difference":
+            assert(approx_equal(self.behavior['r_vals'], np.array([0.0, 1.0]), 1e-16))
+            datadir = 'data/V1/'
+            fname = datadir + 'ProcessedData.mat'
+            M = sio.loadmat(fname)
+            s_data = M['ProcessedData']['StimulusSize_deg'][0,0][0]
+            DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0]
+            SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0]
+            s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
+            
+            DifferenceLS = DifferenceLS[:,s_inds].T # C x D
+            SEMDifferenceLS = SEMDifferenceLS[:,s_inds].T # C x D
+
+            D = 4
+            means = np.reshape(DifferenceLS, ((self.C//2) * D))
+            stds = np.reshape(SEMDifferenceLS, ((self.C//2) * D))
+            variances = np.square(stds)
         first_moments = means
         second_moments = np.square(means) + variances
         mu = np.concatenate((first_moments, second_moments), axis=0)

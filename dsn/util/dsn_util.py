@@ -37,8 +37,11 @@ def get_savedir(
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
     if num_free_params > 1:
-        for i in range(1, num_free_params):
-            sysparams += "_%s" % system.free_params[i]
+        if (num_free_params >= 10):
+            sysparams = "D = %d" % system.D
+        else:
+            for i in range(1, num_free_params):
+                sysparams += "_%s" % system.free_params[i]
 
     if (randsearch):
         savedir = resdir + "%s_%s_%s_flow=%s_rs=%d/" % (

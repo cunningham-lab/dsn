@@ -26,24 +26,20 @@ fixed_params = {'h_FFE':0.0, \
                 's_0':30};
 
 behavior_type = "difference"
-diff_inds = [0, 1, 2, 3]
 
-c_vals=np.array([0.0])
-s_vals=np.array([1.0])
+c_vals=np.array([1.0])
+s_vals=np.array([5, 60])
 r_vals=np.array([0.0, 1.0])
-d_mean = np.array([0.7151, 0.1784, 0.4961, 0.2511]);
-d_stds = np.array([0.0646, 0.0914, 0.0423, 0.0381]);
-d_vars = np.square(d_stds)
+#d_mean = np.array([0.7151, 0.1784, 0.4961, 0.2511]);
+#d_stds = np.array([0.0646, 0.0914, 0.0423, 0.0381]);
+#d_vars = np.square(d_stds)
 behavior = {'type':behavior_type, \
-            'diff_inds':diff_inds, \
             'c_vals':c_vals, \
             's_vals':s_vals, \
-            'r_vals':r_vals, \
-            'd_mean':d_mean, \
-            'd_var':d_vars}
+            'r_vals':r_vals}
 
 # set model options
-model_opts = {"g_FF": "c", "g_LAT": "linear", "g_RUN": "r"} 
+model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"} 
 T = 40
 dt = 0.25
 init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
