@@ -235,30 +235,6 @@ are given by:
 \tau \frac{dr}{dt} = -r + [Wr + h]_+^n
 \end{equation}
 
-In some cases, these neuron types do not send projections to one of the other
-types.  Additionally, much work, such as ([Pfeffer et al. 2013](#Pfeffer2013Inhibition))
-has been done to measure the relative magnitudes of the synaptic projections
-between neural types.
-\begin{equation}
-W = \begin{bmatrix} W_{EE} & -1.0 & -0.54 & 0 \\\\ W_{PE} & -1.01 & -0.33 & 0 \\\\ W_{SE} & 0 & 0 & -0.15 \\\\ W_{VE} & -0.22 & -0.77 & 0 \end{bmatrix}
-\end{equation}
-
-In this model, we are interested in capturing V1 responses across varying
-contrasts $$c$$, stimulus sizes $$s$$, and locomotion $$r$$ conditions as
-in ([Dipoppa et al. 2018](#Dipoppa2018Vision)).
-
-\begin{equation}
-h = b + g_{FF}(c) h_{FF} + g_{LAT}(c,s) h_{LAT} + g_{RUN}(r) h_{RUN}
-\end{equation}
-
-\begin{equation} \begin{bmatrix} h_E \\\\ h_P \\\\ h_S \\\\ h_V \end{bmatrix}
- = \begin{bmatrix} b_E \\\\ b_P \\\\ b_S \\\\ b_V \end{bmatrix} + g_{FF}(c) \begin{bmatrix} h_{FF,E} \\\\ h_{FF,P} \\\\ 0 \\\\ 0 \end{bmatrix} + g_{LAT}(c,s) \begin{bmatrix} h_{LAT,E} \\\\ h_{LAT,P} \\\\ h_{LAT,S} \\\\ h_{LAT,V} \end{bmatrix} + g_{RUN}(r) \begin{bmatrix} h_{RUN,E} \\\\ h_{RUN,P} \\\\ h_{RUN,S} \\\\ h_{RUN,V} \end{bmatrix}
-\end{equation}
-
-where $$g_{FF}(c)$$, $$g_{LAT}(c,s)$$, and $$g_{FF}(r)$$ modulate the input
-parmeterization $$h$$ according to condition.  See initialization argument
-`model_opts` on how to set the form of these functions.
-
 __Attributes__
 
 - `behavior (dict)`: see V1Circuit.compute_suff_stats
