@@ -14,6 +14,7 @@ randsearch = int(sys.argv[2])
 random_seed = int(sys.argv[3])
 if (len(sys.argv) > 4):
     c_init_order = int(sys.argv[4])
+    sigma_init = float(sys.argv[5])
 
 k_max = 40
 
@@ -29,9 +30,8 @@ if (randsearch == 1):
     min_iters = max_iters
 elif (randsearch == 0):
     batch_size = 1000
-    sigma_init = 1.0
     AL_fac = 4.0
-    min_iters=2500
+    min_iters=5000
     max_iters=5000
 else:
     print('Error: randsearch must be 0 or 1.')
