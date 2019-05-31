@@ -38,7 +38,7 @@ def get_savedir(
     num_free_params = len(system.free_params)
     if num_free_params > 1:
         if (num_free_params >= 10):
-            sysparams = "D = %d" % system.D
+            sysparams = "D=%d" % system.D
         else:
             for i in range(1, num_free_params):
                 sysparams += "_%s" % system.free_params[i]
