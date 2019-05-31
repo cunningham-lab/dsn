@@ -1592,6 +1592,25 @@ class SCCircuit(system):
                     r"$E_{\partial W}[{V_{LP},A,NI}-{V_{RP},A,NI}]$",
                     r"$E_{\partial W}[{V_{LP},A,DI}-{V_{RP},A,DI}]$",
                 ]
+            elif (C==6):
+                T_x_labels = [
+                    "err_inc_P_DI",
+                    "err_inc_A_DI",
+                    "err_inc_P_CI",
+                    "err_inc_A_CI",
+                    r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},L,CI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},A,NI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},A,DI}] - p(1-p)$",
+                    r"$Var_{\partial W}[{V_{LP},A,CI}] - p(1-p)$",
+                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
+                    r"$E_{\partial W}[{V_{LP},L,DI}-{V_{RP},L,DI}]$",
+                    r"$E_{\partial W}[{V_{LP},L,CI}-{V_{RP},L,DI}]$",
+                    r"$E_{\partial W}[{V_{LP},A,NI}-{V_{RP},A,NI}]$",
+                    r"$E_{\partial W}[{V_{LP},A,DI}-{V_{RP},A,DI}]$",
+                    r"$E_{\partial W}[{V_{LP},A,CI}-{V_{RP},A,DI}]$",
+                ]
             else:
                 raise NotImplementedError()
         elif self.behavior["type"] == "feasible":
@@ -1843,17 +1862,25 @@ class SCCircuit(system):
                 I = tf.concat((I_LP, I_LP), axis=1)
             elif (self.C==4):
                 I = tf.concat((I_LP, I_LP, I_LA, I_LA), axis=1)
+            elif (self.C==6):
+                I = tf.concat((I_LP, I_LP, I_LP, I_LA, I_LA, I_LA), axis=1)
             else:
                 raise NotImplementedError()
 
         
-        # put eta together (just NI and DI for C=2) TODO
+        # just took roughly middle value
+        opto_strength = 0.7
         eta = np.ones((self.T, self.C, 1, 1, 1), dtype=np.float64)
         if (self.C==2):
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = 0.0
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
         elif (self.C==4):
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = 0.0
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),3,:,:,:] = 0.0
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),3,:,:,:] = opto_strength
+        elif (self.C==6): # figure out CI times and eta mag
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
+            eta[1.2 <= self.t,2,:,:,:] = opto_strength
+            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),4,:,:,:] = opto_strength
+            eta[1.2 <= self.t,5,:,:,:] = opto_strength
         eta = tf.constant(eta, dtype=DTYPE)
 
         return W, I, eta
@@ -1966,7 +1993,7 @@ class SCCircuit(system):
 
         Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
 
-        v_RP = v_t[-1, :, :, 3, :] # we're looking at LP in the standard L Pro condition
+        v_RP = v_t[-1, :, :, 3, :] # we're looking at RP in the standard A Pro condition
         E_v_RP = tf.reduce_mean(v_RP, 2)
 
         square_diff = tf.reduce_mean(tf.square(v_LP - v_RP), axis=2)
@@ -1978,7 +2005,7 @@ class SCCircuit(system):
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "inforoute":
-            if (self.C==4): # actually do the percent difference thing
+            if (self.C==4):
                 err_eps = 1.0e-8
                 err_rate_P_NI = 1 - E_v_LP[:,:,0]
                 err_rate_P_DI = 1 - E_v_LP[:,:,1]
@@ -1989,6 +2016,29 @@ class SCCircuit(system):
                 err_rate_inc_A = tf.divide(err_rate_A_DI, err_rate_A_NI + err_eps) - 1.0
                 
                 err_rate_incs = tf.stack((err_rate_inc_P, err_rate_inc_A), 2)
+                T_x = tf.concat((err_rate_incs, \
+                                Bern_Var_Err,
+                                square_diff
+                                ), 2)
+            elif (self.C==6): # actually do the percent difference thing
+                err_eps = 1.0e-8
+                err_rate_P_NI = 1 - E_v_LP[:,:,0]
+                err_rate_P_DI = 1 - E_v_LP[:,:,1]
+                err_rate_P_CI = 1 - E_v_LP[:,:,2]
+
+                err_rate_inc_P_DI = tf.divide(err_rate_P_DI, err_rate_P_NI + err_eps) - 1.0
+                err_rate_inc_P_CI = tf.divide(err_rate_P_CI, err_rate_P_NI + err_eps) - 1.0
+
+                err_rate_A_NI = 1 - E_v_RP[:,:,3]
+                err_rate_A_DI = 1 - E_v_RP[:,:,4]
+                err_rate_A_CI = 1 - E_v_RP[:,:,5]
+
+                err_rate_inc_A_DI = tf.divide(err_rate_A_DI, err_rate_A_NI + err_eps) - 1.0
+                err_rate_inc_A_CI = tf.divide(err_rate_A_CI, err_rate_A_NI + err_eps) - 1.0
+                
+                err_rate_incs = tf.stack((err_rate_inc_P_DI, err_rate_inc_P_CI, \
+                                          err_rate_inc_A_DI, err_rate_inc_A_CI), 2)
+
                 T_x = tf.concat((err_rate_incs, \
                                 Bern_Var_Err,
                                 square_diff

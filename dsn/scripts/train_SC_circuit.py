@@ -59,6 +59,15 @@ elif (C==4):
     err_inc_A = 0.2
     behavior_type = "inforoute"
     means = np.array([err_inc_P, err_inc_A, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0])
+elif (C==6):
+    err_inc_P_DI = 0.05
+    err_inc_A_DI = 0.2
+    err_inc_P_CI = 0.0
+    err_inc_A_CI = 0.0
+    behavior_type = "inforoute"
+    means = np.array([err_inc_P_DI, err_inc_P_CI, err_inc_A_DI, err_inc_A_CI, \
+                      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
+                      1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
 behavior = {
     "type": behavior_type,
