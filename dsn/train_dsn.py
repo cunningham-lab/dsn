@@ -28,6 +28,7 @@ from dsn.util.dsn_util import (
 )
 from tf_util.tf_util import (
     density_network,
+    mixture_density_network,
     log_grads,
     count_params,
     AL_cost,
@@ -35,6 +36,9 @@ from tf_util.tf_util import (
     check_init,
     load_nf_init,
 )
+
+from tf_util.stat_util import sample_gumbel
+
 from dsn.util.dsn_util import initialize_gauss_nf
 
 
@@ -42,7 +46,7 @@ def train_dsn(
     system,
     arch_dict,
     n=1000,
-    k_max=10,
+    AL_it_max=10,
     sigma_init=1.0,
     c_init_order=0,
     AL_fac=4.0,
@@ -62,7 +66,7 @@ def train_dsn(
             system (obj): Instance of tf_util.systems.system.
             arch_dict (dict): Specifies structure of approximating density network.
             n (int): Batch size.
-            k_max (int): Number of augmented Lagrangian iterations.
+            AL_it_max (int): Number of augmented Lagrangian iterations.
             sigma_init (float): Gaussian initialization standard deviation.
             c_init_order (float): Augmented Lagrangian trade-off parameter initialization.
             min_iters (int): Minimum number of training iterations per AL epoch.
@@ -93,9 +97,16 @@ def train_dsn(
     COST_GRAD_LAG = 100
     ALPHA = 0.05
 
+    K = arch_dict['K']
+    mixture = K > 1
+
     # Look for model initialization.  If not found, optimize the init.
     print('Initializing...')
-    initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
+    np.random.seed(random_seed)
+    if (not mixture):
+        initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
+    else:
+        initdir = None
     print('initdir = ', initdir)
     print('done.')
 
@@ -122,14 +133,25 @@ def train_dsn(
     else:
         support_mapping = None
 
-    Z, sum_log_det_jacobian, flow_layers = density_network(
-        W, arch_dict, support_mapping, initdir=initdir
-    )
+    if (mixture):
+        print('mixture valid')
+        G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
+        Z, sum_log_det_jacobian, log_p_c, flow_layers, alpha = mixture_density_network(
+            G, W, arch_dict, support_mapping, initdir=initdir
+        )
+    else: # mixture
+        Z, sum_log_det_jacobian, flow_layers = density_network(
+            W, arch_dict, support_mapping, initdir=initdir
+        )
 
     with tf.name_scope("Entropy"):
-        p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
-        base_log_q_z = tf.log(p0)
-        log_q_z = base_log_q_z - sum_log_det_jacobian
+        #p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
+        #base_log_q_z = tf.log(p0)
+        base_log_q_z = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
+        if (mixture):
+            log_q_z = log_p_c + base_log_q_z - sum_log_det_jacobian
+        else:
+            log_q_z = base_log_q_z - sum_log_det_jacobian
         H = -tf.reduce_mean(log_q_z)
         tf.summary.scalar("H", H)
 
@@ -178,7 +200,7 @@ def train_dsn(
     # Allow the full trace to be stored at run time.
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
-    num_diagnostic_checks = k_max * (max_iters // check_rate) + 1
+    num_diagnostic_checks = AL_it_max * (max_iters // check_rate) + 1
     nparam_vals = count_params(all_params)
     if (db):
         COST_GRAD_LOG_LEN = num_diagnostic_checks
@@ -207,9 +229,9 @@ def train_dsn(
         log_q_zs = np.zeros((num_diagnostic_checks, nsamps))
         T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
     else:
-        Zs = np.zeros((k_max + 1, nsamps, system.D))
-        log_q_zs = np.zeros((k_max + 1, nsamps))
-        T_xs = np.zeros((k_max + 1, nsamps, system.num_suff_stats))
+        Zs = np.zeros((AL_it_max + 1, nsamps, system.D))
+        log_q_zs = np.zeros((AL_it_max + 1, nsamps))
+        T_xs = np.zeros((AL_it_max + 1, nsamps, system.num_suff_stats))
 
     gamma = 0.25
     num_norms = 100
@@ -228,6 +250,9 @@ def train_dsn(
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
         feed_dict = {W: w_i, Lambda: _lambda, c: _c}
+        if (mixture):
+            g_i = np.expand_dims(sample_gumbel(n, K), 0)
+            feed_dict.update({G: g_i})
         cost_i, _cost_grads, _Z, _T_x, _H, _log_q_z, summary = sess.run(
             [cost, cost_grads, Z, T_x, H, log_q_z, summary_op], feed_dict
         )
@@ -251,7 +276,7 @@ def train_dsn(
         train_step = optimizer.apply_gradients(grads_and_vars)
 
         total_its = 1
-        for k in range(k_max):
+        for k in range(AL_it_max):
             print("AL iteration %d" % (k + 1))
             cs.append(_c)
             lambdas.append(_lambda)
@@ -263,6 +288,9 @@ def train_dsn(
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict.update({W: w_j})
+                if (mixture):
+                    g_i = np.expand_dims(sample_gumbel(n, K), 0)
+                    feed_dict.update({G: g_i})
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
                 _R = np.mean(_T_x_mu_centered[0], 0)
                 norms[j] = np.linalg.norm(_R)
@@ -276,13 +304,18 @@ def train_dsn(
 
                 w_i = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict = {W: w_i, Lambda: _lambda, c: _c}
+                if (mixture):
+                    g_i = np.expand_dims(sample_gumbel(n, K), 0)
+                    feed_dict.update({G: g_i})
 
                 # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind + 1, check_rate) == 0:
-                    feed_dict = {W: w_i, Lambda: _lambda, c: _c}
                     _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
                     print(42 * "*")
                     print("it = %d " % (cur_ind + 1))
+                    if (mixture):
+                        _alpha = sess.run(alpha)
+                        print('alpha', _alpha)
                     print("H", _H, "cost", cost_i)
                     sys.stdout.flush()
                     
@@ -378,6 +411,9 @@ def train_dsn(
                 i += 1
             w_k = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
             feed_dict = {W: w_k, Lambda: _lambda, c: _c}
+            if (mixture):
+                g_k = np.expand_dims(sample_gumbel(n, K), 0)
+                feed_dict.update({G: g_k})
             _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
 
             if (not db):
@@ -416,6 +452,9 @@ def train_dsn(
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict.update({W: w_j})
+                if (mixture):
+                    g_j = np.expand_dims(sample_gumbel(n, K), 0)
+                    feed_dict.update({G: g_j})
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
                 _R = np.mean(_T_x_mu_centered[0], 0)
                 new_norms[j] = np.linalg.norm(_R)
@@ -502,7 +541,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed,
         initialized = check_init(initdir)
         if (not initialized):
             n = 1000
-            k_max = 20
+            AL_it_max = 20
             min_iters = 2500
             max_iters = 5000
             lr_order=-3
@@ -513,7 +552,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed,
                 _, _, is_feasible = train_dsn(system,
                                               n,
                                               arch_dict,
-                                              k_max,
+                                              AL_it_max,
                                               sigma_init,
                                               c_init_order,
                                               lr_order,
