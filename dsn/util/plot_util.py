@@ -4,6 +4,7 @@ import scipy.stats
 from sklearn.manifold import TSNE
 import tensorflow as tf
 from scipy import stats
+import os
 
 """def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 	NUM_SAMPS = 200
@@ -44,7 +45,10 @@ def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
     p_values = np.zeros((n_fnames, k_max + 1, n_suff_stats))
     for i in range(n_fnames):
         fname = fnames[i]
-        npzfile = np.load(fname)
+        try:
+            npzfile = np.load(fname)
+        except:
+            continue
         mu = npzfile["mu"]
         total_samps = npzfile["T_xs"].shape[1]
 
@@ -82,8 +86,14 @@ def assess_constraints2(fnames, k_max, n_suff_stats, tol=0.1):
     AL_final_its = []
     for i in range(n_fnames):
         fname = fnames[i]
-        npzfile = np.load(fname)
+        try:
+            npzfile = np.load(fname)
+        except:
+            n_fnames = n_fnames - 1
+            continue
         mu = npzfile["mu"]
+        if (not (type(tol) == np.ndarray)):
+            tol = tol*np.ones((mu.shape[0],))
 
         for k in range(k_max + 1):
             T_xs = npzfile["T_xs"][k]
@@ -91,11 +101,11 @@ def assess_constraints2(fnames, k_max, n_suff_stats, tol=0.1):
             T_x_mean = np.mean(T_xs, 0)
             failed = False
             for j in range(n_suff_stats // 2):
-                if T_x_mean[j] < (mu[j] - tol) or (mu[j] + tol) < T_x_mean[j]:
+                if T_x_mean[j] < (mu[j] - tol[j]) or (mu[j] + tol[j]) < T_x_mean[j]:
                     failed = True
                     break
             for j in range(n_suff_stats // 2, n_suff_stats):
-                if mu[j] + tol < T_x_mean[j]:
+                if mu[j] + tol[j] < T_x_mean[j]:
                     failed = True
                     break
             if not failed:
@@ -117,6 +127,7 @@ def plot_opt(
     alpha=0.05,
     plotR2=False,
     fontsize=14,
+    tol=0.1,
 ):
     max_legendstrs = 10
     n_fnames = len(fnames)
@@ -128,18 +139,29 @@ def plot_opt(
     T_xs_list = []
     epoch_inds_list = []
     last_inds = []
+    flag = False
     for i in range(n_fnames):
         fname = fnames[i]
-        npzfile = np.load(fname)
+        if (os.path.isfile(fname)):
+            try:
+                npzfile = np.load(fname)
+            except:
+                n_fnames = n_fnames - 1
+                continue
+        else:
+            n_fnames = n_fnames - 1
+            continue
         costs = npzfile["costs"]
         Hs = npzfile["Hs"]
         R2s = npzfile["R2s"]
         mean_T_xs = npzfile["mean_T_xs"]
         T_xs = npzfile["T_xs"]
         epoch_inds = npzfile["epoch_inds"]
+        print('epoch_inds')
+        print(epoch_inds)
 
         check_rate = npzfile["check_rate"]
-        last_inds.append(npzfile["it"] // check_rate)
+        last_inds.append(npzfile['it'] // check_rate)
 
         costs_list.append(costs)
         Hs_list.append(Hs)
@@ -147,23 +169,26 @@ def plot_opt(
         mean_T_xs_list.append(mean_T_xs)
         epoch_inds_list.append(epoch_inds)
 
-        if i == 0:
+        if (not flag):
             mu = npzfile["mu"]
             check_rate = npzfile["check_rate"]
             last_ind = npzfile["it"] // check_rate
             nits = costs.shape[0]
-            k_max = npzfile["T_xs"].shape[0] - 1
+            k_max = len(epoch_inds) + 1
             iterations = np.arange(0, check_rate * nits, check_rate)
             n_suff_stats = mean_T_xs_list[0].shape[1]
             p_values, AL_final_its = assess_constraints(
                 fnames, alpha, frac_samps, k_max, n_suff_stats
             )
+            print('AL_final_its')
+            print(AL_final_its)
             if con_method == "1":
                 pass
             elif con_method == "2":
-                AL_final_its = assess_constraints2(fnames, k_max, n_suff_stats, tol=0.1)
+                AL_final_its = assess_constraints2(fnames, k_max, n_suff_stats, tol=tol)
             else:
                 raise NotImplementedError()
+            flag = True
 
     figs = []
 
@@ -186,6 +211,9 @@ def plot_opt(
         Hs = Hs_list[i]
         epoch_inds = epoch_inds_list[i]
         last_ind = last_inds[i]
+        print(i, last_ind)
+        if (np.sum(np.isnan(Hs[:last_ind])) > 0):
+            print('has nan')
         if i < 5:
             ax.plot(iterations[:last_ind], Hs[:last_ind], label=legendstrs[i])
         else:
@@ -299,7 +327,10 @@ def plot_opt(
         else:
             ymin = mu[i] - yscale_fac * np.max(median_abs_errors)
             ymax = mu[i] + yscale_fac * np.max(median_abs_errors)
-        ax.set_ylim(max(ymin, mu[i] - maxconlim), min(ymax, mu[i] + maxconlim))
+        if (np.isnan(ymin) or np.isnan(ymax)):
+            ax.set_ylim(mu[i] - maxconlim, mu[i] + maxconlim)
+        else:
+            ax.set_ylim(max(ymin, mu[i] - maxconlim), min(ymax, mu[i] + maxconlim))
         ax.set_ylabel(r"$E[T_%d(z)]$" % (i + 1), fontsize=fontsize)
         if i == (n_cols - 1):
             ax.legend(fontsize=fontsize)
@@ -346,6 +377,8 @@ def plot_opt(
 
 def coloring_from_str(c_str, system, npzfile, AL_final_it):
     cm = plt.cm.get_cmap("viridis")
+    vmin = None
+    vmax = None
     if c_str == "log_q_z":
         c = npzfile["log_q_zs"][AL_final_it]
         c_label_str = r"$log(q(z))$"
@@ -409,12 +442,18 @@ def coloring_from_str(c_str, system, npzfile, AL_final_it):
         cm = plt.cm.get_cmap("Reds")
         c_label_str = r"$\Delta_T$"
 
+    elif c_str == "hubfreq":
+        c = npzfile["T_xs"][AL_final_it, :, 0]
+        cm = plt.cm.get_cmap("jet")
+        c_label_str = r"$f_h$"
+        vmin = 0.3
+        vmax = 0.8
     else:
         # no coloring
         c = np.ones((npzfile["T_xs"].shape[1],))
         c_label_str = ""
 
-    return c, c_label_str, cm
+    return c, c_label_str, cm, vmin, vmax
 
 
 def dist_from_str(dist_str, f_str, system, npzfile, AL_final_it):
@@ -540,6 +579,7 @@ def dsn_pairplots(
     ellipses=False,
     outlier_stds=2,
     pfnames=None,
+    figsize=(10,10),
 ):
     n_fnames = len(fnames)
 
@@ -548,7 +588,7 @@ def dsn_pairplots(
     #    print("Warning: D must be at least 2. Setting D = 2.")
     #    D = 2
         # If plotting ellipses, make sure D <= |T(x)|
-    if (system.behavior["type"] == "means"):
+    if (system.behavior["type"] in ["means", "pvar"]):
         if (ellipses and D > system.num_suff_stats):
             D = system.num_suff_stats
     else:
@@ -565,7 +605,6 @@ def dsn_pairplots(
     if len(AL_final_its) == 0:
         AL_final_its = n_fnames * [-1]
 
-    figsize = (6, 6)
     figs = []
     dists = []
     for k in range(n_fnames):
@@ -574,7 +613,10 @@ def dsn_pairplots(
         if AL_final_it is None:
             print("%s has not converged so not plotting." % legendstrs[k])
             continue
-        npzfile = np.load(fname)
+        try:
+            npzfile = np.load(fname)
+        except:
+            continue
         dist, dist_label_strs = dist_from_str(
             dist_str, f_str, system, npzfile, AL_final_it
         )
@@ -582,7 +624,7 @@ def dsn_pairplots(
         if (D == 1):
             continue
 
-        c, c_label_str, cm = coloring_from_str(c_str, system, npzfile, AL_final_it)
+        c, c_label_str, cm, vmin, vmax = coloring_from_str(c_str, system, npzfile, AL_final_it)
         plot_inds, below_inds, over_inds = filter_outliers(c, outlier_stds)
         if tri:
             fig, axs = plt.subplots(D - 1, D - 1, figsize=figsize)
@@ -614,6 +656,8 @@ def dsn_pairplots(
                             cmap=cm,
                             edgecolors="k",
                             linewidths=0.25,
+                            vmin=vmin,
+                            vmax=vmax,
                         )
                         if ellipses:
                             plot_target_ellipse(ax, i, j, system, system.mu)
@@ -697,7 +741,7 @@ def dsn_pairplots(
         if (pfnames is not None and len(pfnames) > (k)):
             plt.savefig(pfnames[k])
         figs.append(fig)
-
+    plt.show()
     return dists
 
 
@@ -818,7 +862,7 @@ def dsn_tSNE(
         dist, dist_label_strs = dist_from_str(
             dist_str, "tSNE", None, npzfile, AL_final_it
         )
-        c, c_label_str, cm = coloring_from_str(c_str, system, npzfile, AL_final_it)
+        c, c_label_str, cm, _, _ = coloring_from_str(c_str, system, npzfile, AL_final_it)
         if AL_final_it is None:
             print("%s has not converged so not plotting." % legendstrs[k])
             continue

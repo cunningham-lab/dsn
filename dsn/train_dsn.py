@@ -133,7 +133,7 @@ def train_dsn(
     if (mixture):
         print('mixture valid')
         G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
-        Z, sum_log_det_jacobian, log_p_c, flow_layers, alpha = mixture_density_network(
+        Z, sum_log_det_jacobian, log_p_c, flow_layers, alpha, C = mixture_density_network(
             G, W, arch_dict, support_mapping, initdir=initdir
         )
     else: # mixture
@@ -222,11 +222,15 @@ def train_dsn(
     # Take snapshots of z and log density throughout training.
     nsamps = 1000
     if (db):
+        alphas = np.zeros((num_diagnostic_checks, K))
         Zs = np.zeros((num_diagnostic_checks, nsamps, system.D))
+        Cs = np.zeros((num_diagnostic_checks, nsamps, K))
         log_q_zs = np.zeros((num_diagnostic_checks, nsamps))
         T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
     else:
-        Zs = np.zeros((AL_it_max + 1, nsamps, system.D))
+        alphas = np.zeros((AL_it_max, K))
+        Zs = np.zeros((AL_it_max, nsamps, system.D))
+        Cs = np.zeros((AL_it_max + 1, nsamps, system.D))
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))
         T_xs = np.zeros((AL_it_max + 1, nsamps, system.num_suff_stats))
 
@@ -265,6 +269,10 @@ def train_dsn(
         costs[0] = cost_i
         check_it += 1
 
+        if (mixture):
+            _alpha, _C = sess.run([alpha, C], {G:g_i})
+            alphas[0,:] = _alpha
+            Cs[0,:,:] = _C
         Zs[0, :, :] = _Z[0, :, :]
         log_q_zs[0, :] = _log_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
@@ -320,6 +328,10 @@ def train_dsn(
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0)
 
                     if (db):
+                        if (mixture):
+                            _alpha, _C = sess.run([alpha, C], {G:g_i})
+                            alphas[check_it,:] = _alpha
+                            Cs[check_it,:,:] = _C
                         Zs[check_it, :, :] = _Z[0, :, :]
                         log_q_zs[check_it, :] = _log_q_z[0, :]
                         T_xs[check_it, :, :] = _T_x[0]
@@ -347,6 +359,8 @@ def train_dsn(
                         behavior=system.behavior,
                         mu=system.mu,
                         it=cur_ind,
+                        alphas=alphas,
+                        Cs=Cs,
                         Zs=Zs,
                         cs=cs,
                         lambdas=lambdas,
@@ -414,6 +428,10 @@ def train_dsn(
             _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
 
             if (not db):
+                if (mixture):
+                    _alpha, _C = sess.run([alpha, C], {G:g_i})
+                    alphas[k+1,:] = _alpha
+                    Cs[k+1,:,:] = _C
                 Zs[k + 1, :, :] = _Z[0, :, :]
                 log_q_zs[k + 1, :] = _log_q_z[0, :]
                 T_xs[k + 1, :, :] = _T_x[0]
@@ -490,6 +508,8 @@ def train_dsn(
         behavior=system.behavior,
         mu=system.mu,
         it=cur_ind,
+        alphas=alphas,
+        Cs=Cs,
         Zs=Zs,
         cs=cs,
         lambdas=lambdas,
