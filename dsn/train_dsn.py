@@ -103,10 +103,7 @@ def train_dsn(
     # Look for model initialization.  If not found, optimize the init.
     print('Initializing...')
     np.random.seed(random_seed)
-    if (not mixture):
-        initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
-    else:
-        initdir = None
+    initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
     print('initdir = ', initdir)
     print('done.')
 
