@@ -8,43 +8,11 @@ import os
 import time
 from matplotlib import animation
 
-"""def assess_constraints(fnames, alpha, k_max, n_suff_stats):
-	NUM_SAMPS = 200
-	n_fnames = len(fnames);
-	p_values = np.zeros((n_fnames, k_max+1, n_suff_stats));
-	for i in range(n_fnames):
-		fname = fnames[i];
-		npzfile = np.load(fname);
-		mu = npzfile['mu']
-		print(i,mu)
-
-		for k in range(k_max+1):
-			T_xs = npzfile['T_xs'][k];
-			for j in range(n_suff_stats):
-				t, p = scipy.stats.ttest_1samp(T_xs[:NUM_SAMPS,j], mu[j]);
-				if (k==0):
-					print('k=0')
-					print(j, 't', t, 'p', p)
-					print('mu', mu[j])
-					print('T', T_xs[:NUM_SAMPS,j])
-				p_values[i,k,j] = p;
-
-	AL_final_its = [];
-	for i in range(n_fnames):
-		for j in range(k_max+1):
-			con_sat = np.prod(p_values[i,j,:] > (alpha / n_suff_stats));
-			if (con_sat==1):
-				AL_final_its.append(j);
-				break;
-			if (j==(k_max)):
-				AL_final_its.append(None)
-	return p_values, AL_final_its;"""
-
-
 def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
 
     n_fnames = len(fnames)
     p_values = np.zeros((n_fnames, k_max + 1, n_suff_stats))
+    AL_final_its = []
     for i in range(n_fnames):
         fname = fnames[i]
         try:
@@ -71,12 +39,10 @@ def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
                 p_val = 2 * min(gt / boot_samps, lt / boot_samps)
                 p_values[i, k, j] = p_val
 
-    AL_final_its = []
-    for i in range(n_fnames):
-        for j in range(k_max + 1):
-            con_sat = np.prod(p_values[i, j, :] > (alpha / n_suff_stats))
+            con_sat = np.prod(p_values[i, k, :] > (alpha / n_suff_stats))
             if con_sat == 1:
-                AL_final_its.append(j)
+                print('Converged!')
+                AL_final_its.append(k)
                 break
             if j == (k_max):
                 AL_final_its.append(None)
@@ -159,8 +125,6 @@ def plot_opt(
         mean_T_xs = npzfile["mean_T_xs"]
         T_xs = npzfile["T_xs"]
         epoch_inds = npzfile["epoch_inds"]
-        print('epoch_inds')
-        print(epoch_inds)
 
         check_rate = npzfile["check_rate"]
         last_inds.append(npzfile['it'] // check_rate)
@@ -176,7 +140,7 @@ def plot_opt(
             check_rate = npzfile["check_rate"]
             last_ind = npzfile["it"] // check_rate
             nits = costs.shape[0]
-            k_max = len(epoch_inds) + 1
+            k_max = T_xs.shape[0]
             iterations = np.arange(0, check_rate * nits, check_rate)
             n_suff_stats = mean_T_xs_list[0].shape[1]
             p_values, AL_final_its = assess_constraints(
@@ -221,7 +185,10 @@ def plot_opt(
         else:
             ax.plot(iterations[:last_ind], Hs[:last_ind])
         if n_fnames == 1 and AL_final_its[i] is not None:
-            conv_it = epoch_inds[AL_final_its[i]]
+            if (epoch_inds.shape[0] < T_xs.shape[0]):
+                conv_it = iterations[AL_final_its[i]]
+            else:
+                conv_it = epoch_inds[AL_final_its[i]]
             ax.plot(
                 [conv_it, conv_it],
                 [np.min(Hs[:last_ind]), np.max(Hs[:last_ind])],
@@ -243,7 +210,10 @@ def plot_opt(
             else:
                 ax.plot(iterations[:last_ind], R2s[:last_ind])
         if n_fnames == 1 and AL_final_its[i] is not None:
-            conv_it = epoch_inds[AL_final_its[i]]
+            if (epoch_inds.shape[0] < T_xs.shape[0]):
+                conv_it = iterations[AL_final_its[i]]
+            else:
+                conv_it = epoch_inds[AL_final_its[i]]
             ax.plot(
                 [conv_it, conv_it],
                 [np.min(R2s[:last_ind]), np.max(R2s[:last_ind])],
@@ -292,7 +262,10 @@ def plot_opt(
                 num_epoch_inds = len(epoch_inds)
                 # ax.errorbar(epoch_inds, T_x_means[:num_epoch_inds], T_x_stds[:num_epoch_inds], c='r', elinewidth=3)
                 if AL_final_its[j] is not None:
-                    conv_it = epoch_inds[AL_final_its[j]]
+                    if (epoch_inds.shape[0] < T_xs.shape[0]):
+                        conv_it = iterations[AL_final_its[j]]
+                    else:
+                        conv_it = epoch_inds[AL_final_its[j]]
                     line_min = min(
                         [
                             np.min(mean_T_xs[:last_ind, i]),
@@ -982,7 +955,16 @@ def PCA(data, dims_rescaled_data=2):
     return NP.dot(evecs.T, data.T).T, evals, evecs
 
 
-def make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, epoch_inds, step, fname='temp'):
+def make_training_movie(fname, system, step, save_fname='temp'):
+    npzfile = np.load(fname)
+    Hs = npzfile['Hs']
+    Zs = npzfile['Zs']
+    log_q_zs = npzfile['log_q_zs']
+    Cs = npzfile['Cs']
+    alphas = npzfile['alphas']
+    check_rate = npzfile['check_rate']
+    epoch_inds = npzfile['epoch_inds']
+
     cm = plt.get_cmap('tab20')
     scale = 100
     Cs = np.argmax(Cs, 2)
@@ -1003,6 +985,7 @@ def make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, e
     Zs = np.transpose(Zs, [1, 0, 2])
     fig, axs = plt.subplots(D, D-1, figsize=(10,12))
     scats = []
+    Cs = Cs.astype(float) / float(K)
     for i in range(D-1):
         for j in range(1, D):
             if (D==2):
@@ -1012,25 +995,53 @@ def make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, e
             if (j > i):
                 s = size_renorm(log_q_zs[i,:M], scale)
                 scats.append(ax.scatter(Zs[:M,0,j], Zs[:M,0,i], 
-                                        s=s, c=Cs[0,:M], cmap=cm, 
+                                        s=s, c=cm(Cs[0,:M]), 
                                         edgecolors="k",
                                         linewidths=0.25,))
+                scats[-1].set_cmap(cm)
                 ax.set_xlim([-10, 10])
                 ax.set_ylim([-10, 10])
+            elif ((i==(D-2)) and j==1):
+                pass
             else:
                 ax.axis('off')
             if i == j - 1:
-                ax.set_xlabel(dist_label_strs[j], fontsize=fontsize)
-                ax.set_ylabel(dist_label_strs[i], fontsize=fontsize)
+                ax.set_xlabel(system.z_labels[j], fontsize=fontsize)
+                ax.set_ylabel(system.z_labels[i], fontsize=fontsize)
 
-    bar_ax = plt.subplot(D, 1, 1)
-    rects = bar_ax.bar(np.arange(1, K+1), alphas[0], color=cm(np.arange(K)/float(K)))
+    if (K > 1):
+        bar_ax = axs[-1,0]
+        rect_colors = np.arange(K)/float(K)
+        rects = bar_ax.bar(np.arange(1, K+1), alphas[0], color=cm(rect_colors))
+        
+        bar_ax.set_ylim([0, 3.0/K])
+        bar_ax.set_xlabel('k')
+        bar_ax.set_ylabel(r'$\alpha_k$')
+        bar_ax.spines['right'].set_visible(False)
+        bar_ax.spines['top'].set_visible(False)
+
+    # plot entropy
+    alpha = 0.05
+    frac_samps = 0.8
+    max_check = Zs.shape[0]
+    n_suff_stats = system.num_suff_stats
+    pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, max_check, n_suff_stats)
+    iterations = np.arange(0, check_rate * N, check_rate)
+    H_ax = plt.subplot(D+1, 1, 1)
+    lines = H_ax.plot(iterations, Hs, lw=1, c=color)
+    H_ax.spines["right"].set_visible(False)
+    H_ax.spines["top"].set_visible(False)
+    H_ax.set_xlabel('iterations', fontsize=fontsize)
+    H_ax.set_ylabel('entropy (H)', fontsize=fontsize)
+    if AL_final_its[0] is not None:
+        conv_it = iterations[AL_final_its[0]]
+        H_ax.plot(
+            [conv_it, conv_it],
+            [np.min(Hs), np.max(Hs)],
+            "k--",
+        )
+    pt = H_ax.plot(iterations[0], Hs[0], 'o', c=color, markersize=15)
     
-    bar_ax.set_ylim([0, 3.0/K])
-    bar_ax.set_xlabel('k')
-    bar_ax.set_ylabel(r'$\alpha_k$')
-    
-    lines = ax.plot([], [], '-', c=color)
     
 
     def animate(i):
@@ -1043,16 +1054,19 @@ def make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, e
                     s = size_renorm(log_q_zs[i,:M], scale)
                     scat = scats[ind]
                     scat.set_offsets(np.stack((Zs[:M,i,j],Zs[:M,i,ii]), 1))
-                    scat.set_array(Cs[i,:M])
+                    scat.set_color(cm(Cs[i,:M]))
                     scat.set_sizes(s)
                     ind += 1
                     
         AL_it = np.sum(epoch_inds < i*check_rate)
-        bar_ax.set_title('AL=%d' % AL_it)
-        j = 0
-        for rect in rects:
-            rect.set_height(alphas[i,j])
-            j += 1
+        H_ax.set_title('AL=%d' % AL_it)
+        if (K > 1):
+            j = 0
+            for rect in rects:
+                rect.set_height(alphas[i,j])
+                j += 1
+
+        pt[0].set_data(iterations[i], Hs[i])
 
         fig.canvas.draw()
         return lines + scats
@@ -1064,7 +1078,7 @@ def make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, e
 
     print('Making video.')
     start_time = time.time()
-    anim.save('%s.mp4' % fname, writer=writer)
+    anim.save('%s.mp4' % save_fname, writer=writer)
     end_time = time.time()
     print('Video complete after %.3f seconds.' % (end_time - start_time))
     return None
