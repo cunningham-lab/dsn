@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import sys, os
@@ -45,10 +47,11 @@ alphas = npzfile['alphas']
 check_rate = npzfile['check_rate']
 epoch_inds = npzfile['epoch_inds']
 dist_label_strs = system.z_labels
-step = 1
+step = 5
+movie_fname = savedir + 'training'
 
 start_time = time.time()
-make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, epoch_inds, step)
+make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, epoch_inds, step, movie_fname)
 end_time = time.time()
 
 print('Took %.3f seconds to make the movie.' % (end_time - start_time))
