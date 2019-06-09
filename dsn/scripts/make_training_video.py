@@ -39,19 +39,10 @@ lr_order = -3
 
 savedir = get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str)
 fname = savedir + 'opt_info.npz'
-npzfile = np.load(fname)
-Zs = npzfile['Zs']
-log_q_zs = npzfile['log_q_zs']
-Cs = npzfile['Cs']
-alphas = npzfile['alphas']
-check_rate = npzfile['check_rate']
-epoch_inds = npzfile['epoch_inds']
-dist_label_strs = system.z_labels
-step = 5
 movie_fname = savedir + 'training'
 
 start_time = time.time()
-make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, epoch_inds, step, movie_fname)
+make_training_movie(fname, system, step, movie_fname)
 end_time = time.time()
 
 print('Took %.3f seconds to make the movie.' % (end_time - start_time))
