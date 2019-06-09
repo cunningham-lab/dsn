@@ -5,6 +5,8 @@ from sklearn.manifold import TSNE
 import tensorflow as tf
 from scipy import stats
 import os
+import time
+from matplotlib import animation
 
 """def assess_constraints(fnames, alpha, k_max, n_suff_stats):
 	NUM_SAMPS = 200
@@ -978,3 +980,92 @@ def PCA(data, dims_rescaled_data=2):
     # carry out the transformation on the data using eigenvectors
     # and return the re-scaled data, eigenvalues, and eigenvectors
     return NP.dot(evecs.T, data.T).T, evals, evecs
+
+
+def make_training_movie(Zs, log_q_zs, Cs, alphas, dist_label_strs, check_rate, epoch_inds, step, fname='temp'):
+    cm = plt.get_cmap('tab20')
+    scale = 100
+    Cs = np.argmax(Cs, 2)
+    def size_renorm(x, scale=30):
+        y = (x - np.min(x))
+        y = y / np.max(y)
+        return scale*y
+    
+    color = [0.0, 0.3, 0.6]
+    M = 100
+    fontsize = 20
+
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=30, metadata=dict(artist='Me'), bitrate=1800)
+
+    K = alphas.shape[1]
+    N, _, D = Zs.shape
+    Zs = np.transpose(Zs, [1, 0, 2])
+    fig, axs = plt.subplots(D, D-1, figsize=(10,12))
+    scats = []
+    for i in range(D-1):
+        for j in range(1, D):
+            if (D==2):
+                ax = plt.gca()
+            else:
+                ax = axs[i+1,j-1]
+            if (j > i):
+                s = size_renorm(log_q_zs[i,:M], scale)
+                scats.append(ax.scatter(Zs[:M,0,j], Zs[:M,0,i], 
+                                        s=s, c=Cs[0,:M], cmap=cm, 
+                                        edgecolors="k",
+                                        linewidths=0.25,))
+                ax.set_xlim([-10, 10])
+                ax.set_ylim([-10, 10])
+            else:
+                ax.axis('off')
+            if i == j - 1:
+                ax.set_xlabel(dist_label_strs[j], fontsize=fontsize)
+                ax.set_ylabel(dist_label_strs[i], fontsize=fontsize)
+
+    bar_ax = plt.subplot(D, 1, 1)
+    rects = bar_ax.bar(np.arange(1, K+1), alphas[0], color=cm(np.arange(K)/float(K)))
+    
+    bar_ax.set_ylim([0, 3.0/K])
+    bar_ax.set_xlabel('k')
+    bar_ax.set_ylabel(r'$\alpha_k$')
+    
+    lines = ax.plot([], [], '-', c=color)
+    
+
+    def animate(i):
+        # we'll step two time-steps per frame.  This leads to nice results.
+        i = (step * i) % N
+        ind = 0
+        for ii in range(D-1):
+            for j in range(1, D):
+                if (j > ii):
+                    s = size_renorm(log_q_zs[i,:M], scale)
+                    scat = scats[ind]
+                    scat.set_offsets(np.stack((Zs[:M,i,j],Zs[:M,i,ii]), 1))
+                    scat.set_array(Cs[i,:M])
+                    scat.set_sizes(s)
+                    ind += 1
+                    
+        AL_it = np.sum(epoch_inds < i*check_rate)
+        bar_ax.set_title('AL=%d' % AL_it)
+        j = 0
+        for rect in rects:
+            rect.set_height(alphas[i,j])
+            j += 1
+
+        fig.canvas.draw()
+        return lines + scats
+
+    # instantiate the animator.
+    frames = ((N-1)//step)
+    anim = animation.FuncAnimation(fig, animate,
+                                   frames=frames, interval=30, blit=True)
+
+    print('Making video.')
+    start_time = time.time()
+    anim.save('%s.mp4' % fname, writer=writer)
+    end_time = time.time()
+    print('Video complete after %.3f seconds.' % (end_time - start_time))
+    return None
+
