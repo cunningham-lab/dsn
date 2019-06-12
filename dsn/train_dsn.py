@@ -133,7 +133,7 @@ def train_dsn(
     if (mixture):
         print('mixture valid')
         G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
-        Z, sum_log_det_jacobian, log_p_c, flow_layers, alpha, C = mixture_density_network(
+        Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, C = mixture_density_network(
             G, W, arch_dict, support_mapping, initdir=initdir
         )
     else: # mixture
@@ -144,10 +144,10 @@ def train_dsn(
     with tf.name_scope("Entropy"):
         #p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
         #base_log_q_z = tf.log(p0)
-        base_log_q_z = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
         if (mixture):
-            log_q_z = log_p_c + base_log_q_z - sum_log_det_jacobian
+            log_q_z = log_base_density - sum_log_det_jacobian
         else:
+            base_log_q_z = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
             log_q_z = base_log_q_z - sum_log_det_jacobian
         H = -tf.reduce_mean(log_q_z)
         tf.summary.scalar("H", H)

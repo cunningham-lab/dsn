@@ -42,11 +42,11 @@ system = Linear2D(fixed_params, behavior)
 n = 1000
 AL_it_max = 2
 lr_order = -3
-min_iters = 1000
-max_iters = 1000
+min_iters = 5000
+max_iters = 5000
 check_rate = 10
 dist_seed = 0
-dir_str = "Linear2D/"
+dir_str = "test"
 
 
 np.random.seed(dist_seed)

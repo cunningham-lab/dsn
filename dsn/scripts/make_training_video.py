@@ -17,7 +17,8 @@ K = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
-if (dir_str == 'Linear2D'):
+print(1)
+if (dir_str == 'Linear2D' or 'test'):
     fixed_params = {"tau": 1.0}
     omega = 1
     mu = np.array([0.0, 2 * np.pi * omega])
@@ -37,10 +38,12 @@ arch_dict = {
 
 lr_order = -3
 
+print(2)
 savedir = get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str)
 fname = savedir + 'opt_info.npz'
 movie_fname = savedir + 'training'
 
+step = 100
 start_time = time.time()
 make_training_movie(fname, system, step, movie_fname)
 end_time = time.time()
