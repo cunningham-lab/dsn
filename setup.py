@@ -8,6 +8,6 @@ setup(name='dsn',
       author='Sean Bittner',
       author_email='srb2201@columbia.edu',
       install_requires=['numpy', 'tensorflow==1.13.1', \
-                        'statsmodels', 'matplotlib', 'scikit-learn'],
+                        'statsmodels', 'matplotlib', 'scikit-learn', 'scipy'],
       packages=['dsn', 'dsn.util'],
      )
