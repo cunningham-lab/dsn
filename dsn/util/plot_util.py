@@ -44,7 +44,7 @@ def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
                 print('Converged!')
                 AL_final_its.append(k)
                 break
-            if j == (k_max):
+            if k == (k_max):
                 AL_final_its.append(None)
     return p_values, AL_final_its
 
@@ -140,13 +140,13 @@ def plot_opt(
             check_rate = npzfile["check_rate"]
             last_ind = npzfile["it"] // check_rate
             nits = costs.shape[0]
-            k_max = T_xs.shape[0]
+            k_max = T_xs.shape[0] - 1
             iterations = np.arange(0, check_rate * nits, check_rate)
             n_suff_stats = mean_T_xs_list[0].shape[1]
             p_values, AL_final_its = assess_constraints(
                 fnames, alpha, frac_samps, k_max, n_suff_stats
             )
-            print('AL_final_its')
+            print('al final')
             print(AL_final_its)
             if con_method == "1":
                 pass
@@ -177,7 +177,6 @@ def plot_opt(
         Hs = Hs_list[i]
         epoch_inds = epoch_inds_list[i]
         last_ind = last_inds[i]
-        print(i, last_ind)
         if (np.sum(np.isnan(Hs[:last_ind])) > 0):
             print('has nan')
         if i < 5:
