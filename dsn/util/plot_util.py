@@ -8,24 +8,27 @@ import os
 import time
 from matplotlib import animation
 
-def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
+def assess_constraints(fnames, alpha, frac_samps, n_suff_stats):
 
     n_fnames = len(fnames)
-    p_values = np.zeros((n_fnames, k_max + 1, n_suff_stats))
     AL_final_its = []
+    pvals_list = []
     for i in range(n_fnames):
         fname = fnames[i]
         try:
             npzfile = np.load(fname)
         except:
             continue
+        print('T_xs', npzfile["T_xs"].shape)
         mu = npzfile["mu"]
         total_samps = npzfile["T_xs"].shape[1]
+        k_max = npzfile["T_xs"].shape[0] - 1
+        p_values = np.zeros((k_max + 1, n_suff_stats))
 
         boot_samps = 200
         samps_per_boot = int(frac_samps * total_samps)
 
-        for k in range(k_max + 1):
+        for k in range(k_max):
             T_xs = npzfile["T_xs"][k]
             for j in range(n_suff_stats):
                 boot_means = np.zeros((boot_samps,))
@@ -37,16 +40,17 @@ def assess_constraints(fnames, alpha, frac_samps, k_max, n_suff_stats):
                 gt = float(np.sum(boot_means > mu[j]))
                 lt = float(np.sum(boot_means < mu[j]))
                 p_val = 2 * min(gt / boot_samps, lt / boot_samps)
-                p_values[i, k, j] = p_val
+                p_values[k, j] = p_val
 
-            con_sat = np.prod(p_values[i, k, :] > (alpha / n_suff_stats))
+            con_sat = np.prod(p_values[k, :] > (alpha / n_suff_stats))
             if con_sat == 1:
                 print('Converged!')
                 AL_final_its.append(k)
                 break
-            if k == (k_max):
+            if k == (k_max-1):
                 AL_final_its.append(None)
-    return p_values, AL_final_its
+        pvals_list.append(p_values)
+    return pvals_list, AL_final_its
 
 
 def assess_constraints2(fnames, k_max, n_suff_stats, tol=0.1):
@@ -144,7 +148,7 @@ def plot_opt(
             iterations = np.arange(0, check_rate * nits, check_rate)
             n_suff_stats = mean_T_xs_list[0].shape[1]
             p_values, AL_final_its = assess_constraints(
-                fnames, alpha, frac_samps, k_max, n_suff_stats
+                fnames, alpha, frac_samps, n_suff_stats
             )
             print('al final')
             print(AL_final_its)
@@ -1022,9 +1026,8 @@ def make_training_movie(fname, system, step, save_fname='temp'):
     # plot entropy
     alpha = 0.05
     frac_samps = 0.8
-    max_check = Zs.shape[0]
     n_suff_stats = system.num_suff_stats
-    pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, max_check, n_suff_stats)
+    pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, n_suff_stats)
     iterations = np.arange(0, check_rate * N, check_rate)
     H_ax = plt.subplot(D+1, 1, 1)
     lines = H_ax.plot(iterations, Hs, lw=1, c=color)
