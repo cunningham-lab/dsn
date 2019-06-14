@@ -12,8 +12,9 @@ os.chdir("../")
 freq = str(sys.argv[1])
 nlayers = int(sys.argv[2])
 c_init_order = int(sys.argv[3])
-sigma_init = float(sys.argv[4])
-random_seed = int(sys.argv[5])
+K = int(sys.argv[4])
+sigma_init = float(sys.argv[5])
+random_seed = int(sys.argv[6])
 
 behavior_type = "hubfreq"
 
@@ -46,35 +47,33 @@ model_opts = {"dt":dt,
 system = STGCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
-latent_dynamics = None;
-TIF_flow_type = 'PlanarFlow';
-mult_and_shift = 'post';
+flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
-             'latent_dynamics':latent_dynamics, \
-             'mult_and_shift':mult_and_shift, \
-             'TIF_flow_type':TIF_flow_type, \
+             'K':K
+             'post_affine':True, \
+             'flow_type':flow_type, \
              'repeats':nlayers};
 
 
 k_max = 20
 
-batch_size = 1000
+batch_size = 200
 lr_order = -3
 
 
 train_dsn(
     system,
     arch_dict,
-    batch_size,
-    k_max=k_max,
+    n=batch_size,
+    AL_it_max=k_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
     AL_fac=4.0,
-    min_iters=10000,
-    max_iters=10000,
+    min_iters=2000,
+    max_iters=2000,
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
     dir_str="STGCircuit",
-    db=False,
+    db=True,
 )
