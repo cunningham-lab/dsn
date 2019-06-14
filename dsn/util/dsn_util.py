@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
-import statsmodels.sandbox.distributions.mv_normal as mvd
 import matplotlib.pyplot as plt
 from tf_util.flows import (
     AffineFlowLayer,
