@@ -43,7 +43,7 @@ savedir = get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, ran
 fname = savedir + 'opt_info.npz'
 movie_fname = savedir + 'training'
 
-step = 100
+step = 1
 start_time = time.time()
 make_training_movie(fname, system, step, movie_fname)
 end_time = time.time()

@@ -133,7 +133,7 @@ def train_dsn(
     if (mixture):
         print('mixture valid')
         G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
-        Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, C = mixture_density_network(
+        Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, Mu, Sigma, C = mixture_density_network(
             G, W, arch_dict, support_mapping, initdir=initdir
         )
     else: # mixture
@@ -144,11 +144,11 @@ def train_dsn(
     with tf.name_scope("Entropy"):
         #p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
         #base_log_q_z = tf.log(p0)
-        if (mixture):
-            log_q_z = log_base_density - sum_log_det_jacobian
-        else:
-            base_log_q_z = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
-            log_q_z = base_log_q_z - sum_log_det_jacobian
+        if (not mixture):
+            log_base_density = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
+        log_q_z = log_base_density - sum_log_det_jacobian
+        base_H = -tf.reduce_mean(log_base_density)
+        sum_log_det_H = tf.reduce_mean(sum_log_det_jacobian)
         H = -tf.reduce_mean(log_q_z)
         tf.summary.scalar("H", H)
 
@@ -211,6 +211,8 @@ def train_dsn(
     # Keep track of cost, entropy, and constraint violation throughout training.
     costs = np.zeros((num_diagnostic_checks,))
     Hs = np.zeros((num_diagnostic_checks,))
+    base_Hs = np.zeros((num_diagnostic_checks,))
+    sum_log_det_Hs = np.zeros((num_diagnostic_checks,))
     R2s = np.zeros((num_diagnostic_checks,))
     mean_T_xs = np.zeros((num_diagnostic_checks, system.num_suff_stats))
 
@@ -220,18 +222,24 @@ def train_dsn(
     epoch_inds = [0]
 
     # Take snapshots of z and log density throughout training.
-    nsamps = 1000
+    nsamps = n
     if (db):
         alphas = np.zeros((num_diagnostic_checks, K))
+        mus = np.zeros((num_diagnostic_checks, K, system.D))
+        sigmas = np.zeros((num_diagnostic_checks, K, system.D))
         Zs = np.zeros((num_diagnostic_checks, nsamps, system.D))
         Cs = np.zeros((num_diagnostic_checks, nsamps, K))
         log_q_zs = np.zeros((num_diagnostic_checks, nsamps))
+        log_base_q_zs = np.zeros((num_diagnostic_checks, nsamps))
         T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
     else:
         alphas = np.zeros((AL_it_max, K))
+        mus = np.zeros((num_diagnostic_checks, K, D))
+        sigmas = np.zeros((num_diagnostic_checks, K, D))
         Zs = np.zeros((AL_it_max, nsamps, system.D))
         Cs = np.zeros((AL_it_max + 1, nsamps, system.D))
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))
+        log_base_q_zs = np.zeros((AL_it_max + 1, nsamps))
         T_xs = np.zeros((AL_it_max + 1, nsamps, system.num_suff_stats))
 
     gamma = 0.25
@@ -252,10 +260,10 @@ def train_dsn(
         w_i = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
         feed_dict = {W: w_i, Lambda: _lambda, c: _c}
         if (mixture):
-            g_i = np.expand_dims(sample_gumbel(n, K), 0)
+            g_i = np.expand_dims(sample_gumbel(nsamps, K), 0)
             feed_dict.update({G: g_i})
-        cost_i, _cost_grads, _Z, _T_x, _H, _log_q_z, summary = sess.run(
-            [cost, cost_grads, Z, T_x, H, log_q_z, summary_op], feed_dict
+        cost_i, _cost_grads, _Z, _T_x, _H, _base_H, _sld_H, _log_q_z, _log_base_q_z, summary = sess.run(
+            [cost, cost_grads, Z, T_x, H, base_H, sum_log_det_H, log_q_z, log_base_density, summary_op], feed_dict
         )
 
         summary_writer.add_summary(summary, 0)
@@ -266,15 +274,20 @@ def train_dsn(
 
         mean_T_xs[0, :] = np.mean(_T_x[0], 0)
         Hs[0] = _H
+        base_Hs[0] = _base_H
+        sum_log_det_Hs[0] = _sld_H
         costs[0] = cost_i
         check_it += 1
 
         if (mixture):
-            _alpha, _C = sess.run([alpha, C], {G:g_i})
+            _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
             alphas[0,:] = _alpha
+            mus[0,:,:] = _mu
+            sigmas[0,:,:] = _sigma
             Cs[0,:,:] = _C
         Zs[0, :, :] = _Z[0, :, :]
         log_q_zs[0, :] = _log_q_z[0, :]
+        log_base_q_zs[0, :] = _log_base_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
 
         optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr)
@@ -315,7 +328,8 @@ def train_dsn(
 
                 # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind + 1, check_rate) == 0:
-                    _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
+                    _H, _base_H, _sld_H, _T_x, _Z, _log_q_z, _log_base_q_z = \
+                        sess.run([H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density], feed_dict)
                     print(42 * "*")
                     print("it = %d " % (cur_ind + 1))
                     if (mixture):
@@ -325,15 +339,20 @@ def train_dsn(
                     sys.stdout.flush()
                     
                     Hs[check_it] = _H
+                    base_Hs[check_it] = _base_H
+                    sum_log_det_Hs[check_it] = _sld_H
                     mean_T_xs[check_it] = np.mean(_T_x[0], 0)
 
                     if (db):
                         if (mixture):
-                            _alpha, _C = sess.run([alpha, C], {G:g_i})
+                            _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
                             alphas[check_it,:] = _alpha
+                            mus[check_it,:,:] = _mu
+                            sigmas[check_it,:,:] = _sigma
                             Cs[check_it,:,:] = _C
                         Zs[check_it, :, :] = _Z[0, :, :]
                         log_q_zs[check_it, :] = _log_q_z[0, :]
+                        log_base_q_zs[check_it, :] = _log_base_q_z[0, :]
                         T_xs[check_it, :, :] = _T_x[0]
 
                     if stop_early:
@@ -353,6 +372,8 @@ def train_dsn(
                         cost_grad_vals=cost_grad_vals,
                         param_vals=param_vals,
                         Hs=Hs,
+                        base_Hs=base_Hs,
+                        sum_log_det_Hs=sum_log_det_Hs,
                         R2s=R2s,
                         mean_T_xs=mean_T_xs,
                         fixed_params=system.fixed_params,
@@ -360,11 +381,14 @@ def train_dsn(
                         mu=system.mu,
                         it=cur_ind,
                         alphas=alphas,
+                        mus=mus,
+                        sigmas=sigmas,
                         Cs=Cs,
                         Zs=Zs,
                         cs=cs,
                         lambdas=lambdas,
                         log_q_zs=log_q_zs,
+                        log_base_q_zs=log_base_q_zs,
                         T_xs=T_xs,
                         convergence_it=convergence_it,
                         check_rate=check_rate,
@@ -423,17 +447,20 @@ def train_dsn(
             w_k = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
             feed_dict = {W: w_k, Lambda: _lambda, c: _c}
             if (mixture):
-                g_k = np.expand_dims(sample_gumbel(n, K), 0)
+                g_k = np.expand_dims(sample_gumbel(nsamps, K), 0)
                 feed_dict.update({G: g_k})
-            _H, _T_x, _Z, _log_q_z = sess.run([H, T_x, Z, log_q_z], feed_dict)
+            _H, _T_x, _Z, _log_q_z, _log_base_q_z = sess.run([H, T_x, Z, log_q_z, log_base_density], feed_dict)
 
             if (not db):
                 if (mixture):
-                    _alpha, _C = sess.run([alpha, C], {G:g_i})
+                    _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
                     alphas[k+1,:] = _alpha
+                    mus[k+1,:] = _mu
+                    sigmas[k+1,:] = _sigma
                     Cs[k+1,:,:] = _C
                 Zs[k + 1, :, :] = _Z[0, :, :]
                 log_q_zs[k + 1, :] = _log_q_z[0, :]
+                log_base_q_zs[k + 1, :] = _log_base_q_z[0, :]
                 T_xs[k + 1, :, :] = _T_x[0]
             _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
             _R = np.mean(_T_x_mu_centered[0], 0)
@@ -502,6 +529,8 @@ def train_dsn(
         cost_grad_vals=cost_grad_vals,
         param_vals=param_vals,
         Hs=Hs,
+        base_Hs=base_Hs,
+        sum_log_det_Hs=sum_log_det_Hs,
         R2s=R2s,
         mean_T_xs=mean_T_xs,
         fixed_params=system.fixed_params,
@@ -509,11 +538,14 @@ def train_dsn(
         mu=system.mu,
         it=cur_ind,
         alphas=alphas,
+        mus=mus,
+        sigmas=sigmas,
         Cs=Cs,
         Zs=Zs,
         cs=cs,
         lambdas=lambdas,
         log_q_zs=log_q_zs,
+        log_base_q_zs=log_base_q_zs,
         T_xs=T_xs,
         convergence_it=convergence_it,
         check_rate=check_rate,

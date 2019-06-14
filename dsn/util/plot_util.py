@@ -961,10 +961,14 @@ def PCA(data, dims_rescaled_data=2):
 def make_training_movie(fname, system, step, save_fname='temp'):
     npzfile = np.load(fname)
     Hs = npzfile['Hs']
+    base_Hs = npzfile['base_Hs']
+    sum_log_det_Hs = npzfile['sum_log_det_Hs']
     Zs = npzfile['Zs']
     log_q_zs = npzfile['log_q_zs']
+    log_base_q_zs = npzfile['log_base_q_zs']
     Cs = npzfile['Cs']
     alphas = npzfile['alphas']
+    sigmas = npzfile['sigmas']
     check_rate = npzfile['check_rate']
     epoch_inds = npzfile['epoch_inds']
 
@@ -976,7 +980,9 @@ def make_training_movie(fname, system, step, save_fname='temp'):
         y = y / np.max(y)
         return scale*y
     
-    color = [0.0, 0.3, 0.6]
+    colors = [[0.0, 0.3, 0.6],
+              [0.0, 0.6, 0.3],
+              [0.6, 0.0, 0.3]]
     M = 100
     fontsize = 20
 
@@ -1002,8 +1008,8 @@ def make_training_movie(fname, system, step, save_fname='temp'):
                                         edgecolors="k",
                                         linewidths=0.25,))
                 scats[-1].set_cmap(cm)
-                ax.set_xlim([-10, 10])
-                ax.set_ylim([-10, 10])
+                ax.set_xlim([-15, 15])
+                ax.set_ylim([-15, 15])
             elif ((i==(D-2)) and j==1):
                 pass
             else:
@@ -1015,13 +1021,24 @@ def make_training_movie(fname, system, step, save_fname='temp'):
     if (K > 1):
         bar_ax = axs[-1,0]
         rect_colors = np.arange(K)/float(K)
-        rects = bar_ax.bar(np.arange(1, K+1), alphas[0], color=cm(rect_colors))
+        bar_rects = bar_ax.bar(np.arange(1, K+1), alphas[0], color=cm(rect_colors))
         
         bar_ax.set_ylim([0, 3.0/K])
         bar_ax.set_xlabel('k')
         bar_ax.set_ylabel(r'$\alpha_k$')
         bar_ax.spines['right'].set_visible(False)
         bar_ax.spines['top'].set_visible(False)
+
+        if (system.D > 2):
+            sigma_ax = axs[-1,1]
+            rect_colors = np.arange(K)/float(K)
+            sigma_rects = sigma_ax.bar(np.arange(1, K+1), np.prod(sigmas[0], 1), color=cm(rect_colors))
+
+            sigma_ax.set_ylim([0, 20.0])
+            sigma_ax.set_xlabel('k')
+            sigma_ax.set_ylabel(r'$\prod_d \sigma_d$')
+            sigma_ax.spines['right'].set_visible(False)
+            sigma_ax.spines['top'].set_visible(False)
 
     # plot entropy
     alpha = 0.05
@@ -1030,11 +1047,16 @@ def make_training_movie(fname, system, step, save_fname='temp'):
     pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, n_suff_stats)
     iterations = np.arange(0, check_rate * N, check_rate)
     H_ax = plt.subplot(D+1, 1, 1)
-    lines = H_ax.plot(iterations, Hs, lw=1, c=color)
+    lines = H_ax.plot(iterations, Hs, lw=1, c=colors[0])
+    lines += H_ax.plot(iterations, base_Hs, lw=1, c=colors[1])
+    lines += H_ax.plot(iterations, sum_log_det_Hs, lw=1, c=colors[2])
+    H_ax.legend(['H (entropy)', 'base H', 'SLDJ H'])
+
     H_ax.spines["right"].set_visible(False)
     H_ax.spines["top"].set_visible(False)
     H_ax.set_xlabel('iterations', fontsize=fontsize)
     H_ax.set_ylabel('entropy (H)', fontsize=fontsize)
+
     if AL_final_its[0] is not None:
         conv_it = iterations[AL_final_its[0]]
         H_ax.plot(
@@ -1042,7 +1064,10 @@ def make_training_movie(fname, system, step, save_fname='temp'):
             [np.min(Hs), np.max(Hs)],
             "k--",
         )
-    pt = H_ax.plot(iterations[0], Hs[0], 'o', c=color, markersize=15)
+    msize = 10
+    pts = H_ax.plot(iterations[0], Hs[0], 'o', c=colors[0], markersize=msize)
+    pts += H_ax.plot(iterations[0], base_Hs[0], 'o', c=colors[1], markersize=msize)
+    pts += H_ax.plot(iterations[0], sum_log_det_Hs[0], 'o', c=colors[2], markersize=msize)
     
     
 
@@ -1064,11 +1089,19 @@ def make_training_movie(fname, system, step, save_fname='temp'):
         H_ax.set_title('AL=%d' % AL_it)
         if (K > 1):
             j = 0
-            for rect in rects:
+            for rect in bar_rects:
                 rect.set_height(alphas[i,j])
                 j += 1
 
-        pt[0].set_data(iterations[i], Hs[i])
+            if (system.D > 2):
+                j = 0
+                for rect in sigma_rects:
+                    rect.set_height(np.prod(sigmas[i,j]))
+                    j += 1
+
+        pts[0].set_data(iterations[i], Hs[i])
+        pts[1].set_data(iterations[i], base_Hs[i])
+        pts[2].set_data(iterations[i], sum_log_det_Hs[i])
 
         fig.canvas.draw()
         return lines + scats
