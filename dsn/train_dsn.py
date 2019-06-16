@@ -24,6 +24,7 @@ from dsn.util.dsn_util import (
     setup_param_logging,
     initialize_adam_parameters,
     get_savedir,
+    get_savestr,
     check_convergence,
 )
 from tf_util.tf_util import (
@@ -40,6 +41,7 @@ from tf_util.tf_util import (
 from tf_util.stat_util import sample_gumbel
 
 from dsn.util.dsn_util import initialize_gauss_nf
+from dsn.util.plot_util import make_training_movie
 
 
 def train_dsn(
@@ -118,8 +120,10 @@ def train_dsn(
     # Create model save directory if doesn't exist.
     if (savedir is None):
         savedir = get_savedir(
-            system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str
+            system, arch_dict, sigma_init, c_init_order, random_seed, dir_str
         )
+    save_fname = savedir + 'opt_info.npz'
+
     if not os.path.exists(savedir):
         print("Making directory %s ." % savedir)
         os.makedirs(savedir)
@@ -367,7 +371,7 @@ def train_dsn(
                         break
 
                     np.savez(
-                        savedir + "opt_info.npz",
+                        save_fname,
                         costs=costs,
                         cost_grad_vals=cost_grad_vals,
                         param_vals=param_vals,
@@ -516,7 +520,7 @@ def train_dsn(
             final_thetas.update({all_params[i].name:sess.run(all_params[i])});
 
         np.savez(
-                savedir + "theta.npz",
+                save_fname,
                 theta=final_thetas
             )
 
@@ -524,7 +528,7 @@ def train_dsn(
     sys.stdout.flush()
                     
     np.savez(
-        savedir + "opt_info.npz",
+        save_fname,
         costs=costs,
         cost_grad_vals=cost_grad_vals,
         param_vals=param_vals,
@@ -557,6 +561,11 @@ def train_dsn(
         min_iters=min_iters,
         max_iters=max_iters,
     )
+
+    # make training movie
+    step = 1
+    video_fname = savedir + get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed) + "_video.mp4"
+    make_training_movie(save_fname, system, step, save_fname=video_fname)
 
     if (system.behavior["type"] == "feasible"):
         return costs, _Z, is_feasible
