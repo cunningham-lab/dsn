@@ -321,6 +321,7 @@ def plot_opt(
     plt.show()
 
     # plot the p-value based constraint satisfaction
+    """
     print("p values")
     n_cols = 4
     n_rows = int(np.ceil(n_fnames / n_cols))
@@ -331,6 +332,8 @@ def plot_opt(
         print(i)
         ax = plt.subplot(n_rows, n_cols, i + 1)
         for j in range(n_suff_stats):
+            print('plot opt here')
+            print(k_max, i, j)
             ax.plot(
                 np.arange(k_max + 1), p_values[i, :, j], label=r"$T_%d(z)$" % (j + 1)
             )
@@ -349,7 +352,7 @@ def plot_opt(
         ax.legend(fontsize=fontsize)
     plt.tight_layout()
     plt.show()
-
+    """
     return figs, AL_final_its, p_values
 
 
@@ -957,8 +960,18 @@ def PCA(data, dims_rescaled_data=2):
     # and return the re-scaled data, eigenvalues, and eigenvectors
     return NP.dot(evecs.T, data.T).T, evals, evecs
 
+def get_default_axlims(sysname):
+    if (sysname == 'Linear2D'):
+        xlims = [-15, 15]
+        ylims = [-15, 15]
+        return xlims, ylims
+    elif (sysname == 'STGCircuit'):
+        xlims = [0, 20]
+        ylims = [0, 20]
+        return xlims, ylims
 
-def make_training_movie(fname, system, step, save_fname='temp'):
+
+def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     npzfile = np.load(fname)
     Hs = npzfile['Hs']
     base_Hs = npzfile['base_Hs']
@@ -971,6 +984,11 @@ def make_training_movie(fname, system, step, save_fname='temp'):
     sigmas = npzfile['sigmas']
     check_rate = npzfile['check_rate']
     epoch_inds = npzfile['epoch_inds']
+
+    if (axis_lims is not None):
+        xlims, ylims = axis_lims
+    else:
+        xlims, ylims = get_default_axlims(system.name)
 
     cm = plt.get_cmap('tab20')
     scale = 100
@@ -992,13 +1010,16 @@ def make_training_movie(fname, system, step, save_fname='temp'):
     K = alphas.shape[1]
     N, _, D = Zs.shape
     Zs = np.transpose(Zs, [1, 0, 2])
-    fig, axs = plt.subplots(D, D-1, figsize=(10,12))
+    if (D == 2):
+        fig, axs = plt.subplots(2,2, figsize=(10,8))
+    else:
+        fig, axs = plt.subplots(D, D-1, figsize=(10,12))
     scats = []
     Cs = Cs.astype(float) / float(K)
     for i in range(D-1):
         for j in range(1, D):
             if (D==2):
-                ax = plt.gca()
+                ax = axs[1,1]
             else:
                 ax = axs[i+1,j-1]
             if (j > i):
@@ -1008,8 +1029,8 @@ def make_training_movie(fname, system, step, save_fname='temp'):
                                         edgecolors="k",
                                         linewidths=0.25,))
                 scats[-1].set_cmap(cm)
-                ax.set_xlim([-15, 15])
-                ax.set_ylim([-15, 15])
+                ax.set_xlim(xlims)
+                ax.set_ylim(ylims)
             elif ((i==(D-2)) and j==1):
                 pass
             else:
@@ -1019,7 +1040,10 @@ def make_training_movie(fname, system, step, save_fname='temp'):
                 ax.set_ylabel(system.z_labels[i], fontsize=fontsize)
 
     if (K > 1):
-        bar_ax = axs[-1,0]
+        if (D==2):
+            bar_ax = axs[1,0]
+        else:
+            bar_ax = axs[-1,0]
         rect_colors = np.arange(K)/float(K)
         bar_rects = bar_ax.bar(np.arange(1, K+1), alphas[0], color=cm(rect_colors))
         
@@ -1042,11 +1066,14 @@ def make_training_movie(fname, system, step, save_fname='temp'):
 
     # plot entropy
     alpha = 0.05
-    frac_samps = 0.8
+    frac_samps = 0.5
     n_suff_stats = system.num_suff_stats
     pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, n_suff_stats)
     iterations = np.arange(0, check_rate * N, check_rate)
-    H_ax = plt.subplot(D+1, 1, 1)
+    if (D==2):
+        H_ax = plt.subplot(2, 1, 1)
+    else:
+        H_ax = plt.subplot(D+1, 1, 1)
     lines = H_ax.plot(iterations, Hs, lw=1, c=colors[0])
     lines += H_ax.plot(iterations, base_Hs, lw=1, c=colors[1])
     lines += H_ax.plot(iterations, sum_log_det_Hs, lw=1, c=colors[2])
