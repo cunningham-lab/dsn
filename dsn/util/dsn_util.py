@@ -28,10 +28,15 @@ from efn.train_nf import train_nf
 
 
 def get_savedir(
-    system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str, randsearch=False
+    system, arch_dict, sigma_init, c_init_order, random_seed, dir_str, randsearch=False
 ):
     # set file I/O stuff
     resdir = "models/" + dir_str + "/"
+    savestr = get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randsearch)
+    savedir = resdir + savestr + "/"
+    return savedir
+
+def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randsearch=False):
     archstring = get_archstring(arch_dict)
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
@@ -43,63 +48,62 @@ def get_savedir(
                 sysparams += "_%s" % system.free_params[i]
 
     if (randsearch):
-        savedir = resdir + "%s_%s_%s_flow=%s_rs=%d/" % (
-            system.name,
-            sysparams,
-            system.behavior_str,
-            archstring,
-            random_seed,
-        )
+        savestr = "%s_%s_%s_flow=%s_rs=%d" % (
+                    system.name,
+                    sysparams,
+                    system.behavior_str,
+                    archstring,
+                    random_seed,
+                    )
     else:
-        savedir = resdir + "%s_%s_%s_flow=%s_sigma=%.2f_c=%d_rs=%d/" % (
-            system.name,
-            sysparams,
-            system.behavior_str,
-            archstring,
-            sigma_init,
-            c_init_order,
-            random_seed,
-        )
-    return savedir
+        savestr = "%s_%s_%s_flow=%s_sigma=%.2f_c=%d_rs=%d" % (
+                    system.name,
+                    sysparams,
+                    system.behavior_str,
+                    archstring,
+                    sigma_init,
+                    c_init_order,
+                    random_seed,
+                    )
+    return savestr
+
+    def construct_latent_dynamics(flow_dict, D_Z, T):
+        latent_dynamics = flow_dict["latent_dynamics"]
+        inits = flow_dict["inits"]
+        if "lock" in flow_dict:
+            lock = flow_dict["lock"]
+        else:
+            lock = False
+
+        if latent_dynamics == "GP":
+            layer = GP_Layer("GP_Layer", dim=D_Z, inits=inits, lock=lock)
+
+        elif latent_dynamics == "AR":
+            param_init = {
+                "alpha_init": inits["alpha_init"],
+                "sigma_init": inits["sigma_init"],
+            }
+            layer = AR_Layer(
+                "AR_Layer", dim=D_Z, T=T, P=flow_dict["P"], inits=inits, lock=lock
+            )
+
+        elif latent_dynamics == "VAR":
+            param_init = {"A_init": inits["A_init"], "sigma_init": inits["sigma_init"]}
+            layer = VAR_Layer(
+                "VAR_Layer", dim=D_Z, T=T, P=flow_dict["P"], inits=inits, lock=lock
+            )
+
+        else:
+            raise NotImplementedError()
+
+        return [layer]
 
 
-def construct_latent_dynamics(flow_dict, D_Z, T):
-    latent_dynamics = flow_dict["latent_dynamics"]
-    inits = flow_dict["inits"]
-    if "lock" in flow_dict:
-        lock = flow_dict["lock"]
-    else:
-        lock = False
-
-    if latent_dynamics == "GP":
-        layer = GP_Layer("GP_Layer", dim=D_Z, inits=inits, lock=lock)
-
-    elif latent_dynamics == "AR":
-        param_init = {
-            "alpha_init": inits["alpha_init"],
-            "sigma_init": inits["sigma_init"],
-        }
-        layer = AR_Layer(
-            "AR_Layer", dim=D_Z, T=T, P=flow_dict["P"], inits=inits, lock=lock
-        )
-
-    elif latent_dynamics == "VAR":
-        param_init = {"A_init": inits["A_init"], "sigma_init": inits["sigma_init"]}
-        layer = VAR_Layer(
-            "VAR_Layer", dim=D_Z, T=T, P=flow_dict["P"], inits=inits, lock=lock
-        )
-
-    else:
-        raise NotImplementedError()
-
-    return [layer]
-
-
-def construct_time_invariant_flow(flow_dict, D_Z, T):
-    layer_ind = 1
-    layers = []
-    TIF_flow_type = flow_dict["TIF_flow_type"]
-    repeats = flow_dict["repeats"]
+    def construct_time_invariant_flow(flow_dict, D_Z, T):
+        layer_ind = 1
+        layers = []
+        TIF_flow_type = flow_dict["TIF_flow_type"]
+        repeats = flow_dict["repeats"]
 
     if TIF_flow_type == "ScalarFlowLayer":
         flow_class = ElemMultLayer
