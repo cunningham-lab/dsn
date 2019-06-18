@@ -20,7 +20,7 @@ from tf_util.flows import (
     FullyConnectedFlowLayer,
     ElemMultLayer,
 )
-from tf_util.tf_util import count_layer_params, get_archstring
+from tf_util.tf_util import get_archstring
 import scipy.linalg
 
 from tf_util.families import family_from_str

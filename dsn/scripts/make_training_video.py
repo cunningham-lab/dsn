@@ -10,6 +10,8 @@ import time
 
 os.chdir("../")
 
+print(sys.argv)
+
 dir_str = str(sys.argv[1])
 nlayers = int(sys.argv[2])
 c_init_order = int(sys.argv[3])
@@ -59,7 +61,7 @@ arch_dict = {
 
 lr_order = -3
 
-savedir = get_savedir(system, arch_dict, sigma_init, lr_order, c_init_order, random_seed, dir_str)
+savedir = get_savedir(system, arch_dict, sigma_init, c_init_order, random_seed, dir_str)
 fname = savedir + 'opt_info.npz'
 movie_fname = savedir + 'training'
 

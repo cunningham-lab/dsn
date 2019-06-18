@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from tf_util.tf_util import count_layer_params, min_barrier, max_barrier
+from tf_util.tf_util import min_barrier, max_barrier
 from tf_util.normalizing_flows import SoftPlusFlow, IntervalFlow
 from tf_util.stat_util import approx_equal
 import scipy.stats
