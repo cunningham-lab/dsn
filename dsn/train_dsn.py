@@ -27,6 +27,9 @@ from dsn.util.dsn_util import (
     get_savestr,
     check_convergence,
 )
+from dsn.util.dsn_util import initialize_gauss_nf
+from dsn.util.plot_util import make_training_movie
+
 from tf_util.tf_util import (
     density_network,
     mixture_density_network,
@@ -37,12 +40,7 @@ from tf_util.tf_util import (
     load_nf_init,
 )
 from tf_util.normalizing_flows import count_params
-
 from tf_util.stat_util import sample_gumbel
-
-from dsn.util.dsn_util import initialize_gauss_nf
-from dsn.util.plot_util import make_training_movie
-
 
 def train_dsn(
     system,
@@ -238,8 +236,8 @@ def train_dsn(
         T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
     else:
         alphas = np.zeros((AL_it_max, K))
-        mus = np.zeros((num_diagnostic_checks, K, D))
-        sigmas = np.zeros((num_diagnostic_checks, K, D))
+        mus = np.zeros((num_diagnostic_checks, K, system.D))
+        sigmas = np.zeros((num_diagnostic_checks, K, system.D))
         Zs = np.zeros((AL_it_max, nsamps, system.D))
         Cs = np.zeros((AL_it_max + 1, nsamps, system.D))
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))
