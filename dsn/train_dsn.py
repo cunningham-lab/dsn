@@ -31,12 +31,12 @@ from tf_util.tf_util import (
     density_network,
     mixture_density_network,
     log_grads,
-    count_params,
     AL_cost,
     get_initdir,
     check_init,
     load_nf_init,
 )
+from tf_util.normalizing_flows import count_params
 
 from tf_util.stat_util import sample_gumbel
 
@@ -202,7 +202,7 @@ def train_dsn(
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
     num_diagnostic_checks = AL_it_max * (max_iters // check_rate) + 1
-    nparam_vals = count_params(all_params)
+    nparam_vals = count_params(arch_dict, system.D)
     if (db):
         COST_GRAD_LOG_LEN = num_diagnostic_checks
         param_vals = np.zeros((COST_GRAD_LOG_LEN, nparam_vals))
