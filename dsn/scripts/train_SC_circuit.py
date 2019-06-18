@@ -16,7 +16,7 @@ if (len(sys.argv) > 4):
     c_init_order = int(sys.argv[4])
     sigma_init = float(sys.argv[5])
 
-k_max = 40
+AL_it_max = 40
 
 dir_str = 'SC_test'
 if (randsearch == 1): 
@@ -40,12 +40,13 @@ else:
 nlayers = 10
 
 # create an instance of the V1_circuit system class
-fixed_params = {'E_constant':0.0, \
-                'E_Pbias':0.1, \
-                'E_Prule':0.5, \
-                'E_Arule':0.5, \
-                'E_choice':-0.2, \
-                'E_light':0.1};
+#fixed_params = {'E_constant':0.0, \
+#                'E_Pbias':0.1, \
+#                'E_Prule':0.5, \
+#                'E_Arule':0.5, \
+#                'E_choice':-0.2, \
+#                'E_light':0.1};
+fixed_params = {}
 
 C = 4
 
@@ -79,12 +80,11 @@ system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
 latent_dynamics = None;
-TIF_flow_type = 'PlanarFlow';
-mult_and_shift = 'post';
+flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
-             'latent_dynamics':latent_dynamics, \
-             'mult_and_shift':mult_and_shift, \
-             'TIF_flow_type':TIF_flow_type, \
+             'K':1,
+             'post_affine':True, \
+             'flow_type':flow_type, \
              'repeats':nlayers};
 
 lr_order = -3
@@ -92,7 +92,6 @@ lr_order = -3
 savedir = get_savedir(system, 
                       arch_dict, 
                       sigma_init, 
-                      lr_order, 
                       c_init_order, 
                       random_seed, 
                       dir_str, 
@@ -111,7 +110,7 @@ train_dsn(
     system,
     arch_dict,
     batch_size,
-    k_max=k_max,
+    AL_it_max=AL_it_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
     AL_fac=AL_fac,
