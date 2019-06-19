@@ -47,17 +47,15 @@ init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
 system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
 # set up DSN architecture
-latent_dynamics = None;
-TIF_flow_type = 'PlanarFlow';
-mult_and_shift = 'post';
+flow_type = 'PlanarFlow';
+post_affine = True
 arch_dict = {'D':system.D, \
-             'latent_dynamics':latent_dynamics, \
-             'mult_and_shift':mult_and_shift, \
-             'TIF_flow_type':TIF_flow_type, \
+             'K':1, \
+             'flow_type':flow_type, \
+             'post_affine':post_affine, \
              'repeats':nlayers};
 
-
-k_max = 40
+AL_it_max = 40
 
 batch_size = 1000
 lr_order = -3
@@ -67,7 +65,7 @@ train_dsn(
     system,
     arch_dict,
     batch_size,
-    k_max=k_max,
+    AL_it_max=AL_it_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
     AL_fac=AL_fac, 
