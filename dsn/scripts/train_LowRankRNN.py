@@ -31,18 +31,18 @@ system = LowRankRNN(
 )
 
 # set up DSN architecture
-latent_dynamics = None
-TIF_flow_type = "PlanarFlow"
-mult_and_shift = "post"
+flow_type = "PlanarFlow"
+post_affine = True
 arch_dict = {
     "D": system.D,
-    "latent_dynamics": latent_dynamics,
-    "mult_and_shift": mult_and_shift,
-    "TIF_flow_type": TIF_flow_type,
+    "K": 1, 
+    "post_affine": post_affine,
+    "flow_type": flow_type,
     "repeats": nlayers,
 }
 
-k_max = 40
+AL_fac = 4.0
+AL_it_max = 40
 batch_size = 1000
 lr_order = -3
 min_iters = 1000
@@ -51,15 +51,16 @@ max_iters = 2000
 
 train_dsn(
     system,
-    batch_size,
     arch_dict,
-    k_max=k_max,
+    batch_size,
+    AL_it_max=AL_it_max,
     sigma_init=sigma_init,
     c_init_order=c_init_order,
-    lr_order=lr_order,
-    random_seed=random_seed,
+    AL_fac=AL_fac,
     min_iters=min_iters,
     max_iters=max_iters,
+    random_seed=random_seed,
+    lr_order=lr_order,
     check_rate=100,
     dir_str="test",
 )
