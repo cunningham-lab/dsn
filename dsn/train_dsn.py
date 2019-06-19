@@ -200,7 +200,7 @@ def train_dsn(
     run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 
     num_diagnostic_checks = AL_it_max * (max_iters // check_rate) + 1
-    nparam_vals = count_params(arch_dict, system.D)
+    nparam_vals = count_params(arch_dict)
     if (db):
         COST_GRAD_LOG_LEN = num_diagnostic_checks
         param_vals = np.zeros((COST_GRAD_LOG_LEN, nparam_vals))
