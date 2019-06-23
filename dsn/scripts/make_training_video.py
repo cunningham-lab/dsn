@@ -19,6 +19,9 @@ K = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
+if (K > 1):
+    sigma0 = float(sys.argv[7])
+
 if (dir_str in ['Linear2D', 'test']):
     print('other here')
     fixed_params = {"tau": 1.0}
@@ -54,6 +57,7 @@ mult_and_shift = "post"
 arch_dict = {
     "D": system.D,
     "K": K,
+    "sigma0":sigma0, 
     "flow_type": flow_type,
     "repeats": nlayers,
     "post_affine": True,
