@@ -6,4 +6,4 @@
 #SBATCH --mem-per-cpu=2gb
 
 source activate dsn
-python3 train_linear_2D.py $1 $2 $3 $4
+python3 train_linear_2D.py $1 $2 $3 $4 $5

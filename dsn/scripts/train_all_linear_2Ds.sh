@@ -8,7 +8,7 @@ do
     do
       for rs in {1..5}
       do
-        sbatch train_linear_2D.sh $num_masks $nlayers $upl $rs
+        sbatch train_linear_2D.sh $num_masks $nlayers $upl $rs 0.5
       done
     done
   done
