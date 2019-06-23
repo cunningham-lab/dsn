@@ -239,7 +239,7 @@ def train_dsn(
         mus = np.zeros((num_diagnostic_checks, K, system.D))
         sigmas = np.zeros((num_diagnostic_checks, K, system.D))
         Zs = np.zeros((AL_it_max, nsamps, system.D))
-        Cs = np.zeros((AL_it_max + 1, nsamps, system.D))
+        Cs = np.zeros((AL_it_max + 1, nsamps, K))
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))
         log_base_q_zs = np.zeros((AL_it_max + 1, nsamps))
         T_xs = np.zeros((AL_it_max + 1, nsamps, system.num_suff_stats))
