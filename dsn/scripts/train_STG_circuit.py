@@ -16,6 +16,9 @@ K = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
+if (K > 1):
+    sigma0 = float(sys.argv[7])
+
 behavior_type = "hubfreq"
 
 if (freq == "high"):
@@ -49,17 +52,19 @@ system = STGCircuit(fixed_params, behavior, model_opts)
 # set up DSN architecture
 flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
-             'K':K
+             'K':K, \
+             'sigma0':sigma0, \
              'post_affine':True, \
              'flow_type':flow_type, \
              'repeats':nlayers};
 
 
-k_max = 20
+k_max = 10
 
 batch_size = 200
 lr_order = -3
 
+iters = 10000
 
 train_dsn(
     system,
@@ -69,8 +74,8 @@ train_dsn(
     sigma_init=sigma_init,
     c_init_order=c_init_order,
     AL_fac=4.0,
-    min_iters=2000,
-    max_iters=2000,
+    min_iters=iters,
+    max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
