@@ -13,7 +13,8 @@ nlayers = int(sys.argv[1])
 c_init_order = int(sys.argv[2])
 K = int(sys.argv[3])
 sigma_init = float(sys.argv[4])
-random_seed = int(sys.argv[5])
+sigma0 = float(sys.argv[5])
+random_seed = int(sys.argv[6])
 
 D = 4
 
@@ -22,6 +23,7 @@ mult_and_shift = "post"
 arch_dict = {
     "D": D,
     "K": K,
+    "sigma0":sigma0,
     "flow_type": flow_type,
     "repeats": nlayers,
     "post_affine": True,
@@ -39,12 +41,12 @@ behavior = {"type": "oscillation", "means": mu, "variances": Sigma}
 system = Linear2D(fixed_params, behavior)
 
 
-n = 1000
+n = 100
 AL_it_max = 2
 lr_order = -3
-min_iters = 5000
-max_iters = 5000
-check_rate = 10
+min_iters = 2000
+max_iters = 2000
+check_rate = 100
 dist_seed = 0
 dir_str = "test"
 
