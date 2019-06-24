@@ -349,7 +349,7 @@ class STGCircuit(system):
         self.fft_start = model_opts['fft_start']
         self.w = model_opts['w']
         self.has_support_map = True
-        self.density_network_init_mu = np.array([4.0, 4.0])
+        self.density_network_init_mu = np.array([2.0, 2.0])
         self.density_network_bounds = [0.0, 20.0]
 
     def get_all_sys_params(self,):
