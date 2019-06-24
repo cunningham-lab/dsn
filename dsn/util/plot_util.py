@@ -968,6 +968,9 @@ def get_default_axlims(sysname):
     elif (sysname == 'STGCircuit'):
         xlims = [0, 20]
         ylims = [0, 20]
+    elif (sysname == 'V1Circuit'):
+        xlims = [0, 5]
+        ylims = [0, 5]
         return xlims, ylims
 
 
@@ -1069,11 +1072,12 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     frac_samps = 0.5
     n_suff_stats = system.num_suff_stats
     pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, n_suff_stats)
-    iterations = np.arange(0, check_rate * N, check_rate)
+    iterations = np.arange(0, check_rate * Hs.shape[0], check_rate)
     if (D==2):
         H_ax = plt.subplot(2, 1, 1)
     else:
         H_ax = plt.subplot(D+1, 1, 1)
+        
     lines = H_ax.plot(iterations, Hs, lw=1, c=colors[0])
     lines += H_ax.plot(iterations, base_Hs, lw=1, c=colors[1])
     lines += H_ax.plot(iterations, sum_log_det_Hs, lw=1, c=colors[2])
@@ -1099,7 +1103,8 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     
 
     def animate(i):
-        # we'll step two time-steps per frame.  This leads to nice results.
+        print('i', i)
+        # we'll step k time-steps per frame.
         i = (step * i) % N
         ind = 0
         for ii in range(D-1):
@@ -1126,9 +1131,13 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
                     rect.set_height(np.prod(sigmas[i,j]))
                     j += 1
 
-        pts[0].set_data(iterations[i], Hs[i])
-        pts[1].set_data(iterations[i], base_Hs[i])
-        pts[2].set_data(iterations[i], sum_log_det_Hs[i])
+        if (Hs.shape[0] > Zs.shape[0]):
+            ind = epoch_inds[i]//check_rate
+        else:
+            ind = i
+        pts[0].set_data(iterations[ind], Hs[ind])
+        pts[1].set_data(iterations[ind], base_Hs[ind])
+        pts[2].set_data(iterations[ind], sum_log_det_Hs[ind])
 
         fig.canvas.draw()
         return lines + scats
