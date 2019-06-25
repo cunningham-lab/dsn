@@ -737,6 +737,7 @@ def pairplot(
     c=None,
     c_label=None,
     cmap=None,
+    ss=False,
     fontsize=12,
     figsize=(12, 12),
     pfname="images/temp.png",
@@ -748,6 +749,7 @@ def pairplot(
         c = c[rand_order]
         plot_inds, below_inds, over_inds = filter_outliers(c, 2)
 
+    size = 10 
     fig, axs = plt.subplots(num_dims - 1, num_dims - 1, figsize=figsize)
     for i in range(num_dims - 1):
         dim_i = dims[i]
@@ -761,6 +763,11 @@ def pairplot(
                 if (xlims is not None) and (ylims is not None) and origin:
                     ax.plot(xlims, [0, 0], c=0.5 * np.ones(3), linestyle="--")
                     ax.plot([0, 0], ylims, c=0.5 * np.ones(3), linestyle="--")
+                if (ss):
+                    M=Z.shape[0]
+                    ax.plot(np.reshape(Z[:,dim_j].T, (M//2, 2)),
+                             np.reshape(Z[:,dim_i].T, (M//2, 2)),
+                             'k', lw=0.2)
                 if c is not None:
                     ax.scatter(
                         Z[below_inds, dim_j],
@@ -768,6 +775,7 @@ def pairplot(
                         c="w",
                         edgecolors="k",
                         linewidths=0.25,
+                        s=size,
                     )
                     ax.scatter(
                         Z[over_inds, dim_j],
@@ -775,6 +783,7 @@ def pairplot(
                         c="k",
                         edgecolors="k",
                         linewidths=0.25,
+                        s=size,
                     )
                     h = ax.scatter(
                         Z[plot_inds, dim_j],
@@ -783,6 +792,7 @@ def pairplot(
                         cmap=cmap,
                         edgecolors="k",
                         linewidths=0.25,
+                        s=size,
                     )
                 else:
                     h = ax.scatter(
@@ -980,6 +990,7 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     base_Hs = npzfile['base_Hs']
     sum_log_det_Hs = npzfile['sum_log_det_Hs']
     Zs = npzfile['Zs']
+    mean_T_xs = npzfile['mean_T_xs']
     log_q_zs = npzfile['log_q_zs']
     log_base_q_zs = npzfile['log_base_q_zs']
     Cs = npzfile['Cs']
@@ -987,6 +998,7 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     sigmas = npzfile['sigmas']
     check_rate = npzfile['check_rate']
     epoch_inds = npzfile['epoch_inds']
+    last_ind = npzfile['it'] // check_rate
 
     if (axis_lims is not None):
         xlims, ylims = axis_lims
@@ -1014,17 +1026,17 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     N, _, D = Zs.shape
     Zs = np.transpose(Zs, [1, 0, 2])
     if (D == 2):
-        fig, axs = plt.subplots(2,2, figsize=(10,8))
+        fig, axs = plt.subplots(3,2, figsize=(10,8))
     else:
-        fig, axs = plt.subplots(D, D-1, figsize=(10,12))
+        fig, axs = plt.subplots(D+1, D-1, figsize=(14,12))
     scats = []
     Cs = Cs.astype(float) / float(K)
     for i in range(D-1):
         for j in range(1, D):
             if (D==2):
-                ax = axs[1,1]
+                ax = axs[2,1]
             else:
-                ax = axs[i+1,j-1]
+                ax = axs[i+2,j-1]
             if (j > i):
                 s = size_renorm(log_q_zs[i,:M], scale)
                 scats.append(ax.scatter(Zs[:M,0,j], Zs[:M,0,i], 
@@ -1044,7 +1056,7 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
 
     if (K > 1):
         if (D==2):
-            bar_ax = axs[1,0]
+            bar_ax = axs[2,0]
         else:
             bar_ax = axs[-1,0]
         rect_colors = np.arange(K)/float(K)
@@ -1074,19 +1086,20 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, n_suff_stats)
     iterations = np.arange(0, check_rate * Hs.shape[0], check_rate)
     if (D==2):
-        H_ax = plt.subplot(2, 1, 1)
+        H_ax = plt.subplot(3, 1, 1)
     else:
-        H_ax = plt.subplot(D+1, 1, 1)
+        H_ax = plt.subplot(D+2, 1, 1)
         
     lines = H_ax.plot(iterations, Hs, lw=1, c=colors[0])
     lines += H_ax.plot(iterations, base_Hs, lw=1, c=colors[1])
     lines += H_ax.plot(iterations, sum_log_det_Hs, lw=1, c=colors[2])
     H_ax.legend(['H (entropy)', 'base H', 'SLDJ H'])
 
+    font_fac = 0.6
     H_ax.spines["right"].set_visible(False)
     H_ax.spines["top"].set_visible(False)
-    H_ax.set_xlabel('iterations', fontsize=fontsize)
-    H_ax.set_ylabel('entropy (H)', fontsize=fontsize)
+    H_ax.set_xlabel('iterations', fontsize=fontsize*font_fac)
+    H_ax.set_ylabel('entropy (H)', fontsize=fontsize*font_fac)
 
     if AL_final_its[0] is not None:
         conv_it = iterations[AL_final_its[0]]
@@ -1099,13 +1112,34 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     pts = H_ax.plot(iterations[0], Hs[0], 'o', c=colors[0], markersize=msize)
     pts += H_ax.plot(iterations[0], base_Hs[0], 'o', c=colors[1], markersize=msize)
     pts += H_ax.plot(iterations[0], sum_log_det_Hs[0], 'o', c=colors[2], markersize=msize)
-    
+   
+    ncons = system.num_suff_stats//2
+    con_pts = []
+    for i in range(ncons):
+        if (D==2):
+            con_ax = plt.subplot(3, ncons, ncons+i+1)
+        else:
+            con_ax = plt.subplot(D+2, ncons, ncons+i+1)
+        lines = con_ax.plot(iterations, mean_T_xs[:,i], lw=1, c=colors[0])
+        con_ax.plot([0, iterations[-1]], [system.mu[i], system.mu[i]], 'k--')
+        con_ax.spines["right"].set_visible(False)
+        con_ax.spines["top"].set_visible(False)
+        con_ax.set_xlabel('iterations', fontsize=fontsize*font_fac)
+        con_ax.set_ylabel(system.T_x_labels[i], fontsize=fontsize*font_fac)
+
+        yfac = 5.0
+        mean_abs_err = np.median(np.abs(mean_T_xs[(last_ind // 2) : last_ind, i] - system.mu[i]))
+        con_ax.set_ylim([system.mu[i] - yfac*mean_abs_err, system.mu[i] + yfac*mean_abs_err])
+
+        con_pts.append(con_ax.plot(iterations[0], mean_T_xs[0,i], 'o', c=colors[0], markersize=msize))
+   
+
     
 
     def animate(i):
-        print('i', i)
         # we'll step k time-steps per frame.
         i = (step * i) % N
+        print('i', i)
         ind = 0
         for ii in range(D-1):
             for j in range(1, D):
@@ -1131,7 +1165,8 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
                     rect.set_height(np.prod(sigmas[i,j]))
                     j += 1
 
-        if (Hs.shape[0] > Zs.shape[0]):
+        print(Hs.shape, Zs.shape)
+        if (not Hs.shape[0]==iterations.shape[0]):
             ind = epoch_inds[i]//check_rate
         else:
             ind = i
@@ -1139,11 +1174,15 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
         pts[1].set_data(iterations[ind], base_Hs[ind])
         pts[2].set_data(iterations[ind], sum_log_det_Hs[ind])
 
+        for j in range(ncons):
+            con_pts[j][0].set_data(iterations[ind], mean_T_xs[ind,j])
+        
         fig.canvas.draw()
         return lines + scats
 
     # instantiate the animator.
     frames = ((N-1)//step)
+    print('# frames', frames)
     anim = animation.FuncAnimation(fig, animate,
                                    frames=frames, interval=30, blit=True)
 

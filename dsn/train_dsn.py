@@ -237,7 +237,7 @@ def train_dsn(
     else:
         alphas = np.zeros((AL_it_max + 1, K))
         mus = np.zeros((AL_it_max + 1, K, system.D))
-        sigmas = np.zeros(((AL_it_max + 1, K, system.D))
+        sigmas = np.zeros((AL_it_max + 1, K, system.D))
         Zs = np.zeros((AL_it_max + 1, nsamps, system.D))
         Cs = np.zeros((AL_it_max + 1, nsamps, K))
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))

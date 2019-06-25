@@ -742,8 +742,8 @@ class V1Circuit(system):
         fixed_params,
         behavior,
         model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r"},
-        T=40,
-        dt=0.25,
+        T=50,
+        dt=0.05,
         init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1),
     ):
         self.model_opts = model_opts
@@ -756,8 +756,8 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 0.2*np.ones((self.D,))
-        self.density_network_bounds = [0.0, 1.0]
+        self.density_network_init_mu = 0.1*np.ones((self.D,))
+        self.density_network_bounds = [0.0, 5.0]
         # compute number of conditions C
         self.has_support_map = True
 
@@ -802,10 +802,10 @@ class V1Circuit(system):
             all_param_labels (list): List of tex strings for all parameters.
         """
         all_params = [
-            "W_EE",
-            "W_PE",
-            "W_SE",
-            "W_VE",
+            "W_E",
+            #"W_PE",
+            #"W_SE",
+            #"W_VE",
             "W_EP",
             "W_PP",
             "W_VP",
@@ -832,10 +832,10 @@ class V1Circuit(system):
             "s_0",
         ]
         all_param_labels = {
-            "W_EE": [r"$W_{EE}$"],
-            "W_PE": [r"$W_{PE}$"],
-            "W_SE": [r"$W_{SE}$"],
-            "W_VE": [r"$W_{VE}$"],
+            "W_E": [r"$W_{E}$"],
+            #"W_PE": [r"$W_{PE}$"],
+            #"W_SE": [r"$W_{SE}$"],
+            #"W_VE": [r"$W_{VE}$"],
             "W_EP": [r"$W_{EP}$"],
             "W_PP": [r"$W_{PP}$"],
             "W_VP": [r"$W_{VP}$"],
@@ -965,14 +965,14 @@ class V1Circuit(system):
         ind = 0
         for free_param in self.free_params:
             # W_XE column
-            if free_param == "W_EE":
-                W_EE = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "W_PE":
-                W_PE = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "W_SE":
-                W_SE = tf.tile(z[:, :, ind], [self.C, 1])
-            elif free_param == "W_VE":
-                W_VE = tf.tile(z[:, :, ind], [self.C, 1])
+            if free_param == "W_E":
+                W_E = tf.tile(z[:, :, ind], [self.C, 1])
+            #elif free_param == "W_PE":
+            #    W_PE = tf.tile(z[:, :, ind], [self.C, 1])
+            #elif free_param == "W_SE":
+            #    W_SE = tf.tile(z[:, :, ind], [self.C, 1])
+            #elif free_param == "W_VE":
+            #    W_VE = tf.tile(z[:, :, ind], [self.C, 1])
 
             # W_XP column
             elif free_param == "W_EP":
@@ -1044,22 +1044,22 @@ class V1Circuit(system):
 
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
-            if fixed_param == "W_EE":
-                W_EE = self.fixed_params[fixed_param] * tf.ones(
+            if fixed_param == "W_E":
+                W_E = self.fixed_params[fixed_param] * tf.ones(
                     (self.C, M), dtype=DTYPE
                 )
-            elif fixed_param == "W_PE":
-                W_PE = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            elif fixed_param == "W_SE":
-                W_SE = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            elif fixed_param == "W_VE":
-                W_VE = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
+            #elif fixed_param == "W_PE":
+            #    W_PE = self.fixed_params[fixed_param] * tf.ones(
+            #        (self.C, M), dtype=DTYPE
+            #    )
+            #elif fixed_param == "W_SE":
+            #    W_SE = self.fixed_params[fixed_param] * tf.ones(
+            #        (self.C, M), dtype=DTYPE
+            #    )
+            #elif fixed_param == "W_VE":
+            #    W_VE = self.fixed_params[fixed_param] * tf.ones(
+            #        (self.C, M), dtype=DTYPE
+            #    )
 
             elif fixed_param == "W_EP":
                 W_EP = self.fixed_params[fixed_param] * tf.ones(
@@ -1141,14 +1141,14 @@ class V1Circuit(system):
 
         # Gather weights into the dynamics matrix W [C,M,4,4]
         W_EX = tf.stack(
-            [W_EE, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            [W_E, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
         W_PX = tf.stack(
-            [W_PE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            [W_E, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
         W_SX = tf.stack(
             [
-                W_SE,
+                W_E,
                 tf.zeros((self.C, M), dtype=DTYPE),
                 tf.zeros((self.C, M), dtype=DTYPE),
                 -W_SV,
@@ -1156,7 +1156,7 @@ class V1Circuit(system):
             axis=2,
         )
         W_VX = tf.stack(
-            [W_VE, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            [W_E, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
         W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2)
 
@@ -1394,12 +1394,13 @@ class V1Circuit(system):
             variances = self.behavior["d_var"]
         elif self.behavior["type"] == "difference":
             assert(approx_equal(self.behavior['r_vals'], np.array([0.0, 1.0]), 1e-16))
+            fac = self.behavior['fac']
             datadir = 'data/V1/'
             fname = datadir + 'ProcessedData.mat'
             M = sio.loadmat(fname)
             s_data = M['ProcessedData']['StimulusSize_deg'][0,0][0]
-            DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0]
-            SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0]
+            DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0] / fac
+            SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0] / fac
             s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
             
             DifferenceLS = DifferenceLS[:,s_inds].T # C x D
@@ -1423,7 +1424,8 @@ class V1Circuit(system):
         # Returns
             Z (np.array): Samples from the DSN at the final layer.
         """
-        return SoftPlusFlow([], inputs)
+        a, b = self.density_network_bounds
+        return IntervalFlow([], inputs, np.array([a]), np.array([b]))
 
 
 class SCCircuit(system):
