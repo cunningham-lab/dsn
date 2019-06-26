@@ -981,7 +981,7 @@ def get_default_axlims(sysname):
     elif (sysname == 'V1Circuit'):
         xlims = [0, 5]
         ylims = [0, 5]
-        return xlims, ylims
+    return xlims, ylims
 
 
 def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
