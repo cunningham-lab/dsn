@@ -1402,9 +1402,10 @@ class V1Circuit(system):
             DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0] / fac
             SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0] / fac
             s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
-            
-            DifferenceLS = DifferenceLS[:,s_inds].T # C x D
-            SEMDifferenceLS = SEMDifferenceLS[:,s_inds].T # C x D
+           
+            cell_ord = [3,2,0,1]
+            DifferenceLS = DifferenceLS[cell_ord,s_inds].T # C x D
+            SEMDifferenceLS = SEMDifferenceLS[cell_ord,s_inds].T # C x D
 
             D = 4
             means = np.reshape(DifferenceLS, ((self.C//2) * D))
