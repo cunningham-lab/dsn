@@ -756,8 +756,8 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 0.1*np.ones((self.D,))
-        self.density_network_bounds = [0.0, 5.0]
+        self.density_network_init_mu = 1.0*np.ones((self.D,))
+        self.density_network_bounds = [0.0, 20.0]
         # compute number of conditions C
         self.has_support_map = True
 
