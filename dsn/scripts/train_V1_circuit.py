@@ -46,11 +46,14 @@ c_vals=np.array([1.0])
 s_vals=np.array([s])
 r_vals=np.array([0.0, 1.0])
 fac = 10.0
+C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
+bounds = np.zeros((C*4,))
 behavior = {'type':behavior_type, \
             'c_vals':c_vals, \
             's_vals':s_vals, \
             'r_vals':r_vals, \
-            'fac':fac}
+            'fac':fac,
+            'bounds':bounds}
 
 # set model options
 model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"} 

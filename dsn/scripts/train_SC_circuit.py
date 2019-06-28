@@ -48,7 +48,7 @@ nlayers = 10
 #                'E_light':0.1};
 fixed_params = {}
 
-C = 4
+C = 2
 
 if (C==2):
     p_NI = 0.8
@@ -73,6 +73,7 @@ elif (C==6):
 behavior = {
     "type": behavior_type,
     "means": means,
+    "bounds":np.zeros(C),
 }
 
 model_opts = {"params":param_str, "C":C}
@@ -119,7 +120,7 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
-    dir_str=None,
+    dir_str='test',
     savedir=savedir,
     entropy=True,
     db=False,
