@@ -1238,6 +1238,23 @@ class V1Circuit(system):
 
         return h
 
+    def compute_I_x(self, z, T_x):
+        # Not efficient (repeated computation) 
+        # but convenient modularization for now
+        t = 1.0
+        bounds = self.behavior["bounds"]
+        r_ss = self.r_t[-1,:,:,:,0] # (C x M x 4)
+
+        barriers = []
+        ind = 0
+        for i in range(self.C):
+            for d in range(4):
+                barriers.append(min_barrier(r_ss[i,:,d], bounds[i], t))
+        I_x = tf.stack(barriers, axis=1)
+        I_x = tf.expand_dims(I_x, 0)
+        return I_x
+
+
     def simulate(self, z):
         """Simulate the V1 4-neuron circuit given parameters z.
 
@@ -1352,6 +1369,7 @@ class V1Circuit(system):
 
         # r1_t, r2_t = self.simulate(z);
         r_t = self.simulate(z)
+        self.r_t = r_t
         # [T, C, M, D, 1]
 
         if self.behavior["type"] == "old_difference":
@@ -1901,7 +1919,6 @@ class SCCircuit(system):
             barriers.append(min_barrier(Var_v_LP[i], bounds[i], 1.0))
         I_x = tf.stack(barriers, axis=1)
         I_x = tf.expand_dims(I_x, 0)
-        print('I_x', I_x)
         return I_x
 
 

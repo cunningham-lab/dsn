@@ -162,7 +162,12 @@ def train_dsn(
         T_x = system.compute_suff_stats(Z)
         mu = system.compute_mu()
         T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
-        I_x = None
+        if ('bounds' in system.behavior.keys()):
+            I_x = system.compute_I_x(Z, T_x)
+        else:
+            I_x = None
+
+
 
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     with tf.name_scope("AugLagCoeffs"):
@@ -574,7 +579,7 @@ def train_dsn(
 def initialize_nf(system, arch_dict, sigma_init, random_seed, 
                   min_iters=50000):
     # Inequality case: Start in the feasible set of the bounds.
-    if ("bounds" in system.behavior.keys()):
+    """if ("bounds" in system.behavior.keys()):
         # Check for feasible set initialization first
         behavior = system.behavior
         feasible_behavior = {"type":"feasible", \
@@ -623,20 +628,20 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed,
                 max_iters = 2*max_iters
 
         system.behavior = behavior
-    else:
-        initdir = get_initdir(system, 
-                              arch_dict, 
-                              sigma_init, 
-                              random_seed)
-        initialized = check_init(initdir)
-        if (not initialized):
-            initialize_gauss_nf(system.D, 
-                                arch_dict, 
-                                sigma_init,
-                                random_seed, 
-                                initdir,
-                                mu=system.density_network_init_mu,
-                                bounds=system.density_network_bounds)
+    else:"""
+    initdir = get_initdir(system, 
+                          arch_dict, 
+                          sigma_init, 
+                          random_seed)
+    initialized = check_init(initdir)
+    if (not initialized):
+        initialize_gauss_nf(system.D, 
+                            arch_dict, 
+                            sigma_init,
+                            random_seed, 
+                            initdir,
+                            mu=system.density_network_init_mu,
+                            bounds=system.density_network_bounds)
     return initdir
 
 
