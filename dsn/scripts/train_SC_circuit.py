@@ -23,13 +23,13 @@ if (randsearch == 1):
     np.random.seed(random_seed)
     dir_str = dir_str + '_randsearch'
     sigma_init =  np.around(np.random.uniform(1.0, 6.0), 2)
-    batch_size = np.random.randint(200, 1000)
+    batch_size = np.random.randint(200, 500)
     c_init_order =  np.random.uniform(1.0, 10.0)
     AL_fac = np.random.uniform(2.0, 10.0)
     max_iters = np.random.randint(5000, 20000)
     min_iters = max_iters
 elif (randsearch == 0):
-    batch_size = 1000
+    batch_size = 200
     AL_fac = 4.0
     min_iters=5000
     max_iters=5000
@@ -40,13 +40,13 @@ else:
 nlayers = 10
 
 # create an instance of the V1_circuit system class
-#fixed_params = {'E_constant':0.0, \
-#                'E_Pbias':0.1, \
-#                'E_Prule':0.5, \
-#                'E_Arule':0.5, \
-#                'E_choice':-0.2, \
-#                'E_light':0.1};
-fixed_params = {}
+fixed_params = {'E_constant':0.0, \
+                'E_Pbias':0.1, \
+                'E_Prule':0.5, \
+                'E_Arule':0.5, \
+                'E_choice':-0.2, \
+                'E_light':0.1};
+#fixed_params = {}
 
 C = 2
 

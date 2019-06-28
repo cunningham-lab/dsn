@@ -73,13 +73,13 @@ arch_dict = {'D':system.D, \
              'post_affine':post_affine, \
              'repeats':nlayers};
 
-AL_it_max = 1
+AL_it_max = 20
 
 batch_size = 200
 lr_order = -3
 AL_fac = 4.0
 
-iters = 200
+iters = 5000
 
 train_dsn(
     system,
@@ -93,7 +93,7 @@ train_dsn(
     max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
-    check_rate=10,
+    check_rate=100,
     dir_str="V1Circuit",
     db=True
 )
