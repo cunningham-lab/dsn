@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys, os
 from dsn.util.dsn_util import get_savedir
-from dsn.util.systems import Linear2D, STGCircuit, V1Circuit
+from dsn.util.systems import Linear2D, STGCircuit, V1Circuit, SCCircuit
 from dsn.util.plot_util import make_training_movie
 import time
 
@@ -29,6 +29,38 @@ if (dir_str in ['Linear2D', 'test']):
     Sigma = np.array([1.0, 1.0])
     behavior = {"type": "oscillation", "means": mu, "variances": Sigma}
     system = Linear2D(fixed_params, behavior)
+elif (dir_str in ['SC_WTA']):
+    p = 0.5
+    inact_str = "NI"
+    param_str = "reduced"
+    fixed_params = {'E_constant':0.0, \
+                    'E_Pbias':0.1, \
+                    'E_Prule':0.5, \
+                    'E_Arule':0.5, \
+                    'E_choice':-0.2, \
+                    'E_light':0.1};
+
+    C = 1
+
+    behavior_type = "WTA"
+    means = np.array([p, 0.0, 1.0])
+    if (p==0.0 or p==1.0):
+        behavior = {
+            "type": behavior_type,
+            "means": means,
+            "inact_str":inact_str
+        }
+    else:
+        behavior = {
+            "type": behavior_type,
+            "means": means,
+            "bounds":np.zeros(C),
+            "inact_str":inact_str
+        }
+
+    model_opts = {"params":param_str, "C":C}
+    system = SCCircuit(fixed_params, behavior, model_opts)
+
 elif (dir_str == 'STGCircuit'):
     T = 200
     mean = 0.525

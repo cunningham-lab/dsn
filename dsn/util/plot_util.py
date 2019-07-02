@@ -740,6 +740,7 @@ def pairplot(
     ss=False,
     fontsize=12,
     figsize=(12, 12),
+    outlier_stds=2,
     pfname="images/temp.png",
 ):
     num_dims = len(dims)
@@ -747,9 +748,9 @@ def pairplot(
     Z = Z[rand_order, :]
     if c is not None:
         c = c[rand_order]
-        plot_inds, below_inds, over_inds = filter_outliers(c, 2)
+        plot_inds, below_inds, over_inds = filter_outliers(c, outlier_stds)
 
-    size = 10 
+    size = 40 
     fig, axs = plt.subplots(num_dims - 1, num_dims - 1, figsize=figsize)
     for i in range(num_dims - 1):
         dim_i = dims[i]
@@ -981,6 +982,10 @@ def get_default_axlims(sysname):
     elif (sysname == 'V1Circuit'):
         xlims = [0, 5]
         ylims = [0, 5]
+    elif (sysname == 'SCCircuit'):
+        xlims = [-5, 5]
+        ylims = [-5, 5]
+
     return xlims, ylims
 
 
@@ -1038,7 +1043,7 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
             else:
                 ax = axs[i+2,j-1]
             if (j > i):
-                s = size_renorm(log_q_zs[i,:M], scale)
+                s = size_renorm(log_q_zs[0,:M], scale)
                 scats.append(ax.scatter(Zs[:M,0,j], Zs[:M,0,i], 
                                         s=s, c=cm(Cs[0,:M]), 
                                         edgecolors="k",
@@ -1113,7 +1118,7 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     pts += H_ax.plot(iterations[0], base_Hs[0], 'o', c=colors[1], markersize=msize)
     pts += H_ax.plot(iterations[0], sum_log_det_Hs[0], 'o', c=colors[2], markersize=msize)
    
-    ncons = system.num_suff_stats//2
+    ncons = system.num_suff_stats
     con_pts = []
     for i in range(ncons):
         if (D==2):

@@ -1584,7 +1584,14 @@ class SCCircuit(system):
 
         """
         C = self.model_opts["C"]
-        if self.behavior["type"] == "inforoute":
+        if self.behavior["type"] == "WTA":
+            inact_str = self.behavior["inact_str"]
+            T_x_labels = [
+                r"$E_{\partial W}[{V_{LP} \mid L,%s}]$" % inact_str,
+                r"$Var_{\partial W}[{V_{LP} \mid L,%s}] - p(1-p)$" % inact_str,
+                r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,%s}]$" % inact_str,
+            ]
+        elif self.behavior["type"] == "inforoute":
             if (C==1):
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
@@ -1873,7 +1880,7 @@ class SCCircuit(system):
         I_lightR = E_light*tf.constant(I_lightR)
 
         # Gather inputs into I [T,C,1,4,1]
-        if self.behavior["type"] in ["inforoute", "feasible"]:
+        if self.behavior["type"] in ["WTA", "inforoute", "feasible"]:
             I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
             I_LA = I_constant + I_Pbias + I_Arule + I_choice + I_lightL
             # this is just a stepping stone, will implement full resps
@@ -1892,16 +1899,27 @@ class SCCircuit(system):
         # just took roughly middle value
         opto_strength = 0.7
         eta = np.ones((self.T, self.C, 1, 1, 1), dtype=np.float64)
-        if (self.C==2):
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
-        elif (self.C==4):
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),3,:,:,:] = opto_strength
-        elif (self.C==6): # figure out CI times and eta mag
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
-            eta[1.2 <= self.t,2,:,:,:] = opto_strength
-            eta[np.logical_and(.8 <= self.t, self.t <= 1.2),4,:,:,:] = opto_strength
-            eta[1.2 <= self.t,5,:,:,:] = opto_strength
+        if self.behavior["type"] == "WTA":
+            assert(self.C == 1)
+            inact_str = self.behavior["inact_str"]
+            if (inact_str == "NI"):
+                pass
+            elif (inact_str == "DI"):
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),0,:,:,:] = opto_strength
+            elif (inact_str == "CI"):
+                eta[1.2 <= self.t,0,:,:,:] = opto_strength
+        else:
+            if (self.C==2):
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
+            elif (self.C==4):
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),3,:,:,:] = opto_strength
+            elif (self.C==6): # figure out CI times and eta mag
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
+                eta[1.2 <= self.t,2,:,:,:] = opto_strength
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),4,:,:,:] = opto_strength
+                eta[1.2 <= self.t,5,:,:,:] = opto_strength
+                
         eta = tf.constant(eta, dtype=DTYPE)
 
         return W, I, eta
@@ -1987,7 +2005,7 @@ class SCCircuit(system):
 
         """
 
-        if self.behavior["type"] in ["inforoute", "feasible"]:
+        if self.behavior["type"] in ["WTA", "inforoute", "feasible"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError()
@@ -2024,7 +2042,9 @@ class SCCircuit(system):
         Bern_Var_Err = tf.expand_dims(tf.transpose(Bern_Var_Err), 0)
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
-        if self.behavior["type"] == "inforoute":
+        if self.behavior["type"] == "WTA":
+            T_x = tf.concat((E_v_LP, Bern_Var_Err, square_diff), 2)
+        elif self.behavior["type"] == "inforoute":
             if (self.C==4):
                 err_eps = 1.0e-8
                 err_rate_P_NI = 1 - E_v_LP[:,:,0]
@@ -2038,7 +2058,7 @@ class SCCircuit(system):
                 err_rate_incs = tf.stack((err_rate_inc_P, err_rate_inc_A), 2)
                 T_x = tf.concat((err_rate_incs, \
                                 Bern_Var_Err,
-                                square_diff
+                                square_di1ff
                                 ), 2)
             elif (self.C==6): # actually do the percent difference thing
                 err_eps = 1.0e-8
@@ -2088,7 +2108,9 @@ class SCCircuit(system):
 
         means = self.behavior["means"]
         first_moments = means
-        if self.behavior["type"] == "inforoute":
+        if self.behavior["type"] == "WTA":
+            mu = first_moments
+        elif self.behavior["type"] == "inforoute":
             mu = first_moments
         elif self.behavior["type"] in ["feasible"]:
             variances = self.behavior["variances"]
