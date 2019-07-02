@@ -756,8 +756,11 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 1.0*np.ones((self.D,))
-        self.density_network_bounds = [0.0, 20.0]
+        self.density_network_init_mu = 2.0*np.ones((self.D,))
+        a = np.zeros((self.D,))
+        a[0] = 1.0
+        b = 20.0*np.ones((self.D,))
+        self.density_network_bounds = [a, b]
         # compute number of conditions C
         self.has_support_map = True
 
@@ -1444,7 +1447,9 @@ class V1Circuit(system):
             Z (np.array): Samples from the DSN at the final layer.
         """
         a, b = self.density_network_bounds
-        return IntervalFlow([], inputs, np.array([a]), np.array([b]))
+        print('aaaah')
+        print(a.shape, b.shape)
+        return IntervalFlow([], inputs, a, b)
 
 
 class SCCircuit(system):
