@@ -16,13 +16,13 @@ c_init_order = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
-AL_it_max = 1
+AL_it_max = 20
 
-dir_str = 'SC_WTA'
-batch_size = 100
+dir_str = 'SC_WTA_%s' % inact_str
+batch_size = 300
 AL_fac = 4.0
-min_iters=1000
-max_iters=1000
+min_iters=5000
+max_iters=5000
 
 nlayers = 10
 
@@ -38,6 +38,8 @@ C = 1
 
 behavior_type = "WTA"
 means = np.array([p, 0.0, 1.0])
+barrier_EPS = 1e-10
+
 if (p==0.0 or p==1.0):
     behavior = {
         "type": behavior_type,
@@ -48,7 +50,7 @@ else:
     behavior = {
         "type": behavior_type,
         "means": means,
-        "bounds":np.zeros(C),
+        "bounds":np.zeros(C) - barrier_EPS,
         "inact_str":inact_str
     }
 
