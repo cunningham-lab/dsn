@@ -1932,6 +1932,7 @@ class SCCircuit(system):
     def compute_I_x(self, z, T_x):
         # Not efficient (repeated computation) 
         # but convenient modularization for now
+        t = 1.0
         bounds = self.behavior["bounds"]
         # [T, C, M, D, trials]
         v_LP = self.v_t[-1, :, :, 0, :]
@@ -1939,7 +1940,7 @@ class SCCircuit(system):
         Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 2)), 2)
         barriers = []
         for i in range(self.C):
-            barriers.append(min_barrier(Var_v_LP[i], bounds[i], 1.0))
+            barriers.append(min_barrier(Var_v_LP[i], bounds[i], t))
         I_x = tf.stack(barriers, axis=1)
         I_x = tf.expand_dims(I_x, 0)
         return I_x
