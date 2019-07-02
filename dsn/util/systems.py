@@ -756,9 +756,9 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 6.0*np.ones((self.D,))
+        self.density_network_init_mu = 3.0*np.ones((self.D,))
         a = np.zeros((self.D,))
-        a[0] = 5.0
+        a[0] = 2.0
         b = 20.0*np.ones((self.D,))
         self.density_network_bounds = [a, b]
         # compute number of conditions C
