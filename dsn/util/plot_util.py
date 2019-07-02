@@ -8,12 +8,26 @@ import os
 import time
 from matplotlib import animation
 
-def assess_constraints(fnames, alpha, frac_samps, n_suff_stats):
+def assess_constraints(model_dirs, alpha, frac_samps, n_suff_stats):
+    n_fnames = len(model_dirs)
+    fnames = []
+    for i in range(n_fnames):
+        fnames.append(model_dirs[i] + 'opt_info.npz')
 
-    n_fnames = len(fnames)
     AL_final_its = []
     pvals_list = []
     for i in range(n_fnames):
+        AL_conv_fname = model_dirs[i] + 'AL_conv_a=%.2f_fs=%.2f_1.npz' % (alpha, frac_samps)
+        if (os.path.isfile(AL_conv_fname)):
+            AL_conv_file = np.load(AL_conv_fname)
+            AL_final_it = AL_conv_file['AL_final_it']
+            if (np.isnan(AL_final_it)):
+                AL_final_it = None
+            p_values = AL_conv_file['p_values']
+            AL_final_its.append(AL_final_it)
+            pvals_list.append(p_values)
+            continue
+        
         fname = fnames[i]
         try:
             npzfile = np.load(fname)
@@ -46,17 +60,33 @@ def assess_constraints(fnames, alpha, frac_samps, n_suff_stats):
             if con_sat == 1:
                 print('Converged!')
                 AL_final_its.append(k)
+                np.savez(AL_conv_fname, AL_final_it=k, p_values=p_values)
                 break
             if k == (k_max-1):
                 AL_final_its.append(None)
+                np.savez(AL_conv_fname, AL_final_it=np.nan, p_values=p_values)
         pvals_list.append(p_values)
     return pvals_list, AL_final_its
 
 
-def assess_constraints2(fnames, k_max, n_suff_stats, tol=0.1):
-    n_fnames = len(fnames)
+def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
+    n_fnames = len(model_dirs)
+
+    fnames = []
+    for i in range(n_fnames):
+        fnames.append(model_dirs[i] + 'opt_info.npz')
+
     AL_final_its = []
     for i in range(n_fnames):
+        AL_conv_fname = model_dirs[i] + 'AL_conv_a=%.2f_fs=%.2f_2.npz' % (alpha, frac_samps)
+        if (os.path.isfile(AL_conv_fname)):
+            AL_conv_file = np.load(AL_conv_fname)
+            AL_final_it = AL_conv_file['AL_final_it']
+            if (np.isnan(AL_final_it)):
+                AL_final_it = None
+            AL_final_its.append(AL_final_it)
+            continue
+
         fname = fnames[i]
         try:
             npzfile = np.load(fname)
@@ -82,16 +112,18 @@ def assess_constraints2(fnames, k_max, n_suff_stats, tol=0.1):
                     break
             if not failed:
                 AL_final_its.append(k)
+                np.savez(AL_conv_fname, AL_final_it=k)
                 break
 
         if failed:
             AL_final_its.append(None)
+            np.savez(AL_conv_fname, AL_final_it=None)
 
     return AL_final_its
 
 
 def plot_opt(
-    fnames,
+    model_dirs,
     legendstrs=[],
     con_method="1",
     frac_samps=0.2,
@@ -102,7 +134,11 @@ def plot_opt(
     tol=0.1,
 ):
     max_legendstrs = 10
-    n_fnames = len(fnames)
+    n_fnames = len(model_dirs)
+    fnames = []
+    for i in range(n_fnames):
+        fnames.append(model_dirs[i] + 'opt_info.npz')
+
     # read optimization diagnostics from files
     costs_list = []
     Hs_list = []
@@ -147,17 +183,19 @@ def plot_opt(
             k_max = T_xs.shape[0] - 1
             iterations = np.arange(0, check_rate * nits, check_rate)
             n_suff_stats = mean_T_xs_list[0].shape[1]
-            p_values, AL_final_its = assess_constraints(
-                fnames, alpha, frac_samps, n_suff_stats
-            )
-            print('al final')
-            print(AL_final_its)
             if con_method == "1":
+                p_values, AL_final_its = assess_constraints(
+                    model_dirs, alpha, frac_samps, n_suff_stats
+                )
                 pass
             elif con_method == "2":
-                AL_final_its = assess_constraints2(fnames, k_max, n_suff_stats, tol=tol)
+                AL_final_its = assess_constraints2(model_dirs, k_max, n_suff_stats, tol=tol)
+                p_values = None
             else:
-                raise NotImplementedError()
+                AL_final_its = n_fnames*[-1]
+                p_values = None
+            print('al final')
+            print(AL_final_its)
             flag = True
 
     figs = []
@@ -989,7 +1027,8 @@ def get_default_axlims(sysname):
     return xlims, ylims
 
 
-def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
+def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=None):
+    fname = model_dir
     npzfile = np.load(fname)
     Hs = npzfile['Hs']
     base_Hs = npzfile['base_Hs']
@@ -1088,7 +1127,7 @@ def make_training_movie(fname, system, step, save_fname='temp', axis_lims=None):
     alpha = 0.05
     frac_samps = 0.5
     n_suff_stats = system.num_suff_stats
-    pvals, AL_final_its = assess_constraints([fname], alpha, frac_samps, n_suff_stats)
+    pvals, AL_final_its = assess_constraints([model_dir], alpha, frac_samps, n_suff_stats)
     iterations = np.arange(0, check_rate * Hs.shape[0], check_rate)
     if (D==2):
         H_ax = plt.subplot(3, 1, 1)
