@@ -72,13 +72,17 @@ def assess_constraints(model_dirs, alpha, frac_samps, n_suff_stats):
 def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
     n_fnames = len(model_dirs)
 
+    _tol = tol
+    if (not (type(tol) == np.ndarray)):
+        tol = tol*np.ones((n_suff_stats,))
+
     fnames = []
     for i in range(n_fnames):
         fnames.append(model_dirs[i] + 'opt_info.npz')
 
     AL_final_its = []
     for i in range(n_fnames):
-        AL_conv_fname = model_dirs[i] + 'AL_conv_a=%.2f_fs=%.2f_2.npz' % (alpha, frac_samps)
+        AL_conv_fname = model_dirs[i] + 'AL_conv_tol=%.2f_2.npz' % _tol
         if (os.path.isfile(AL_conv_fname)):
             AL_conv_file = np.load(AL_conv_fname)
             AL_final_it = AL_conv_file['AL_final_it']
@@ -94,8 +98,6 @@ def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
             n_fnames = n_fnames - 1
             continue
         mu = npzfile["mu"]
-        if (not (type(tol) == np.ndarray)):
-            tol = tol*np.ones((mu.shape[0],))
 
         for k in range(k_max + 1):
             T_xs = npzfile["T_xs"][k]
@@ -117,7 +119,7 @@ def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
 
         if failed:
             AL_final_its.append(None)
-            np.savez(AL_conv_fname, AL_final_it=None)
+            np.savez(AL_conv_fname, AL_final_it=np.nan)
 
     return AL_final_its
 
@@ -197,6 +199,10 @@ def plot_opt(
             print('al final')
             print(AL_final_its)
             flag = True
+
+    if (n_fnames == 0):
+        print("Filenames invalid. Exitting.")
+        return None, None, None
 
     figs = []
 
@@ -582,7 +588,7 @@ def lin_reg_plot(x, y, xlabel="", ylabel="", pfname="images/temp.png", fontsize=
 
 
 def dsn_pairplots(
-    fnames,
+    model_dirs,
     dist_str,
     system,
     D,
@@ -600,7 +606,7 @@ def dsn_pairplots(
     pfnames=None,
     figsize=(10,10),
 ):
-    n_fnames = len(fnames)
+    n_fnames = len(model_dirs)
 
     # make sure D is greater than 1
     #if D < 2:
@@ -627,7 +633,7 @@ def dsn_pairplots(
     figs = []
     dists = []
     for k in range(n_fnames):
-        fname = fnames[k]
+        fname = model_dirs[k] + 'opt_info.npz'
         AL_final_it = AL_final_its[k]
         if AL_final_it is None:
             print("%s has not converged so not plotting." % legendstrs[k])
