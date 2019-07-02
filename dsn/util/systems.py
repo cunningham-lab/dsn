@@ -1611,9 +1611,12 @@ class SCCircuit(system):
         if self.behavior["type"] == "WTA":
             inact_str = self.behavior["inact_str"]
             T_x_labels = [
-                r"$E_{\partial W}[{V_{LP} \mid L,%s}]$" % inact_str,
-                r"$Var_{\partial W}[{V_{LP} \mid L,%s}] - p(1-p)$" % inact_str,
-                r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,%s}]$" % inact_str,
+                r"$E_{\partial W}[{V_{LP} \mid L,P,%s}]$" % inact_str,
+                r"$E_{\partial W}[{V_{RP} \mid L,A,%s}]$" % inact_str,
+                r"$Var_{\partial W}[{V_{LP} \mid L,P,%s}] - p(1-p)$" % inact_str,
+                r"$Var_{\partial W}[{V_{RP} \mid L,A,%s}] - p(1-p)$" % inact_str,
+                r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,P,%s}]$" % inact_str,
+                r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,A,%s}]$" % inact_str,
             ]
         elif self.behavior["type"] == "inforoute":
             if (C==1):
@@ -1903,10 +1906,10 @@ class SCCircuit(system):
         I_lightR = np.expand_dims(np.expand_dims(np.expand_dims(I_lightR, 2), 1), 1)
         I_lightR = E_light*tf.constant(I_lightR)
 
+        I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
+        I_LA = I_constant + I_Pbias + I_Arule + I_choice + I_lightL
         # Gather inputs into I [T,C,1,4,1]
-        if self.behavior["type"] in ["WTA", "inforoute", "feasible"]:
-            I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
-            I_LA = I_constant + I_Pbias + I_Arule + I_choice + I_lightL
+        if self.behavior["type"] in ["inforoute", "feasible"]:
             # this is just a stepping stone, will implement full resps
             if (self.C==1):
                 I = I_LP
@@ -1918,20 +1921,23 @@ class SCCircuit(system):
                 I = tf.concat((I_LP, I_LP, I_LP, I_LA, I_LA, I_LA), axis=1)
             else:
                 raise NotImplementedError()
+        elif self.behavior["type"] == "WTA":
+            I = tf.concat((I_LP, I_LA), axis=1)
+        else:
+            raise NotImplementedError()
 
         
         # just took roughly middle value
         opto_strength = 0.7
         eta = np.ones((self.T, self.C, 1, 1, 1), dtype=np.float64)
         if self.behavior["type"] == "WTA":
-            assert(self.C == 1)
             inact_str = self.behavior["inact_str"]
             if (inact_str == "NI"):
                 pass
             elif (inact_str == "DI"):
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),0,:,:,:] = opto_strength
+                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),:,:,:,:] = opto_strength
             elif (inact_str == "CI"):
-                eta[1.2 <= self.t,0,:,:,:] = opto_strength
+                eta[1.2 <= self.t,:,:,:,:] = opto_strength
         else:
             if (self.C==2):
                 eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
@@ -2054,22 +2060,30 @@ class SCCircuit(system):
         E_v_LP = tf.reduce_mean(v_LP, 2)
         Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 2)), 2)
 
-        Bern_Var_Err = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
-
         v_RP = v_t[-1, :, :, 3, :] # we're looking at RP in the standard A Pro condition
         E_v_RP = tf.reduce_mean(v_RP, 2)
+        Var_v_RP = tf.reduce_mean(tf.square(v_RP - tf.expand_dims(E_v_RP, 2)), 2)
+
+        Bern_Var_Err_L = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
+        Bern_Var_Err_R = Var_v_RP - (E_v_RP*(1.0-E_v_RP))
+
+        Bern_Var_Err_L = tf.expand_dims(tf.transpose(Bern_Var_Err_L), 0)
+        Bern_Var_Err_R = tf.expand_dims(tf.transpose(Bern_Var_Err_R), 0)
 
         square_diff = tf.reduce_mean(tf.square(v_LP - v_RP), axis=2)
         
         # suff stats are all [C, M].  Make [1, M, C]
         E_v_LP = tf.expand_dims(tf.transpose(E_v_LP), 0)
         E_v_RP = tf.expand_dims(tf.transpose(E_v_RP), 0)
-        Bern_Var_Err = tf.expand_dims(tf.transpose(Bern_Var_Err), 0)
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "WTA":
-            T_x = tf.concat((E_v_LP, Bern_Var_Err, square_diff), 2)
+            p_hats = tf.stack((E_v_LP[:,:,0], E_v_RP[:,:,1]), axis=2)
+            Bern_Var_Err = tf.stack((Bern_Var_Err_L[:,:,0], Bern_Var_Err_R[:,:,1]), axis=2)
+            T_x = tf.concat((p_hats, Bern_Var_Err, square_diff), 2)
         elif self.behavior["type"] == "inforoute":
+            assert(False)
+            #TODO need to handle the new Bern_Var comp graph
             if (self.C==4):
                 err_eps = 1.0e-8
                 err_rate_P_NI = 1 - E_v_LP[:,:,0]

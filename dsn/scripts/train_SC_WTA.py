@@ -34,10 +34,10 @@ fixed_params = {'E_constant':0.0, \
                 'E_choice':-0.2, \
                 'E_light':0.1};
 
-C = 1
+C = 2
 
 behavior_type = "WTA"
-means = np.array([p, 0.0, 1.0])
+means = np.array([p, p, 0.0, 0.0, 1.0, 1.0])
 barrier_EPS = 1e-10
 
 if (p==0.0 or p==1.0):
@@ -58,7 +58,6 @@ model_opts = {"params":param_str, "C":C}
 system = SCCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
-latent_dynamics = None;
 flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
              'K':1,
