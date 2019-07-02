@@ -41,7 +41,7 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
     if num_free_params > 1:
-        if (num_free_params >= 10):
+        if (num_free_params >= 5):
             sysparams = "D=%d" % system.D
         else:
             for i in range(1, num_free_params):

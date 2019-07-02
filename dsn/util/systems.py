@@ -756,9 +756,9 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 2.0*np.ones((self.D,))
+        self.density_network_init_mu = 6.0*np.ones((self.D,))
         a = np.zeros((self.D,))
-        a[0] = 1.0
+        a[0] = 5.0
         b = 20.0*np.ones((self.D,))
         self.density_network_bounds = [a, b]
         # compute number of conditions C
@@ -1447,9 +1447,28 @@ class V1Circuit(system):
             Z (np.array): Samples from the DSN at the final layer.
         """
         a, b = self.density_network_bounds
-        print('aaaah')
         print(a.shape, b.shape)
         return IntervalFlow([], inputs, a, b)
+
+    def get_behavior_str(self,):
+        """Returns `behavior_str`.
+
+        # Returns
+            behavior_str (str): String for DSN filenaming.
+
+        """
+        assert(self.behavior["type"] == "difference")
+        print(self.behavior)
+        s_vals = self.behavior["s_vals"]
+        behavior_str = "diff_s="
+        for i in range(s_vals.shape[0]):
+            if (i > 0):
+                behavior_str += "_"
+            behavior_str += '%d' % s_vals[i]
+        return behavior_str
+
+
+    
 
 
 class SCCircuit(system):
