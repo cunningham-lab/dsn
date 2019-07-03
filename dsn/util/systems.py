@@ -2081,6 +2081,7 @@ class SCCircuit(system):
             p_hats = tf.stack((E_v_LP[:,:,0], E_v_RP[:,:,1]), axis=2)
             Bern_Var_Err = tf.stack((Bern_Var_Err_L[:,:,0], Bern_Var_Err_R[:,:,1]), axis=2)
             T_x = tf.concat((p_hats, Bern_Var_Err, square_diff), 2)
+            #T_x = tf.concat((E_v_LP, Bern_Var_Err_L, square_diff), 2)
         elif self.behavior["type"] == "inforoute":
             assert(False)
             #TODO need to handle the new Bern_Var comp graph

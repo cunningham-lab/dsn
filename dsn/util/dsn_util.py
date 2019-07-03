@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from tf_util.tf_util import get_archstring
 import scipy.linalg
 from dsn.util.systems import V1Circuit, SCCircuit, STGCircuit
+from dsn.util.plot_util import assess_constraints_mix
 
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
@@ -107,11 +108,13 @@ def get_system_from_template(sysname, param_dict):
             'E_choice':-0.2, \
             'E_light':0.1};
         if behavior_type == "WTA":
+            #C = 1
             C = 2
             param_str = "full"
             p = param_dict['p']
             inact_str = param_dict['inact_str']
             means = np.array([p, p, 0.0, 0.0, 1.0, 1.0])
+            #means = np.array([p, 0.0, 1.0])
             barrier_EPS = 1e-10
             if (p==0.0 or p==1.0):
                 behavior = {
@@ -134,6 +137,57 @@ def get_system_from_template(sysname, param_dict):
         raise NotImplementedError()
 
     return system
+
+def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirstr, conv_dict):
+    num_sigmas = sigma_inits.shape[0]
+    num_cs = c_init_ords.shape[0]
+    num_rs = random_seeds.shape[0]
+    
+    model_dirs = []
+    for i in range(num_cs):
+        c_init_order = c_init_ords[i]
+        for j in range(num_sigmas):
+            sigma_init = sigma_inits[j]
+            for k in range(num_rs):
+                rs = random_seeds[k]
+                savedir = get_savedir(system, arch_dict, sigma_init, c_init_order, rs, dirstr)
+                model_dirs.append(savedir)
+                
+    first_its, ME_its, MEs = assess_constraints_mix(model_dirs, 
+                                                    tol=conv_dict['tol'], 
+                                                    tol_inds=conv_dict['tol_inds'],
+                                                    alpha=conv_dict['alpha'], 
+                                                    frac_samps=conv_dict['frac_samples']
+                                                    )
+    num_models = len(model_dirs)
+    # Find the model that had maximum entropy while satisfying convergence criteria
+    # iterate because of Nones
+    flg = True
+    for i in range(num_models):
+        if (flg):
+            if MEs[i] is not None:
+                max_ME = MEs[i]
+                max_ind = i
+                flg = False
+        else:
+            if (MEs[i] is not None) and MEs[i] > max_ME:
+                max_ME = MEs[i]
+                max_ind = i
+    
+    if (flg):
+        best_model = None
+        max_ME = None
+        first_it = None
+        ME_it = None
+    else:
+        best_model = model_dirs[max_ind]
+        ME_it = ME_its[max_ind]
+        first_it = first_its[max_ind]
+    
+    return best_model, max_ME, ME_it, first_it
+    
+    
+                
 
 def initialize_adam_parameters(sess, optimizer, all_params):
     nparams = len(all_params)

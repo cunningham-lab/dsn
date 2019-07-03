@@ -7,15 +7,29 @@ from scipy import stats
 import os
 import time
 from matplotlib import animation
+from tf_util.stat_util import approx_equal
 
-def assess_constraints(model_dirs, alpha, frac_samps, n_suff_stats):
+def bootstrap_test(T_x, mu, M, N):
+    total_samps = T_x.shape[0]
+    assert(N < total_samps)
+    boot_means = np.zeros((M,))
+    for i in range(M):
+        inds_i = np.random.choice(
+            np.arange(total_samps), N, replace=False
+        )
+        boot_means[i] = np.mean(T_x[inds_i])
+    gt = float(np.sum(boot_means > mu))
+    lt = float(np.sum(boot_means < mu))
+    p_val = 2 * min(gt / M, lt / M)
+    return p_val
+
+def assess_constraints(model_dirs, alpha, frac_samps):
     n_fnames = len(model_dirs)
     fnames = []
     for i in range(n_fnames):
         fnames.append(model_dirs[i] + 'opt_info.npz')
 
     AL_final_its = []
-    pvals_list = []
     for i in range(n_fnames):
         AL_conv_fname = model_dirs[i] + 'AL_conv_a=%.2f_fs=%.2f_1.npz' % (alpha, frac_samps)
         if (os.path.isfile(AL_conv_fname)):
@@ -23,9 +37,7 @@ def assess_constraints(model_dirs, alpha, frac_samps, n_suff_stats):
             AL_final_it = AL_conv_file['AL_final_it']
             if (np.isnan(AL_final_it)):
                 AL_final_it = None
-            p_values = AL_conv_file['p_values']
             AL_final_its.append(AL_final_it)
-            pvals_list.append(p_values)
             continue
         
         fname = fnames[i]
@@ -33,48 +45,36 @@ def assess_constraints(model_dirs, alpha, frac_samps, n_suff_stats):
             npzfile = np.load(fname)
         except:
             continue
-        print('T_xs', npzfile["T_xs"].shape)
+
         mu = npzfile["mu"]
+        n_suff_stats = mu.shape[0]
         total_samps = npzfile["T_xs"].shape[1]
-        k_max = npzfile["T_xs"].shape[0] - 1
-        p_values = np.zeros((k_max + 1, n_suff_stats))
+        samps_per_boot = int(frac_samps * total_samps)
+        total_its = npzfile["T_xs"].shape[0] 
 
         boot_samps = 200
-        samps_per_boot = int(frac_samps * total_samps)
+        for j in range(total_its):
+            T_xs = npzfile["T_xs"][j]
+            pvals = []
+            for ii in range(n_suff_stats):
+                pvals.append(bootstrap_test(T_xs[:,ii], mu[ii], boot_samps, samps_per_boot))
 
-        for k in range(k_max):
-            T_xs = npzfile["T_xs"][k]
-            for j in range(n_suff_stats):
-                boot_means = np.zeros((boot_samps,))
-                for ii in range(boot_samps):
-                    inds_ii = np.random.choice(
-                        np.arange(total_samps), samps_per_boot, replace=False
-                    )
-                    boot_means[ii] = np.mean(T_xs[inds_ii, j])
-                gt = float(np.sum(boot_means > mu[j]))
-                lt = float(np.sum(boot_means < mu[j]))
-                p_val = 2 * min(gt / boot_samps, lt / boot_samps)
-                p_values[k, j] = p_val
-
-            con_sat = np.prod(p_values[k, :] > (alpha / n_suff_stats))
+            con_sat = np.prod(np.array(pvals) > (alpha / n_suff_stats))
             if con_sat == 1:
                 print('Converged!')
-                AL_final_its.append(k)
-                np.savez(AL_conv_fname, AL_final_it=k, p_values=p_values)
+                AL_final_its.append(j)
+                np.savez(AL_conv_fname, AL_final_it=j)
                 break
-            if k == (k_max-1):
+            if j == (total_its-1):
                 AL_final_its.append(None)
-                np.savez(AL_conv_fname, AL_final_it=np.nan, p_values=p_values)
-        pvals_list.append(p_values)
-    return pvals_list, AL_final_its
+                np.savez(AL_conv_fname, AL_final_it=np.nan)
+
+    return AL_final_its
 
 
-def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
+
+def assess_constraints2(model_dirs, tol=0.1):
     n_fnames = len(model_dirs)
-
-    _tol = tol
-    if (not (type(tol) == np.ndarray)):
-        tol = tol*np.ones((n_suff_stats,))
 
     fnames = []
     for i in range(n_fnames):
@@ -82,7 +82,21 @@ def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
 
     AL_final_its = []
     for i in range(n_fnames):
-        AL_conv_fname = model_dirs[i] + 'AL_conv_tol=%.2f_2.npz' % _tol
+        fname = fnames[i]
+        try:
+            npzfile = np.load(fname)
+        except:
+            n_fnames = n_fnames - 1
+            continue
+        mu = npzfile["mu"]
+        n_suff_stats = mu.shape[0]
+        T_xs = npzfile["T_xs"]
+        total_its = T_xs.shape[0]
+        
+        if (not (type(tol) == np.ndarray)):
+            tol = tol*np.ones((n_suff_stats,))
+
+        AL_conv_fname = model_dirs[i] + 'T_x_conv_2.npz'
         if (os.path.isfile(AL_conv_fname)):
             AL_conv_file = np.load(AL_conv_fname)
             AL_final_it = AL_conv_file['AL_final_it']
@@ -91,30 +105,17 @@ def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
             AL_final_its.append(AL_final_it)
             continue
 
-        fname = fnames[i]
-        try:
-            npzfile = np.load(fname)
-        except:
-            n_fnames = n_fnames - 1
-            continue
-        mu = npzfile["mu"]
-
-        for k in range(k_max + 1):
-            T_xs = npzfile["T_xs"][k]
-            total_samps = T_xs.shape[0]
-            T_x_mean = np.mean(T_xs, 0)
+        for j in range(total_its):
+            T_x = T_xs[j]
+            T_x_mean = np.mean(T_x, 0)
             failed = False
-            for j in range(n_suff_stats // 2):
-                if T_x_mean[j] < (mu[j] - tol[j]) or (mu[j] + tol[j]) < T_x_mean[j]:
-                    failed = True
-                    break
-            for j in range(n_suff_stats // 2, n_suff_stats):
-                if mu[j] + tol[j] < T_x_mean[j]:
+            for ii in range(n_suff_stats):
+                if T_x_mean[ii] < (mu[ii] - tol[ii]) or (mu[ii] + tol[ii]) < T_x_mean[ii]:
                     failed = True
                     break
             if not failed:
-                AL_final_its.append(k)
-                np.savez(AL_conv_fname, AL_final_it=k)
+                AL_final_its.append(j)
+                np.savez(AL_conv_fname, AL_final_it=j)
                 break
 
         if failed:
@@ -122,6 +123,114 @@ def assess_constraints2(model_dirs, k_max, n_suff_stats, tol=0.1):
             np.savez(AL_conv_fname, AL_final_it=np.nan)
 
     return AL_final_its
+
+
+
+def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
+    EPS = 1e-10
+    n_fnames = len(model_dirs)
+    fnames = []
+    for i in range(n_fnames):
+        fnames.append(model_dirs[i] + 'opt_info.npz')
+
+    first_its = []
+    ME_its = []
+    MEs = []
+    for i in range(n_fnames):
+        print(i, model_dirs[i])
+        AL_conv_fname = model_dirs[i] + 'AL_conv.npz'
+        if (os.path.isfile(AL_conv_fname)):
+            print('found conv file')
+            AL_conv_file = np.load(AL_conv_fname)
+            first_it = AL_conv_file['first_it']
+            ME_it = AL_conv_file['ME_it']
+            ME = AL_conv_file['ME']
+            alpha_eq = approx_equal(alpha, AL_conv_file['alpha'], EPS)
+            if (len(AL_conv_file['tol_inds']) > 0):
+                tol_shape_eq = (tol.shape[0] == AL_conv_file['tol'].shape[0])
+                tol_eq = tol_shape_eq and approx_equal(tol, AL_conv_file['tol'], EPS)
+            else:
+                tol_eq = (len(tol_inds) == 0)
+            if not(alpha_eq and tol_eq):
+                pass
+            else:
+                if (np.isnan(first_it)):
+                    first_it = None
+                if (np.isnan(ME_it)):
+                    ME_it = None
+                if (np.isnan(ME)):
+                    ME = None
+                first_its.append(first_it)
+                ME_its.append(ME_it)
+                MEs.append(ME)
+                continue
+        
+        fname = fnames[i]
+        try:
+            npzfile = np.load(fname)
+        except:
+            first_its.append(None)
+            ME_its.append(None)
+            MEs.append(None)
+            continue
+
+        mu = npzfile["mu"]
+        n_suff_stats = mu.shape[0]
+        total_samps = npzfile["T_xs"].shape[1]
+        samps_per_boot = int(frac_samps * total_samps)
+        total_its = npzfile["T_xs"].shape[0] 
+        Hs = npzfile["Hs"]
+
+        assert(Hs.shape[0] == total_its)
+        # If this doesn't match then we need to fit it
+
+        boot_samps = 200
+        first_flag = False
+        inds_to_check = np.arange(total_its)[np.logical_not(np.isnan(Hs))]
+        jj = 0
+        while (jj < inds_to_check.shape[0]):
+            j = inds_to_check[jj]
+            T_xs = npzfile["T_xs"][j]
+            T_x_mean = np.mean(T_xs, 0)
+            tol_it = 0
+            pvals = []
+            failed = False
+            for ii in range(n_suff_stats):
+                if (ii in tol_inds):
+                    failed = (T_x_mean[ii] < (mu[ii] - tol[tol_it])) or ((mu[ii] + tol[tol_it]) < T_x_mean[ii])
+                    tol_it += 1
+                    if failed:
+                        break
+                else:
+                    pvals.append(bootstrap_test(T_xs[:,ii], mu[ii], boot_samps, samps_per_boot))
+
+            con_sat = np.prod(np.array(pvals) > (alpha / n_suff_stats))
+            if ((not failed) and con_sat == 1):
+                if (not first_flag):
+                    first_it = j
+                    first_flag = True
+
+                ME_it = j
+                ME = Hs[j]
+                greater_H = Hs[(j+1):] > ME
+                inds_to_check = np.arange(j+1,total_its)[greater_H]
+                print('inds to check left', np.sum(greater_H))
+                jj = -1
+
+            jj += 1
+
+        if (not first_flag):
+            first_its.append(None)
+            ME_its.append(None)
+            MEs.append(None)
+            np.savez(AL_conv_fname, first_it=np.nan, ME_it=np.nan, ME=np.nan, alpha=alpha, tol=tol, tol_inds=tol_inds)
+        else:
+            first_its.append(first_it)
+            ME_its.append(ME_it)
+            MEs.append(ME)
+            np.savez(AL_conv_fname, first_it=first_it, ME_it=ME_it, ME=ME, alpha=alpha, tol=tol, tol_inds=tol_inds)
+
+    return first_its, ME_its, MEs
 
 
 def plot_opt(
@@ -134,12 +243,24 @@ def plot_opt(
     plotR2=False,
     fontsize=14,
     tol=0.1,
+    tol_inds=[],
 ):
     max_legendstrs = 10
     n_fnames = len(model_dirs)
     fnames = []
     for i in range(n_fnames):
         fnames.append(model_dirs[i] + 'opt_info.npz')
+
+    if con_method == "1":
+        first_its = assess_constraints(
+            model_dirs, alpha, frac_samps
+        )
+    elif con_method == "2":
+        first_its = assess_constraints2(model_dirs, tol=tol)
+    elif con_method == "mix":
+        first_its, ME_its, MEs = assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps)
+    else:
+        first_its = n_fnames*[-1]
 
     # read optimization diagnostics from files
     costs_list = []
@@ -178,31 +299,15 @@ def plot_opt(
         epoch_inds_list.append(epoch_inds)
 
         if (not flag):
-            mu = npzfile["mu"]
-            check_rate = npzfile["check_rate"]
-            last_ind = npzfile["it"] // check_rate
-            nits = costs.shape[0]
-            k_max = T_xs.shape[0] - 1
-            iterations = np.arange(0, check_rate * nits, check_rate)
-            n_suff_stats = mean_T_xs_list[0].shape[1]
-            if con_method == "1":
-                p_values, AL_final_its = assess_constraints(
-                    model_dirs, alpha, frac_samps, n_suff_stats
-                )
-                pass
-            elif con_method == "2":
-                AL_final_its = assess_constraints2(model_dirs, k_max, n_suff_stats, tol=tol)
-                p_values = None
-            else:
-                AL_final_its = n_fnames*[-1]
-                p_values = None
-            print('al final')
-            print(AL_final_its)
+            iterations = np.arange(0, check_rate*Hs.shape[0]+1, check_rate)
+            n_suff_stats = T_xs.shape[2]
+            mu = npzfile['mu']
             flag = True
+
 
     if (n_fnames == 0):
         print("Filenames invalid. Exitting.")
-        return None, None, None
+        return None, None
 
     figs = []
 
@@ -214,6 +319,7 @@ def plot_opt(
     ax = axs[0]
     for i in range(n_fnames):
         costs = costs_list[i]
+        last_ind = last_inds[i]
         ax.plot(iterations[:last_ind], costs[:last_ind], label=legendstrs[i])
     ax.set_xlabel("iterations", fontsize=fontsize)
     ax.set_ylabel("cost", fontsize=fontsize)
@@ -231,11 +337,11 @@ def plot_opt(
             ax.plot(iterations[:last_ind], Hs[:last_ind], label=legendstrs[i])
         else:
             ax.plot(iterations[:last_ind], Hs[:last_ind])
-        if n_fnames == 1 and AL_final_its[i] is not None:
+        if n_fnames == 1 and first_its[i] is not None:
             if (epoch_inds.shape[0] < T_xs.shape[0]):
-                conv_it = iterations[AL_final_its[i]]
+                conv_it = iterations[first_its[i]]
             else:
-                conv_it = epoch_inds[AL_final_its[i]]
+                conv_it = epoch_inds[first_its[i]]
             ax.plot(
                 [conv_it, conv_it],
                 [np.min(Hs[:last_ind]), np.max(Hs[:last_ind])],
@@ -256,11 +362,11 @@ def plot_opt(
                 ax.plot(iterations[:last_ind], R2s[:last_ind], label=legendstrs[i])
             else:
                 ax.plot(iterations[:last_ind], R2s[:last_ind])
-        if n_fnames == 1 and AL_final_its[i] is not None:
+        if n_fnames == 1 and first_its[i] is not None:
             if (epoch_inds.shape[0] < T_xs.shape[0]):
-                conv_it = iterations[AL_final_its[i]]
+                conv_it = iterations[first_its[i]]
             else:
-                conv_it = epoch_inds[AL_final_its[i]]
+                conv_it = epoch_inds[first_its[i]]
             ax.plot(
                 [conv_it, conv_it],
                 [np.min(R2s[:last_ind]), np.max(R2s[:last_ind])],
@@ -308,11 +414,11 @@ def plot_opt(
                 T_x_stds = np.std(T_xs[:, :, i], axis=1)
                 num_epoch_inds = len(epoch_inds)
                 # ax.errorbar(epoch_inds, T_x_means[:num_epoch_inds], T_x_stds[:num_epoch_inds], c='r', elinewidth=3)
-                if AL_final_its[j] is not None:
+                if first_its[j] is not None:
                     if (epoch_inds.shape[0] < T_xs.shape[0]):
-                        conv_it = iterations[AL_final_its[j]]
+                        conv_it = iterations[first_its[j]]
                     else:
-                        conv_it = epoch_inds[AL_final_its[j]]
+                        conv_it = epoch_inds[first_its[j]]
                     line_min = min(
                         [
                             np.min(mean_T_xs[:last_ind, i]),
@@ -364,40 +470,7 @@ def plot_opt(
     plt.tight_layout()
     plt.show()
 
-    # plot the p-value based constraint satisfaction
-    """
-    print("p values")
-    n_cols = 4
-    n_rows = int(np.ceil(n_fnames / n_cols))
-    figsize = (n_cols * 4, n_rows * 4)
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
-    figs.append(fig)
-    for i in range(n_fnames):
-        print(i)
-        ax = plt.subplot(n_rows, n_cols, i + 1)
-        for j in range(n_suff_stats):
-            print('plot opt here')
-            print(k_max, i, j)
-            ax.plot(
-                np.arange(k_max + 1), p_values[i, :, j], label=r"$T_%d(z)$" % (j + 1)
-            )
-        if AL_final_its[i] is not None:
-            ax.plot(
-                [AL_final_its[i], AL_final_its[i]], [0, 1], "k--", label="convergence"
-            )
-            ax.set_title(legendstrs[i], fontsize=fontsize)
-        else:
-            ax.set_title(legendstrs[i] + " no converge", fontsize=fontsize)
-        ax.spines["right"].set_visible(False)
-        ax.spines["top"].set_visible(False)
-        ax.set_xlabel("aug Lag it", fontsize=fontsize)
-        ax.set_ylabel("p value", fontsize=fontsize)
-        ax.set_ylim([0, 1])
-        ax.legend(fontsize=fontsize)
-    plt.tight_layout()
-    plt.show()
-    """
-    return figs, AL_final_its, p_values
+    return figs, first_its
 
 
 def coloring_from_str(c_str, system, npzfile, AL_final_it):
@@ -633,6 +706,7 @@ def dsn_pairplots(
     figs = []
     dists = []
     for k in range(n_fnames):
+        print(k)
         fname = model_dirs[k] + 'opt_info.npz'
         AL_final_it = AL_final_its[k]
         if AL_final_it is None:
@@ -645,6 +719,7 @@ def dsn_pairplots(
         dist, dist_label_strs = dist_from_str(
             dist_str, f_str, system, npzfile, AL_final_it
         )
+        print('dist', dist.shape)
         dists.append(dist)
         if (D == 1):
             continue
@@ -767,7 +842,7 @@ def dsn_pairplots(
             plt.savefig(pfnames[k])
         figs.append(fig)
     plt.show()
-    return dists
+    return dists, axs
 
 
 def pairplot(

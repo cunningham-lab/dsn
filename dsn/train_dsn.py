@@ -568,7 +568,7 @@ def train_dsn(
     # make training movie
     step = 1
     video_fname = savedir + get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed) + "_video"
-    make_training_movie(save_fname, system, step, save_fname=video_fname)
+    make_training_movie(savedir, system, step, save_fname=video_fname)
 
     if (system.behavior["type"] == "feasible"):
         return costs, _Z, is_feasible
