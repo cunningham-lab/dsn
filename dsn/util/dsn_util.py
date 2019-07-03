@@ -6,6 +6,7 @@ from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
 from tf_util.tf_util import get_archstring
 import scipy.linalg
+from dsn.util.systems import V1Circuit, SCCircuit, STGCircuit
 
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
@@ -51,6 +52,88 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
                     )
     return savestr
 
+def get_system_from_template(sysname, param_dict):
+    if (sysname == "V1Circuit"):
+        behavior_type = param_dict["behavior_type"]
+        if (behavior_type == "difference"):
+            base_I = 0.15
+            run_I = 0.3
+            tau = 0.15
+            s = param_dict["s"]
+            fac = param_dict["fac"]
+            fixed_params = {'b_E':base_I, \
+                            'b_P':base_I, \
+                            'b_S':base_I, \
+                            'b_V':base_I, \
+                            'h_RUNE':run_I, \
+                            'h_RUNP':run_I, \
+                            'h_RUNS':run_I, \
+                            'h_RUNV':run_I, \
+                            'h_FFE':0.0, \
+                            'h_FFP':0.0, \
+                            'h_LATE':0.0, \
+                            'h_LATP':0.0, \
+                            'h_LATS':0.0, \
+                            'h_LATV':0.0, \
+                            'tau':tau, \
+                            'n':2.0, \
+                            's_0':30};
+            behavior_type = "difference"
+            c_vals=np.array([1.0])
+            s_vals=np.array([s])
+            r_vals=np.array([0.0, 1.0])
+            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
+            bounds = np.zeros((C*4,))
+            behavior = {'type':behavior_type, \
+                        'c_vals':c_vals, \
+                        's_vals':s_vals, \
+                        'r_vals':r_vals, \
+                        'fac':fac,
+                        'bounds':bounds}
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
+            T = 50
+            dt = 0.05
+            init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
+            system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+        else:
+            raise NotImplementedError()
+        
+    elif (sysname == 'SCCircuit'):
+        behavior_type = param_dict["behavior_type"]
+        fixed_params = {'E_constant':0.0, \
+            'E_Pbias':0.1, \
+            'E_Prule':0.5, \
+            'E_Arule':0.5, \
+            'E_choice':-0.2, \
+            'E_light':0.1};
+        if behavior_type == "WTA":
+            C = 2
+            param_str = "full"
+            p = param_dict['p']
+            inact_str = param_dict['inact_str']
+            means = np.array([p, p, 0.0, 0.0, 1.0, 1.0])
+            barrier_EPS = 1e-10
+            if (p==0.0 or p==1.0):
+                behavior = {
+                    "type": behavior_type,
+                    "means": means,
+                    "inact_str":inact_str
+                }
+            else:
+                behavior = {
+                    "type": behavior_type,
+                    "means": means,
+                    "bounds":np.zeros(C) - barrier_EPS,
+                    "inact_str":inact_str
+                }
+            model_opts = {"params":param_str, "C":C}
+            system = SCCircuit(fixed_params, behavior, model_opts)
+        else:
+            raise NotImplementedError()
+    else:
+        raise NotImplementedError()
+
+    return system
 
 def initialize_adam_parameters(sess, optimizer, all_params):
     nparams = len(all_params)
