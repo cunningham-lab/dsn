@@ -274,10 +274,10 @@ def train_dsn(
         )
 
         summary_writer.add_summary(summary, 0)
-        log_grads(_cost_grads, cost_grad_vals, 0)
+        #log_grads(_cost_grads, cost_grad_vals, 0)
         if (db):
             _params = sess.run(all_params)
-            log_grads(_params, param_vals, 0)
+            #log_grads(_params, param_vals, 0)
 
         mean_T_xs[0, :] = np.mean(_T_x[0], 0)
         Hs[0] = _H
@@ -438,11 +438,11 @@ def train_dsn(
                     end_time = time.time()
                     print("Iteration took %.4f seconds." % (end_time - start_time))
 
-                log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
+                #log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
                 if (db):
                     _params = sess.run(all_params)
-                    log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
+                    #log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
 
 
                 if (MODEL_SAVE and np.mod(i, MODEL_SAVE_EVERY) == 0):
