@@ -27,7 +27,7 @@ from dsn.util.dsn_util import (
     get_savestr,
     check_convergence,
 )
-from dsn.util.dsn_util import initialize_gauss_nf
+from dsn.util.dsn_util import initialize_nf
 from dsn.util.plot_util import make_training_movie
 
 from tf_util.tf_util import (
@@ -35,8 +35,6 @@ from tf_util.tf_util import (
     mixture_density_network,
     log_grads,
     AL_cost,
-    get_initdir,
-    check_init,
 )
 from tf_util.normalizing_flows import count_params
 from tf_util.stat_util import sample_gumbel
@@ -100,16 +98,28 @@ def train_dsn(
     mixture = K > 1
 
     # Look for model initialization.  If not found, optimize the init.
-    print('Initializing...')
-    np.random.seed(random_seed)
-    initdir = initialize_nf(system, arch_dict, sigma_init, random_seed)
-    print('initdir = ', initdir)
+    if (K > 1 and (not arch_dict['shared'])):
+        initdirs = []
+        for rs in range(1, K+1):
+            print('Initializing %d/%d...' % (rs, K))
+            initdirs.append(initialize_nf(system,
+                                          arch_dict, 
+                                          sigma_init,
+                                          rs))
+    else:
+        print('Initializing...')
+        initdirs = [initialize_nf(system,
+                                  arch_dict, 
+                                  sigma_init,
+                                  random_seed)]
+
+
+    print('initdirs ', initdirs)
     print('done.')
 
     # Reset tf graph, and set random seeds.
     tf.reset_default_graph()
     tf.set_random_seed(random_seed)
-    np.random.seed(0)
 
     # Load nf initialization
     W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
@@ -132,14 +142,15 @@ def train_dsn(
         support_mapping = None
 
     if (mixture):
-        print('mixture valid')
+        np.random.seed(random_seed)
         G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
-        Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, Mu, Sigma, C = mixture_density_network(
-            G, W, arch_dict, support_mapping, initdir=initdir
+        #Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, Mu, Sigma, C = mixture_density_network(
+        Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, C = mixture_density_network(
+            G, W, arch_dict, support_mapping, initdirs=initdirs
         )
     else: # mixture
         Z, sum_log_det_jacobian, flow_layers = density_network(
-            W, arch_dict, support_mapping, initdir=initdir
+            W, arch_dict, support_mapping, initdir=initdirs[0]
         )
 
     with tf.name_scope("Entropy"):
@@ -253,6 +264,7 @@ def train_dsn(
     norms = np.zeros((num_norms,))
     new_norms = np.zeros((num_norms,))
 
+    np.random.seed(0)
     _c = c_init
     _lambda = np.zeros((system.num_suff_stats,))
     check_it = 0
@@ -286,10 +298,11 @@ def train_dsn(
         check_it += 1
 
         if (mixture):
-            _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+            #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+            _alpha, _C = sess.run([alpha, C], {G:g_i})
             alphas[0,:] = _alpha
-            mus[0,:,:] = _mu
-            sigmas[0,:,:] = _sigma
+            #mus[0,:,:] = _mu
+            #sigmas[0,:,:] = _sigma
             Cs[0,:,:] = _C
         Zs[0, :, :] = _Z[0, :, :]
         log_q_zs[0, :] = _log_q_z[0, :]
@@ -351,10 +364,11 @@ def train_dsn(
 
                     if (db):
                         if (mixture):
-                            _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+                            #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+                            _alpha, _C = sess.run([alpha, C], {G:g_i})
                             alphas[check_it,:] = _alpha
-                            mus[check_it,:,:] = _mu
-                            sigmas[check_it,:,:] = _sigma
+                            #mus[check_it,:,:] = _mu
+                            #sigmas[check_it,:,:] = _sigma
                             Cs[check_it,:,:] = _C
                         Zs[check_it, :, :] = _Z[0, :, :]
                         log_q_zs[check_it, :] = _log_q_z[0, :]
@@ -459,10 +473,11 @@ def train_dsn(
 
             if (not db):
                 if (mixture):
-                    _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+                    #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+                    _alpha, _C = sess.run([alpha, C], {G:g_i})
                     alphas[k+1,:] = _alpha
-                    mus[k+1,:] = _mu
-                    sigmas[k+1,:] = _sigma
+                    #mus[k+1,:] = _mu
+                    #sigmas[k+1,:] = _sigma
                     Cs[k+1,:,:] = _C
                 Zs[k + 1, :, :] = _Z[0, :, :]
                 log_q_zs[k + 1, :] = _log_q_z[0, :]
@@ -573,25 +588,5 @@ def train_dsn(
         return costs, _Z, is_feasible
     else:
         return costs, _Z
-
-
-def initialize_nf(system, arch_dict, sigma_init, random_seed, 
-                  min_iters=50000):
-    initdir = get_initdir(system, 
-                          arch_dict, 
-                          sigma_init, 
-                          random_seed)
-    initialized = check_init(initdir)
-    if (not initialized):
-        initialize_gauss_nf(system.D, 
-                            arch_dict, 
-                            sigma_init,
-                            random_seed, 
-                            initdir,
-                            mu=system.density_network_init_mu,
-                            bounds=system.density_network_bounds)
-    return initdir
-
-
 
 

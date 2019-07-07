@@ -4,7 +4,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
-from tf_util.tf_util import get_archstring
+from tf_util.tf_util import get_archstring, get_initdir, check_init
 import scipy.linalg
 from dsn.util.systems import V1Circuit, SCCircuit, STGCircuit
 from dsn.util.plot_util import assess_constraints_mix
@@ -430,6 +430,31 @@ def rvs(dim):
         return K
 
 
+def initialize_nf(system, arch_dict, sigma_init, random_seed):
+    if (system.density_network_bounds is not None):
+        a, b = system.density_network_bounds
+    else:
+        a = None
+        b = None
+    initdir = get_initdir(arch_dict,
+                          random_seed,
+                          init_type='gauss',
+                          mu=system.mu,
+                          sigma=sigma_init*np.ones((system.D)),
+                          a=a,
+                          b=b)
+    initialized = check_init(initdir)
+    if (not initialized):
+        initialize_gauss_nf(system.D,
+                            arch_dict,
+                            sigma_init,
+                            random_seed,
+                            initdir,
+                            mu=system.density_network_init_mu,
+                            bounds=system.density_network_bounds)
+    return initdir
+
+
 def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu=None, bounds=None):
     if (bounds is not None):
         # make this more flexible for single bounds
@@ -450,7 +475,7 @@ def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu
     n = 1000
     lr_order = -3
     check_rate = 100
-    min_iters = 5000
+    min_iters = 10000
     max_iters = 10000
     converged = False
     while (not converged):
@@ -471,5 +496,5 @@ def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu
         if converged:
             print("done initializing gaussian NF")
         else:
-            max_iters = 5*max_iters
+            max_iters = 4*max_iters
     return converged
