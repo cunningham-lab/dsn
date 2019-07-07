@@ -1119,7 +1119,6 @@ def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=No
     log_base_q_zs = npzfile['log_base_q_zs']
     Cs = npzfile['Cs']
     alphas = npzfile['alphas']
-    sigmas = npzfile['sigmas']
     check_rate = npzfile['check_rate']
     epoch_inds = npzfile['epoch_inds']
     last_ind = npzfile['it'] // check_rate
@@ -1191,17 +1190,6 @@ def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=No
         bar_ax.set_ylabel(r'$\alpha_k$')
         bar_ax.spines['right'].set_visible(False)
         bar_ax.spines['top'].set_visible(False)
-
-        if (system.D > 2):
-            sigma_ax = axs[-1,1]
-            rect_colors = np.arange(K)/float(K)
-            sigma_rects = sigma_ax.bar(np.arange(1, K+1), np.prod(sigmas[0], 1), color=cm(rect_colors))
-
-            sigma_ax.set_ylim([0, 20.0])
-            sigma_ax.set_xlabel('k')
-            sigma_ax.set_ylabel(r'$\prod_d \sigma_d$')
-            sigma_ax.spines['right'].set_visible(False)
-            sigma_ax.spines['top'].set_visible(False)
 
     # plot entropy
     alpha = 0.05
@@ -1286,12 +1274,6 @@ def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=No
             for rect in bar_rects:
                 rect.set_height(alphas[i,j])
                 j += 1
-
-            if (system.D > 2):
-                j = 0
-                for rect in sigma_rects:
-                    rect.set_height(np.prod(sigmas[i,j]))
-                    j += 1
 
         print(Hs.shape, Zs.shape)
         if (not Hs.shape[0]==iterations.shape[0]):
