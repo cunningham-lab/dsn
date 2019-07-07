@@ -1,26 +1,16 @@
 import tensorflow as tf
 import numpy as np
-from tf_util.tf_util import min_barrier, max_barrier
+from tf_util.tf_util import min_barrier, max_barrier, tile_for_conditions
 from tf_util.normalizing_flows import SoftPlusFlow, IntervalFlow
 from tf_util.stat_util import approx_equal
 import scipy.stats
-from scipy.special import gammaln, psi
 import scipy.io as sio
-from itertools import compress
 from dsn.util.tf_DMFT_solvers import rank1_spont_chaotic_solve, \
                                      rank1_input_chaotic_solve, \
                                      rank2_CDD_chaotic_solve, \
                                      rank2_CDD_static_solve
 
 DTYPE = tf.float64
-
-def tile_for_conditions(tensor_list, num_conds):
-    num_tensors = len(tensor_list)
-    tiled = []
-    for i in range(num_tensors):
-        tensor_i = tensor_list[i]
-        tiled.append(tf.tile(tensor_i, [1,num_conds]))
-    return tiled
 
 class system:
     """Base class for systems using DSN modeling.
