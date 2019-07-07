@@ -2,9 +2,17 @@ import tensorflow as tf
 import numpy as np
 import scipy
 from tf_util.stat_util import approx_equal
-from dsn.util.systems import system, Linear2D, STGCircuit, V1Circuit, SCCircuit, LowRankRNN
+from dsn.util.systems import (
+    system,
+    Linear2D,
+    STGCircuit,
+    V1Circuit,
+    SCCircuit,
+    LowRankRNN,
+)
 import matplotlib.pyplot as plt
-#import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
+
+# import dsn.lib.LowRank.Fig1_Spontaneous.fct_mf as mf
 
 DTYPE = tf.float64
 EPS = 1e-16
@@ -42,7 +50,6 @@ class linear_2D:
         return T_x
 
 
-
 def test_Linear2D():
     n = 1000
 
@@ -71,7 +78,6 @@ def test_Linear2D():
         ]
         assert sys.D == 5
         assert sys.num_suff_stats == 4
-
 
         # Fix tau to 1.0 and A to eye(2)
         tau = 1.0
@@ -126,6 +132,7 @@ def test_Linear2D():
         _T_x = sess.run(T_x, {Z: _Z})
         assert approx_equal(_T_x[0, :, :], _T_x_true, EPS)
     return None
+
 
 if __name__ == "__main__":
     test_Linear2D()

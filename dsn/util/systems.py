@@ -5,12 +5,15 @@ from tf_util.normalizing_flows import SoftPlusFlow, IntervalFlow
 from tf_util.stat_util import approx_equal
 import scipy.stats
 import scipy.io as sio
-from dsn.util.tf_DMFT_solvers import rank1_spont_chaotic_solve, \
-                                     rank1_input_chaotic_solve, \
-                                     rank2_CDD_chaotic_solve, \
-                                     rank2_CDD_static_solve
+from dsn.util.tf_DMFT_solvers import (
+    rank1_spont_chaotic_solve,
+    rank1_input_chaotic_solve,
+    rank2_CDD_chaotic_solve,
+    rank2_CDD_static_solve,
+)
 
 DTYPE = tf.float64
+
 
 class system:
     """Base class for systems using DSN modeling.
@@ -157,9 +160,9 @@ class system:
         type_str = self.behavior["type"]
         behavior_str = type_str + "_mu="
         for i in range(self.num_suff_stats):
-            if (i > 0):
+            if i > 0:
                 behavior_str += "_"
-            behavior_str += '%.2E' % self.mu[i]
+            behavior_str += "%.2E" % self.mu[i]
         return behavior_str
 
 
@@ -330,17 +333,17 @@ class STGCircuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"dt":0.025, "T":280, "fft_start":40, "w":40}
+        model_opts={"dt": 0.025, "T": 280, "fft_start": 40, "w": 40},
     ):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
         self.name = "STGCircuit"
 
         # simulation parameters
-        self.dt = model_opts['dt']
-        self.T = model_opts['T']
-        self.fft_start = model_opts['fft_start']
-        self.w = model_opts['w']
+        self.dt = model_opts["dt"]
+        self.T = model_opts["T"]
+        self.fft_start = model_opts["fft_start"]
+        self.w = model_opts["w"]
         self.density_network_init_mu = np.array([2.0, 2.0])
         a = np.zeros((self.D,))
         b = np.array([10.0, 8.0])
@@ -358,15 +361,11 @@ class STGCircuit(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        all_params = [
-            "g_el",
-            "g_synA",
-            "g_synB",
-        ]
+        all_params = ["g_el", "g_synA", "g_synB"]
         all_param_labels = {
             "g_el": [r"$g_{el}$"],
             "g_synA": [r"$g_{synA}$"],
-            "g_synB": [r"$g_{synB}$"]
+            "g_synB": [r"$g_{synB}$"],
         }
 
         return all_params, all_param_labels
@@ -381,10 +380,7 @@ class STGCircuit(system):
 
         """
         if self.behavior["type"] == "hubfreq":
-            T_x_labels = [
-                r"$f_{h}$",
-                r"$f_{h}^2$"
-            ]
+            T_x_labels = [r"$f_{h}$", r"$f_{h}^2$"]
         else:
             raise NotImplementedError
         return T_x_labels
@@ -423,17 +419,11 @@ class STGCircuit(system):
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
             if fixed_param == "g_el":
-                g_el = self.fixed_params[fixed_param] * tf.ones(
-                    (M,), dtype=DTYPE
-                )
+                g_el = self.fixed_params[fixed_param] * tf.ones((M,), dtype=DTYPE)
             elif fixed_param == "g_synA":
-                g_synA = self.fixed_params[fixed_param] * tf.ones(
-                    (M,), dtype=DTYPE
-                )
+                g_synA = self.fixed_params[fixed_param] * tf.ones((M,), dtype=DTYPE)
             elif fixed_param == "g_synB":
-                g_synB = self.fixed_params[fixed_param] * tf.ones(
-                    (M,), dtype=DTYPE
-                )
+                g_synB = self.fixed_params[fixed_param] * tf.ones((M,), dtype=DTYPE)
             else:
                 print("Error: unknown fixed parameter: %s." % fixed_param)
                 raise NotImplementedError
@@ -461,95 +451,103 @@ class STGCircuit(system):
         C_m = 1.0e-9
 
         # volatages
-        V_leak = -40.0e-3 # 40 mV
-        V_Ca = 100.0e-3 # 100mV
-        V_k = -80.0e-3 # -80mV
-        V_h = -20.0e-3 # -20mV
-        V_syn = -75.0e-3 # -75mV
+        V_leak = -40.0e-3  # 40 mV
+        V_Ca = 100.0e-3  # 100mV
+        V_k = -80.0e-3  # -80mV
+        V_h = -20.0e-3  # -20mV
+        V_syn = -75.0e-3  # -75mV
 
-        v_1 = 0.0 # 0mV
-        v_2 = 20.0e-3 # 20mV
-        v_3 = 0.0 # 0mV
-        v_4 = 15.0e-3 # 15mV
-        v_5 = 78.3e-3 # 78.3mV
-        v_6 = 10.5e-3 # 10.5mV
-        v_7 = -42.2e-3 # -42.2mV
-        v_8 = 87.3e-3 # 87.3mV
+        v_1 = 0.0  # 0mV
+        v_2 = 20.0e-3  # 20mV
+        v_3 = 0.0  # 0mV
+        v_4 = 15.0e-3  # 15mV
+        v_5 = 78.3e-3  # 78.3mV
+        v_6 = 10.5e-3  # 10.5mV
+        v_7 = -42.2e-3  # -42.2mV
+        v_8 = 87.3e-3  # 87.3mV
         v_9 = 5.0e-3  # 5.0mV
 
-        v_th = -25.0e-3 # -25mV
+        v_th = -25.0e-3  # -25mV
 
         # neuron specific conductances
-        g_Ca_f = 1.9e-2 * (1e-6) # 1.9e-2 \mu S
-        g_Ca_h = 1.7e-2 * (1e-6) # 1.7e-2 \mu S
-        g_Ca_s = 8.5e-3 * (1e-6) # 8.5e-3 \mu S
+        g_Ca_f = 1.9e-2 * (1e-6)  # 1.9e-2 \mu S
+        g_Ca_h = 1.7e-2 * (1e-6)  # 1.7e-2 \mu S
+        g_Ca_s = 8.5e-3 * (1e-6)  # 8.5e-3 \mu S
 
-        g_k_f  = 3.9e-2 * (1e-6) # 3.9e-2 \mu S
-        g_k_h  = 1.9e-2 * (1e-6) # 1.9e-2 \mu S
-        g_k_s  = 1.5e-2 * (1e-6) # 1.5e-2 \mu S
+        g_k_f = 3.9e-2 * (1e-6)  # 3.9e-2 \mu S
+        g_k_h = 1.9e-2 * (1e-6)  # 1.9e-2 \mu S
+        g_k_s = 1.5e-2 * (1e-6)  # 1.5e-2 \mu S
 
-        g_h_f  = 2.5e-2 * (1e-6) # 2.5e-2 \mu S
-        g_h_h  = 8.0e-3 * (1e-6) # 8.0e-3 \mu S
-        g_h_s  = 1.0e-2 * (1e-6) # 1.0e-2 \mu S
+        g_h_f = 2.5e-2 * (1e-6)  # 2.5e-2 \mu S
+        g_h_h = 8.0e-3 * (1e-6)  # 8.0e-3 \mu S
+        g_h_s = 1.0e-2 * (1e-6)  # 1.0e-2 \mu S
 
         g_Ca = np.array([g_Ca_f, g_Ca_f, g_Ca_h, g_Ca_s, g_Ca_s])
         g_k = np.array([g_k_f, g_k_f, g_k_h, g_k_s, g_k_s])
         g_h = np.array([g_h_f, g_h_f, g_h_h, g_h_s, g_h_s])
 
-        g_leak = 1.0e-4 * (1e-6) # 1e-4 \mu S
+        g_leak = 1.0e-4 * (1e-6)  # 1e-4 \mu S
 
-        phi_N = 2 # 0.002 ms^-1
-
+        phi_N = 2  # 0.002 ms^-1
 
         # obtain weights and inputs from parameterization
         g_el, g_synA, g_synB = self.filter_Z(z)
 
         _zeros = tf.zeros((M,), dtype=DTYPE)
-                           
+
         def f(x, g_el, g_synA, g_synB):
             # x contains
-            V_m = x[:,:5]
-            N = x[:,5:10]
-            H = x[:,10:]
-            
-            M_inf = 0.5*(1.0 + tf.tanh((V_m - v_1)/ v_2))
-            N_inf = 0.5*(1.0 + tf.tanh((V_m - v_3)/v_4))
-            H_inf = 1.0 / (1.0 + tf.exp((V_m + v_5)/v_6))
-                           
+            V_m = x[:, :5]
+            N = x[:, 5:10]
+            H = x[:, 10:]
+
+            M_inf = 0.5 * (1.0 + tf.tanh((V_m - v_1) / v_2))
+            N_inf = 0.5 * (1.0 + tf.tanh((V_m - v_3) / v_4))
+            H_inf = 1.0 / (1.0 + tf.exp((V_m + v_5) / v_6))
+
             S_inf = 1.0 / (1.0 + tf.exp((v_th - V_m) / v_9))
-            
-            I_leak = g_leak*(V_m - V_leak)
-            I_Ca = g_Ca*M_inf*(V_m - V_Ca)
-            I_k = g_k*N*(V_m - V_k)
-            I_h = g_h*H*(V_m - V_h)
 
-            I_elec = tf.stack([_zeros, 
-                               g_el*(V_m[:,1]-V_m[:,2]),
-                               g_el*(V_m[:,2]-V_m[:,1] + V_m[:,2]-V_m[:,4]),
-                               _zeros,
-                               g_el*(V_m[:,4]-V_m[:,2])], 
-                               axis=1)
-                           
-            I_syn = tf.stack([g_synB*S_inf[:,1]*(V_m[:,0] - V_syn),
-                                g_synB*S_inf[:,0]*(V_m[:,1] - V_syn),
-                                g_synA*S_inf[:,0]*(V_m[:,2] - V_syn) + g_synA*S_inf[:,3]*(V_m[:,2] - V_syn),
-                                g_synB*S_inf[:,4]*(V_m[:,3] - V_syn),
-                                g_synB*S_inf[:,3]*(V_m[:,4] - V_syn)], 
-                                axis=1)
+            I_leak = g_leak * (V_m - V_leak)
+            I_Ca = g_Ca * M_inf * (V_m - V_Ca)
+            I_k = g_k * N * (V_m - V_k)
+            I_h = g_h * H * (V_m - V_h)
 
-            I_total = I_leak + I_Ca + I_k + I_h + I_elec + I_syn    
-            
+            I_elec = tf.stack(
+                [
+                    _zeros,
+                    g_el * (V_m[:, 1] - V_m[:, 2]),
+                    g_el * (V_m[:, 2] - V_m[:, 1] + V_m[:, 2] - V_m[:, 4]),
+                    _zeros,
+                    g_el * (V_m[:, 4] - V_m[:, 2]),
+                ],
+                axis=1,
+            )
+
+            I_syn = tf.stack(
+                [
+                    g_synB * S_inf[:, 1] * (V_m[:, 0] - V_syn),
+                    g_synB * S_inf[:, 0] * (V_m[:, 1] - V_syn),
+                    g_synA * S_inf[:, 0] * (V_m[:, 2] - V_syn)
+                    + g_synA * S_inf[:, 3] * (V_m[:, 2] - V_syn),
+                    g_synB * S_inf[:, 4] * (V_m[:, 3] - V_syn),
+                    g_synB * S_inf[:, 3] * (V_m[:, 4] - V_syn),
+                ],
+                axis=1,
+            )
+
+            I_total = I_leak + I_Ca + I_k + I_h + I_elec + I_syn
+
             # I have to use 1.9 on habanero with their cuda versions
-            if (tf.__version__ == '1.9.0'):
-                lambda_N = (phi_N)*tf.cosh((V_m - v_3)/(2*v_4))
+            if tf.__version__ == "1.9.0":
+                lambda_N = (phi_N) * tf.cosh((V_m - v_3) / (2 * v_4))
             else:
-                lambda_N = (phi_N)*tf.math.cosh((V_m - v_3)/(2*v_4))
+                lambda_N = (phi_N) * tf.math.cosh((V_m - v_3) / (2 * v_4))
             tau_h = (272.0 - (-1499.0 / (1.0 + tf.exp((-V_m + v_7) / v_8)))) / 1000.0
-            
-            dVmdt = (1.0 / C_m)*(-I_total)
-            dNdt = lambda_N*(N_inf - N)
+
+            dVmdt = (1.0 / C_m) * (-I_total)
+            dNdt = lambda_N * (N_inf - N)
             dHdt = (H_inf - H) / tau_h
-            
+
             dxdt = tf.concat((dVmdt, dNdt, dHdt), axis=1)
             return dxdt
 
@@ -558,26 +556,42 @@ class STGCircuit(system):
         N_0 = 0.25*np.ones((5,))
         H_0 = 0.1*np.ones((5,))
         x0_np = tf.constant(np.concatenate((V_m0, N_0, H_0), axis=0))"""
-        x0_np = np.array([-0.04169771, -0.04319491,  0.00883992, -0.06879824,  0.03048103,
-                           0.00151316, 0.19784773, 0.56514935, 0.12214069, 0.35290397,
-                           0.08614699, 0.04938177, 0.05568701, 0.07007949, 0.05790969])
-        
+        x0_np = np.array(
+            [
+                -0.04169771,
+                -0.04319491,
+                0.00883992,
+                -0.06879824,
+                0.03048103,
+                0.00151316,
+                0.19784773,
+                0.56514935,
+                0.12214069,
+                0.35290397,
+                0.08614699,
+                0.04938177,
+                0.05568701,
+                0.07007949,
+                0.05790969,
+            ]
+        )
+
         x0 = tf.tile(tf.expand_dims(x0_np, 0), [M, 1])
 
         x = x0
-        if (db):
+        if db:
             xs = [x]
         else:
-            v_hs = [x[:,2]]
+            v_hs = [x[:, 2]]
         for i in range(self.T):
             dxdt = f(x, g_el, g_synA, g_synB)
-            x = x + dxdt*self.dt
-            if (db):
+            x = x + dxdt * self.dt
+            if db:
                 xs.append(x)
             else:
-                v_hs.append(x[:,2])
+                v_hs.append(x[:, 2])
 
-        if (db):
+        if db:
             x_t = tf.stack(xs, axis=0)
         else:
             x_t = tf.stack(v_hs, axis=0)
@@ -620,20 +634,20 @@ class STGCircuit(system):
         """
 
         # sampling frequency
-        Fs  = 1.0 / self.dt 
+        Fs = 1.0 / self.dt
         # num samples for freq measurement
-        N = self.T - self.fft_start + 1 - (self.w-1) 
+        N = self.T - self.fft_start + 1 - (self.w - 1)
 
         min_freq = 0.0
         max_freq = 1.0
         num_freqs = 101
         freqs = np.linspace(min_freq, max_freq, num_freqs)
 
-        ns = np.arange(0,N)
+        ns = np.arange(0, N)
         phis = []
         for i in range(num_freqs):
-            k = N*freqs[i] / Fs
-            phi = np.cos(2*np.pi*k*ns/N) - 1j * np.sin(2*np.pi*k*ns/N)
+            k = N * freqs[i] / Fs
+            phi = np.cos(2 * np.pi * k * ns / N) - 1j * np.sin(2 * np.pi * k * ns / N)
             phis.append(phi)
 
         # [T, K]
@@ -641,26 +655,26 @@ class STGCircuit(system):
 
         alpha = 100
 
-        avg_filter = (1.0 / self.w)*tf.ones((self.w,1,1), dtype=DTYPE)
+        avg_filter = (1.0 / self.w) * tf.ones((self.w, 1, 1), dtype=DTYPE)
 
         # [T, M]
         x_t = self.simulate(z, db=False)
 
         if self.behavior["type"] == "hubfreq":
-            v_h = tf.transpose(x_t[self.fft_start:, :]) # [M,N]
+            v_h = tf.transpose(x_t[self.fft_start :, :])  # [M,N]
             th = 0.01
-            v_h_rect = tf.expand_dims(tf.nn.relu(v_h+th)-th, 2) # [M,T,C=1]
-            v_h_rect_LPF = tf.nn.conv1d(v_h_rect, avg_filter, stride=1, padding='VALID')[:,:,0]
-            #v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
+            v_h_rect = tf.expand_dims(tf.nn.relu(v_h + th) - th, 2)  # [M,T,C=1]
+            v_h_rect_LPF = tf.nn.conv1d(
+                v_h_rect, avg_filter, stride=1, padding="VALID"
+            )[:, :, 0]
+            # v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
             V_h = tf.matmul(tf.cast(v_h_rect_LPF, tf.complex128), Phi)
 
             V_h_pow = tf.pow(tf.abs(V_h), alpha)
             freq_id = V_h_pow / tf.expand_dims(tf.reduce_sum(V_h_pow, 1), 1)
 
             f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id))
-            T_x = tf.stack((f_h, \
-                            tf.square(f_h)
-                            ), 2)
+            T_x = tf.stack((f_h, tf.square(f_h)), 2)
         else:
             raise NotImplementedError
 
@@ -677,7 +691,7 @@ class STGCircuit(system):
         mean = self.behavior["mean"]
         variance = self.behavior["variance"]
         first_moment = mean
-        second_moment = mean**2 + variance
+        second_moment = mean ** 2 + variance
         if self.behavior["type"] == "hubfreq":
             mu = np.array([first_moment, second_moment])
         else:
@@ -751,10 +765,10 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 3.0*np.ones((self.D,))
+        self.density_network_init_mu = 3.0 * np.ones((self.D,))
         a = np.zeros((self.D,))
         a[0] = 2.0
-        b = 20.0*np.ones((self.D,))
+        b = 20.0 * np.ones((self.D,))
         self.density_network_bounds = [a, b]
         # compute number of conditions C
         self.has_support_map = True
@@ -801,9 +815,9 @@ class V1Circuit(system):
         """
         all_params = [
             "W_E",
-            #"W_PE",
-            #"W_SE",
-            #"W_VE",
+            # "W_PE",
+            # "W_SE",
+            # "W_VE",
             "W_EP",
             "W_PP",
             "W_VP",
@@ -831,9 +845,9 @@ class V1Circuit(system):
         ]
         all_param_labels = {
             "W_E": [r"$W_{E}$"],
-            #"W_PE": [r"$W_{PE}$"],
-            #"W_SE": [r"$W_{SE}$"],
-            #"W_VE": [r"$W_{VE}$"],
+            # "W_PE": [r"$W_{PE}$"],
+            # "W_SE": [r"$W_{SE}$"],
+            # "W_VE": [r"$W_{VE}$"],
             "W_EP": [r"$W_{EP}$"],
             "W_PP": [r"$W_{PP}$"],
             "W_VP": [r"$W_{VP}$"],
@@ -899,24 +913,24 @@ class V1Circuit(system):
             num_c = len(self.behavior["c_vals"])
             num_s = len(self.behavior["s_vals"])
             num_r = len(self.behavior["r_vals"])
-            assert(num_c == 1)
-            assert(num_r == 2)
+            assert num_c == 1
+            assert num_r == 2
             mean_T_x_labels = []
             square_T_x_labels = []
             for i in range(num_s):
                 s_i = self.behavior["s_vals"][i]
                 mean_T_x_labels += [
-                                    r"$d_{E,ss}(s=%d)$" % int(s_i),
-                                    r"$d_{P,ss}(s=%d)$" % int(s_i),
-                                    r"$d_{S,ss}(s=%d)$" % int(s_i),
-                                    r"$d_{V,ss}(s=%d)$" % int(s_i),
-                                   ]
+                    r"$d_{E,ss}(s=%d)$" % int(s_i),
+                    r"$d_{P,ss}(s=%d)$" % int(s_i),
+                    r"$d_{S,ss}(s=%d)$" % int(s_i),
+                    r"$d_{V,ss}(s=%d)$" % int(s_i),
+                ]
                 square_T_x_labels += [
-                                    r"$d_{E,ss}(s=%d)^2$" % int(s_i),
-                                    r"$d_{P,ss}(s=%d)^2$" % int(s_i),
-                                    r"$d_{S,ss}(s=%d)^2$" % int(s_i),
-                                    r"$d_{V,ss}(s=%d)^2$" % int(s_i),
-                                   ]
+                    r"$d_{E,ss}(s=%d)^2$" % int(s_i),
+                    r"$d_{P,ss}(s=%d)^2$" % int(s_i),
+                    r"$d_{S,ss}(s=%d)^2$" % int(s_i),
+                    r"$d_{V,ss}(s=%d)^2$" % int(s_i),
+                ]
             T_x_labels = mean_T_x_labels + square_T_x_labels
         else:
             raise NotImplementedError
@@ -965,11 +979,11 @@ class V1Circuit(system):
             # W_XE column
             if free_param == "W_E":
                 W_E = tf.tile(z[:, :, ind], [self.C, 1])
-            #elif free_param == "W_PE":
+            # elif free_param == "W_PE":
             #    W_PE = tf.tile(z[:, :, ind], [self.C, 1])
-            #elif free_param == "W_SE":
+            # elif free_param == "W_SE":
             #    W_SE = tf.tile(z[:, :, ind], [self.C, 1])
-            #elif free_param == "W_VE":
+            # elif free_param == "W_VE":
             #    W_VE = tf.tile(z[:, :, ind], [self.C, 1])
 
             # W_XP column
@@ -1043,18 +1057,16 @@ class V1Circuit(system):
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
             if fixed_param == "W_E":
-                W_E = self.fixed_params[fixed_param] * tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
-            #elif fixed_param == "W_PE":
+                W_E = self.fixed_params[fixed_param] * tf.ones((self.C, M), dtype=DTYPE)
+            # elif fixed_param == "W_PE":
             #    W_PE = self.fixed_params[fixed_param] * tf.ones(
             #        (self.C, M), dtype=DTYPE
             #    )
-            #elif fixed_param == "W_SE":
+            # elif fixed_param == "W_SE":
             #    W_SE = self.fixed_params[fixed_param] * tf.ones(
             #        (self.C, M), dtype=DTYPE
             #    )
-            #elif fixed_param == "W_VE":
+            # elif fixed_param == "W_VE":
             #    W_VE = self.fixed_params[fixed_param] * tf.ones(
             #        (self.C, M), dtype=DTYPE
             #    )
@@ -1137,14 +1149,10 @@ class V1Circuit(system):
                 print("Error: unknown fixed parameter: %s." % fixed_param)
                 raise NotImplementedError
 
-        W_XE = tf.ones(
-                    (self.C, M), dtype=DTYPE
-                )
+        W_XE = tf.ones((self.C, M), dtype=DTYPE)
 
         # Gather weights into the dynamics matrix W [C,M,4,4]
-        W_EX = tf.stack(
-            [W_E, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
-        )
+        W_EX = tf.stack([W_E, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2)
         W_PX = tf.stack(
             [W_XE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
@@ -1241,21 +1249,20 @@ class V1Circuit(system):
         return h
 
     def compute_I_x(self, z, T_x):
-        # Not efficient (repeated computation) 
+        # Not efficient (repeated computation)
         # but convenient modularization for now
         t = 1.0
         bounds = self.behavior["bounds"]
-        r_ss = self.r_t[-1,:,:,:,0] # (C x M x 4)
+        r_ss = self.r_t[-1, :, :, :, 0]  # (C x M x 4)
 
         barriers = []
         ind = 0
         for i in range(self.C):
             for d in range(4):
-                barriers.append(min_barrier(r_ss[i,:,d], bounds[i], t))
+                barriers.append(min_barrier(r_ss[i, :, d], bounds[i], t))
         I_x = tf.stack(barriers, axis=1)
         I_x = tf.expand_dims(I_x, 0)
         return I_x
-
 
     def simulate(self, z):
         """Simulate the V1 4-neuron circuit given parameters z.
@@ -1289,7 +1296,7 @@ class V1Circuit(system):
             return tf.clip_by_value(drdt, -1e30, 1e30)
 
         # worst-case cost is about
-        # time = dt*T = 10 
+        # time = dt*T = 10
         # r_ss = 1e30*time = 1e31
         # cost second mom term
         # r_ss2 = r_ss**2 = 1e62
@@ -1298,7 +1305,6 @@ class V1Circuit(system):
 
         # bound should be 1e308
         # going to 1e45 doesnt work for some reason?
-
 
         # time axis
         t = np.arange(0, self.T * self.dt, self.dt)
@@ -1387,14 +1393,18 @@ class V1Circuit(system):
             T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
 
         elif self.behavior["type"] == "difference":
-            D = 4 
+            D = 4
             r_shape = tf.shape(r_t)
             M = r_shape[2]
-            r_ss = r_t[-1] # C x M x D x 1
-            r_ss = tf.transpose(r_ss, [1, 2, 0, 3]) # M x D x C x 1
-            r_ss = tf.reshape(r_ss, (M, D, self.C//2, 2)) # stationary, locomotion in last dim
-            diff_ss = r_ss[:,:,:,1] - r_ss[:,:,:,0] # M x D x C//2
-            diff_ss = tf.reshape(tf.transpose(diff_ss, [0, 2, 1]), (M, D*(self.C//2))) # (M, CD)
+            r_ss = r_t[-1]  # C x M x D x 1
+            r_ss = tf.transpose(r_ss, [1, 2, 0, 3])  # M x D x C x 1
+            r_ss = tf.reshape(
+                r_ss, (M, D, self.C // 2, 2)
+            )  # stationary, locomotion in last dim
+            diff_ss = r_ss[:, :, :, 1] - r_ss[:, :, :, 0]  # M x D x C//2
+            diff_ss = tf.reshape(
+                tf.transpose(diff_ss, [0, 2, 1]), (M, D * (self.C // 2))
+            )  # (M, CD)
             diff_ss = tf.expand_dims(diff_ss, 0)
 
             T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
@@ -1413,23 +1423,23 @@ class V1Circuit(system):
             means = self.behavior["d_mean"]
             variances = self.behavior["d_var"]
         elif self.behavior["type"] == "difference":
-            assert(approx_equal(self.behavior['r_vals'], np.array([0.0, 1.0]), 1e-16))
-            #fac = self.behavior['fac']
-            datadir = 'data/V1/'
-            fname = datadir + 'ProcessedData.mat'
+            assert approx_equal(self.behavior["r_vals"], np.array([0.0, 1.0]), 1e-16)
+            # fac = self.behavior['fac']
+            datadir = "data/V1/"
+            fname = datadir + "ProcessedData.mat"
             M = sio.loadmat(fname)
-            s_data = M['ProcessedData']['StimulusSize_deg'][0,0][0]
-            DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0] 
-            SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0]
+            s_data = M["ProcessedData"]["StimulusSize_deg"][0, 0][0]
+            DifferenceLS = M["ProcessedData"]["DifferenceLS"][0, 0]
+            SEMDifferenceLS = M["ProcessedData"]["SEMDifferenceLS"][0, 0]
             s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
-           
-            cell_ord = [3,2,0,1]
-            DifferenceLS = DifferenceLS[cell_ord,s_inds].T # C x D
-            SEMDifferenceLS = SEMDifferenceLS[cell_ord,s_inds].T # C x D
+
+            cell_ord = [3, 2, 0, 1]
+            DifferenceLS = DifferenceLS[cell_ord, s_inds].T  # C x D
+            SEMDifferenceLS = SEMDifferenceLS[cell_ord, s_inds].T  # C x D
 
             D = 4
-            means = np.reshape(DifferenceLS, ((self.C//2) * D))
-            stds = np.reshape(SEMDifferenceLS, ((self.C//2) * D))
+            means = np.reshape(DifferenceLS, ((self.C // 2) * D))
+            stds = np.reshape(SEMDifferenceLS, ((self.C // 2) * D))
             variances = np.square(stds)
         first_moments = means
         second_moments = np.square(means) + variances
@@ -1456,18 +1466,15 @@ class V1Circuit(system):
             behavior_str (str): String for DSN filenaming.
 
         """
-        assert(self.behavior["type"] == "difference")
+        assert self.behavior["type"] == "difference"
         print(self.behavior)
         s_vals = self.behavior["s_vals"]
         behavior_str = "diff_s="
         for i in range(s_vals.shape[0]):
-            if (i > 0):
+            if i > 0:
                 behavior_str += "_"
-            behavior_str += '%d' % s_vals[i]
+            behavior_str += "%d" % s_vals[i]
         return behavior_str
-
-
-    
 
 
 class SCCircuit(system):
@@ -1488,10 +1495,7 @@ class SCCircuit(system):
     """
 
     def __init__(
-        self,
-        fixed_params,
-        behavior,
-        model_opts={"params":"reduced", "C":1}
+        self, fixed_params, behavior, model_opts={"params": "reduced", "C": 1}
     ):
         self.model_opts = model_opts
         self.C = self.model_opts["C"]
@@ -1507,13 +1511,12 @@ class SCCircuit(system):
         self.T = self.t.shape[0]
 
         # number of frozen noises to average over
-        self.N = 100 
+        self.N = 100
         # Sample frozen noise.
         # Rates are stored as (T, C, M, 4, N).
         # C and M are broadcast dimensions.
-        self.w = np.random.normal(0.0, 1.0, (self.T,1,1,4,self.N))
+        self.w = np.random.normal(0.0, 1.0, (self.T, 1, 1, 4, self.N))
         self.has_support_map = False
-
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -1534,7 +1537,7 @@ class SCCircuit(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        if (self.model_opts["params"] == "full"):
+        if self.model_opts["params"] == "full":
             all_params = [
                 "sW_P",
                 "sW_A",
@@ -1567,7 +1570,7 @@ class SCCircuit(system):
                 "E_choice": [r"$E_{choice}$"],
                 "E_light": [r"$E_{light}$"],
             }
-        elif (self.model_opts["params"] == "reduced"):
+        elif self.model_opts["params"] == "reduced":
             all_params = [
                 "sW",
                 "vW",
@@ -1618,22 +1621,22 @@ class SCCircuit(system):
                 r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,A,%s}]$" % inact_str,
             ]
         elif self.behavior["type"] == "inforoute":
-            if (C==1):
+            if C == 1:
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
                     r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
-                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$"
+                    r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
                 ]
-            elif (C==2):
+            elif C == 2:
                 T_x_labels = [
                     r"$E_{\partial W}[{V_{LP},L,NI}]$",
                     r"$E_{\partial W}[{V_{LP},L,DI}]$",
                     r"$Var_{\partial W}[{V_{LP},L,NI}] - p(1-p)$",
                     r"$Var_{\partial W}[{V_{LP},L,DI}] - p(1-p)$",
                     r"$E_{\partial W}[{V_{LP},L,NI}-{V_{RP},L,NI}]$",
-                    r"$E_{\partial W}[{V_{LP},L,DI}-{V_{RP},L,DI}]$"
+                    r"$E_{\partial W}[{V_{LP},L,DI}-{V_{RP},L,DI}]$",
                 ]
-            elif (C==4):
+            elif C == 4:
                 T_x_labels = [
                     "err_inc_P",
                     "err_inc_A",
@@ -1646,7 +1649,7 @@ class SCCircuit(system):
                     r"$E_{\partial W}[{V_{LP},A,NI}-{V_{RP},A,NI}]$",
                     r"$E_{\partial W}[{V_{LP},A,DI}-{V_{RP},A,DI}]$",
                 ]
-            elif (C==6):
+            elif C == 6:
                 T_x_labels = [
                     "err_inc_P_DI",
                     "err_inc_A_DI",
@@ -1668,12 +1671,12 @@ class SCCircuit(system):
             else:
                 raise NotImplementedError
         elif self.behavior["type"] == "feasible":
-            if (C==1):
+            if C == 1:
                 T_x_labels = [
                     r"$Var_{\partial W}[{V_{LP},L,NI}]$",
                     r"$Var_{\partial W}[{V_{LP},L,NI}]^2$",
                 ]
-            elif (C==2):
+            elif C == 2:
                 T_x_labels = [
                     r"$Var_{\partial W}[{V_{LP},L,NI}]$",
                     r"$Var_{\partial W}[{V_{LP},L,DI}]$",
@@ -1707,7 +1710,7 @@ class SCCircuit(system):
         M = z_shape[1]
 
         # read free parameters from z vector
-        if (self.model_opts["params"] == "full"):
+        if self.model_opts["params"] == "full":
             ind = 0
             for free_param in self.free_params:
                 if free_param == "sW_P":
@@ -1727,17 +1730,29 @@ class SCCircuit(system):
                 elif free_param == "hW_A":
                     hW_A = tf.tile(z[:, :, ind], [self.C, 1])
                 elif free_param == "E_constant":
-                    E_constant = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_constant = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_Pbias":
-                    E_Pbias = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_Pbias = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_Prule":
-                    E_Prule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_Prule = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_Arule":
-                    E_Arule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_Arule = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_choice":
-                    E_choice = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_choice = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_light":
-                    E_light = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_light = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
 
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
@@ -1779,29 +1794,41 @@ class SCCircuit(system):
                         (self.C, M), dtype=DTYPE
                     )
                 elif fixed_param == "E_constant":
-                    E_constant = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_constant = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_Pbias":
-                    E_Pbias = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_Pbias = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_Prule":
-                    E_Prule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_Prule = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_Arule":
-                    E_Arule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_Arule = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_choice":
-                    E_choice = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_choice = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_light":
-                    E_light = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_light = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
 
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError
 
             # Gather weights into the dynamics matrix W [C,M,4,4]
-            Wrow1 = tf.stack([sW_P,  vW_PA, dW_PA, hW_P], axis=2)
-            Wrow2 = tf.stack([vW_AP, sW_A,  hW_A,  dW_AP], axis=2)
-            Wrow3 = tf.stack([dW_AP, hW_A,  sW_A,  vW_AP], axis=2)
-            Wrow4 = tf.stack([hW_P,  dW_PA, vW_PA, sW_P], axis=2)
+            Wrow1 = tf.stack([sW_P, vW_PA, dW_PA, hW_P], axis=2)
+            Wrow2 = tf.stack([vW_AP, sW_A, hW_A, dW_AP], axis=2)
+            Wrow3 = tf.stack([dW_AP, hW_A, sW_A, vW_AP], axis=2)
+            Wrow4 = tf.stack([hW_P, dW_PA, vW_PA, sW_P], axis=2)
             W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
-        elif (self.model_opts["params"] == "reduced"):
+        elif self.model_opts["params"] == "reduced":
             ind = 0
             for free_param in self.free_params:
                 if free_param == "sW":
@@ -1813,17 +1840,29 @@ class SCCircuit(system):
                 elif free_param == "hW":
                     hW = tf.tile(z[:, :, ind], [self.C, 1])
                 elif free_param == "E_constant":
-                    E_constant = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_constant = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_Pbias":
-                    E_Pbias = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_Pbias = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_Prule":
-                    E_Prule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_Prule = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_Arule":
-                    E_Arule = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_Arule = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_choice":
-                    E_choice = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_choice = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
                 elif free_param == "E_light":
-                    E_light = tf.expand_dims(tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4)
+                    E_light = tf.expand_dims(
+                        tf.expand_dims(tf.expand_dims(z[:, :, ind], 1), 3), 4
+                    )
 
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
@@ -1849,17 +1888,29 @@ class SCCircuit(system):
                         (self.C, M), dtype=DTYPE
                     )
                 elif fixed_param == "E_constant":
-                    E_constant = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_constant = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_Pbias":
-                    E_Pbias = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_Pbias = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_Prule":
-                    E_Prule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_Prule = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_Arule":
-                    E_Arule = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_Arule = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_choice":
-                    E_choice = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_choice = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
                 elif fixed_param == "E_light":
-                    E_light = self.fixed_params[fixed_param] * tf.ones((1, 1, M, 1, 1), dtype=DTYPE)
+                    E_light = self.fixed_params[fixed_param] * tf.ones(
+                        (1, 1, M, 1, 1), dtype=DTYPE
+                    )
 
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
@@ -1873,50 +1924,50 @@ class SCCircuit(system):
             W = tf.stack([Wrow1, Wrow2, Wrow3, Wrow4], axis=2)
 
         # input current time courses
-        I_constant = E_constant*tf.ones((self.T, 1, 1, 4, 1), dtype=DTYPE)
+        I_constant = E_constant * tf.ones((self.T, 1, 1, 4, 1), dtype=DTYPE)
 
-        I_Pbias = np.zeros((self.T,4))
+        I_Pbias = np.zeros((self.T, 4))
         I_Pbias[self.t < 1.2] = np.array([1, 0, 0, 1])
         I_Pbias = np.expand_dims(np.expand_dims(np.expand_dims(I_Pbias, 2), 1), 1)
-        I_Pbias = E_Pbias*tf.constant(I_Pbias)
+        I_Pbias = E_Pbias * tf.constant(I_Pbias)
 
-        I_Prule = np.zeros((self.T,4))
+        I_Prule = np.zeros((self.T, 4))
         I_Prule[self.t < 1.2] = np.array([1, 0, 0, 1])
         I_Prule = np.expand_dims(np.expand_dims(np.expand_dims(I_Prule, 2), 1), 1)
-        I_Prule = E_Prule*tf.constant(I_Prule)
+        I_Prule = E_Prule * tf.constant(I_Prule)
 
-        I_Arule = np.zeros((self.T,4))
+        I_Arule = np.zeros((self.T, 4))
         I_Arule[self.t < 1.2] = np.array([0, 1, 1, 0])
         I_Arule = np.expand_dims(np.expand_dims(np.expand_dims(I_Arule, 2), 1), 1)
-        I_Arule = E_Arule*tf.constant(I_Arule)
+        I_Arule = E_Arule * tf.constant(I_Arule)
 
-        I_choice = np.zeros((self.T,4))
+        I_choice = np.zeros((self.T, 4))
         I_choice[self.t > 1.2] = np.array([1, 1, 1, 1])
         I_choice = np.expand_dims(np.expand_dims(np.expand_dims(I_choice, 2), 1), 1)
-        I_choice = E_choice*tf.constant(I_choice)
+        I_choice = E_choice * tf.constant(I_choice)
 
-        I_lightL = np.zeros((self.T,4))
+        I_lightL = np.zeros((self.T, 4))
         I_lightL[self.t > 1.2] = np.array([1, 1, 0, 0])
         I_lightL = np.expand_dims(np.expand_dims(np.expand_dims(I_lightL, 2), 1), 1)
-        I_lightL = E_light*tf.constant(I_lightL)
+        I_lightL = E_light * tf.constant(I_lightL)
 
-        I_lightR = np.zeros((self.T,4))
+        I_lightR = np.zeros((self.T, 4))
         I_lightR[self.t > 1.2] = np.array([0, 0, 1, 1])
         I_lightR = np.expand_dims(np.expand_dims(np.expand_dims(I_lightR, 2), 1), 1)
-        I_lightR = E_light*tf.constant(I_lightR)
+        I_lightR = E_light * tf.constant(I_lightR)
 
         I_LP = I_constant + I_Pbias + I_Prule + I_choice + I_lightL
         I_LA = I_constant + I_Pbias + I_Arule + I_choice + I_lightL
         # Gather inputs into I [T,C,1,4,1]
         if self.behavior["type"] in ["inforoute", "feasible"]:
             # this is just a stepping stone, will implement full resps
-            if (self.C==1):
+            if self.C == 1:
                 I = I_LP
-            elif (self.C==2):
+            elif self.C == 2:
                 I = tf.concat((I_LP, I_LP), axis=1)
-            elif (self.C==4):
+            elif self.C == 4:
                 I = tf.concat((I_LP, I_LP, I_LA, I_LA), axis=1)
-            elif (self.C==6):
+            elif self.C == 6:
                 I = tf.concat((I_LP, I_LP, I_LP, I_LA, I_LA, I_LA), axis=1)
             else:
                 raise NotImplementedError
@@ -1925,36 +1976,47 @@ class SCCircuit(system):
         else:
             raise NotImplementedError
 
-        
         # just took roughly middle value
         opto_strength = 0.7
         eta = np.ones((self.T, self.C, 1, 1, 1), dtype=np.float64)
         if self.behavior["type"] == "WTA":
             inact_str = self.behavior["inact_str"]
-            if (inact_str == "NI"):
+            if inact_str == "NI":
                 pass
-            elif (inact_str == "DI"):
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),:,:,:,:] = opto_strength
-            elif (inact_str == "CI"):
-                eta[1.2 <= self.t,:,:,:,:] = opto_strength
+            elif inact_str == "DI":
+                eta[
+                    np.logical_and(0.8 <= self.t, self.t <= 1.2), :, :, :, :
+                ] = opto_strength
+            elif inact_str == "CI":
+                eta[1.2 <= self.t, :, :, :, :] = opto_strength
         else:
-            if (self.C==2):
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
-            elif (self.C==4):
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),3,:,:,:] = opto_strength
-            elif (self.C==6): # figure out CI times and eta mag
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),1,:,:,:] = opto_strength
-                eta[1.2 <= self.t,2,:,:,:] = opto_strength
-                eta[np.logical_and(.8 <= self.t, self.t <= 1.2),4,:,:,:] = opto_strength
-                eta[1.2 <= self.t,5,:,:,:] = opto_strength
-                
+            if self.C == 2:
+                eta[
+                    np.logical_and(0.8 <= self.t, self.t <= 1.2), 1, :, :, :
+                ] = opto_strength
+            elif self.C == 4:
+                eta[
+                    np.logical_and(0.8 <= self.t, self.t <= 1.2), 1, :, :, :
+                ] = opto_strength
+                eta[
+                    np.logical_and(0.8 <= self.t, self.t <= 1.2), 3, :, :, :
+                ] = opto_strength
+            elif self.C == 6:  # figure out CI times and eta mag
+                eta[
+                    np.logical_and(0.8 <= self.t, self.t <= 1.2), 1, :, :, :
+                ] = opto_strength
+                eta[1.2 <= self.t, 2, :, :, :] = opto_strength
+                eta[
+                    np.logical_and(0.8 <= self.t, self.t <= 1.2), 4, :, :, :
+                ] = opto_strength
+                eta[1.2 <= self.t, 5, :, :, :] = opto_strength
+
         eta = tf.constant(eta, dtype=DTYPE)
 
         return W, I, eta
 
     def compute_I_x(self, z, T_x):
-        # Not efficient (repeated computation) 
+        # Not efficient (repeated computation)
         # but convenient modularization for now
         t = 1.0
         bounds = self.behavior["bounds"]
@@ -1968,7 +2030,6 @@ class SCCircuit(system):
         I_x = tf.stack(barriers, axis=1)
         I_x = tf.expand_dims(I_x, 0)
         return I_x
-
 
     def simulate(self, z):
         """Simulate the V1 4-neuron circuit given parameters z.
@@ -1992,26 +2053,25 @@ class SCCircuit(system):
         tau = 0.09
         sigma = 0.3
 
-
         # obtain weights and inputs from parameterization
         W, I, eta = self.filter_Z(z)
 
         # initial conditions
-        v0 = 0.1*tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
+        v0 = 0.1 * tf.ones((self.C, M, 4, self.N), dtype=DTYPE)
         # I have to use 1.9 on habanero with their cuda versions
-        if (tf.__version__ == '1.9.0'): 
-            u0 = beta*tf.atanh(2*v0-1) - theta
+        if tf.__version__ == "1.9.0":
+            u0 = beta * tf.atanh(2 * v0 - 1) - theta
         else:
-            u0 = beta*tf.math.atanh(2*v0-1) - theta
+            u0 = beta * tf.math.atanh(2 * v0 - 1) - theta
 
         v = v0
         u = u0
         v_t_list = [v]
         u_t_list = [u]
-        for i in range(1,self.T):
-            du = (self.dt /tau) * (-u + tf.matmul(W, v) + I[i] + sigma*self.w[i])
+        for i in range(1, self.T):
+            du = (self.dt / tau) * (-u + tf.matmul(W, v) + I[i] + sigma * self.w[i])
             u = u + du
-            v = eta[i] * (0.5*tf.tanh((u - theta)/beta) + 0.5)
+            v = eta[i] * (0.5 * tf.tanh((u - theta) / beta) + 0.5)
             v_t_list.append(v)
             u_t_list.append(u)
 
@@ -2055,83 +2115,93 @@ class SCCircuit(system):
 
         v_t = self.get_v_t(z)
         # [T, C, M, D, trials]
-        v_LP = v_t[-1, :, :, 0, :] # we're looking at LP in the standard L Pro condition
+        v_LP = v_t[
+            -1, :, :, 0, :
+        ]  # we're looking at LP in the standard L Pro condition
         E_v_LP = tf.reduce_mean(v_LP, 2)
         Var_v_LP = tf.reduce_mean(tf.square(v_LP - tf.expand_dims(E_v_LP, 2)), 2)
 
-        v_RP = v_t[-1, :, :, 3, :] # we're looking at RP in the standard A Pro condition
+        v_RP = v_t[
+            -1, :, :, 3, :
+        ]  # we're looking at RP in the standard A Pro condition
         E_v_RP = tf.reduce_mean(v_RP, 2)
         Var_v_RP = tf.reduce_mean(tf.square(v_RP - tf.expand_dims(E_v_RP, 2)), 2)
 
-        Bern_Var_Err_L = Var_v_LP - (E_v_LP*(1.0-E_v_LP))
-        Bern_Var_Err_R = Var_v_RP - (E_v_RP*(1.0-E_v_RP))
+        Bern_Var_Err_L = Var_v_LP - (E_v_LP * (1.0 - E_v_LP))
+        Bern_Var_Err_R = Var_v_RP - (E_v_RP * (1.0 - E_v_RP))
 
         Bern_Var_Err_L = tf.expand_dims(tf.transpose(Bern_Var_Err_L), 0)
         Bern_Var_Err_R = tf.expand_dims(tf.transpose(Bern_Var_Err_R), 0)
 
         square_diff = tf.reduce_mean(tf.square(v_LP - v_RP), axis=2)
-        
+
         # suff stats are all [C, M].  Make [1, M, C]
         E_v_LP = tf.expand_dims(tf.transpose(E_v_LP), 0)
         E_v_RP = tf.expand_dims(tf.transpose(E_v_RP), 0)
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "WTA":
-            p_hats = tf.stack((E_v_LP[:,:,0], E_v_RP[:,:,1]), axis=2)
-            Bern_Var_Err = tf.stack((Bern_Var_Err_L[:,:,0], Bern_Var_Err_R[:,:,1]), axis=2)
+            p_hats = tf.stack((E_v_LP[:, :, 0], E_v_RP[:, :, 1]), axis=2)
+            Bern_Var_Err = tf.stack(
+                (Bern_Var_Err_L[:, :, 0], Bern_Var_Err_R[:, :, 1]), axis=2
+            )
             T_x = tf.concat((p_hats, Bern_Var_Err, square_diff), 2)
-            #T_x = tf.concat((E_v_LP, Bern_Var_Err_L, square_diff), 2)
+            # T_x = tf.concat((E_v_LP, Bern_Var_Err_L, square_diff), 2)
         elif self.behavior["type"] == "inforoute":
-            assert(False)
-            #TODO need to handle the new Bern_Var comp graph
-            if (self.C==4):
+            assert False
+            # TODO need to handle the new Bern_Var comp graph
+            if self.C == 4:
                 err_eps = 1.0e-8
-                err_rate_P_NI = 1 - E_v_LP[:,:,0]
-                err_rate_P_DI = 1 - E_v_LP[:,:,1]
+                err_rate_P_NI = 1 - E_v_LP[:, :, 0]
+                err_rate_P_DI = 1 - E_v_LP[:, :, 1]
                 err_rate_inc_P = tf.divide(err_rate_P_DI, err_rate_P_NI + err_eps) - 1.0
 
-                err_rate_A_NI = 1 - E_v_RP[:,:,2]
-                err_rate_A_DI = 1 - E_v_RP[:,:,3]
+                err_rate_A_NI = 1 - E_v_RP[:, :, 2]
+                err_rate_A_DI = 1 - E_v_RP[:, :, 3]
                 err_rate_inc_A = tf.divide(err_rate_A_DI, err_rate_A_NI + err_eps) - 1.0
-                
+
                 err_rate_incs = tf.stack((err_rate_inc_P, err_rate_inc_A), 2)
-                T_x = tf.concat((err_rate_incs, \
-                                Bern_Var_Err,
-                                square_di1ff
-                                ), 2)
-            elif (self.C==6): # actually do the percent difference thing
+                T_x = tf.concat((err_rate_incs, Bern_Var_Err, square_di1ff), 2)
+            elif self.C == 6:  # actually do the percent difference thing
                 err_eps = 1.0e-8
-                err_rate_P_NI = 1 - E_v_LP[:,:,0]
-                err_rate_P_DI = 1 - E_v_LP[:,:,1]
-                err_rate_P_CI = 1 - E_v_LP[:,:,2]
+                err_rate_P_NI = 1 - E_v_LP[:, :, 0]
+                err_rate_P_DI = 1 - E_v_LP[:, :, 1]
+                err_rate_P_CI = 1 - E_v_LP[:, :, 2]
 
-                err_rate_inc_P_DI = tf.divide(err_rate_P_DI, err_rate_P_NI + err_eps) - 1.0
-                err_rate_inc_P_CI = tf.divide(err_rate_P_CI, err_rate_P_NI + err_eps) - 1.0
+                err_rate_inc_P_DI = (
+                    tf.divide(err_rate_P_DI, err_rate_P_NI + err_eps) - 1.0
+                )
+                err_rate_inc_P_CI = (
+                    tf.divide(err_rate_P_CI, err_rate_P_NI + err_eps) - 1.0
+                )
 
-                err_rate_A_NI = 1 - E_v_RP[:,:,3]
-                err_rate_A_DI = 1 - E_v_RP[:,:,4]
-                err_rate_A_CI = 1 - E_v_RP[:,:,5]
+                err_rate_A_NI = 1 - E_v_RP[:, :, 3]
+                err_rate_A_DI = 1 - E_v_RP[:, :, 4]
+                err_rate_A_CI = 1 - E_v_RP[:, :, 5]
 
-                err_rate_inc_A_DI = tf.divide(err_rate_A_DI, err_rate_A_NI + err_eps) - 1.0
-                err_rate_inc_A_CI = tf.divide(err_rate_A_CI, err_rate_A_NI + err_eps) - 1.0
-                
-                err_rate_incs = tf.stack((err_rate_inc_P_DI, err_rate_inc_P_CI, \
-                                          err_rate_inc_A_DI, err_rate_inc_A_CI), 2)
+                err_rate_inc_A_DI = (
+                    tf.divide(err_rate_A_DI, err_rate_A_NI + err_eps) - 1.0
+                )
+                err_rate_inc_A_CI = (
+                    tf.divide(err_rate_A_CI, err_rate_A_NI + err_eps) - 1.0
+                )
 
-                T_x = tf.concat((err_rate_incs, \
-                                Bern_Var_Err,
-                                square_diff
-                                ), 2)
+                err_rate_incs = tf.stack(
+                    (
+                        err_rate_inc_P_DI,
+                        err_rate_inc_P_CI,
+                        err_rate_inc_A_DI,
+                        err_rate_inc_A_CI,
+                    ),
+                    2,
+                )
+
+                T_x = tf.concat((err_rate_incs, Bern_Var_Err, square_diff), 2)
             else:
-                T_x = tf.concat((E_v_LP, \
-                                Bern_Var_Err,
-                                square_diff
-                                ), 2)
+                T_x = tf.concat((E_v_LP, Bern_Var_Err, square_diff), 2)
         elif self.behavior["type"] == "feasible":
             # this won't work
-            T_x = tf.stack((Var_v_LP, \
-                            tf.square(Var_v_LP)
-                            ), 2)
+            T_x = tf.stack((Var_v_LP, tf.square(Var_v_LP)), 2)
         else:
             raise NotImplementedError
 
@@ -2235,7 +2305,7 @@ class LowRankRNN(system):
             all_param_labels (list): List of tex strings for all parameters.
         """
 
-        if (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'spont'):
+        if self.model_opts["rank"] == 1 and self.model_opts["input_type"] == "spont":
             all_params = ["g", "Mm", "Mn", "Sm"]
             all_param_labels = {
                 "g": [r"$g$"],
@@ -2243,7 +2313,7 @@ class LowRankRNN(system):
                 "Mn": [r"$M_n$"],
                 "Sm": [r"$\Sigma_m$"],
             }
-        elif (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'input'):
+        elif self.model_opts["rank"] == 1 and self.model_opts["input_type"] == "input":
             all_params = ["g", "Mm", "Mn", "MI", "Sm", "Sn", "SmI", "Sperp"]
             all_param_labels = {
                 "g": [r"$g$"],
@@ -2255,7 +2325,11 @@ class LowRankRNN(system):
                 "SmI": [r"$\Sigma_{m,I}$"],
                 "Sperp": [r"$\Sigma_\perp$"],
             }
-        elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
+        elif (
+            self.model_opts["rank"] == 2
+            and self.model_opts["input_type"] == "input"
+            and self.behavior["type"] == "CDD"
+        ):
             all_params = ["g", "rhom", "rhon", "betam", "betan", "gammaLO", "gammaHI"]
             all_param_labels = {
                 "g": [r"$g$"],
@@ -2291,9 +2365,9 @@ class LowRankRNN(system):
         elif self.behavior["type"] == "ND":
             T_x_labels = [
                 r"$\kappa_{HI}  -\kappa_{LO}$",
-                #r"$\Delta_T$",
+                # r"$\Delta_T$",
                 r"$(\kappa_{HI}  -\kappa_{LO})^2$",
-                #r"$\Delta_T^2$",
+                # r"$\Delta_T^2$",
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
@@ -2325,7 +2399,7 @@ class LowRankRNN(system):
         # read free parameters from z vector
         ind = 0
 
-        if (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'spont'):
+        if self.model_opts["rank"] == 1 and self.model_opts["input_type"] == "spont":
             for free_param in self.free_params:
                 if free_param == "g":
                     g = z[:, :, ind]
@@ -2356,7 +2430,7 @@ class LowRankRNN(system):
 
             return g, Mm, Mn, Sm
 
-        elif (self.model_opts['rank'] == 1 and self.model_opts['input_type'] == 'input'):
+        elif self.model_opts["rank"] == 1 and self.model_opts["input_type"] == "input":
             for free_param in self.free_params:
                 if free_param == "g":
                     g = z[:, :, ind]
@@ -2396,14 +2470,20 @@ class LowRankRNN(system):
                 elif fixed_param == "SmI":
                     SmI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "Sperp":
-                    Sperp = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                    Sperp = self.fixed_params[fixed_param] * tf.ones(
+                        (1, M), dtype=DTYPE
+                    )
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError
 
             return g, Mm, Mn, MI, Sm, Sn, SmI, Sperp
 
-        elif (self.model_opts['rank'] == 2 and self.model_opts['input_type'] == 'input' and self.behavior['type'] == 'CDD'):
+        elif (
+            self.model_opts["rank"] == 2
+            and self.model_opts["input_type"] == "input"
+            and self.behavior["type"] == "CDD"
+        ):
             for free_param in self.free_params:
                 if free_param == "g":
                     g = z[:, :, ind]
@@ -2415,7 +2495,7 @@ class LowRankRNN(system):
                     betam = z[:, :, ind]
                 elif free_param == "betan":
                     betan = z[:, :, ind]
-                elif free_param == "gammaLO": # negate
+                elif free_param == "gammaLO":  # negate
                     gammaLO = -z[:, :, ind]
                 elif free_param == "gammaHI":
                     gammaHI = z[:, :, ind]
@@ -2433,13 +2513,21 @@ class LowRankRNN(system):
                 elif fixed_param == "rhon":
                     rhon = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "betam":
-                    betam = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                    betam = self.fixed_params[fixed_param] * tf.ones(
+                        (1, M), dtype=DTYPE
+                    )
                 elif fixed_param == "betan":
-                    betan = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                    betan = self.fixed_params[fixed_param] * tf.ones(
+                        (1, M), dtype=DTYPE
+                    )
                 elif fixed_param == "gammaLO":
-                    gammaLO = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                    gammaLO = self.fixed_params[fixed_param] * tf.ones(
+                        (1, M), dtype=DTYPE
+                    )
                 elif fixed_param == "gammaHI":
-                    gammaHI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                    gammaHI = self.fixed_params[fixed_param] * tf.ones(
+                        (1, M), dtype=DTYPE
+                    )
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError
@@ -2509,7 +2597,7 @@ class LowRankRNN(system):
                     self.solve_its,
                     self.solve_eps,
                     gauss_quad_pts=50,
-                    db=False
+                    db=False,
                 )
 
                 static_var = delta_inf
@@ -2525,25 +2613,26 @@ class LowRankRNN(system):
                 raise NotImplementedError
 
         elif self.behavior["type"] == "ND":
-            assert(self.model_opts["input_type"] == "input")
+            assert self.model_opts["input_type"] == "input"
             num_conds = 2
             c_LO = 0.25
             c_HI = 0.75
 
             g, Mm, Mn, MI, Sm, Sn, SmI, Sperp = self.filter_Z(z)
             g, Mm, Mn, MI, Sm, Sn, SmI, Sperp = tile_for_conditions(
-                [g, Mm, Mn, MI, Sm, Sn, SmI, Sperp], 
-                num_conds)
+                [g, Mm, Mn, MI, Sm, Sn, SmI, Sperp], num_conds
+            )
 
-            mu_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            kappa_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            delta_0_init = 5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            mu_init = -5.0 * tf.ones((num_conds * M,), dtype=DTYPE)
+            kappa_init = -5.0 * tf.ones((num_conds * M,), dtype=DTYPE)
+            delta_0_init = 5.0 * tf.ones((num_conds * M,), dtype=DTYPE)
+            delta_inf_init = 4.0 * tf.ones((num_conds * M,), dtype=DTYPE)
 
-            SnI = tf.concat((c_LO*tf.ones((M,), dtype=DTYPE), 
-                             c_HI*tf.ones((M,), dtype=DTYPE)), 
-                            axis=0)
-            
+            SnI = tf.concat(
+                (c_LO * tf.ones((M,), dtype=DTYPE), c_HI * tf.ones((M,), dtype=DTYPE)),
+                axis=0,
+            )
+
             mu, kappa, delta_0, delta_inf = rank1_input_chaotic_solve(
                 mu_init,
                 kappa_init,
@@ -2561,19 +2650,17 @@ class LowRankRNN(system):
                 self.solve_its,
                 self.solve_eps,
                 gauss_quad_pts=50,
-                db=False)
+                db=False,
+            )
 
-            #static_var = delta_inf
+            # static_var = delta_inf
             kappa_LO = kappa[:M]
             kappa_HI = kappa[M:]
 
-            first_moments = tf.stack([kappa_HI-kappa_LO], axis=1)
+            first_moments = tf.stack([kappa_HI - kappa_LO], axis=1)
             second_moments = tf.square(first_moments)
-            T_x = tf.expand_dims(
-                tf.concat((first_moments, second_moments), axis=1), 0
-            )
+            T_x = tf.expand_dims(tf.concat((first_moments, second_moments), axis=1), 0)
 
-                
         elif self.behavior["type"] == "CDD":
             num_conds = 2
             c_LO = 0.0
@@ -2583,30 +2670,28 @@ class LowRankRNN(system):
             gammaHI, gammaLO = tile_for_conditions([gammaHI, gammaLO], 2)
 
             g, rhom, rhon, betam, betan = tile_for_conditions(
-                [g, rhom, rhon, betam, betan], 
-                num_conds)
-
+                [g, rhom, rhon, betam, betan], num_conds
+            )
 
             gammaA = gammaHI
             gammaB = gammaLO
 
-            cA = tf.concat((c_HI*tf.ones((M,), dtype=DTYPE), 
-                             c_LO*tf.ones((M,), dtype=DTYPE)),
-                             axis=0)
-            cB = tf.concat((c_LO*tf.ones((M,), dtype=DTYPE), 
-                             c_HI*tf.ones((M,), dtype=DTYPE)),
-                             axis=0)
+            cA = tf.concat(
+                (c_HI * tf.ones((M,), dtype=DTYPE), c_LO * tf.ones((M,), dtype=DTYPE)),
+                axis=0,
+            )
+            cB = tf.concat(
+                (c_LO * tf.ones((M,), dtype=DTYPE), c_HI * tf.ones((M,), dtype=DTYPE)),
+                axis=0,
+            )
 
-            
-
-
-            kappa1_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            kappa2_init = -5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            delta_0_init = 5.0 * tf.ones((num_conds*M,), dtype=DTYPE)
-            #delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
+            kappa1_init = -5.0 * tf.ones((num_conds * M,), dtype=DTYPE)
+            kappa2_init = -5.0 * tf.ones((num_conds * M,), dtype=DTYPE)
+            delta_0_init = 5.0 * tf.ones((num_conds * M,), dtype=DTYPE)
+            # delta_inf_init = 4.0 * tf.ones((num_conds*M,), dtype=DTYPE)
 
             # TODO delta_0 should be written square diff in commented out?
-            #kappa1, kappa2, delta_0, delta_inf, z = rank2_CDD_chaotic_solve(
+            # kappa1, kappa2, delta_0, delta_inf, z = rank2_CDD_chaotic_solve(
             kappa1, kappa2, delta_0, z = rank2_CDD_static_solve(
                 kappa1_init,
                 kappa2_init,
@@ -2618,8 +2703,8 @@ class LowRankRNN(system):
                 rhon[0, :],
                 betam[0, :],
                 betan[0, :],
-                gammaA[0,:],
-                gammaB[0,:],
+                gammaA[0, :],
+                gammaB[0, :],
                 self.solve_its,
                 self.solve_eps,
                 gauss_quad_pts=50,
@@ -2627,14 +2712,12 @@ class LowRankRNN(system):
             )
 
             z_ctxA_A = z[:M]
-            z_ctxA_B = z[M:2*M]
+            z_ctxA_B = z[M : 2 * M]
 
             first_moments = tf.stack([z_ctxA_A - z_ctxA_B], axis=1)
             second_moments = tf.square(first_moments)
-            T_x = tf.expand_dims(
-                tf.concat((first_moments, second_moments), axis=1), 0
-            )
-        
+            T_x = tf.expand_dims(tf.concat((first_moments, second_moments), axis=1), 0)
+
         else:
             raise NotImplementedError
 
@@ -2684,7 +2767,6 @@ def system_from_str(system_str):
     elif system_str in ["V1Circuit"]:
         return V1Circuit
     elif system_str in ["SCCircuit"]:
-        return 
+        return
     elif system_str in ["STGircuit"]:
         return STGCircuit
-
