@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from dsn.util.dsn_util import get_savedir
+from dsn.util.dsn_util import get_savedir, get_system_from_template
 from dsn.util.systems import SCCircuit
 from dsn.train_dsn import train_dsn
 import pandas as pd
@@ -25,42 +25,22 @@ min_iters=5000
 max_iters=5000
 
 nlayers = 10
+K = 20
+sigma0 = 0.1
 
-# create an instance of the V1_circuit system class
-fixed_params = {'E_constant':0.0, \
-                'E_Pbias':0.1, \
-                'E_Prule':0.5, \
-                'E_Arule':0.5, \
-                'E_choice':-0.2, \
-                'E_light':0.1};
-
-C = 2
-
-behavior_type = "WTA"
-means = np.array([p, p, 0.0, 0.0, 1.0, 1.0])
-barrier_EPS = 1e-10
-
-if (p==0.0 or p==1.0):
-    behavior = {
-        "type": behavior_type,
-        "means": means,
-        "inact_str":inact_str
-    }
-else:
-    behavior = {
-        "type": behavior_type,
-        "means": means,
-        "bounds":np.zeros(C) - barrier_EPS,
-        "inact_str":inact_str
+param_dict = {
+    "behavior_type":"WTA",
+    "p":p,
+    "inact_str":inact_str,
     }
 
-model_opts = {"params":param_str, "C":C}
-system = SCCircuit(fixed_params, behavior, model_opts)
+system = get_system_from_template('SCCircuit', param_dict)
 
 # set up DSN architecture
 flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
-             'K':1,
+             'K':K, \
+             'sigma0':sigma0, \
              'post_affine':True, \
              'flow_type':flow_type, \
              'repeats':nlayers};
