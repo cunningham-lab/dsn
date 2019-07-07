@@ -37,7 +37,6 @@ from tf_util.tf_util import (
     AL_cost,
     get_initdir,
     check_init,
-    load_nf_init,
 )
 from tf_util.normalizing_flows import count_params
 from tf_util.stat_util import sample_gumbel
@@ -578,57 +577,6 @@ def train_dsn(
 
 def initialize_nf(system, arch_dict, sigma_init, random_seed, 
                   min_iters=50000):
-    # Inequality case: Start in the feasible set of the bounds.
-    """if ("bounds" in system.behavior.keys()):
-        # Check for feasible set initialization first
-        behavior = system.behavior
-        feasible_behavior = {"type":"feasible", \
-                             "means":system.behavior["feasible_means"], \
-                             "variances":system.behavior["feasible_variances"], \
-                             "is_feasible":system.behavior["is_feasible"]
-                            }
-        system.behavior = feasible_behavior
-        system.mu = system.compute_mu()
-        system.T_x_labels = system.get_T_x_labels()
-        system.num_suff_stats = len(system.T_x_labels)
-        system.behavior_str = system.get_behavior_str()
-
-        initdir = get_initdir(system, 
-                              arch_dict, 
-                              sigma_init, 
-                              random_seed,
-                              init_type="feas")
-        
-        initialized = check_init(initdir)
-        if (not initialized):
-            n = 1000
-            AL_it_max = 20
-            min_iters = 2500
-            max_iters = 5000
-            lr_order=-3
-            c_init_order = 0
-            check_rate = 100
-            is_feasible = False
-            while (not is_feasible):
-                _, _, is_feasible = train_dsn(system,
-                                              n,
-                                              arch_dict,
-                                              AL_it_max,
-                                              sigma_init,
-                                              c_init_order,
-                                              lr_order,
-                                              random_seed,
-                                              min_iters,
-                                              max_iters,
-                                              check_rate,
-                                              dir_str=None,
-                                              savedir=initdir,
-                                              entropy=False
-                                              )
-                max_iters = 2*max_iters
-
-        system.behavior = behavior
-    else:"""
     initdir = get_initdir(system, 
                           arch_dict, 
                           sigma_init, 
