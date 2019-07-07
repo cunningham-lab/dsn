@@ -61,9 +61,9 @@ elif (dir_str in ['SC_WTA']):
     model_opts = {"params":param_str, "C":C}
     system = SCCircuit(fixed_params, behavior, model_opts)
 
-elif (dir_str == 'STGCircuit'):
-    T = 200
-    mean = 0.525
+elif (dir_str == 'STGCircuit_big'):
+    T = 500
+    mean = 0.50
     variance = (.025)**2
     dt = 0.025
     fft_start = 0
@@ -141,12 +141,11 @@ if (len(sys.argv) > 7):
 lr_order = -3
 
 savedir = get_savedir(system, arch_dict, sigma_init, c_init_order, random_seed, dir_str)
-fname = savedir + 'opt_info.npz'
 movie_fname = savedir + 'training'
 
 step = 5 
 start_time = time.time()
-make_training_movie(fname, system, step, movie_fname)
+make_training_movie(savedir, system, step, movie_fname)
 end_time = time.time()
 
 print('Took %.3f seconds to make the movie.' % (end_time - start_time))
