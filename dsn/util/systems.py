@@ -33,6 +33,9 @@ class system:
         all_param_labels (list): List of tex strings for all parameters.
         z_labels (list): List of tex strings for free parameters.
         T_x_labels (list): List of tex strings for elements of $$T(x)$$.
+        density_network_init_mu (np.array): Center of density network gaussian init.
+        density_network_bounds (list): List of np.arrays of lower and upper bounds.
+                                       None if no bounds.
         has_support_map (bool): True if there is a support transformation.
     """
 
@@ -54,9 +57,9 @@ class system:
         self.mu = self.compute_mu()
         self.num_suff_stats = len(self.T_x_labels)
         self.behavior_str = self.get_behavior_str()
-        self.has_support_map = False
         self.density_network_init_mu = np.zeros((self.D,))
         self.density_network_bounds = None
+        self.has_support_map = False
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -65,7 +68,7 @@ class system:
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_free_params(self,):
         """Returns members of `all_params` not in `fixed_params.keys()`.
@@ -99,7 +102,7 @@ class system:
             behavior_str (str): String for DSN filenaming.
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def get_T_x_labels(self,):
         """Returns `T_x_labels`.
@@ -108,7 +111,7 @@ class system:
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def compute_suff_stats(self, z):
         """Compute sufficient statistics of density network samples.
@@ -120,7 +123,7 @@ class system:
             T_x (tf.tensor): Sufficient statistics of samples.
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def compute_mu(self,):
         """Calculate expected moment constraints given system paramterization.
@@ -129,7 +132,7 @@ class system:
             mu (np.array): Expected moment constraints.
 
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def center_suff_stats_by_mu(self, T_x):
         """Center sufficient statistics by the mean parameters mu.
@@ -219,7 +222,7 @@ class Linear2D(system):
                 r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
             ]
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return T_x_labels
 
     def compute_suff_stats(self, z):
@@ -383,7 +386,7 @@ class STGCircuit(system):
                 r"$f_{h}^2$"
             ]
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return T_x_labels
 
     def filter_Z(self, z):
@@ -414,7 +417,7 @@ class STGCircuit(system):
                 g_synB = 1e-9 * z[0, :, ind]
             else:
                 print("Error: unknown free parameter: %s." % free_param)
-                raise NotImplementedError()
+                raise NotImplementedError
             ind += 1
 
         # load fixed parameters
@@ -433,7 +436,7 @@ class STGCircuit(system):
                 )
             else:
                 print("Error: unknown fixed parameter: %s." % fixed_param)
-                raise NotImplementedError()
+                raise NotImplementedError
 
         return g_el, g_synA, g_synB
 
@@ -601,7 +604,7 @@ class STGCircuit(system):
         if self.behavior["type"] in ["hubfreq"]:
             T_x = self.simulation_suff_stats(z)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return T_x
 
@@ -659,7 +662,7 @@ class STGCircuit(system):
                             tf.square(f_h)
                             ), 2)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return T_x
 
@@ -678,7 +681,7 @@ class STGCircuit(system):
         if self.behavior["type"] == "hubfreq":
             mu = np.array([first_moment, second_moment])
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return mu
 
     def support_mapping(self, inputs):
@@ -916,7 +919,7 @@ class V1Circuit(system):
                                    ]
             T_x_labels = mean_T_x_labels + square_T_x_labels
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return T_x_labels
 
     def filter_Z(self, z):
@@ -1034,7 +1037,7 @@ class V1Circuit(system):
 
             else:
                 print("Error: unknown free parameter: %s." % free_param)
-                raise NotImplementedError()
+                raise NotImplementedError
             ind += 1
 
         # load fixed parameters
@@ -1132,7 +1135,7 @@ class V1Circuit(system):
 
             else:
                 print("Error: unknown fixed parameter: %s." % fixed_param)
-                raise NotImplementedError()
+                raise NotImplementedError
 
         W_XE = tf.ones(
                     (self.C, M), dtype=DTYPE
@@ -1207,7 +1210,7 @@ class V1Circuit(system):
             elif self.model_opts["g_FF"] == "saturate":
                 g_FF = tf.divide(tf.pow(c, a), tf.pow(c_50, a) + tf.pow(c, a))
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             for j in range(num_s):
                 s = self.behavior["s_vals"][j]
@@ -1217,13 +1220,13 @@ class V1Circuit(system):
                 elif self.model_opts["g_LAT"] == "square":
                     g_LAT = tf.multiply(c, tf.nn.relu(np.square(s) - tf.square(s_0)))
                 else:
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
                 for k in range(num_r):
                     if self.model_opts["g_RUN"] == "r":
                         r = self.behavior["r_vals"][k]
                     else:
-                        raise NotImplementedError()
+                        raise NotImplementedError
 
                     g_RUN = r
                     h_csr = (
@@ -1351,7 +1354,7 @@ class V1Circuit(system):
         if self.behavior["type"] in ["data", "difference"]:
             T_x = self.simulation_suff_stats(z)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return T_x
 
@@ -1590,7 +1593,7 @@ class SCCircuit(system):
                 "E_light": [r"$E_{light}$"],
             }
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return all_params, all_param_labels
 
@@ -1663,7 +1666,7 @@ class SCCircuit(system):
                     r"$E_{\partial W}[{V_{LP},A,CI}-{V_{RP},A,DI}]$",
                 ]
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
         elif self.behavior["type"] == "feasible":
             if (C==1):
                 T_x_labels = [
@@ -1678,9 +1681,9 @@ class SCCircuit(system):
                     r"$Var_{\partial W}[ {V_{LP},L,DI}]^2$",
                 ]
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return T_x_labels
 
     def get_v_t(self, z):
@@ -1738,7 +1741,7 @@ class SCCircuit(system):
 
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
                 ind += 1
 
             # load fixed parameters
@@ -1790,7 +1793,7 @@ class SCCircuit(system):
 
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
             # Gather weights into the dynamics matrix W [C,M,4,4]
             Wrow1 = tf.stack([sW_P,  vW_PA, dW_PA, hW_P], axis=2)
@@ -1824,7 +1827,7 @@ class SCCircuit(system):
 
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
                 ind += 1
 
             # load fixed parameters
@@ -1860,7 +1863,7 @@ class SCCircuit(system):
 
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
             # Gather weights into the dynamics matrix W [C,M,4,4]
             Wrow1 = tf.stack([sW, vW, dW, hW], axis=2)
@@ -1916,11 +1919,11 @@ class SCCircuit(system):
             elif (self.C==6):
                 I = tf.concat((I_LP, I_LP, I_LP, I_LA, I_LA, I_LA), axis=1)
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
         elif self.behavior["type"] == "WTA":
             I = tf.concat((I_LP, I_LA), axis=1)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         
         # just took roughly middle value
@@ -2035,7 +2038,7 @@ class SCCircuit(system):
         if self.behavior["type"] in ["WTA", "inforoute", "feasible"]:
             T_x = self.simulation_suff_stats(z)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return T_x
 
@@ -2130,7 +2133,7 @@ class SCCircuit(system):
                             tf.square(Var_v_LP)
                             ), 2)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return T_x
 
@@ -2153,7 +2156,7 @@ class SCCircuit(system):
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return mu
 
 
@@ -2298,7 +2301,7 @@ class LowRankRNN(system):
                 r"$(z_{ctxA,A} - z_{ctxA,B})^2$",
             ]
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         return T_x_labels
 
     def filter_Z(self, z):
@@ -2334,7 +2337,7 @@ class LowRankRNN(system):
                     Sm = z[:, :, ind]
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
                 ind += 1
 
             # load fixed parameters
@@ -2349,7 +2352,7 @@ class LowRankRNN(system):
                     Sm = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
             return g, Mm, Mn, Sm
 
@@ -2373,7 +2376,7 @@ class LowRankRNN(system):
                     Sperp = z[:, :, ind]
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
                 ind += 1
 
             # load fixed parameters
@@ -2396,7 +2399,7 @@ class LowRankRNN(system):
                     Sperp = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
             return g, Mm, Mn, MI, Sm, Sn, SmI, Sperp
 
@@ -2418,7 +2421,7 @@ class LowRankRNN(system):
                     gammaHI = z[:, :, ind]
                 else:
                     print("Error: unknown free parameter: %s." % free_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
                 ind += 1
 
             # load fixed parameters
@@ -2439,7 +2442,7 @@ class LowRankRNN(system):
                     gammaHI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 else:
                     print("Error: unknown fixed parameter: %s." % fixed_param)
-                    raise NotImplementedError()
+                    raise NotImplementedError
 
             return g, rhom, rhon, betam, betan, gammaLO, gammaHI
 
@@ -2519,7 +2522,7 @@ class LowRankRNN(system):
                 )
 
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
         elif self.behavior["type"] == "ND":
             assert(self.model_opts["input_type"] == "input")
@@ -2633,7 +2636,7 @@ class LowRankRNN(system):
             )
         
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
         return T_x
 
@@ -2649,7 +2652,7 @@ class LowRankRNN(system):
             means = self.behavior["means"]
             variances = self.behavior["variances"]
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
         first_moments = means
         second_moments = np.square(means) + variances
         mu = np.concatenate((first_moments, second_moments), axis=0)
