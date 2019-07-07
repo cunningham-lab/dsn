@@ -1144,16 +1144,20 @@ class V1Circuit(system):
                 print("Error: unknown fixed parameter: %s." % fixed_param)
                 raise NotImplementedError()
 
+        W_XE = tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+
         # Gather weights into the dynamics matrix W [C,M,4,4]
         W_EX = tf.stack(
             [W_E, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
         W_PX = tf.stack(
-            [W_E, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            [W_XE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
         W_SX = tf.stack(
             [
-                W_E,
+                W_XE,
                 tf.zeros((self.C, M), dtype=DTYPE),
                 tf.zeros((self.C, M), dtype=DTYPE),
                 -W_SV,
@@ -1161,7 +1165,7 @@ class V1Circuit(system):
             axis=2,
         )
         W_VX = tf.stack(
-            [W_E, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            [W_XE, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
         W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2)
 
@@ -1417,13 +1421,13 @@ class V1Circuit(system):
             variances = self.behavior["d_var"]
         elif self.behavior["type"] == "difference":
             assert(approx_equal(self.behavior['r_vals'], np.array([0.0, 1.0]), 1e-16))
-            fac = self.behavior['fac']
+            #fac = self.behavior['fac']
             datadir = 'data/V1/'
             fname = datadir + 'ProcessedData.mat'
             M = sio.loadmat(fname)
             s_data = M['ProcessedData']['StimulusSize_deg'][0,0][0]
-            DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0] / fac
-            SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0] / fac
+            DifferenceLS = M['ProcessedData']['DifferenceLS'][0,0] 
+            SEMDifferenceLS = M['ProcessedData']['SEMDifferenceLS'][0,0]
             s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
            
             cell_ord = [3,2,0,1]
