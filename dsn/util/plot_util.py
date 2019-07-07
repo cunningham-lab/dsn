@@ -214,7 +214,6 @@ def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
                 ME = Hs[j]
                 greater_H = Hs[(j+1):] > ME
                 inds_to_check = np.arange(j+1,total_its)[greater_H]
-                print('inds to check left', np.sum(greater_H))
                 jj = -1
 
             jj += 1
@@ -1109,7 +1108,7 @@ def get_default_axlims(sysname):
 
 
 def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=None):
-    fname = model_dir
+    fname = model_dir + 'opt_info.npz'
     npzfile = np.load(fname)
     Hs = npzfile['Hs']
     base_Hs = npzfile['base_Hs']
@@ -1208,7 +1207,11 @@ def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=No
     alpha = 0.05
     frac_samps = 0.5
     n_suff_stats = system.num_suff_stats
-    pvals, AL_final_its = assess_constraints([model_dir], alpha, frac_samps, n_suff_stats)
+    AL_final_its, ME_its, MEs = assess_constraints_mix([model_dir],
+                                                 tol=[],
+                                                 tol_inds=[],
+                                                 alpha=alpha, 
+                                                 frac_samps=frac_samps)
     iterations = np.arange(0, check_rate * Hs.shape[0], check_rate)
     if (D==2):
         H_ax = plt.subplot(3, 1, 1)
