@@ -42,6 +42,7 @@ arch_dict = {'D':system.D, \
              'K':K, \
              'sigma0':sigma0, \
              'post_affine':True, \
+             'shared':True, \
              'flow_type':flow_type, \
              'repeats':nlayers};
 

@@ -102,13 +102,12 @@ def get_system_from_template(sysname, param_dict):
     elif (sysname == 'SCCircuit'):
         behavior_type = param_dict["behavior_type"]
         fixed_params = {'E_constant':0.0, \
-            'E_Pbias':0.1, \
-            'E_Prule':0.5, \
-            'E_Arule':0.5, \
-            'E_choice':-0.2, \
-            'E_light':0.1};
+            'E_Pbias':0.0, \
+            'E_Prule':10.0, \
+            'E_Arule':10.0, \
+            'E_choice':2.0, \
+            'E_light':1.0};
         if behavior_type == "WTA":
-            #C = 1
             C = 2
             param_str = "full"
             p = param_dict['p']

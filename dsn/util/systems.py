@@ -1927,7 +1927,7 @@ class SCCircuit(system):
         I_constant = E_constant * tf.ones((self.T, 1, 1, 4, 1), dtype=DTYPE)
 
         I_Pbias = np.zeros((self.T, 4))
-        I_Pbias[self.t < 1.2] = np.array([1, 0, 0, 1])
+        I_Pbias[self.t < self.T*self.dt] = np.array([1, 0, 0, 1])
         I_Pbias = np.expand_dims(np.expand_dims(np.expand_dims(I_Pbias, 2), 1), 1)
         I_Pbias = E_Pbias * tf.constant(I_Pbias)
 
@@ -2051,7 +2051,7 @@ class SCCircuit(system):
         theta = 0.05
         beta = 0.5
         tau = 0.09
-        sigma = 0.3
+        sigma = 1.0
 
         # obtain weights and inputs from parameterization
         W, I, eta = self.filter_Z(z)
