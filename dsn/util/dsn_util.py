@@ -441,7 +441,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed):
     initdir = get_initdir(arch_dict,
                           random_seed,
                           init_type='gauss',
-                          mu=system.density_network_init_mu,
+                          mu=system.mu,
                           sigma=sigma_init*np.ones((system.D)),
                           a=a,
                           b=b)
@@ -477,7 +477,7 @@ def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu
     n = 1000
     lr_order = -3
     check_rate = 100
-    min_iters = 10000
+    min_iters = 5000
     max_iters = 10000
     converged = False
     while (not converged):
