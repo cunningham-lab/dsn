@@ -16,9 +16,11 @@ c_init_order = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
+std = 0.05
+var = std**2
 AL_it_max = 20
 
-dir_str = 'SC_WTA_%s' % inact_str
+dir_str = 'test_SC_WTA_%s' % inact_str
 batch_size = 300
 AL_fac = 4.0
 min_iters=5000
@@ -31,6 +33,7 @@ sigma0 = 0.1
 param_dict = {
     "behavior_type":"WTA",
     "p":p,
+    "var":var,
     "inact_str":inact_str,
     }
 
@@ -72,7 +75,7 @@ train_dsn(
     dir_str='test',
     savedir=savedir,
     entropy=True,
-    db=True,
+    db=False,
 )
 
 
