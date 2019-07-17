@@ -111,20 +111,23 @@ def get_system_from_template(sysname, param_dict):
             C = 2
             param_str = "full"
             p = param_dict['p']
+            var = param_dict['var']
             inact_str = param_dict['inact_str']
-            means = np.array([p, p, 0.0, 0.0, 1.0, 1.0])
-            #means = np.array([p, 0.0, 1.0])
+            means = np.array([p, p])
+            variances = np.array([var,var])
             barrier_EPS = 1e-10
             if (p==0.0 or p==1.0):
                 behavior = {
                     "type": behavior_type,
                     "means": means,
+                    "variances": variances,
                     "inact_str":inact_str
                 }
             else:
                 behavior = {
                     "type": behavior_type,
                     "means": means,
+                    "variances": variances,
                     "bounds":np.zeros(C) - barrier_EPS,
                     "inact_str":inact_str
                 }

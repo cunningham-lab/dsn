@@ -1615,6 +1615,8 @@ class SCCircuit(system):
             T_x_labels = [
                 r"$E_{\partial W}[{V_{LP} \mid L,P,%s}]$" % inact_str,
                 r"$E_{\partial W}[{V_{RP} \mid L,A,%s}]$" % inact_str,
+                r"$E_{\partial W}[{V_{LP} \mid L,P,%s}]^2$" % inact_str,
+                r"$E_{\partial W}[{V_{RP} \mid L,A,%s}]^2$" % inact_str,
                 r"$Var_{\partial W}[{V_{LP} \mid L,P,%s}] - p(1-p)$" % inact_str,
                 r"$Var_{\partial W}[{V_{RP} \mid L,A,%s}] - p(1-p)$" % inact_str,
                 r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,P,%s}]$" % inact_str,
@@ -2142,10 +2144,13 @@ class SCCircuit(system):
 
         if self.behavior["type"] == "WTA":
             p_hats = tf.stack((E_v_LP[:, :, 0], E_v_RP[:, :, 1]), axis=2)
+            p_hat_sqs = tf.stack((tf.square(E_v_LP[:, :, 0]), 
+                                  tf.square(E_v_RP[:, :, 1])), 
+                                 axis=2)
             Bern_Var_Err = tf.stack(
                 (Bern_Var_Err_L[:, :, 0], Bern_Var_Err_R[:, :, 1]), axis=2
             )
-            T_x = tf.concat((p_hats, Bern_Var_Err, square_diff), 2)
+            T_x = tf.concat((p_hats, p_hat_sqs, Bern_Var_Err, square_diff), 2)
             # T_x = tf.concat((E_v_LP, Bern_Var_Err_L, square_diff), 2)
         elif self.behavior["type"] == "inforoute":
             assert False
@@ -2215,16 +2220,19 @@ class SCCircuit(system):
 
         """
 
-        means = self.behavior["means"]
-        first_moments = means
         if self.behavior["type"] == "WTA":
-            mu = first_moments
-        elif self.behavior["type"] == "inforoute":
-            mu = first_moments
-        elif self.behavior["type"] in ["feasible"]:
+            means = self.behavior["means"]
             variances = self.behavior["variances"]
+            first_moments = means
             second_moments = np.square(means) + variances
-            mu = np.concatenate((first_moments, second_moments), axis=0)
+            bern_var_errs = np.zeros((2,))
+            WTA_diffs = np.ones((2,))
+            mu = np.concatenate((first_moments,
+                                 second_moments,
+                                 bern_var_errs,
+                                 WTA_diffs),
+                                 axis=0)
+
         else:
             raise NotImplementedError
         return mu
