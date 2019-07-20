@@ -441,7 +441,7 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed):
     initdir = get_initdir(arch_dict,
                           random_seed,
                           init_type='gauss',
-                          mu=system.mu,
+                          mu=system.density_network_init_mu,
                           sigma=sigma_init*np.ones((system.D)),
                           a=a,
                           b=b)

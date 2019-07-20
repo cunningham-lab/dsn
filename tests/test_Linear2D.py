@@ -25,11 +25,9 @@ class linear_2D:
     def compute_mu(self, behavior):
         means = behavior["means"]
         variances = behavior["variances"]
-        first_mom = means
-        second_mom = means ** 2 + variances
-        return np.concatenate((first_mom, second_mom), axis=0)
+        return np.concatenate((means, variances), axis=0)
 
-    def compute_suff_stats(self, tau, A):
+    def compute_suff_stats(self, tau, A, mu):
         C = A / float(tau)
         c1 = C[0, 0]
         c2 = C[0, 1]
@@ -45,7 +43,8 @@ class linear_2D:
             lambda_1_imag = np.sqrt(-root_term) / 2.0
 
         T_x = np.array(
-            [lambda_1_real, lambda_1_imag, lambda_1_real ** 2, lambda_1_imag ** 2]
+            [lambda_1_real, lambda_1_imag, \
+             (lambda_1_real-mu[0]) ** 2, (lambda_1_imag-mu[1]) ** 2]
         )
         return T_x
 
@@ -65,7 +64,7 @@ def test_Linear2D():
         # no fixed parameters
         sys = Linear2D({}, behavior1)
         assert sys.name == "Linear2D"
-        assert sys.behavior_str == "oscillation_mu=0.00E+00_1.26E+01_1.00E+00_1.59E+02"
+        assert sys.behavior_str == "oscillation_mu=0.00E+00_1.26E+01_1.00E+00_1.00E+00"
         assert not sys.fixed_params  # empty dict evaluates to False
         assert sys.all_params == ["A", "tau"]
         assert sys.free_params == ["A", "tau"]
@@ -73,8 +72,8 @@ def test_Linear2D():
         assert sys.T_x_labels == [
             r"real($\lambda_1$)",
             r"$\frac{imag(\lambda_1)}{2 \pi}$",
-            r"real$(\lambda_1)^2$",
-            r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
+            r"(real$(\lambda_1)-\mu)^2$",
+            r"$(\frac{imag(\lambda_1)}{2 \pi}-\mu)^2$",
         ]
         assert sys.D == 5
         assert sys.num_suff_stats == 4
@@ -90,12 +89,6 @@ def test_Linear2D():
         assert sys.all_params == ["A", "tau"]
         assert sys.free_params == []
         assert sys.z_labels == []
-        assert sys.T_x_labels == [
-            r"real($\lambda_1$)",
-            r"$\frac{imag(\lambda_1)}{2 \pi}$",
-            r"real$(\lambda_1)^2$",
-            r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
-        ]
         assert sys.D == 0
         assert sys.num_suff_stats == 4
 
@@ -128,7 +121,7 @@ def test_Linear2D():
         _Z = np.concatenate((np.reshape(A, [1, n, 4]), tau), axis=2)
         _T_x_true = np.zeros((n, sys.num_suff_stats))
         for i in range(n):
-            _T_x_true[i, :] = true_sys.compute_suff_stats(tau[0, i], A[0, i])
+            _T_x_true[i, :] = true_sys.compute_suff_stats(tau[0, i], A[0, i], mu1)
         _T_x = sess.run(T_x, {Z: _Z})
         assert approx_equal(_T_x[0, :, :], _T_x_true, EPS)
     return None

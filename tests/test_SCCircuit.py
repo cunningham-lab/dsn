@@ -106,7 +106,7 @@ def test_SCCircuit():
     print(system.behavior_str)
     assert (
         system.behavior_str
-        == "WTA_mu=7.00E-01_7.00E-01_4.92E-01_4.92E-01_0.00E+00_0.00E+00_1.00E+00_1.00E+00"
+        == "WTA_mu=7.00E-01_7.00E-01_2.50E-03_2.50E-03_0.00E+00_0.00E+00_1.00E+00_1.00E+00"
     )
     assert system.D == 8
     assert system.num_suff_stats == 8

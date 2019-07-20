@@ -221,8 +221,8 @@ class Linear2D(system):
             T_x_labels = [
                 r"real($\lambda_1$)",
                 r"$\frac{imag(\lambda_1)}{2 \pi}$",
-                r"real$(\lambda_1)^2$",
-                r"$(\frac{imag(\lambda_1)}{2 \pi})^2$",
+                r"(real$(\lambda_1)-\mu)^2$",
+                r"$(\frac{imag(\lambda_1)}{2 \pi}-\mu)^2$",
             ]
         else:
             raise NotImplementedError
@@ -251,6 +251,8 @@ class Linear2D(system):
             z_shape = tf.shape(z)
             K = z_shape[0]
             M = z_shape[1]
+
+            mu_means = self.behavior['means']
 
             # read free parameters from z vector
             ind = 0
@@ -290,13 +292,13 @@ class Linear2D(system):
             lambda_1 = real_common + 0.5 * beta_sqrt
             lambda_1_real = tf.real(lambda_1)
             lambda_1_imag = tf.imag(lambda_1)
-            moments = [
+            T_x_list = [
                 lambda_1_real,
                 lambda_1_imag,
-                tf.square(lambda_1_real),
-                tf.square(lambda_1_imag),
+                tf.square(lambda_1_real - mu_means[0]),
+                tf.square(lambda_1_imag - mu_means[1]),
             ]
-            T_x = tf.stack(moments, 2)
+            T_x = tf.stack(T_x_list, 2)
         else:
             raise NotImplementedError
         return T_x
@@ -310,9 +312,7 @@ class Linear2D(system):
         """
         means = self.behavior["means"]
         variances = self.behavior["variances"]
-        first_moments = means
-        second_moments = np.square(means) + variances
-        mu = np.concatenate((first_moments, second_moments), axis=0)
+        mu = np.concatenate((means, variances), axis=0)
         return mu
 
 
@@ -1615,8 +1615,8 @@ class SCCircuit(system):
             T_x_labels = [
                 r"$E_{\partial W}[{V_{LP} \mid L,P,%s}]$" % inact_str,
                 r"$E_{\partial W}[{V_{RP} \mid L,A,%s}]$" % inact_str,
-                r"$E_{\partial W}[{V_{LP} \mid L,P,%s}]^2$" % inact_str,
-                r"$E_{\partial W}[{V_{RP} \mid L,A,%s}]^2$" % inact_str,
+                r"$(E_{\partial W}[{V_{LP} \mid L,P,%s}]-\mu)^2$" % inact_str,
+                r"$(E_{\partial W}[{V_{RP} \mid L,A,%s}]-\mu)^2$" % inact_str,
                 r"$Var_{\partial W}[{V_{LP} \mid L,P,%s}] - p(1-p)$" % inact_str,
                 r"$Var_{\partial W}[{V_{RP} \mid L,A,%s}] - p(1-p)$" % inact_str,
                 r"$E_{\partial W}[{(V_{LP} - V_{RP})^2 \mid L,P,%s}]$" % inact_str,
@@ -2116,6 +2116,7 @@ class SCCircuit(system):
         """
 
         v_t = self.get_v_t(z)
+        mu_p = self.behavior['means']
         # [T, C, M, D, trials]
         v_LP = v_t[
             -1, :, :, 0, :
@@ -2144,13 +2145,13 @@ class SCCircuit(system):
 
         if self.behavior["type"] == "WTA":
             p_hats = tf.stack((E_v_LP[:, :, 0], E_v_RP[:, :, 1]), axis=2)
-            p_hat_sqs = tf.stack((tf.square(E_v_LP[:, :, 0]), 
-                                  tf.square(E_v_RP[:, :, 1])), 
-                                 axis=2)
+            p_hat_vars = tf.stack((tf.square(E_v_LP[:, :, 0] - mu_p[0]), 
+                                   tf.square(E_v_RP[:, :, 1] - mu_p[1])), 
+                                   axis=2)
             Bern_Var_Err = tf.stack(
                 (Bern_Var_Err_L[:, :, 0], Bern_Var_Err_R[:, :, 1]), axis=2
             )
-            T_x = tf.concat((p_hats, p_hat_sqs, Bern_Var_Err, square_diff), 2)
+            T_x = tf.concat((p_hats, p_hat_vars, Bern_Var_Err, square_diff), 2)
             # T_x = tf.concat((E_v_LP, Bern_Var_Err_L, square_diff), 2)
         elif self.behavior["type"] == "inforoute":
             assert False
@@ -2223,12 +2224,10 @@ class SCCircuit(system):
         if self.behavior["type"] == "WTA":
             means = self.behavior["means"]
             variances = self.behavior["variances"]
-            first_moments = means
-            second_moments = np.square(means) + variances
             bern_var_errs = np.zeros((2,))
             WTA_diffs = np.ones((2,))
-            mu = np.concatenate((first_moments,
-                                 second_moments,
+            mu = np.concatenate((means,
+                                 variances,
                                  bern_var_errs,
                                  WTA_diffs),
                                  axis=0)
