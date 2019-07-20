@@ -16,11 +16,7 @@
 import numpy as np
 import tensorflow as tf
 import dsn.util.tf_integrals as tfi
-from dsn.util.tf_langevin import langevin_dyn_rank1_spont_static, \
-                                 langevin_dyn_rank1_spont_chaos, \
-                                 langevin_dyn_rank1_input_chaos, \
-                                 langevin_dyn_rank2_CDD_chaos, \
-                                 langevin_dyn_rank2_CDD_static
+from dsn.util.tf_langevin import bounded_langevin_dyn
 
 DTYPE = tf.float64
 
@@ -39,7 +35,8 @@ def rank1_spont_static_solve(mu_init, delta_0_init, g, Mm, Mn, Sm, num_its, eps)
         return tf.stack([F, H], axis=1)
 
     x_init = tf.stack([mu_init, delta_0_init], axis=1)
-    xs_end = langevin_dyn_rank1_spont_static(f, x_init, eps, num_its)
+    non_neg = [False, True]
+    xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg)
     mu = xs_end[:, 0]
     delta_0 = xs_end[:, 1]
     return mu, delta_0
@@ -80,10 +77,11 @@ def rank1_spont_chaotic_solve(
         return tf.stack([F, G, H], axis=1)
 
     x_init = tf.stack([mu_init, delta_0_init, delta_inf_init], axis=1)
+    non_neg = [False, True, True]
     if db:
-        xs_end, xs = langevin_dyn_rank1_spont_chaos(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank1_spont_chaos(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     mu = xs_end[:, 0]
     delta_0 = xs_end[:, 1]
@@ -144,11 +142,12 @@ def rank1_input_chaotic_solve(
         return tf.stack([F, G, H, I], axis=1)
 
     x_init = tf.stack([mu_init, kappa_init, square_diff_init, delta_inf_init], axis=1)
+    non_neg = [False, False, True, True]
 
     if db:
-        xs_end, xs = langevin_dyn_rank1_input_chaos(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank1_input_chaos(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     mu = xs_end[:, 0]
     kappa = xs_end[:,1]
@@ -206,11 +205,12 @@ def rank2_CDD_static_solve(
         return tf.stack([F, G, H], axis=1)
 
     x_init = tf.stack([kappa1_init, kappa2_init, delta_0_init], axis=1)
+    non_neg = [False, False, True]
 
     if db:
-        xs_end, xs = langevin_dyn_rank2_CDD_static(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank2_CDD_static(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     kappa1 = xs_end[:, 0]
     kappa2 = xs_end[:,1]
@@ -291,11 +291,11 @@ def rank2_CDD_chaotic_solve(
         return tf.stack([F, G, H, I], axis=1)
 
     x_init = tf.stack([kappa1_init, kappa2_init, square_diff_init, delta_inf_init], axis=1)
-
+    non_neg = [False, False, True, True]
     if db:
-        xs_end, xs = langevin_dyn_rank2_CDD_chaos(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank2_CDD_chaos(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     kappa1 = xs_end[:, 0]
     kappa2 = xs_end[:,1]
