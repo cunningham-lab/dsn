@@ -16,30 +16,28 @@
 import numpy as np
 import tensorflow as tf
 import dsn.util.tf_integrals as tfi
-from dsn.util.tf_langevin import langevin_dyn_rank1_spont_static, \
-                                 langevin_dyn_rank1_spont_chaos, \
-                                 langevin_dyn_rank1_input_chaos, \
-                                 langevin_dyn_rank2_CDD_chaos, \
-                                 langevin_dyn_rank2_CDD_static
+from dsn.util.tf_langevin import bounded_langevin_dyn, bounded_langevin_dyn_np
+import dsn.util.np_integrals as npi
 
 DTYPE = tf.float64
 
-def rank1_spont_static_solve(mu_init, delta_0_init, g, Mm, Mn, Sm, num_its, eps):
+def rank1_spont_static_solve(mu_init, delta_0_init, g, Mm, Mn, Sm, num_its, eps, gauss_quad_pts=50):
 
     # convergence equations used for langevin-like dynamimcs solver
     def f(x):
         mu = x[:, 0]
         delta_0 = x[:, 1]
 
-        Phi = tfi.Phi(mu, delta_0)
-        PhiSq = tfi.PhiSq(mu, delta_0)
+        Phi = tfi.Phi(mu, delta_0, num_pts=gauss_quad_pts)
+        PhiSq = tfi.PhiSq(mu, delta_0, num_pts=gauss_quad_pts)
 
         F = Mm * Mn * Phi
         H = (g ** 2) * PhiSq + (Sm ** 2) * (Mn ** 2) * Phi ** 2
         return tf.stack([F, H], axis=1)
 
     x_init = tf.stack([mu_init, delta_0_init], axis=1)
-    xs_end = langevin_dyn_rank1_spont_static(f, x_init, eps, num_its)
+    non_neg = [False, True]
+    xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg)
     mu = xs_end[:, 0]
     delta_0 = xs_end[:, 1]
     return mu, delta_0
@@ -80,10 +78,11 @@ def rank1_spont_chaotic_solve(
         return tf.stack([F, G, H], axis=1)
 
     x_init = tf.stack([mu_init, delta_0_init, delta_inf_init], axis=1)
+    non_neg = [False, True, True]
     if db:
-        xs_end, xs = langevin_dyn_rank1_spont_chaos(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank1_spont_chaos(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     mu = xs_end[:, 0]
     delta_0 = xs_end[:, 1]
@@ -144,11 +143,12 @@ def rank1_input_chaotic_solve(
         return tf.stack([F, G, H, I], axis=1)
 
     x_init = tf.stack([mu_init, kappa_init, square_diff_init, delta_inf_init], axis=1)
+    non_neg = [False, False, True, True]
 
     if db:
-        xs_end, xs = langevin_dyn_rank1_input_chaos(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank1_input_chaos(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     mu = xs_end[:, 0]
     kappa = xs_end[:,1]
@@ -206,11 +206,12 @@ def rank2_CDD_static_solve(
         return tf.stack([F, G, H], axis=1)
 
     x_init = tf.stack([kappa1_init, kappa2_init, delta_0_init], axis=1)
+    non_neg = [False, False, True]
 
     if db:
-        xs_end, xs = langevin_dyn_rank2_CDD_static(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank2_CDD_static(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     kappa1 = xs_end[:, 0]
     kappa2 = xs_end[:,1]
@@ -291,11 +292,11 @@ def rank2_CDD_chaotic_solve(
         return tf.stack([F, G, H, I], axis=1)
 
     x_init = tf.stack([kappa1_init, kappa2_init, square_diff_init, delta_inf_init], axis=1)
-
+    non_neg = [False, False, True, True]
     if db:
-        xs_end, xs = langevin_dyn_rank2_CDD_chaos(f, x_init, eps, num_its, db=db)
+        xs_end, xs = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
     else:
-        xs_end = langevin_dyn_rank2_CDD_chaos(f, x_init, eps, num_its, db=db)
+        xs_end = bounded_langevin_dyn(f, x_init, eps, num_its, non_neg, db=db)
 
     kappa1 = xs_end[:, 0]
     kappa2 = xs_end[:,1]
@@ -316,4 +317,88 @@ def rank2_CDD_chaotic_solve(
         return kappa1, kappa2, delta_0, delta_inf, z
 
 
+def rank1_spont_static_solve_np(mu_init, delta_0_init, g, Mm, Mn, Sm, num_its, eps):
+    def f(x):
+        mu = x[:, 0]
+        delta_0 = x[:, 1]
+
+        Phi = npi.Phi(mu, delta_0)
+        PhiSq = npi.PhiSq(mu, delta_0)
+
+        F = Mm * Mn * Phi
+        H = (g ** 2) * PhiSq + (Sm ** 2) * (Mn ** 2) * Phi ** 2
+        return np.stack([F, H], axis=1)
+
+    x_init = np.stack([mu_init, delta_0_init], axis=1)
+    non_neg = [False, True]
+    xs_end = bounded_langevin_dyn_np(f, x_init, eps, num_its, non_neg)
+    mu = xs_end[:, 0]
+    delta_0 = xs_end[:, 1]
+    return mu, delta_0
+
+def rank2_CDD_static_solve_np(
+    kappa1_init,
+    kappa2_init,
+    delta_0_init,
+    cA,
+    cB,
+    g,
+    rhom,
+    rhon,
+    betam,
+    betan,
+    gammaA,
+    gammaB,
+    num_its,
+    eps,
+    db=False,
+):
+    # Use equations 159 and 160 from M&O 2018
+
+    SI = 1.2
+    Sy = 1.2
+
+
+    # convergence equations used for langevin-like dynamimcs solver
+    def f(x):
+        kappa1 = x[:, 0]
+        kappa2 = x[:, 1]
+        delta_0 = x[:, 2]
+
+        mu = np.zeros((1,))
+
+        Prime = npi.Prime(mu, delta_0)
+        PhiSq = npi.PhiSq(mu, delta_0)
+
+        F = (rhom*rhon*kappa1 + betam*betan*(kappa1+kappa2) + cA*(SI**2) + rhon*gammaA)*Prime
+        G = (rhom*rhon*kappa2 + betam*betan*(kappa1+kappa2) + cB*(SI**2) + rhon*gammaB)*Prime
+        H = (g**2)*PhiSq
+        H += ((Sy**2)+np.square(betam))*(np.square(kappa1) + np.square(kappa2))
+        H += (SI**2)*(cA**2 + cB**2) + np.square(rhom*kappa1 + gammaA) + np.square(rhom*kappa2 + gammaB)
+
+        return np.stack([F, G, H], axis=1)
+
+    x_init = np.stack([kappa1_init, kappa2_init, delta_0_init], axis=1)
+    non_neg = [False, False, True]
+
+    if db:
+        xs_end, xs = bounded_langevin_dyn_np(f, x_init, eps, num_its, non_neg, db=db)
+    else:
+        xs_end = bounded_langevin_dyn_np(f, x_init, eps, num_its, non_neg, db=db)
+
+    kappa1 = xs_end[:, 0]
+    kappa2 = xs_end[:,1]
+    delta_0 = xs_end[:, 2]
+
+    mu = np.zeros((1,))
+
+    Prime = npi.Prime(mu, delta_0)
+    
+    z = betam*(kappa1+kappa2)*Prime
+
+
+    if db:
+        return kappa1, kappa2, delta_0, z, xs
+    else:
+        return kappa1, kappa2, delta_0, z
 
