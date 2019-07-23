@@ -29,12 +29,14 @@ max_iters=5000
 nlayers = 10
 K = 20
 sigma0 = 0.1
+N = 1000
 
 param_dict = {
     "behavior_type":"WTA",
     "p":p,
     "var":var,
     "inact_str":inact_str,
+    "N":N,
     }
 
 system = get_system_from_template('SCCircuit', param_dict)
