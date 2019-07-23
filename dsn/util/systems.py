@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from tf_util.tf_util import min_barrier, max_barrier, tile_for_conditions
+from tf_util.tf_util import min_barrier, max_barrier, tile_for_conditions, get_array_str
 from tf_util.normalizing_flows import SoftPlusFlow, IntervalFlow
 from tf_util.stat_util import approx_equal
 import scipy.stats
@@ -11,7 +11,7 @@ from dsn.util.tf_DMFT_solvers import (
     rank2_CDD_chaotic_solve,
     rank2_CDD_static_solve,
 )
-
+import os
 DTYPE = tf.float64
 
 
@@ -667,7 +667,6 @@ class STGCircuit(system):
             v_h_rect_LPF = tf.nn.conv1d(
                 v_h_rect, avg_filter, stride=1, padding="VALID"
             )[:, :, 0]
-            # v_h_rect_LPF = v_h_rect_LPF[:,:,0] - tf.expand_dims(tf.reduce_mean(v_h_rect_LPF, [1,2]), 1)
             V_h = tf.matmul(tf.cast(v_h_rect_LPF, tf.complex128), Phi)
 
             V_h_pow = tf.pow(tf.abs(V_h), alpha)
@@ -1495,7 +1494,7 @@ class SCCircuit(system):
     """
 
     def __init__(
-        self, fixed_params, behavior, model_opts={"params": "reduced", "C": 1}
+        self, fixed_params, behavior, model_opts={"params": "reduced", "C": 1, "N":100}
     ):
         self.model_opts = model_opts
         self.C = self.model_opts["C"]
@@ -1511,7 +1510,7 @@ class SCCircuit(system):
         self.T = self.t.shape[0]
 
         # number of frozen noises to average over
-        self.N = 100
+        self.N = model_opts["N"]
         # Sample frozen noise.
         # Rates are stored as (T, C, M, 4, N).
         # C and M are broadcast dimensions.
@@ -2291,7 +2290,38 @@ class LowRankRNN(system):
         self.name = "LowRankRNN"
         self.solve_its = solve_its
         self.solve_eps = solve_eps
+        self.a, self.b = self.get_a_b()
+        self.warm_start_grid_step = 0.5
         self.has_support_map = True
+
+    def get_a_b(self,):
+        a = np.zeros((self.D,))
+        b = np.zeros((self.D,))
+        if (self.model_opts['rank'] == 2 and self.behavior['type'] == 'CDD'):
+            lb = -1.0
+            ub = 1.0
+            a_dict = {"g":0.0, 
+                      "rhom":lb, 
+                      "rhon":lb, 
+                      "betam":0.0, 
+                      "betan":0.0, 
+                      "gammaLO":lb, 
+                      "gammaHI":lb}
+            b_dict = {"g":ub, 
+                      "rhom":ub, 
+                      "rhon":ub, 
+                      "betam":1.0, 
+                      "betan":1.0, 
+                      "gammaLO":ub, 
+                      "gammaHI":ub}
+            for i in range(self.D):
+                a[i] = a_dict[self.free_params[i]]
+                b[i] = b_dict[self.free_params[i]]
+        else:
+            raise NotImplementedError()
+
+        return a, b
+
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -2588,7 +2618,9 @@ class LowRankRNN(system):
 
         if self.behavior["type"] == "struct_chaos":
             if self.model_opts["input_type"] == "spont":
+                # mu_init, delta_0_init, delta_inf_init = self.warm_start_inits(z)
                 g, Mm, Mn, Sm = self.filter_Z(z)
+                
                 mu_init = 50.0 * tf.ones((M,), dtype=DTYPE)
                 delta_0_init = 55.0 * tf.ones((M,), dtype=DTYPE)
                 delta_inf_init = 45.0 * tf.ones((M,), dtype=DTYPE)
@@ -2759,6 +2791,31 @@ class LowRankRNN(system):
         """
         return SoftPlusFlow([], inputs)
 
+    def get_warm_start_inits(self, z):
+        """Calculates warm start initialization for parameter sample.
+
+        # Arguments:
+            z (tf.tensor): Density network system parameter samples.
+
+        # Returns
+            inits (list): list of (M,) tf.tensor solver inits
+        """
+
+        # TODO need to make this soft selection per input combination
+        ws_filename, _ = warm_start(system)
+        ws_file = np.load(ws_filename)
+        param_grid = ws_file['param_grid']
+        solution_grid = ws_file['solution_grid']
+
+        # take dot product and make approx one-hot
+        z_dot_pg = tf.matmul(z[0], param_grid)
+        alpha = 100
+        z_dot_pg_pow = tf.pow(z_dot_pg, alpha)
+        z_dot_pg_one_hot = z_dot_pg_pow / tf.expand_dims(tf.reduce_sum(z_dot_pg_pow, 1), 1)
+        warm_start_inits = tf.matmul(z_dot_pg_one_hot, solution_grid)
+
+        # soft-select the solution grid to be the initializations.
+        return warm_start_inits
 
 def system_from_str(system_str):
     if system_str in ["Linear2D"]:

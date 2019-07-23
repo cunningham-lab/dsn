@@ -113,6 +113,7 @@ def get_system_from_template(sysname, param_dict):
             p = param_dict['p']
             var = param_dict['var']
             inact_str = param_dict['inact_str']
+            N = param_dict['N']
             means = np.array([p, p])
             variances = np.array([var,var])
             barrier_EPS = 1e-10
@@ -131,7 +132,7 @@ def get_system_from_template(sysname, param_dict):
                     "bounds":np.zeros(C) - barrier_EPS,
                     "inact_str":inact_str
                 }
-            model_opts = {"params":param_str, "C":C}
+            model_opts = {"params":param_str, "C":C, "N":N}
             system = SCCircuit(fixed_params, behavior, model_opts)
         else:
             raise NotImplementedError()
