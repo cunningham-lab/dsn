@@ -26,7 +26,7 @@ if (freq == "high"):
     mean = 0.725
     variance = (.025)**2
 elif (freq == "med"):
-    T = 200
+    T = 20
     mean = 0.525
     variance = (.025)**2
 else:
