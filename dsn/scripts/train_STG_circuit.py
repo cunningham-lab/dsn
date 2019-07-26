@@ -26,8 +26,8 @@ if (freq == "high"):
     mean = 0.725
     variance = (.025)**2
 elif (freq == "med"):
-    T = 20
-    mean = 0.525
+    T = 500
+    mean = 0.5
     variance = (.025)**2
 else:
     print('Error: freq not med or high.')
@@ -54,6 +54,7 @@ flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
              'K':K, \
              'sigma0':sigma0, \
+             'shared':False, \
              'post_affine':True, \
              'flow_type':flow_type, \
              'repeats':nlayers};
@@ -79,6 +80,6 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
-    dir_str="STGCircuit",
+    dir_str="STGCircuit_big",
     db=True,
 )
