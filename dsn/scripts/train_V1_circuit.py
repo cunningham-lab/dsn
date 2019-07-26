@@ -10,29 +10,25 @@ import sys, os
 
 os.chdir("../")
 
-s = int(sys.argv[1])
-nlayers = int(sys.argv[2])
-K = int(sys.argv[3])
-c_init_order = int(sys.argv[4])
-sigma_init = float(sys.argv[5])
-random_seed = int(sys.argv[6])
-sigma0 = float(sys.argv[7])
+nlayers = int(sys.argv[1])
+c_init_order = int(sys.argv[2])
+sigma_init = float(sys.argv[3])
+random_seed = int(sys.argv[4])
 
-behavior_type = 'difference'
-fac = 10.0
+behavior_type = 'ISN_coeff'
 param_dict = {
     "behavior_type":behavior_type,
-    "s":s,
-    "fac":fac,
+    "silenced":'S',
 }
 system = get_system_from_template("V1Circuit", param_dict)
 
 # set up DSN architecture
+K = 1
 flow_type = 'PlanarFlow';
 post_affine = True
 arch_dict = {'D':system.D, \
              'K':K, \
-             'sigma0':sigma0, \
+             'shared':True, \
              'flow_type':flow_type, \
              'post_affine':post_affine, \
              'repeats':nlayers};

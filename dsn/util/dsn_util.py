@@ -56,7 +56,47 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
 def get_system_from_template(sysname, param_dict):
     if (sysname == "V1Circuit"):
         behavior_type = param_dict["behavior_type"]
-        if (behavior_type == "difference"):
+        if (behavior_type == 'ISN_coeff'):
+            base_I = 1.0
+            W_EE = 1.0
+            tau = 0.02
+            fixed_params = {'W_EE':W_EE, \
+                            'b_E':base_I, \
+                            'b_P':base_I, \
+                            'b_S':base_I, \
+                            'b_V':base_I, \
+                            'h_RUNE':0.0, \
+                            'h_RUNP':0.0, \
+                            'h_RUNS':0.0, \
+                            'h_RUNV':0.0, \
+                            'h_FFE':0.0, \
+                            'h_FFP':0.0, \
+                            'h_LATE':0.0, \
+                            'h_LATP':0.0, \
+                            'h_LATS':0.0, \
+                            'h_LATV':0.0, \
+                            'n':2.0, \
+                            's_0':30, \
+                            'tau':tau}
+            c_vals=np.array([1.0])
+            s_vals=np.array([5])
+            r_vals=np.array([0.0])
+            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
+            behavior = {'type':behavior_type, \
+                        'mean':0.0, \
+                        'std':0.25, \
+                        'c_vals':c_vals, \
+                        's_vals':s_vals, \
+                        'r_vals':r_vals, \
+                        'silenced':'V'}
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
+            T = 100
+            dt = 0.005
+            init_conds = np.random.normal(1.0, 0.01, (4,1))
+            print(behavior)
+            system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+
+        elif (behavior_type == "difference"):
             base_I = 0.15
             run_I = 0.3
             tau = 0.15
@@ -79,7 +119,6 @@ def get_system_from_template(sysname, param_dict):
                             'tau':tau, \
                             'n':2.0, \
                             's_0':30};
-            behavior_type = "difference"
             c_vals=np.array([1.0])
             s_vals=np.array([s])
             r_vals=np.array([0.0, 1.0])
@@ -92,9 +131,9 @@ def get_system_from_template(sysname, param_dict):
                         'fac':fac,
                         'bounds':bounds}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
-            T = 50
-            dt = 0.05
-            init_conds = np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1)
+            T = 100
+            dt = 0.02
+            init_conds = np.random.normal(1.0, 0.01, (4,))
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
         else:
             raise NotImplementedError()
@@ -479,7 +518,7 @@ def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu
     lr_order = -3
     check_rate = 100
     min_iters = 5000
-    max_iters = 10000
+    max_iters = 50000
     converged = False
     while (not converged):
         converged = train_nf(

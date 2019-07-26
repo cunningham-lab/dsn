@@ -750,9 +750,9 @@ class V1Circuit(system):
         fixed_params,
         behavior,
         model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r"},
-        T=50,
-        dt=0.05,
-        init_conds=np.expand_dims(np.array([1.0, 1.1, 1.2, 1.3]), 1),
+        T=100,
+        dt=0.02,
+        init_conds=np.random.normal(1.0, 0.01, (4,1)),
     ):
         self.model_opts = model_opts
         num_c = behavior["c_vals"].shape[0]
@@ -764,10 +764,9 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 3.0 * np.ones((self.D,))
+        self.density_network_init_mu = 5.0 * np.ones((self.D,))
         a = np.zeros((self.D,))
-        a[0] = 2.0
-        b = 20.0 * np.ones((self.D,))
+        b = 10.0 * np.ones((self.D,))
         self.density_network_bounds = [a, b]
         # compute number of conditions C
         self.has_support_map = True
@@ -776,9 +775,7 @@ class V1Circuit(system):
         """Returns ordered list of all system parameters and individual element labels.
 
          - $$W_{EE}$$ - strength of excitatory-to-excitatory projection
-         - $$W_{PE}$$ - strength of excitatory-to-parvalbumin projection 
-         - $$W_{SE}$$ - strength of excitatory-to-somatostatin projection 
-         - $$W_{VE}$$ - strength of excitatory-to-VIP projection
+         - $$W_{XE}$$ - strength of excitatory-to-VIP projection
          - $$W_{EP}$$ - strength of parvalbumin-to-excitatory projection
          - $$W_{PP}$$ - strength of parvalbumin-to-parvalbumin projection 
          - $$W_{VP}$$ - strength of parvalbumin-to-VIP projection
@@ -813,10 +810,8 @@ class V1Circuit(system):
             all_param_labels (list): List of tex strings for all parameters.
         """
         all_params = [
-            "W_E",
-            # "W_PE",
-            # "W_SE",
-            # "W_VE",
+            "W_EE",
+            "W_XE",
             "W_EP",
             "W_PP",
             "W_VP",
@@ -843,10 +838,8 @@ class V1Circuit(system):
             "s_0",
         ]
         all_param_labels = {
-            "W_E": [r"$W_{E}$"],
-            # "W_PE": [r"$W_{PE}$"],
-            # "W_SE": [r"$W_{SE}$"],
-            # "W_VE": [r"$W_{VE}$"],
+            "W_EE": [r"$W_{EE}$"],
+            "W_XE": [r"$W_{XE}$"],
             "W_EP": [r"$W_{EP}$"],
             "W_PP": [r"$W_{PP}$"],
             "W_VP": [r"$W_{VP}$"],
@@ -892,7 +885,17 @@ class V1Circuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if self.behavior["type"] == "old_difference":
+        print(self.behavior["type"])
+        if (self.behavior["type"] == "ISN_coeff"):
+            T_x_labels = ["ISN", "(ISN-E[ISN])^2"]
+            if ('silenced' in self.behavior.keys()):
+                if (self.behavior['silenced'] == 'S'):
+                     T_x_labels.append(r'$r_{ss,S}$')
+                elif (self.behavior['silenced'] == 'V'):
+                     T_x_labels.append(r'$r_{ss,V}$')
+                else:
+                    raise NotImplementedError()
+        elif self.behavior["type"] == "old_difference":
             all_T_x_labels = [
                 r"$d_{E,ss}$",
                 r"$d_{P,ss}$",
@@ -958,32 +961,15 @@ class V1Circuit(system):
         K = z_shape[0]
         M = z_shape[1]
 
-        """
-        # Assumed parameters
-        W_EP = 1.0 * tf.ones((self.C, M), dtype=DTYPE)
-        W_ES = 0.54 * tf.ones((self.C, M), dtype=DTYPE)
-
-        W_PP = 1.01 * tf.ones((self.C, M), dtype=DTYPE)
-        W_PS = 0.33 * tf.ones((self.C, M), dtype=DTYPE)
-
-        W_SV = 0.15 * tf.ones((self.C, M), dtype=DTYPE)
-
-        W_VP = 0.22 * tf.ones((self.C, M), dtype=DTYPE)
-        W_VS = 0.77 * tf.ones((self.C, M), dtype=DTYPE)
-        """
 
         # read free parameters from z vector
         ind = 0
         for free_param in self.free_params:
             # W_XE column
-            if free_param == "W_E":
-                W_E = tf.tile(z[:, :, ind], [self.C, 1])
-            # elif free_param == "W_PE":
-            #    W_PE = tf.tile(z[:, :, ind], [self.C, 1])
-            # elif free_param == "W_SE":
-            #    W_SE = tf.tile(z[:, :, ind], [self.C, 1])
-            # elif free_param == "W_VE":
-            #    W_VE = tf.tile(z[:, :, ind], [self.C, 1])
+            if free_param == "W_EE":
+                W_EE = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_XE":
+                W_XE = tf.tile(z[:, :, ind], [self.C, 1])
 
             # W_XP column
             elif free_param == "W_EP":
@@ -1055,21 +1041,12 @@ class V1Circuit(system):
 
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
-            if fixed_param == "W_E":
-                W_E = self.fixed_params[fixed_param] * tf.ones((self.C, M), dtype=DTYPE)
-            # elif fixed_param == "W_PE":
-            #    W_PE = self.fixed_params[fixed_param] * tf.ones(
-            #        (self.C, M), dtype=DTYPE
-            #    )
-            # elif fixed_param == "W_SE":
-            #    W_SE = self.fixed_params[fixed_param] * tf.ones(
-            #        (self.C, M), dtype=DTYPE
-            #    )
-            # elif fixed_param == "W_VE":
-            #    W_VE = self.fixed_params[fixed_param] * tf.ones(
-            #        (self.C, M), dtype=DTYPE
-            #    )
-
+            if fixed_param == "W_EE":
+                W_EE = self.fixed_params[fixed_param] * tf.ones((self.C, M), dtype=DTYPE)
+            elif fixed_param == "W_XE":
+                W_XE = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
             elif fixed_param == "W_EP":
                 W_EP = self.fixed_params[fixed_param] * tf.ones(
                     (self.C, M), dtype=DTYPE
@@ -1148,10 +1125,8 @@ class V1Circuit(system):
                 print("Error: unknown fixed parameter: %s." % fixed_param)
                 raise NotImplementedError
 
-        W_XE = tf.ones((self.C, M), dtype=DTYPE)
-
         # Gather weights into the dynamics matrix W [C,M,4,4]
-        W_EX = tf.stack([W_E, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2)
+        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2)
         W_PX = tf.stack(
             [W_XE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
         )
@@ -1280,6 +1255,7 @@ class V1Circuit(system):
         M = z_shape[1]
 
         W, b, h_FF, h_LAT, h_RUN, tau, n, s_0, a, c_50 = self.filter_Z(z)
+        self.W = W
         h = self.compute_h(b, h_FF, h_LAT, h_RUN, s_0, a, c_50)
 
         # initial conditions
@@ -1379,7 +1355,22 @@ class V1Circuit(system):
         self.r_t = r_t
         # [T, C, M, D, 1]
 
-        if self.behavior["type"] == "old_difference":
+        if self.behavior["type"] == "ISN_coeff":
+            assert(self.fixed_params['n'] == 2.0)
+            u_E = tf.sqrt(r_t[-1,:,:,0,0]) # [1 x M]
+            ISN = 1 - 2*u_E*self.W[:,:,0,0] # [1 x M]
+            ISN_var = tf.square(ISN - self.mu[0])
+            T_x = tf.stack((ISN, ISN_var), axis=2)
+            if ('silenced' in self.behavior.keys()):
+                if (self.behavior['silenced'] == 'S'):
+                    r_ss = tf.expand_dims(r_t[-1,:,:,2,0], 2)
+                elif (self.behavior['silenced'] == 'V'):
+                    r_ss = tf.expand_dims(r_t[-1,:,:,3,0], 2)
+                else:
+                    raise NotImplementedError()
+                T_x = tf.concat((T_x, r_ss), axis=2)
+                    
+        elif self.behavior["type"] == "old_difference":
             diff_inds = self.behavior["diff_inds"]
             r1_ss_list = []
             r2_ss_list = []
@@ -1418,9 +1409,19 @@ class V1Circuit(system):
 
         """
 
-        if self.behavior["type"] == "old_difference":
+        if self.behavior["type"] == "ISN_coeff":
+            if ('silenced' in self.behavior.keys()):
+                mu = np.zeros((3,))
+            else:
+                mu = np.zeros((2,))
+            mu[0] = self.behavior['mean']
+            mu[1] = self.behavior['std']**2
+        elif self.behavior["type"] == "old_difference":
             means = self.behavior["d_mean"]
             variances = self.behavior["d_var"]
+            first_moments = means
+            second_moments = np.square(means) + variances
+            mu = np.concatenate((first_moments, second_moments), axis=0)
         elif self.behavior["type"] == "difference":
             assert approx_equal(self.behavior["r_vals"], np.array([0.0, 1.0]), 1e-16)
             # fac = self.behavior['fac']
@@ -1440,9 +1441,10 @@ class V1Circuit(system):
             means = np.reshape(DifferenceLS, ((self.C // 2) * D))
             stds = np.reshape(SEMDifferenceLS, ((self.C // 2) * D))
             variances = np.square(stds)
-        first_moments = means
-        second_moments = np.square(means) + variances
-        mu = np.concatenate((first_moments, second_moments), axis=0)
+            first_moments = means
+            second_moments = np.square(means) + variances
+            mu = np.concatenate((first_moments, second_moments), axis=0)
+
         return mu
 
     def support_mapping(self, inputs):
@@ -1465,14 +1467,17 @@ class V1Circuit(system):
             behavior_str (str): String for DSN filenaming.
 
         """
-        assert self.behavior["type"] == "difference"
-        print(self.behavior)
-        s_vals = self.behavior["s_vals"]
-        behavior_str = "diff_s="
-        for i in range(s_vals.shape[0]):
-            if i > 0:
-                behavior_str += "_"
-            behavior_str += "%d" % s_vals[i]
+        if (self.behavior['type'] == 'ISN_coeff'):
+            behavior_str = "ISN_%.2E_%.2E" % (self.behavior['mean'], self.behavior['std'])
+            if ('silenced' in self.behavior.keys()):
+                behavior_str += '_%s=0' % self.behavior['silenced']
+        elif (self.behavior["type"] == "difference"):
+            s_vals = self.behavior["s_vals"]
+            behavior_str = "diff_s="
+            for i in range(s_vals.shape[0]):
+                if i > 0:
+                    behavior_str += "_"
+                behavior_str += "%d" % s_vals[i]
         return behavior_str
 
 
