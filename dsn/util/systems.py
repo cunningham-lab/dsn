@@ -1332,7 +1332,7 @@ class V1Circuit(system):
 
         """
 
-        if self.behavior["type"] in ["data", "difference"]:
+        if self.behavior["type"] in ["data", "difference", "ISN_coeff"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError
