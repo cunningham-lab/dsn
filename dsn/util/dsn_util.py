@@ -88,7 +88,7 @@ def get_system_from_template(sysname, param_dict):
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                         'r_vals':r_vals, \
-                        'silenced':'V'}
+                        'silenced':param_dict['silenced']}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
             T = 100
             dt = 0.005
