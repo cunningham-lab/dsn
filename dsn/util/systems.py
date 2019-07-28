@@ -764,12 +764,14 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        self.density_network_init_mu = 5.0 * np.ones((self.D,))
         if (behavior['type'] == 'ISN_coeff'):
             a = np.zeros((self.D,))
             b = 10.0 * np.ones((self.D,))
             self.density_network_bounds = [a, b]
             self.has_support_map = True
+	    self.density_network_init_mu = 5.0 * np.ones((self.D,))
+        else:
+	    self.density_network_init_mu = np.zeros((self.D,))
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
