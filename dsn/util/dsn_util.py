@@ -88,7 +88,59 @@ def get_system_from_template(sysname, param_dict):
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                         'r_vals':r_vals, \
-                        'silenced':param_dict['silenced']}
+                        'silenced':'V'}
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
+            T = 100
+            dt = 0.005
+            init_conds = np.random.normal(1.0, 0.01, (4,1))
+            print(behavior)
+            system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+        elif (behavior_type == "difference"):
+            silenced = param_dict['silenced']
+            npzfile = np.load("data/V1/Zs_%s=0.npz" % silenced)
+            if (param_dict['ISN'] == 'pos'):
+                Z = npzfile['pos_ISN_Z']
+            elif (param_dict['ISN'] == 'neg'):
+                Z = npzfile['neg_ISN_Z']
+            else:
+                raise NotImplementedError()
+
+            base_I = 1.0
+            W_EE = 1.0
+            tau = 0.02
+            fixed_params = {'W_EE':W_EE, \
+                            'W_XE':Z[0], \
+                            'W_EP':Z[1], \
+                            'W_PP':Z[2], \
+                            'W_VP':Z[3], \
+                            'W_ES':Z[4], \
+                            'W_PS':Z[5], \
+                            'W_VS':Z[6], \
+                            'W_SV':Z[7], \
+                            'b_E':base_I, \
+                            'b_P':base_I, \
+                            'b_S':base_I, \
+                            'b_V':base_I, \
+                            'h_FFE':0.0, \
+                            'h_FFP':0.0, \
+                            'h_LATE':0.0, \
+                            'h_LATP':0.0, \
+                            'h_LATS':0.0, \
+                            'h_LATV':0.0, \
+                            'n':2.0, \
+                            's_0':30, \
+                            'tau':tau}
+            c_vals=np.array([1.0])
+            s_vals=np.array([5])
+            r_vals=np.array([0.0, 1.0])
+            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
+            behavior = {'type':behavior_type, \
+                        'mean': 0.1, \
+                        'std':0.01, \
+                        'c_vals':c_vals, \
+                        's_vals':s_vals, \
+                        'r_vals':r_vals, \
+                        'silenced':silenced}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
             T = 100
             dt = 0.005
@@ -96,48 +148,7 @@ def get_system_from_template(sysname, param_dict):
             print(behavior)
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
-        elif (behavior_type == "difference"):
-            base_I = 0.15
-            run_I = 0.3
-            tau = 0.15
-            s = param_dict["s"]
-            fac = param_dict["fac"]
-            fixed_params = {'b_E':base_I, \
-                            'b_P':base_I, \
-                            'b_S':base_I, \
-                            'b_V':base_I, \
-                            'h_RUNE':run_I, \
-                            'h_RUNP':run_I, \
-                            'h_RUNS':run_I, \
-                            'h_RUNV':run_I, \
-                            'h_FFE':0.0, \
-                            'h_FFP':0.0, \
-                            'h_LATE':0.0, \
-                            'h_LATP':0.0, \
-                            'h_LATS':0.0, \
-                            'h_LATV':0.0, \
-                            'tau':tau, \
-                            'n':2.0, \
-                            's_0':30};
-            c_vals=np.array([1.0])
-            s_vals=np.array([s])
-            r_vals=np.array([0.0, 1.0])
-            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
-            bounds = np.zeros((C*4,))
-            behavior = {'type':behavior_type, \
-                        'c_vals':c_vals, \
-                        's_vals':s_vals, \
-                        'r_vals':r_vals, \
-                        'fac':fac,
-                        'bounds':bounds}
-            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
-            T = 100
-            dt = 0.02
-            init_conds = np.random.normal(1.0, 0.01, (4,))
-            system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
-        else:
-            raise NotImplementedError()
-        
+
     elif (sysname == 'SCCircuit'):
         behavior_type = param_dict["behavior_type"]
         fixed_params = {'E_constant':0.0, \
