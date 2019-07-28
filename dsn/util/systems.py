@@ -1487,12 +1487,17 @@ class V1Circuit(system):
             if ('silenced' in self.behavior.keys()):
                 behavior_str += '_%s=0' % self.behavior['silenced']
         elif (self.behavior["type"] == "difference"):
+            """
             s_vals = self.behavior["s_vals"]
             behavior_str = "diff_s="
             for i in range(s_vals.shape[0]):
                 if i > 0:
                     behavior_str += "_"
                 behavior_str += "%d" % s_vals[i]
+            """
+            isn_str = self.behavior['ISN']
+            silenced = self.behavior['silenced']
+            behavior_str = 'diff_%sISN_%s=0_%.2E_%.2E' % (isn_str, silenced, self.mu[0], self.mu[1])
         return behavior_str
 
 

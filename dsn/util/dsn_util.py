@@ -96,11 +96,12 @@ def get_system_from_template(sysname, param_dict):
             print(behavior)
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
         elif (behavior_type == "difference"):
+            isn_str = param_dict['ISN']
             silenced = param_dict['silenced']
             npzfile = np.load("data/V1/Zs_%s=0.npz" % silenced)
-            if (param_dict['ISN'] == 'pos'):
+            if (isn_str == 'pos'):
                 Z = npzfile['pos_ISN_Z']
-            elif (param_dict['ISN'] == 'neg'):
+            elif (isn_str == 'neg'):
                 Z = npzfile['neg_ISN_Z']
             else:
                 raise NotImplementedError()
@@ -140,6 +141,7 @@ def get_system_from_template(sysname, param_dict):
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                         'r_vals':r_vals, \
+                        'ISN':isn_str, \
                         'silenced':silenced}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
             T = 100
