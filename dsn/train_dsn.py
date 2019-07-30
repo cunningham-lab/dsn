@@ -323,16 +323,6 @@ def train_dsn(
             # does not effect optimization in the next epoch.
             initialize_adam_parameters(sess, optimizer, all_params)
 
-            for j in range(num_norms):
-                w_j = np.random.normal(np.zeros((1, n, system.D)), 1.0)
-                feed_dict.update({W: w_j})
-                if (mixture):
-                    g_i = np.expand_dims(sample_gumbel(n, K), 0)
-                    feed_dict.update({G: g_i})
-                _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
-                _R = np.mean(_T_x_mu_centered[0], 0)
-                norms[j] = np.linalg.norm(_R)
-
             i = 0
             wrote_graph = False
             has_converged = False
@@ -532,6 +522,8 @@ def train_dsn(
                 _c = AL_fac * _c
             else:
                 print(u, "same c")
+
+            norms = new_norms
 
         final_thetas = {};
         for i in range(nparams):
