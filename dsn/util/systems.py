@@ -253,6 +253,7 @@ class Linear2D(system):
             M = z_shape[1]
 
             mu_means = self.behavior['means']
+            mu_variances = self.behavior['variances']
 
             # read free parameters from z vector
             ind = 0
@@ -295,8 +296,8 @@ class Linear2D(system):
             T_x_list = [
                 lambda_1_real,
                 lambda_1_imag,
-                tf.square(lambda_1_real - mu_means[0]),
-                tf.square(lambda_1_imag - mu_means[1]),
+                tf.square(lambda_1_real - mu_means[0]) / mu_variances[0],
+                tf.square(lambda_1_imag - mu_means[1]) / mu_variances[1],
             ]
             T_x = tf.stack(T_x_list, 2)
         else:
@@ -311,8 +312,9 @@ class Linear2D(system):
 
         """
         means = self.behavior["means"]
-        variances = self.behavior["variances"]
-        mu = np.concatenate((means, variances), axis=0)
+        #variances = self.behavior["variances"]
+        #mu = np.concatenate((means, variances), axis=0)
+        mu = np.concatenate((means, np.ones((2,))), axis=0)
         return mu
 
 
@@ -769,9 +771,9 @@ class V1Circuit(system):
             b = 10.0 * np.ones((self.D,))
             self.density_network_bounds = [a, b]
             self.has_support_map = True
-	    self.density_network_init_mu = 5.0 * np.ones((self.D,))
+            self.density_network_init_mu = 5.0 * np.ones((self.D,))
         else:
-	    self.density_network_init_mu = np.zeros((self.D,))
+            self.density_network_init_mu = np.zeros((self.D,))
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -2142,7 +2144,6 @@ class SCCircuit(system):
         """
 
         v_t = self.get_v_t(z)
-        mu_p = self.behavior['means']
         # [T, C, M, D, trials]
         v_LP = v_t[
             -1, :, :, 0, :
@@ -2170,9 +2171,11 @@ class SCCircuit(system):
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "WTA":
+            mu_p = self.behavior['means']
+            var_p = self.behavior['variances']
             p_hats = tf.stack((E_v_LP[:, :, 0], E_v_RP[:, :, 1]), axis=2)
-            p_hat_vars = tf.stack((tf.square(E_v_LP[:, :, 0] - mu_p[0]), 
-                                   tf.square(E_v_RP[:, :, 1] - mu_p[1])), 
+            p_hat_vars = tf.stack((tf.square(E_v_LP[:, :, 0] - mu_p[0]) / var_p[0], 
+                                   tf.square(E_v_RP[:, :, 1] - mu_p[1]) / var_p[1]), 
                                    axis=2)
             Bern_Var_Err = tf.stack(
                 (Bern_Var_Err_L[:, :, 0], Bern_Var_Err_R[:, :, 1]), axis=2
@@ -2253,7 +2256,7 @@ class SCCircuit(system):
             bern_var_errs = np.zeros((2,))
             WTA_diffs = np.ones((2,))
             mu = np.concatenate((means,
-                                 variances,
+                                 np.ones((2,)),
                                  bern_var_errs,
                                  WTA_diffs),
                                  axis=0)
