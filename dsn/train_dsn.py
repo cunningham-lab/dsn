@@ -85,7 +85,7 @@ def train_dsn(
     TB_SAVE = False
     MODEL_SAVE = True
     TB_SAVE_EVERY = 50
-    MODEL_SAVE_EVERY = 5
+    MODEL_SAVE_EVERY = 5000
     tb_save_params = False
     FIM = True
 
@@ -199,23 +199,28 @@ def train_dsn(
         grads_and_vars.append((cost_grads[i], all_params[i]))
 
     # Compute the fisher information matrix
+    # TODO just write inverses for the shifts and scales and make a single loop
     if (FIM and not mixture):
         if (arch_dict['flow_type'] == 'RealNVP'):
             print('computing inverse of realNVP')
             Z_INV = Z
+            layer_ind = len(flow_layers) - 1
+            if (system.has_support_map):
+                support_mapping = flow_layers[layer_ind]
+                Z_INV = support_mapping.inverse(Z_INV)
+                layer_ind = layer_ind - 1
+
             if (arch_dict['post_affine']):
                 # unshift
-                shift_layer = flow_layers[-1]
+                shift_layer = flow_layers[layer_ind]
                 Z_INV = (Z_INV - tf.expand_dims(shift_layer.b, 1))
+                layer_ind = layer_ind - 1
 
                 # unmult
-                elem_mult_layer = flow_layers[-2]
+                elem_mult_layer = flow_layers[layer_ind]
                 Z_INV = Z_INV / tf.expand_dims(elem_mult_layer.a, 1)
+                layer_ind = layer_ind - 1
 
-                layer_ind = len(flow_layers) - 3
-            else:
-                layer_ind = len(flow_layers) - 1
-            
             while (layer_ind > -1):
                 layer = flow_layers[layer_ind]
                 Z_INV = layer.inverse(Z_INV)
@@ -562,6 +567,10 @@ def train_dsn(
                 save_fname,
                 theta=final_thetas
             )
+
+        if (MODEL_SAVE):
+            print("Saving model before exit")
+            saver.save(sess, savedir + "model")
 
     print("saving to %s  ..." % savedir)
     sys.stdout.flush()
