@@ -83,10 +83,11 @@ def train_dsn(
 
     # save tensorboard summary in intervals
     TB_SAVE = False
-    MODEL_SAVE = False
+    MODEL_SAVE = True
     TB_SAVE_EVERY = 50
-    MODEL_SAVE_EVERY = 5000
+    MODEL_SAVE_EVERY = 5
     tb_save_params = False
+    FIM = True
 
     # Optimization hyperparameters:
     # If stop_early is true, test if parameter gradients over the last COST_GRAD_LAG
@@ -178,8 +179,6 @@ def train_dsn(
         else:
             I_x = None
 
-
-
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     with tf.name_scope("AugLagCoeffs"):
         Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
@@ -199,9 +198,39 @@ def train_dsn(
     for i in range(len(all_params)):
         grads_and_vars.append((cost_grads[i], all_params[i]))
 
+    # Compute the fisher information matrix
+    if (FIM and not mixture):
+        if (arch_dict['flow_type'] == 'RealNVP'):
+            print('computing inverse of realNVP')
+            Z_INV = Z
+            if (arch_dict['post_affine']):
+                # unshift
+                shift_layer = flow_layers[-1]
+                Z_INV = (Z_INV - tf.expand_dims(shift_layer.b, 1))
+
+                # unmult
+                elem_mult_layer = flow_layers[-2]
+                Z_INV = Z_INV / tf.expand_dims(elem_mult_layer.a, 1)
+
+                layer_ind = len(flow_layers) - 3
+            else:
+                layer_ind = len(flow_layers) - 1
+            
+            while (layer_ind > -1):
+                layer = flow_layers[layer_ind]
+                Z_INV = layer.inverse(Z_INV)
+                layer_ind -= 1
+
+        else:
+            Z_INV = tf.placeholder(tf.float64, (1,))
+
+
     # Add inputs and outputs of NF to saved tf model.
     tf.add_to_collection("W", W)
     tf.add_to_collection("Z", Z)
+    tf.add_to_collection("log_q_z", log_q_z)
+    if (FIM and not mixture):
+        tf.add_to_collection("Z_INV", Z_INV)
     saver = tf.train.Saver()
 
     # Tensorboard logging
