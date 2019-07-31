@@ -18,12 +18,13 @@ random_seed = int(sys.argv[4])
 behavior_type = 'ISN_coeff'
 param_dict = {
     "behavior_type":behavior_type,
-    "silenced":'S',
+    "silenced":'V',
 }
 system = get_system_from_template("V1Circuit", param_dict)
 
 # set up DSN architecture
 K = 1
+"""
 flow_type = 'PlanarFlow';
 post_affine = True
 arch_dict = {'D':system.D, \
@@ -32,10 +33,29 @@ arch_dict = {'D':system.D, \
              'flow_type':flow_type, \
              'post_affine':post_affine, \
              'repeats':nlayers};
+"""
+repeats = 1
+flow_type = "RealNVP"
+real_nvp_arch = {
+                 'num_masks':8,
+                 'nlayers':nlayers,
+                 'upl':20,
+                }
+mult_and_shift = "post"
+arch_dict = {
+    "D": system.D,
+    "K": K,
+    "sigma0":0.1,
+    "flow_type": flow_type,
+    "real_nvp_arch":real_nvp_arch,
+    "repeats": repeats,
+    "post_affine": True,
+    "shared":False,
+}
 
 AL_it_max = 20
 
-batch_size = 200
+batch_size = 300
 lr_order = -3
 AL_fac = 4.0
 
@@ -55,5 +75,5 @@ train_dsn(
     lr_order=lr_order,
     check_rate=100,
     dir_str="V1Circuit",
-    db=True
+    db=False
 )
