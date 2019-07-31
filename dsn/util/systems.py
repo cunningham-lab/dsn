@@ -767,9 +767,9 @@ class V1Circuit(system):
         self.dt = dt
         self.init_conds = init_conds
         if (behavior['type'] == 'ISN_coeff'):
-            a = np.zeros((self.D,))
-            b = 10.0 * np.ones((self.D,))
-            self.density_network_bounds = [a, b]
+            #a = np.zeros((self.D,))
+            #b = 10.0 * np.ones((self.D,))
+            #self.density_network_bounds = [a, b]
             self.has_support_map = True
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
         else:
@@ -1475,9 +1475,11 @@ class V1Circuit(system):
         # Returns
             Z (np.array): Samples from the DSN at the final layer.
         """
-        a, b = self.density_network_bounds
-        print(a.shape, b.shape)
-        return IntervalFlow([], inputs, a, b)
+        #a, b = self.density_network_bounds
+        #print(a.shape, b.shape)
+        #return IntervalFlow([], inputs, a, b)
+        return SoftPlusFlow([], inputs)
+
 
     def get_behavior_str(self,):
         """Returns `behavior_str`.
