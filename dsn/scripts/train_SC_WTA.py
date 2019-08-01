@@ -26,7 +26,7 @@ AL_fac = 4.0
 min_iters=5000
 max_iters=5000
 
-nlayers = 10
+nlayers = 2
 K = 20
 sigma0 = 0.1
 N = 1000
@@ -42,6 +42,7 @@ param_dict = {
 system = get_system_from_template('SCCircuit', param_dict)
 
 # set up DSN architecture
+"""
 flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
              'K':K, \
@@ -50,6 +51,25 @@ arch_dict = {'D':system.D, \
              'shared':True, \
              'flow_type':flow_type, \
              'repeats':nlayers};
+"""
+repeats = 1
+flow_type = "RealNVP"
+real_nvp_arch = {
+                 'num_masks':8,
+                 'nlayers':nlayers,
+                 'upl':20,
+                }
+mult_and_shift = "post"
+arch_dict = {
+    "D": system.D,
+    "K": 1,
+    "sigma0":0.1,
+    "flow_type": flow_type,
+    "real_nvp_arch":real_nvp_arch,
+    "repeats": repeats,
+    "post_affine": True,
+    "shared":False,
+}
 
 lr_order = -3
 
