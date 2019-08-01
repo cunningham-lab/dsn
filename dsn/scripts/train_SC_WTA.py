@@ -27,9 +27,9 @@ min_iters=5000
 max_iters=5000
 
 nlayers = 2
-K = 20
+K = 1 
 sigma0 = 0.1
-N = 1000
+N = 500
 
 param_dict = {
     "behavior_type":"WTA",
@@ -94,7 +94,7 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
-    dir_str='test',
+    dir_str='SC_WTA_NI',
     savedir=savedir,
     entropy=True,
     db=False,
