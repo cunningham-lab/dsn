@@ -2175,8 +2175,8 @@ class SCCircuit(system):
             mu_p = self.behavior['means']
             var_p = self.behavior['variances']
             p_hats = tf.stack((E_v_LP[:, :, 0], E_v_RP[:, :, 1]), axis=2)
-            p_hat_vars = tf.stack((tf.square(E_v_LP[:, :, 0] - mu_p[0]) / var_p[0], 
-                                   tf.square(E_v_RP[:, :, 1] - mu_p[1]) / var_p[1]), 
+            p_hat_vars = tf.stack((tf.square(E_v_LP[:, :, 0] - mu_p[0]), 
+                                   tf.square(E_v_RP[:, :, 1] - mu_p[1])), 
                                    axis=2)
             Bern_Var_Err = tf.stack(
                 (Bern_Var_Err_L[:, :, 0], Bern_Var_Err_R[:, :, 1]), axis=2
@@ -2257,7 +2257,7 @@ class SCCircuit(system):
             bern_var_errs = np.zeros((2,))
             WTA_diffs = np.ones((2,))
             mu = np.concatenate((means,
-                                 np.ones((2,)),
+                                 variances,
                                  bern_var_errs,
                                  WTA_diffs),
                                  axis=0)
