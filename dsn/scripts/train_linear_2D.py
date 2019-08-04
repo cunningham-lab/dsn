@@ -17,7 +17,7 @@ sigma0 = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
 D = 4
-
+"""
 flow_type = "PlanarFlow"
 mult_and_shift = "post"
 arch_dict = {
@@ -27,28 +27,47 @@ arch_dict = {
     "flow_type": flow_type,
     "repeats": nlayers,
     "post_affine": True,
+    "shared":False,
 }
+"""
 
-
+repeats = 1
+flow_type = "RealNVP"
+real_nvp_arch = {
+                 'num_masks':4,
+                 'nlayers':nlayers,
+                 'upl':10,
+                }
+mult_and_shift = "post"
+arch_dict = {
+    "D": D,
+    "K": K,
+    "sigma0":sigma0,
+    "flow_type": flow_type,
+    "real_nvp_arch":real_nvp_arch,
+    "repeats": repeats,
+    "post_affine": True,
+    "shared":False,
+}
 
 fixed_params = {"tau": 1.0}
 
 omega = 1
-mu = np.array([0.0, 2 * np.pi * omega])
+means = np.array([0.0, 2 * np.pi * omega])
 Sigma = np.array([1.0, 1.0])
-behavior = {"type": "oscillation", "means": mu, "variances": Sigma}
+behavior = {"type": "oscillation", "means": means, "variances": Sigma}
 
 system = Linear2D(fixed_params, behavior)
 
 
-n = 100
-AL_it_max = 2
+n = 1000
+AL_it_max = 5
 lr_order = -3
-min_iters = 2000
-max_iters = 2000
+min_iters = 5000
+max_iters = 5000
 check_rate = 100
 dist_seed = 0
-dir_str = "test"
+dir_str = "LDS_test"
 
 
 np.random.seed(dist_seed)
