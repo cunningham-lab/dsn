@@ -50,6 +50,7 @@ model_opts = {"dt":dt,
 system = STGCircuit(fixed_params, behavior, model_opts)
 
 # set up DSN architecture
+"""
 flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
              'K':K, \
@@ -58,6 +59,24 @@ arch_dict = {'D':system.D, \
              'post_affine':True, \
              'flow_type':flow_type, \
              'repeats':nlayers};
+"""
+repeats = 1
+flow_type = "RealNVP"
+real_nvp_arch = {
+                 'num_masks':2,
+                 'nlayers':nlayers,
+                 'upl':10,
+                }
+arch_dict = {
+    "D": system.D,
+    "K": K,
+    "sigma0":sigma0,
+    "flow_type": flow_type,
+    "real_nvp_arch":real_nvp_arch,
+    "repeats": repeats,
+    "post_affine": True,
+    "shared":False,
+}
 
 
 k_max = 10
@@ -79,7 +98,7 @@ train_dsn(
     max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
-    check_rate=100,
+    check_rate=1,
     dir_str="STGCircuit_big",
     db=True,
 )
