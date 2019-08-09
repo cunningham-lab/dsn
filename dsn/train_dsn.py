@@ -88,6 +88,7 @@ def train_dsn(
     MODEL_SAVE_EVERY = 5000
     tb_save_params = False
     FIM = True
+    MAX_TO_KEEP = 1000
 
     # Optimization hyperparameters:
     # If stop_early is true, test if parameter gradients over the last COST_GRAD_LAG
@@ -236,7 +237,7 @@ def train_dsn(
     tf.add_to_collection("log_q_z", log_q_z)
     if (FIM and not mixture):
         tf.add_to_collection("Z_INV", Z_INV)
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(max_to_keep=MAX_TO_KEEP)
 
     # Tensorboard logging
     summary_writer = tf.summary.FileWriter(savedir)
@@ -344,6 +345,11 @@ def train_dsn(
         log_base_q_zs[0, :] = _log_base_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
 
+        if (MODEL_SAVE):
+            print("Saving model at beginning.")
+            saver.save(sess, savedir + "model", global_step=0)
+
+
         optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr)
         train_step = optimizer.apply_gradients(grads_and_vars)
 
@@ -399,6 +405,11 @@ def train_dsn(
                         log_q_zs[check_it, :] = _log_q_z[0, :]
                         log_base_q_zs[check_it, :] = _log_base_q_z[0, :]
                         T_xs[check_it, :, :] = _T_x[0]
+
+                        if (MODEL_SAVE):
+                            print("Saving model at iter %d." % cur_ind)
+                            saver.save(sess, savedir + "model", global_step=check_it)
+
 
                     if stop_early:
                         has_converged = check_convergence(
@@ -468,6 +479,7 @@ def train_dsn(
                         wrote_graph = True
                 else:
                     ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
+
                 if np.mod(cur_ind + 1, check_rate) == 0:
                     costs[check_it] = cost_i
                     check_it += 1
@@ -482,10 +494,6 @@ def train_dsn(
                     _params = sess.run(all_params)
                     #log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
 
-
-                if (MODEL_SAVE and np.mod(i, MODEL_SAVE_EVERY) == 0):
-                    print("Saving model at iter %d." % i)
-                    saver.save(sess, savedir + "model")
 
                 sys.stdout.flush()
                 i += 1
@@ -519,7 +527,8 @@ def train_dsn(
             # saveParams(params, savedir);
             # save the model
             print("saving to", savedir)
-            saver.save(sess, savedir + "model")
+            if (MODEL_SAVE and not db):
+                saver.save(sess, savedir + "model", global_step=k)
 
             total_its += i
             epoch_inds.append(total_its - 1)
@@ -570,7 +579,11 @@ def train_dsn(
 
         if (MODEL_SAVE):
             print("Saving model before exit")
-            saver.save(sess, savedir + "model")
+            if db:
+                global_step = check_it
+            else:
+                global_step = k
+            saver.save(sess, savedir + "model", global_step=global_step)
 
     print("saving to %s  ..." % savedir)
     sys.stdout.flush()
