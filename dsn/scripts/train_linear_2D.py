@@ -9,13 +9,13 @@ import sys, os
 
 os.chdir("../")
 
-nlayers = int(sys.argv[1])
-c_init_order = int(sys.argv[2])
-K = int(sys.argv[3])
-sigma_init = float(sys.argv[4])
-sigma0 = float(sys.argv[5])
-random_seed = int(sys.argv[6])
+repeats = int(sys.argv[1])
+nlayers = int(sys.argv[2])
+sigma_init = float(sys.argv[3])
+random_seed = int(sys.argv[4])
 
+c_init_order = 1
+K = 1
 D = 4
 """
 flow_type = "PlanarFlow"
@@ -31,7 +31,6 @@ arch_dict = {
 }
 """
 
-repeats = 1
 flow_type = "RealNVP"
 real_nvp_arch = {
                  'num_masks':4,
@@ -42,7 +41,6 @@ mult_and_shift = "post"
 arch_dict = {
     "D": D,
     "K": K,
-    "sigma0":sigma0,
     "flow_type": flow_type,
     "real_nvp_arch":real_nvp_arch,
     "repeats": repeats,
@@ -61,10 +59,10 @@ system = Linear2D(fixed_params, behavior)
 
 
 n = 1000
-AL_it_max = 5 
+AL_it_max = 10 
 lr_order = -3
-min_iters = 2000
-max_iters = 2000
+min_iters = 5000
+max_iters = 5000
 check_rate = 100
 dist_seed = 0
 dir_str = "LDS_test"
