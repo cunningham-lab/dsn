@@ -157,6 +157,7 @@ def train_dsn(
         )
 
     # Permutations and batch norms
+    final_thetas = {};
     batch_norm_mus = []
     batch_norm_sigmas = []
     batch_norm_layer_means = []
@@ -178,15 +179,6 @@ def train_dsn(
                 batch_norm_layer_vars.append(flow_layer.layer_vars[j])
                 _batch_norm_mus.append(np.zeros((system.D,)))
                 _batch_norm_sigmas.append(np.ones((system.D,)))
-
-    # recored permutations of they exist
-    final_thetas = {};
-    for i in range(len(flow_layers)):
-        flow_layer = flow_layers[i]
-        if (flow_layer.name == 'PermutationFlow'):
-            print('saving perm in layer', i)
-            final_thetas.update({'DensityNetwork/Layer%d/perm_inds' % i:flow_layer.inds})
-            
 
     with tf.name_scope("Entropy"):
         #p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
