@@ -244,6 +244,14 @@ def train_dsn(
     tf.add_to_collection("log_q_z", log_q_z)
     if (FIM and not mixture):
         tf.add_to_collection("Z_INV", Z_INV)
+    if (batch_norm):
+        num_batch_norms = len(batch_norm_mus)
+        for i in range(num_batch_norms):
+            tf.add_to_collection("batch_norm_mu%d" % (i+1), batch_norm_mus[i])
+            tf.add_to_collection("batch_norm_sigma%d" % (i+1), batch_norm_sigmas[i])
+            tf.add_to_collection("batch_norm_layer_mean%d" % (i+1), batch_norm_layer_means[i])
+            tf.add_to_collection("batch_norm_layer_var%d" % (i+1), batch_norm_layer_vars[i])
+
     saver = tf.train.Saver(max_to_keep=MAX_TO_KEEP)
 
     # Tensorboard logging
