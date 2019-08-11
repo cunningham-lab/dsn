@@ -61,10 +61,10 @@ system = Linear2D(fixed_params, behavior)
 
 
 n = 1000
-AL_it_max = 5
+AL_it_max = 5 
 lr_order = -3
-min_iters = 5000
-max_iters = 5000
+min_iters = 2000
+max_iters = 2000
 check_rate = 100
 dist_seed = 0
 dir_str = "LDS_test"

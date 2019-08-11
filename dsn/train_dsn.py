@@ -156,6 +156,38 @@ def train_dsn(
             W, arch_dict, support_mapping, initdir=initdirs[0]
         )
 
+    # Permutations and batch norms
+    batch_norm_mus = []
+    batch_norm_sigmas = []
+    batch_norm_layer_means = []
+    batch_norm_layer_vars = []
+    _batch_norm_mus = []
+    _batch_norm_sigmas = []
+    batch_norm = False
+    for i in range(len(flow_layers)):
+        flow_layer = flow_layers[i]
+        if (flow_layer.name == 'PermutationFlow'):
+            final_thetas.update({'DensityNetwork/Layer%d/perm_inds' % (i+1):flow_layer.inds})
+        if (flow_layer.name == 'RealNVP' and flow_layer.batch_norm):
+            batch_norm = True
+            num_masks = arch_dict['real_nvp_arch']['num_masks']
+            for j in range(num_masks):
+                batch_norm_mus.append(flow_layer.mus[j])
+                batch_norm_sigmas.append(flow_layer.sigmas[j])
+                batch_norm_layer_means.append(flow_layer.layer_means[j])
+                batch_norm_layer_vars.append(flow_layer.layer_vars[j])
+                _batch_norm_mus.append(np.zeros((system.D,)))
+                _batch_norm_sigmas.append(np.ones((system.D,)))
+
+    # recored permutations of they exist
+    final_thetas = {};
+    for i in range(len(flow_layers)):
+        flow_layer = flow_layers[i]
+        if (flow_layer.name == 'PermutationFlow'):
+            print('saving perm in layer', i)
+            final_thetas.update({'DensityNetwork/Layer%d/perm_inds' % i:flow_layer.inds})
+            
+
     with tf.name_scope("Entropy"):
         #p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
         #base_log_q_z = tf.log(p0)
@@ -199,29 +231,12 @@ def train_dsn(
     for i in range(len(all_params)):
         grads_and_vars.append((cost_grads[i], all_params[i]))
 
-    # Compute the fisher information matrix
-    # TODO just write inverses for the shifts and scales and make a single loop
+    # Compute inverse of dgm if known
     if (FIM and not mixture):
         if (arch_dict['flow_type'] == 'RealNVP'):
             print('computing inverse of realNVP')
             Z_INV = Z
             layer_ind = len(flow_layers) - 1
-            if (system.has_support_map):
-                support_mapping = flow_layers[layer_ind]
-                Z_INV = support_mapping.inverse(Z_INV)
-                layer_ind = layer_ind - 1
-
-            if (arch_dict['post_affine']):
-                # unshift
-                shift_layer = flow_layers[layer_ind]
-                Z_INV = (Z_INV - tf.expand_dims(shift_layer.b, 1))
-                layer_ind = layer_ind - 1
-
-                # unmult
-                elem_mult_layer = flow_layers[layer_ind]
-                Z_INV = Z_INV / tf.expand_dims(elem_mult_layer.a, 1)
-                layer_ind = layer_ind - 1
-
             while (layer_ind > -1):
                 layer = flow_layers[layer_ind]
                 Z_INV = layer.inverse(Z_INV)
@@ -313,12 +328,44 @@ def train_dsn(
         # Log initial state of the DSN.
         w_i = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
         feed_dict = {W: w_i, Lambda: _lambda, c: _c}
+
+        # Initialize the batch norms.  Iteratively run out the coupling layers.
+        if (batch_norm):
+            print('Initializing batch norm parameters.')
+            num_batch_norms = len(batch_norm_mus)
+            for j in range(num_batch_norms):
+                _batch_norm_mus[j] = sess.run(batch_norm_layer_means[j], feed_dict)
+                _batch_norm_sigmas[j] = np.sqrt(sess.run(batch_norm_layer_vars[j], feed_dict))
+                feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
+                feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
+
         if (mixture):
             g_i = np.expand_dims(sample_gumbel(nsamps, K), 0)
             feed_dict.update({G: g_i})
-        cost_i, _cost_grads, _Z, _T_x, _H, _base_H, _sld_H, _log_q_z, _log_base_q_z, summary = sess.run(
-            [cost, cost_grads, Z, T_x, H, base_H, sum_log_det_H, log_q_z, log_base_density, summary_op], feed_dict
-        )
+       
+        args = [cost, cost_grads, Z, T_x, H, base_H, sum_log_det_H, log_q_z, log_base_density, summary_op]
+        if (batch_norm):
+            args += batch_norm_layer_means + batch_norm_layer_vars
+        _args = sess.run(args, feed_dict)
+
+        cost_i = _args[0]
+        _cost_grads = _args[1]
+        _Z = _args[2]
+        _T_x = _args[3]
+        _H = _args[4]
+        _base_H = _args[5]
+        _sld_H = _args[6]
+        _log_q_z = _args[7]
+        _log_base_q_z = _args[8]
+        summary = _args[9]
+        
+        # Update batch norm params
+        if (batch_norm):
+            mom = 0.99
+            _batch_norm_list = _args[10:]
+            for j in range(num_batch_norms):
+                _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_list[j]
+                _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_list[j+num_batch_norms])
 
         summary_writer.add_summary(summary, 0)
         #log_grads(_cost_grads, cost_grad_vals, 0)
@@ -371,7 +418,7 @@ def train_dsn(
                 cur_ind = total_its + i
 
                 w_i = np.random.normal(np.zeros((1, n, system.D)), 1.0)
-                feed_dict = {W: w_i, Lambda: _lambda, c: _c}
+                feed_dict.update({W: w_i})
                 if (mixture):
                     g_i = np.expand_dims(sample_gumbel(n, K), 0)
                     feed_dict.update({G: g_i})
@@ -490,15 +537,15 @@ def train_dsn(
 
                 #log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
-                if (db):
-                    _params = sess.run(all_params)
-                    #log_grads(_params, param_vals, cur_ind % COST_GRAD_LOG_LEN)
-
+                if (batch_norm):
+                    for j in range(num_batch_norms):
+                        feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
+                        feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
 
                 sys.stdout.flush()
                 i += 1
             w_k = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
-            feed_dict = {W: w_k, Lambda: _lambda, c: _c}
+            feed_dict.update({W: w_k})
             if (mixture):
                 g_k = np.expand_dims(sample_gumbel(nsamps, K), 0)
                 feed_dict.update({G: g_k})
@@ -544,8 +591,6 @@ def train_dsn(
                     print('Not on safe part of feasible set yet.')
 
             # do the hypothesis test to figure out whether or not we should update c
-            feed_dict = {Lambda: _lambda, c: _c}
-
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict.update({W: w_j})
@@ -566,9 +611,10 @@ def train_dsn(
             else:
                 print(u, "same c")
 
+            feed_dict.update({Lambda: _lambda, c: _c})
+
             norms = new_norms
 
-        final_thetas = {};
         for i in range(nparams):
             final_thetas.update({all_params[i].name:sess.run(all_params[i])});
 
