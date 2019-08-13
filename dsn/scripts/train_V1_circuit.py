@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from dsn.util.systems import V1Circuit
@@ -10,36 +9,26 @@ import sys, os
 
 os.chdir("../")
 
-nlayers = int(sys.argv[1])
-c_init_order = int(sys.argv[2])
-sigma_init = float(sys.argv[3])
+silenced = str(sys.argv[1])
+nlayers = int(sys.argv[2])
+c_init_order = int(sys.argv[3])
 random_seed = int(sys.argv[4])
 
 behavior_type = 'ISN_coeff'
 param_dict = {
     "behavior_type":behavior_type,
-    "silenced":'V',
+    "silenced":silenced,
 }
 system = get_system_from_template("V1Circuit", param_dict)
 
 # set up DSN architecture
 K = 1
-"""
-flow_type = 'PlanarFlow';
-post_affine = True
-arch_dict = {'D':system.D, \
-             'K':K, \
-             'shared':True, \
-             'flow_type':flow_type, \
-             'post_affine':post_affine, \
-             'repeats':nlayers};
-"""
-repeats = 1
+repeats = 2
 flow_type = "RealNVP"
 real_nvp_arch = {
                  'num_masks':8,
                  'nlayers':nlayers,
-                 'upl':20,
+                 'upl':10,
                 }
 mult_and_shift = "post"
 arch_dict = {
