@@ -23,109 +23,6 @@ def bootstrap_test(T_x, mu, M, N):
     p_val = 2 * min(gt / M, lt / M)
     return p_val
 
-def assess_constraints(model_dirs, alpha, frac_samps):
-    n_fnames = len(model_dirs)
-    fnames = []
-    for i in range(n_fnames):
-        fnames.append(model_dirs[i] + 'opt_info.npz')
-
-    AL_final_its = []
-    for i in range(n_fnames):
-        AL_conv_fname = model_dirs[i] + 'AL_conv_a=%.2f_fs=%.2f_1.npz' % (alpha, frac_samps)
-        if (os.path.isfile(AL_conv_fname)):
-            AL_conv_file = np.load(AL_conv_fname)
-            AL_final_it = AL_conv_file['AL_final_it']
-            if (np.isnan(AL_final_it)):
-                AL_final_it = None
-            AL_final_its.append(AL_final_it)
-            continue
-        
-        fname = fnames[i]
-        try:
-            npzfile = np.load(fname)
-        except:
-            continue
-
-        mu = npzfile["mu"]
-        n_suff_stats = mu.shape[0]
-        total_samps = npzfile["T_xs"].shape[1]
-        samps_per_boot = int(frac_samps * total_samps)
-        total_its = npzfile["T_xs"].shape[0] 
-
-        boot_samps = 200
-        for j in range(total_its):
-            T_xs = npzfile["T_xs"][j]
-            pvals = []
-            for ii in range(n_suff_stats):
-                pvals.append(bootstrap_test(T_xs[:,ii], mu[ii], boot_samps, samps_per_boot))
-
-            con_sat = np.prod(np.array(pvals) > (alpha / n_suff_stats))
-            if con_sat == 1:
-                print('Converged!')
-                AL_final_its.append(j)
-                np.savez(AL_conv_fname, AL_final_it=j)
-                break
-            if j == (total_its-1):
-                AL_final_its.append(None)
-                np.savez(AL_conv_fname, AL_final_it=np.nan)
-
-    return AL_final_its
-
-
-
-def assess_constraints2(model_dirs, tol=0.1):
-    n_fnames = len(model_dirs)
-
-    fnames = []
-    for i in range(n_fnames):
-        fnames.append(model_dirs[i] + 'opt_info.npz')
-
-    AL_final_its = []
-    for i in range(n_fnames):
-        fname = fnames[i]
-        try:
-            npzfile = np.load(fname)
-        except:
-            n_fnames = n_fnames - 1
-            continue
-        mu = npzfile["mu"]
-        n_suff_stats = mu.shape[0]
-        T_xs = npzfile["T_xs"]
-        total_its = T_xs.shape[0]
-        
-        if (not (type(tol) == np.ndarray)):
-            tol = tol*np.ones((n_suff_stats,))
-
-        AL_conv_fname = model_dirs[i] + 'T_x_conv_2.npz'
-        if (os.path.isfile(AL_conv_fname)):
-            AL_conv_file = np.load(AL_conv_fname)
-            AL_final_it = AL_conv_file['AL_final_it']
-            if (np.isnan(AL_final_it)):
-                AL_final_it = None
-            AL_final_its.append(AL_final_it)
-            continue
-
-        for j in range(total_its):
-            T_x = T_xs[j]
-            T_x_mean = np.mean(T_x, 0)
-            failed = False
-            for ii in range(n_suff_stats):
-                if T_x_mean[ii] < (mu[ii] - tol[ii]) or (mu[ii] + tol[ii]) < T_x_mean[ii]:
-                    failed = True
-                    break
-            if not failed:
-                AL_final_its.append(j)
-                np.savez(AL_conv_fname, AL_final_it=j)
-                break
-
-        if failed:
-            AL_final_its.append(None)
-            np.savez(AL_conv_fname, AL_final_it=np.nan)
-
-    return AL_final_its
-
-
-
 def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
     EPS = 1e-10
     n_fnames = len(model_dirs)
@@ -207,7 +104,8 @@ def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
                     if failed:
                         break
                 else:
-                    pvals.append(bootstrap_test(T_xs[:,ii], mu[ii], boot_samps, samps_per_boot))
+                    pval = bootstrap_test(T_xs[:,ii], mu[ii], boot_samps, samps_per_boot)
+                    pvals.append(pval)
 
             con_sat = np.prod(np.array(pvals) > (alpha / n_suff_stats))
             if ((not failed) and con_sat == 1):
@@ -242,7 +140,7 @@ def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
 def plot_opt(
     model_dirs,
     legendstrs=[],
-    con_method="1",
+    con_method="mix",
     frac_samps=0.2,
     maxconlim=3.0,
     alpha=0.05,
@@ -262,6 +160,7 @@ def plot_opt(
         first_its, ME_its, MEs = assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps)
     else:
         first_its = n_fnames*[-1]
+        ME_its = n_fnames*[-1]
 
     # read optimization diagnostics from files
     costs_list = []
@@ -338,14 +237,15 @@ def plot_opt(
             ax.plot(iterations[:last_ind], Hs[:last_ind], label=legendstrs[i])
         else:
             ax.plot(iterations[:last_ind], Hs[:last_ind])
-        if n_fnames == 1 and first_its[i] is not None:
-            if (epoch_inds.shape[0] < T_xs.shape[0]):
-                ME_it = iterations[ME_its[i]]
-            else:
+        if n_fnames == 1 and ME_its[i] is not None:
+            if (Hs.shape[0] > T_xs.shape[0]):
                 ME_it = epoch_inds[ME_its[i]]
+            else:
+                ME_it = iterations[ME_its[i]]
+            finite_inds = np.isfinite(Hs[:last_ind])
             ax.plot(
                 [ME_it, ME_it],
-                [np.min(Hs[:last_ind]), np.max(Hs[:last_ind])],
+                [np.min(Hs[:last_ind][finite_inds]), np.max(Hs[:last_ind][finite_inds])],
                 "k--",
             )
     ax.set_xlabel("iterations", fontsize=fontsize)
@@ -363,11 +263,11 @@ def plot_opt(
                 ax.plot(iterations[:last_ind], R2s[:last_ind], label=legendstrs[i])
             else:
                 ax.plot(iterations[:last_ind], R2s[:last_ind])
-        if n_fnames == 1 and first_its[i] is not None:
-            if (epoch_inds.shape[0] < T_xs.shape[0]):
-                ME_it = iterations[ME_its[i]]
-            else:
+        if n_fnames == 1 and ME_its[i] is not None:
+            if (Hs.shape[0] > T_xs.shape[0]):
                 ME_it = epoch_inds[ME_its[i]]
+            else:
+                ME_it = iterations[ME_its[i]]
             ax.plot(
                 [ME_it, ME_it],
                 [np.min(R2s[:last_ind]), np.max(R2s[:last_ind])],
@@ -415,45 +315,37 @@ def plot_opt(
                 T_x_stds = np.std(T_xs[:, :, i], axis=1)
                 num_epoch_inds = len(epoch_inds)
                 # ax.errorbar(epoch_inds, T_x_means[:num_epoch_inds], T_x_stds[:num_epoch_inds], c='r', elinewidth=3)
-                if first_its[j] is not None:
-                    if (epoch_inds.shape[0] < T_xs.shape[0]):
-                        ME_it = iterations[ME_its[j]]
-                    else:
+                finite_inds = np.isfinite(mean_T_xs[:last_ind,i])
+
+                line_min = min(
+                    [
+                        np.min(mean_T_xs[:last_ind, i][finite_inds]),
+                        mu[i] - yscale_fac * median_abs_errors[j],
+                        np.min(T_x_means - 2 * T_x_stds),
+                    ]
+                )
+                line_max = max(
+                    [
+                        np.max(mean_T_xs[:last_ind, i][finite_inds]),
+                        mu[i] + yscale_fac * median_abs_errors[j],
+                        np.max(T_x_means + 2 * T_x_stds),
+                    ]
+                )
+
+                ymin = line_min
+                ymax = line_max
+
+                if ME_its[j] is not None:
+                    if (Hs.shape[0] > T_xs.shape[0]):
                         ME_it = epoch_inds[ME_its[j]]
-                    line_min = min(
-                        [
-                            np.min(mean_T_xs[:last_ind, i]),
-                            mu[i] - yscale_fac * median_abs_errors[j],
-                            np.min(T_x_means - 2 * T_x_stds),
-                        ]
-                    )
-                    line_max = max(
-                        [
-                            np.max(mean_T_xs[:last_ind, i]),
-                            mu[i] + yscale_fac * median_abs_errors[j],
-                            np.max(T_x_means + 2 * T_x_stds),
-                        ]
-                    )
+                    else:
+                        ME_it = iterations[ME_its[j]]
+                    print(line_min, line_max)
                     ax.plot([ME_it, ME_it], [line_min, line_max], "k--")
 
         ax.plot([iterations[0], iterations[max(last_inds)]], [mu[i], mu[i]], "k-")
         # make ylim 2* mean abs error of last 50% of optimization
-        if n_fnames == 1:
-            ymin = min(
-                mu[i] - yscale_fac * np.max(median_abs_errors),
-                np.min(
-                    T_x_means[(num_epoch_inds // 2) :]
-                    - 2 * T_x_stds[(num_epoch_inds // 2) :]
-                ),
-            )
-            ymax = max(
-                mu[i] + yscale_fac * np.max(median_abs_errors),
-                np.max(
-                    T_x_means[(num_epoch_inds // 2) :]
-                    + 2 * T_x_stds[(num_epoch_inds // 2) :]
-                ),
-            )
-        else:
+        if not n_fnames == 1:
             ymin = mu[i] - yscale_fac * np.max(median_abs_errors)
             ymax = mu[i] + yscale_fac * np.max(median_abs_errors)
         if (np.isnan(ymin) or np.isnan(ymax)):
@@ -474,7 +366,7 @@ def plot_opt(
     plt.tight_layout()
     plt.show()
 
-    return figs, first_its
+    return figs, ME_its
 
 
 def coloring_from_str(c_str, system, npzfile, AL_final_it):
@@ -714,6 +606,7 @@ def dsn_pairplots(
     figs = []
     dists = []
     cs = []
+    models = []
     for k in range(n_fnames):
         print(k)
         fname = model_dirs[k] + 'opt_info.npz'

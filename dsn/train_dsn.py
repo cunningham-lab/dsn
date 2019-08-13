@@ -133,6 +133,7 @@ def train_dsn(
             system, arch_dict, sigma_init, c_init_order, random_seed, dir_str
         )
     save_fname = savedir + 'opt_info.npz'
+    param_fname = savedir + 'params.npz'
 
     if not os.path.exists(savedir):
         print("Making directory %s ." % savedir)
@@ -157,7 +158,7 @@ def train_dsn(
         )
 
     # Permutations and batch norms
-    final_thetas = {};
+    final_thetas = {}
     batch_norm_mus = []
     batch_norm_sigmas = []
     batch_norm_layer_means = []
@@ -181,8 +182,6 @@ def train_dsn(
                 _batch_norm_sigmas.append(np.ones((system.D,)))
 
     with tf.name_scope("Entropy"):
-        #p0 = tf.reduce_prod(tf.exp((-tf.square(W)) / 2.0) / np.sqrt(2.0 * np.pi), axis=2)
-        #base_log_q_z = tf.log(p0)
         if (not mixture):
             log_base_density = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
         log_q_z = log_base_density - sum_log_det_jacobian
@@ -300,6 +299,10 @@ def train_dsn(
         log_q_zs = np.zeros((num_diagnostic_checks, nsamps))
         log_base_q_zs = np.zeros((num_diagnostic_checks, nsamps))
         T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
+        # params
+        if (batch_norm):
+            bn_mus = np.zeros((num_diagnostic_checks, num_batch_norms, system.D))
+            bn_sigmas = np.zeros((num_diagnostic_checks, num_batch_norms, system.D))
     else:
         alphas = np.zeros((AL_it_max + 1, K))
         mus = np.zeros((AL_it_max + 1, K, system.D))
@@ -309,6 +312,9 @@ def train_dsn(
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))
         log_base_q_zs = np.zeros((AL_it_max + 1, nsamps))
         T_xs = np.zeros((AL_it_max + 1, nsamps, system.num_suff_stats))
+        if (batch_norm):
+            bn_mus = np.zeros((AL_it_max + 1, num_batch_norms, system.D))
+            bn_sigmas = np.zeros((AL_it_max + 1, num_batch_norms, system.D))
 
     gamma = 0.25
     num_norms = 100
@@ -345,7 +351,8 @@ def train_dsn(
        
         args = [cost, cost_grads, Z, T_x, H, base_H, sum_log_det_H, log_q_z, log_base_density, summary_op]
         if (batch_norm):
-            args += batch_norm_layer_means + batch_norm_layer_vars
+            args.append(batch_norm_layer_means)
+            args.append(batch_norm_layer_vars)
         _args = sess.run(args, feed_dict)
 
         cost_i = _args[0]
@@ -362,10 +369,11 @@ def train_dsn(
         # Update batch norm params
         if (batch_norm):
             mom = 0.99
-            _batch_norm_list = _args[10:]
+            _batch_norm_layer_means = _args[10]
+            _batch_norm_layer_vars = _args[11]
             for j in range(num_batch_norms):
-                _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_list[j]
-                _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_list[j+num_batch_norms])
+                _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_layer_means[j]
+                _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_layer_vars[j])
 
         summary_writer.add_summary(summary, 0)
         #log_grads(_cost_grads, cost_grad_vals, 0)
@@ -391,6 +399,9 @@ def train_dsn(
         log_q_zs[0, :] = _log_q_z[0, :]
         log_base_q_zs[0, :] = _log_base_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
+
+        bn_mus[0] = np.array(_batch_norm_mus)
+        bn_sigmas[0] = np.array(_batch_norm_sigmas)
 
         if (MODEL_SAVE):
             print("Saving model at beginning.")
@@ -452,6 +463,9 @@ def train_dsn(
                         log_q_zs[check_it, :] = _log_q_z[0, :]
                         log_base_q_zs[check_it, :] = _log_base_q_z[0, :]
                         T_xs[check_it, :, :] = _T_x[0]
+
+                        bn_mus[check_it] = np.array(_batch_norm_mus)
+                        bn_sigmas[check_it] = np.array(_batch_norm_sigmas)
 
                         if (MODEL_SAVE):
                             print("Saving model at iter %d." % cur_ind)
@@ -619,8 +633,10 @@ def train_dsn(
             final_thetas.update({all_params[i].name:sess.run(all_params[i])});
 
         np.savez(
-                save_fname,
-                theta=final_thetas
+                param_fname,
+                theta=final_thetas,
+                batch_norm_mus=bn_mus,
+                batch_norm_sigmas=bn_sigmas,
             )
 
         if (MODEL_SAVE):

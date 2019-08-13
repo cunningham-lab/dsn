@@ -10,25 +10,33 @@ import sys, os
 os.chdir("../")
 
 silenced = str(sys.argv[1])
-nlayers = int(sys.argv[2])
-c_init_order = int(sys.argv[3])
-random_seed = int(sys.argv[4])
+repeats = int(sys.argv[2])
+nlayers = int(sys.argv[3])
+upl = int(sys.argv[4])
+c_init_order = int(sys.argv[5])
+random_seed = int(sys.argv[6])
 
 behavior_type = 'ISN_coeff'
 param_dict = {
     "behavior_type":behavior_type,
     "silenced":silenced,
 }
+
 system = get_system_from_template("V1Circuit", param_dict)
+
+# use informed initialization:
+init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
+npzfile = np.load(init_param_fn)
+system.density_network_init_mu = npzfile['mean']
+sigma_init = npzfile['std']
 
 # set up DSN architecture
 K = 1
-repeats = 2
 flow_type = "RealNVP"
 real_nvp_arch = {
                  'num_masks':8,
                  'nlayers':nlayers,
-                 'upl':10,
+                 'upl':upl,
                 }
 mult_and_shift = "post"
 arch_dict = {
@@ -44,7 +52,7 @@ arch_dict = {
 
 AL_it_max = 20
 
-batch_size = 300
+batch_size = 1000
 lr_order = -3
 AL_fac = 4.0
 

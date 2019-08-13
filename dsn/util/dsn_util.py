@@ -33,6 +33,11 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
             for i in range(1, num_free_params):
                 sysparams += "_%s" % system.free_params[i]
 
+    if (type(sigma_init) == float):
+        sigma_str = 'sigma=%.2f' % sigma_init
+    else:
+        sigma_str = ''
+
     if (randsearch):
         savestr = "%s_%s_%s_flow=%s_rs=%d" % (
                     system.name,
@@ -42,12 +47,12 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
                     random_seed,
                     )
     else:
-        savestr = "%s_%s_%s_flow=%s_sigma=%.2f_c=%d_rs=%d" % (
+        savestr = "%s_%s_%s_flow=%s_%s_c=%d_rs=%d" % (
                     system.name,
                     sysparams,
                     system.behavior_str,
                     archstring,
-                    sigma_init,
+                    sigma_str,
                     c_init_order,
                     random_seed,
                     )
@@ -56,6 +61,7 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
 def get_system_from_template(sysname, param_dict):
     if (sysname == "V1Circuit"):
         behavior_type = param_dict["behavior_type"]
+        silenced = param_dict['silenced']
         if (behavior_type == 'ISN_coeff'):
             base_I = 1.0
             W_EE = 1.0
@@ -88,7 +94,7 @@ def get_system_from_template(sysname, param_dict):
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                         'r_vals':r_vals, \
-                        'silenced':'V'}
+                        'silenced':silenced}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
             T = 100
             dt = 0.005
@@ -491,11 +497,13 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed):
     else:
         a = None
         b = None
+    if (type(sigma_init) == float):
+        sigma_init = sigma_init*np.ones((system.D))
     initdir = get_initdir(arch_dict,
                           random_seed,
                           init_type='gauss',
                           mu=system.density_network_init_mu,
-                          sigma=sigma_init*np.ones((system.D)),
+                          sigma=sigma_init,
                           a=a,
                           b=b)
     initialized = check_init(initdir)
@@ -524,7 +532,7 @@ def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu
 
     params = {
         "mu": mu,
-        "Sigma": np.square(sigma_init) * np.eye(D),
+        "Sigma": np.diag(np.square(sigma_init)),
         "dist_seed": 0,
     }
     n = 1000
