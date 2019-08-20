@@ -33,8 +33,8 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
             for i in range(1, num_free_params):
                 sysparams += "_%s" % system.free_params[i]
 
-    if (type(sigma_init) == float):
-        sigma_str = 'sigma=%.2f' % sigma_init
+    if (type(sigma_init) == float or type(sigma_init) == np.float64):
+        sigma_str = '_sigma=%.2f' % sigma_init
     else:
         sigma_str = ''
 
@@ -47,7 +47,7 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
                     random_seed,
                     )
     else:
-        savestr = "%s_%s_%s_flow=%s_%s_c=%d_rs=%d" % (
+        savestr = "%s_%s_%s_flow=%s%s_c=%d_rs=%d" % (
                     system.name,
                     sysparams,
                     system.behavior_str,
@@ -200,7 +200,7 @@ def get_system_from_template(sysname, param_dict):
     return system
 
 def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirstr, conv_dict):
-    num_sigmas = sigma_inits.shape[0]
+    num_sigmas = len(sigma_inits)
     num_cs = c_init_ords.shape[0]
     num_rs = random_seeds.shape[0]
     
@@ -220,6 +220,7 @@ def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirs
                                                     alpha=conv_dict['alpha'], 
                                                     frac_samps=conv_dict['frac_samples']
                                                     )
+    print(first_its, ME_its, MEs)
     num_models = len(model_dirs)
     # Find the model that had maximum entropy while satisfying convergence criteria
     # iterate because of Nones
