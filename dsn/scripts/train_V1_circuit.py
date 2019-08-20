@@ -71,6 +71,6 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
-    dir_str="V1Circuit",
+    dir_str="V1Circuit_0-20",
     db=False
 )
