@@ -158,28 +158,35 @@ def train_dsn(
         )
 
     # Permutations and batch norms
-    final_thetas = {}
-    batch_norm_mus = []
-    batch_norm_sigmas = []
-    batch_norm_layer_means = []
-    batch_norm_layer_vars = []
-    _batch_norm_mus = []
-    _batch_norm_sigmas = []
-    batch_norm = False
-    for i in range(len(flow_layers)):
-        flow_layer = flow_layers[i]
-        if (flow_layer.name == 'PermutationFlow'):
-            final_thetas.update({'DensityNetwork/Layer%d/perm_inds' % (i+1):flow_layer.inds})
-        if (flow_layer.name == 'RealNVP' and flow_layer.batch_norm):
-            batch_norm = True
-            num_masks = arch_dict['real_nvp_arch']['num_masks']
-            for j in range(num_masks):
-                batch_norm_mus.append(flow_layer.mus[j])
-                batch_norm_sigmas.append(flow_layer.sigmas[j])
-                batch_norm_layer_means.append(flow_layer.layer_means[j])
-                batch_norm_layer_vars.append(flow_layer.layer_vars[j])
-                _batch_norm_mus.append(final_thetas['DensityNetwork/batch_norm_mu%d' % (j+1)])
-                _batch_norm_sigmas.append(final_thetas['DensityNetwork/batch_norm_sigma%d' % (j+1)])
+    # havent implemented mixture flows for real nvp archs yet
+    if (not mixture):
+        init_param_fname = initdirs[0] + 'theta.npz'
+        init_param_file =  np.load(init_param_fname)
+        init_thetas = init_param_file['theta'][()]
+
+        final_thetas = {}
+        batch_norm_mus = []
+        batch_norm_sigmas = []
+        batch_norm_layer_means = []
+        batch_norm_layer_vars = []
+        _batch_norm_mus = []
+        _batch_norm_sigmas = []
+        batch_norm = False
+        for i in range(len(flow_layers)):
+            flow_layer = flow_layers[i]
+            if (flow_layer.name == 'PermutationFlow'):
+                final_thetas.update({'DensityNetwork/Layer%d/perm_inds' % (i+1):flow_layer.inds})
+            if (flow_layer.name == 'RealNVP' and flow_layer.batch_norm):
+                batch_norm = True
+                num_masks = arch_dict['real_nvp_arch']['num_masks']
+                for j in range(num_masks):
+                    batch_norm_mus.append(flow_layer.mus[j])
+                    batch_norm_sigmas.append(flow_layer.sigmas[j])
+                    batch_norm_layer_means.append(flow_layer.layer_means[j])
+                    batch_norm_layer_vars.append(flow_layer.layer_vars[j])
+                    _batch_norm_mus.append(init_thetas['DensityNetwork/batch_norm_mu%d' % (j+1)])
+                    _batch_norm_sigmas.append(init_thetas['DensityNetwork/batch_norm_sigma%d' % (j+1)])
+
 
     with tf.name_scope("Entropy"):
         if (not mixture):
