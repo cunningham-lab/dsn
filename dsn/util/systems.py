@@ -187,7 +187,11 @@ class Linear2D(system):
     def __init__(self, fixed_params, behavior):
         super().__init__(fixed_params, behavior)
         self.name = "Linear2D"
-        self.has_support_map = False
+        a = -20.0 * np.ones((self.D,))
+        b =  20.0 * np.ones((self.D,))
+        self.density_network_bounds = [a, b]
+        self.has_support_map = True
+        #self.has_support_map = False
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -316,6 +320,18 @@ class Linear2D(system):
         #mu = np.concatenate((means, variances), axis=0)
         mu = np.concatenate((means, np.ones((2,))), axis=0)
         return mu
+
+    def support_mapping(self, inputs):
+        """Maps from real numbers to support of parameters.
+
+        # Arguments:
+            inputs (np.array): Input from previous layers of the DSN.
+
+        # Returns
+            Z (np.array): Samples from the DSN at the final layer.
+        """
+        a, b = self.density_network_bounds
+        return IntervalFlow([], inputs, a, b)
 
 
 class STGCircuit(system):
@@ -768,7 +784,7 @@ class V1Circuit(system):
         self.init_conds = init_conds
         if (behavior['type'] == 'ISN_coeff'):
             a = np.zeros((self.D,))
-            b = 10.0 * np.ones((self.D,))
+            b = 20.0 * np.ones((self.D,))
             self.density_network_bounds = [a, b]
             self.has_support_map = True
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
