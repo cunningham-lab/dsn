@@ -406,6 +406,12 @@ def train_dsn(
         if (MODEL_SAVE):
             print("Saving model at beginning.")
             saver.save(sess, savedir + "model", global_step=0)
+            np.savez(
+                    param_fname,
+                    theta=final_thetas,
+                    batch_norm_mus=bn_mus,
+                    batch_norm_sigmas=bn_sigmas,
+                )
 
 
         optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr)
@@ -470,6 +476,12 @@ def train_dsn(
                         if (MODEL_SAVE):
                             print("Saving model at iter %d." % cur_ind)
                             saver.save(sess, savedir + "model", global_step=check_it)
+                            np.savez(
+                                    param_fname,
+                                    theta=final_thetas,
+                                    batch_norm_mus=bn_mus,
+                                    batch_norm_sigmas=bn_sigmas,
+                                )
 
 
                     if stop_early:
@@ -590,6 +602,12 @@ def train_dsn(
             print("saving to", savedir)
             if (MODEL_SAVE and not db):
                 saver.save(sess, savedir + "model", global_step=k)
+                np.savez(
+                        param_fname,
+                        theta=final_thetas,
+                        batch_norm_mus=bn_mus,
+                        batch_norm_sigmas=bn_sigmas,
+                    )
 
             total_its += i
             epoch_inds.append(total_its - 1)
@@ -632,12 +650,6 @@ def train_dsn(
         for i in range(nparams):
             final_thetas.update({all_params[i].name:sess.run(all_params[i])});
 
-        np.savez(
-                param_fname,
-                theta=final_thetas,
-                batch_norm_mus=bn_mus,
-                batch_norm_sigmas=bn_sigmas,
-            )
 
         if (MODEL_SAVE):
             print("Saving model before exit")
@@ -646,6 +658,12 @@ def train_dsn(
             else:
                 global_step = k
             saver.save(sess, savedir + "model", global_step=global_step)
+            np.savez(
+                    param_fname,
+                    theta=final_thetas,
+                    batch_norm_mus=bn_mus,
+                    batch_norm_sigmas=bn_sigmas,
+                )
 
     print("saving to %s  ..." % savedir)
     sys.stdout.flush()
