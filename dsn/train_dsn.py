@@ -1,4 +1,4 @@
-# Copyright 2018 Sean Bittner, Columbia University
+#p Copyright 2018 Sean Bittner, Columbia University
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -178,8 +178,8 @@ def train_dsn(
                 batch_norm_sigmas.append(flow_layer.sigmas[j])
                 batch_norm_layer_means.append(flow_layer.layer_means[j])
                 batch_norm_layer_vars.append(flow_layer.layer_vars[j])
-                _batch_norm_mus.append(np.zeros((system.D,)))
-                _batch_norm_sigmas.append(np.ones((system.D,)))
+                _batch_norm_mus.append(final_thetas['DensityNetwork/batch_norm_mu%d' % (j+1)])
+                _batch_norm_sigmas.append(final_thetas['DensityNetwork/batch_norm_sigma%d' % (j+1)])
 
     with tf.name_scope("Entropy"):
         if (not mixture):
@@ -340,8 +340,8 @@ def train_dsn(
             print('Initializing batch norm parameters.')
             num_batch_norms = len(batch_norm_mus)
             for j in range(num_batch_norms):
-                _batch_norm_mus[j] = sess.run(batch_norm_layer_means[j], feed_dict)
-                _batch_norm_sigmas[j] = np.sqrt(sess.run(batch_norm_layer_vars[j], feed_dict))
+                #_batch_norm_mus[j] = sess.run(batch_norm_layer_means[j], feed_dict)
+                #_batch_norm_sigmas[j] = np.sqrt(sess.run(batch_norm_layer_vars[j], feed_dict))
                 feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
                 feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
 
