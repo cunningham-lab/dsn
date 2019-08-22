@@ -84,6 +84,31 @@ def get_system_from_template(sysname, param_dict):
         behavior = {"type": "oscillation", "means": means, "variances": variances}
         system = Linear2D(fixed_params, behavior)
 
+    elif (sysname == "STGCircuit"):
+        freq = param_dict['freq']
+        if (freq == "med"):
+            T = 500
+            mean = 0.525*np.ones((5,))
+            variance = (.025)**2*np.ones((5,))
+        else:
+            print('Error: freq not med or high.')
+            exit()
+
+        dt = 0.025
+        fft_start = 0
+        w = 20
+
+        fixed_params = {'g_synB':5e-9}
+        behavior = {"type":"freq",
+                    "mean":mean,
+                    "variance":variance}
+        model_opts = {"dt":dt,
+                      "T":T,
+                      "fft_start":fft_start,
+                      "w":w
+                     }
+        system = STGCircuit(fixed_params, behavior, model_opts)
+
     elif (sysname == "V1Circuit"):
         """# Parameters
                behavior_type - in {'ISN_coeff'}
@@ -265,24 +290,52 @@ def get_arch_from_template(sysname, param_dict):
         post_affine = True
         K = 1
         real_nvp_arch = {
-                 'num_masks':4,
-                 'nlayers':nlayers,
-                 'upl':10,
-                }
+                         'num_masks':4,
+                         'nlayers':nlayers,
+                         'upl':10,
+                        }
         mu_init = np.zeros((D,))
 
         arch_dict = {
-                "D": D,
-                "flow_type": flow_type,
-                "repeats": repeats,
-                "post_affine": True,
-                "K": K,
-                "real_nvp_arch":real_nvp_arch,
-                "mu_init": mu_init,
-                "sigma_init": sigma_init,
-            }
+                     "D": D,
+                     "flow_type": flow_type,
+                     "repeats": repeats,
+                     "post_affine": post_affine,
+                     "K": K,
+                     "real_nvp_arch":real_nvp_arch,
+                     "mu_init": mu_init,
+                     "sigma_init": sigma_init,
+                    }
 
-    if (sysname == "V1Circuit"):
+    elif (sysname == "STGCircuit"):
+        D = param_dict['D']
+        num_masks = param_dict['num_masks']
+        nlayers = param_dict['nlayers']
+        mu_init = param_dict['mu_init']
+        sigma_init = param_dict['sigma_init']
+
+        flow_type = "RealNVP"
+        repeats = 1
+        post_affine = True
+        K = 1
+        real_nvp_arch = {
+                         'num_masks':num_masks,
+                         'nlayers':nlayers,
+                         'upl':10,
+                        }
+
+        arch_dict = {
+                     "D": D,
+                     "flow_type": flow_type,
+                     "repeats": repeats,
+                     "post_affine": post_affine,
+                     "K": K,
+                     "real_nvp_arch":real_nvp_arch,
+                     "mu_init": mu_init,
+                     "sigma_init": sigma_init,
+                    }
+
+    elif (sysname == "V1Circuit"):
         """# Parameters
                behavior_type - in {'ISN_coeff'}
                silenced - in {'S', 'V'}
@@ -315,15 +368,15 @@ def get_arch_from_template(sysname, param_dict):
             sigma_init = npzfile['std']
 
             arch_dict = {
-                "D": D,
-                "flow_type": flow_type,
-                "repeats": repeats,
-                "post_affine": True,
-                "K": K,
-                "real_nvp_arch":real_nvp_arch,
-                "mu_init": mu_init,
-                "sigma_init": sigma_init,
-            }
+                         "D": D,
+                         "flow_type": flow_type,
+                         "repeats": repeats,
+                         "post_affine": post_affine,
+                         "K": K,
+                         "real_nvp_arch":real_nvp_arch,
+                         "mu_init": mu_init,
+                         "sigma_init": sigma_init,
+                        }
 
     return arch_dict
 
