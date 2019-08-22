@@ -19,16 +19,12 @@ random_seed = int(sys.argv[6])
 if (K > 1):
     sigma0 = float(sys.argv[7])
 
-behavior_type = "hubfreq"
+behavior_type = "freq"
 
-if (freq == "high"):
-    T = 500 
-    mean = 0.725
-    variance = (.025)**2
-elif (freq == "med"):
+if (freq == "med"):
     T = 500
-    mean = 0.5
-    variance = (.025)**2
+    mean = 0.525*np.ones((5,))
+    variance = (.025)**2*np.ones((5,))
 else:
     print('Error: freq not med or high.')
     exit()
@@ -38,7 +34,7 @@ fft_start = 0
 w = 20
 
 fixed_params = {'g_synB':5e-9}
-behavior = {"type":"hubfreq",
+behavior = {"type":behavior_type,
             "mean":mean,
             "variance":variance}
 model_opts = {"dt":dt,
@@ -49,17 +45,6 @@ model_opts = {"dt":dt,
 
 system = STGCircuit(fixed_params, behavior, model_opts)
 
-# set up DSN architecture
-"""
-flow_type = 'PlanarFlow';
-arch_dict = {'D':system.D, \
-             'K':K, \
-             'sigma0':sigma0, \
-             'shared':False, \
-             'post_affine':True, \
-             'flow_type':flow_type, \
-             'repeats':nlayers};
-"""
 repeats = 1
 flow_type = "RealNVP"
 real_nvp_arch = {
@@ -98,7 +83,7 @@ train_dsn(
     max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
-    check_rate=1,
+    check_rate=100,
     dir_str="STGCircuit_big",
     db=True,
 )

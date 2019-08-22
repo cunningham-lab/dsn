@@ -397,7 +397,7 @@ class STGCircuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if self.behavior["type"] == "hubfreq":
+        if self.behavior["type"] == "freq":
             T_x_labels = [r"$f_{h}$", r"$f_{h}^2$"]
         else:
             raise NotImplementedError
@@ -600,19 +600,20 @@ class STGCircuit(system):
         if db:
             xs = [x]
         else:
-            v_hs = [x[:, 2]]
+            vs = [x[:,:5]]
+            #v_hs = [x[:, 2]]
         for i in range(self.T):
             dxdt = f(x, g_el, g_synA, g_synB)
             x = x + dxdt * self.dt
             if db:
                 xs.append(x)
             else:
-                v_hs.append(x[:, 2])
+                vs.append(x[:, :5])
 
         if db:
             x_t = tf.stack(xs, axis=0)
         else:
-            x_t = tf.stack(v_hs, axis=0)
+            x_t = tf.stack(vs, axis=0)
 
         return x_t
 
@@ -633,7 +634,7 @@ class STGCircuit(system):
 
         """
 
-        if self.behavior["type"] in ["hubfreq"]:
+        if self.behavior["type"] in ["freq"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError
@@ -651,6 +652,7 @@ class STGCircuit(system):
 
         """
 
+        M = tf.shape(z)[1]
         # sampling frequency
         Fs = 1.0 / self.dt
         # num samples for freq measurement
@@ -675,23 +677,27 @@ class STGCircuit(system):
 
         avg_filter = (1.0 / self.w) * tf.ones((self.w, 1, 1), dtype=DTYPE)
 
-        # [T, M]
+        # [T+1, M, 5]
         x_t = self.simulate(z, db=False)
 
-        if self.behavior["type"] == "hubfreq":
-            v_h = tf.transpose(x_t[self.fft_start :, :])  # [M,N]
-            th = 0.01
-            v_h_rect = tf.expand_dims(tf.nn.relu(v_h + th) - th, 2)  # [M,T,C=1]
-            v_h_rect_LPF = tf.nn.conv1d(
-                v_h_rect, avg_filter, stride=1, padding="VALID"
-            )[:, :, 0]
-            V_h = tf.matmul(tf.cast(v_h_rect_LPF, tf.complex128), Phi)
+        if self.behavior["type"] == "freq":
+            v = tf.reshape(x_t, (self.T+1, M*5, 1))
+            v = tf.transpose(v, [1, 0, 2])[:,self.fft_start:,:] # (M5, T-fft+1, 1)
+            v_rect = tf.nn.relu(v)  # [M5,T-fft,1]
+            v_rect_LPF = tf.nn.conv1d(
+                v_rect, avg_filter, stride=1, padding="VALID"
+            )[:,:,0]
 
-            V_h_pow = tf.pow(tf.abs(V_h), alpha)
-            freq_id = V_h_pow / tf.expand_dims(tf.reduce_sum(V_h_pow, 1), 1)
+            v_rect_LPF = v_rect_LPF - tf.expand_dims(tf.reduce_mean(v_rect_LPF, 1), 1)
 
-            f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id))
-            T_x = tf.stack((f_h, tf.square(f_h)), 2)
+            V = tf.matmul(tf.cast(v_rect_LPF, tf.complex128), Phi)
+
+            V_pow = tf.pow(tf.abs(V), alpha)
+            freq_id = V_pow / tf.expand_dims(tf.reduce_sum(V_pow, 1), 1)
+
+            f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id)) # (1 x M5)
+            f_h = tf.reshape(f_h, (1,M,5))
+            T_x = tf.concat((f_h, tf.square(f_h)), 2)
         else:
             raise NotImplementedError
 
@@ -709,7 +715,7 @@ class STGCircuit(system):
         variance = self.behavior["variance"]
         first_moment = mean
         second_moment = mean ** 2 + variance
-        if self.behavior["type"] == "hubfreq":
+        if self.behavior["type"] == "freq":
             mu = np.array([first_moment, second_moment])
         else:
             raise NotImplementedError

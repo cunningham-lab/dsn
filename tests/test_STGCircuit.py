@@ -182,24 +182,28 @@ class stg_circuit:
         alpha = 100
 
         X = self.simulate(g_el, g_synA, g_synB)
-        v_h = X[self.fft_start :, 2]
 
-        v_h_rect = np.maximum(v_h, -0.01)
-        v_h_rect_LPF = moving_average(v_h_rect, self.w)
-        # v_h_rect_LPF = v_h_rect_LPF - np.mean(v_h_rect_LPF)
+        v_freqs = np.zeros((5,))
+        for i in range(5):
+            v = X[self.fft_start:,i]
 
-        V_h = np.abs(np.dot(Phi, v_h_rect_LPF))
-        V_h_pow = np.power(V_h, alpha)
-        freq_id = V_h_pow / np.sum(V_h_pow)
+            v_rect = np.maximum(v, 0.0)
+            v_rect_LPF = moving_average(v_rect, self.w)
+            v_rect_LPF = v_rect_LPF - np.mean(v_rect_LPF)
 
-        freq = np.dot(freqs, freq_id)
-        T_x = np.array([freq, np.square(freq)])
+            V = np.abs(np.dot(Phi, v_rect_LPF))
+            V_pow = np.power(V, alpha)
+
+            freq_id = V_pow / np.sum(V_pow)
+
+            v_freqs[i] = np.dot(freqs, freq_id)
+        T_x = np.concatenate((v_freqs, np.square(v_freqs)), axis=0)
         return T_x
 
 
 def test_STGCircuit():
     np.random.seed(0)
-    M = 100
+    M = 500
 
     dt = 0.025
     T = 200
@@ -211,11 +215,11 @@ def test_STGCircuit():
     mean = 0.55
     variance = 0.0001
     fixed_params = {}
-    behavior = {"type": "hubfreq", "mean": mean, "variance": variance}
+    behavior = {"type": "freq", "mean": mean, "variance": variance}
     model_opts = {"dt": dt, "T": T, "fft_start": fft_start, "w": w}
     system = STGCircuit(fixed_params, behavior, model_opts)
     assert system.name == "STGCircuit"
-    assert system.behavior_str == "hubfreq_mu=5.50E-01_3.03E-01"
+    assert system.behavior_str == "freq_mu=5.50E-01_3.03E-01"
     assert approx_equal(system.behavior["mean"], 0.55, EPS)
     assert system.all_params == ["g_el", "g_synA", "g_synB"]
     assert system.free_params == ["g_el", "g_synA", "g_synB"]
@@ -225,11 +229,11 @@ def test_STGCircuit():
     assert system.num_suff_stats == 2
 
     Z = tf.placeholder(dtype=DTYPE, shape=(1, M, 3))
-    _Z = np.random.uniform(0.0, 20.0, (1, M, 2)) * 1e-9
+    _Z = np.random.uniform(0.0, 10.0, (1, M, 2)) * 1e-9
     synB = 5e-9
     _Z = np.concatenate((_Z, synB * np.ones((1, M, 1))), axis=2)
     x_true = np.zeros((M, 15, T + 1))
-    T_x_true = np.zeros((M, 2))
+    T_x_true = np.zeros((M, 10))
     for i in range(M):
         g_el = _Z[0, i, 0]
         g_synA = _Z[0, i, 1]
@@ -237,10 +241,18 @@ def test_STGCircuit():
         x_true[i, :, :] = true_sys.simulate(g_el, g_synA, g_synB).T
         T_x_true[i, :] = true_sys.T_x(g_el, g_synA, g_synB)
 
+    print('txtrue', np.sum(np.isnan(T_x_true)))
+
     T_x = system.compute_suff_stats(Z)
     x_t = system.simulate(Z, db=True)
     with tf.Session() as sess:
         _x_t, _T_x = sess.run([x_t, T_x], {Z: _Z / 1.0e-9})
+    print('_T_x', np.sum(np.isnan(_T_x)))
+
+    print('tf')
+    print(_T_x[0])
+    print('np')
+    print(T_x_true)
 
     assert approx_equal(np.transpose(_x_t, [1, 2, 0]), x_true, EPS)
     assert approx_equal(_T_x[0], T_x_true, EPS, allow_special=True)
