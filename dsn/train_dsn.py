@@ -612,7 +612,7 @@ def train_dsn(
             # save the model
             print("saving to", savedir)
             if (MODEL_SAVE and not db):
-                saver.save(sess, savedir + "model", global_step=k)
+                saver.save(sess, savedir + "model", global_step=(k+1))
                 np.savez(
                         param_fname,
                         theta=final_thetas,
@@ -667,7 +667,7 @@ def train_dsn(
             if db:
                 global_step = check_it
             else:
-                global_step = k
+                global_step = k+1
             saver.save(sess, savedir + "model", global_step=global_step)
             np.savez(
                     param_fname,
