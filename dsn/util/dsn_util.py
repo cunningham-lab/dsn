@@ -14,15 +14,15 @@ from efn.train_nf import train_nf
 
 
 def get_savedir(
-    system, arch_dict, sigma_init, c_init_order, random_seed, dir_str, randsearch=False
+    system, arch_dict, c_init_order, random_seed, dir_str, randsearch=False
 ):
     # set file I/O stuff
     resdir = "models/" + dir_str + "/"
-    savestr = get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randsearch)
+    savestr = get_savestr(system, arch_dict, c_init_order, random_seed, randsearch)
     savedir = resdir + savestr + "/"
     return savedir
 
-def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randsearch=False):
+def get_savestr(system, arch_dict, c_init_order, random_seed, randsearch=False):
     archstring = get_archstring(arch_dict)
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
@@ -33,8 +33,11 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
             for i in range(1, num_free_params):
                 sysparams += "_%s" % system.free_params[i]
 
+    sigma_init = arch_dict['sigma_init']
     if (type(sigma_init) == float or type(sigma_init) == np.float64):
         sigma_str = '_sigma=%.2f' % sigma_init
+    elif (type(sigma_init) == np.ndarray and np.all(sigma_init == sigma_init[0])):
+        sigma_str = '_sigma=%.2f' % sigma_init[0]
     else:
         sigma_str = ''
 
@@ -59,49 +62,74 @@ def get_savestr(system, arch_dict, sigma_init, c_init_order, random_seed, randse
     return savestr
 
 def get_system_from_template(sysname, param_dict):
+    """Returns template system class given system-specific parameters.
+
+        # Arguments
+            sysname (string): System name. 
+              E.g. STGCircuit, V1Circuit, SCCircuit
+            param_dict (dict): Parameters for template.
+
+        # Returns
+            system (system): System from template parameterization.
+
+    """
     if (sysname == "V1Circuit"):
+        """# Parameters
+               behavior_type - in {'ISN_coeff'}
+               silenced - in {'S', 'V'}
+        """
         behavior_type = param_dict["behavior_type"]
         silenced = param_dict['silenced']
+        assert(silenced in ['S', 'V'])
         if (behavior_type == 'ISN_coeff'):
+            # Simulation parameters
+            T = 100
+            dt = 0.005
+            init_conds = np.random.normal(1.0, 0.01, (4,1))
+
+            # Set fixed parameters.
             base_I = 1.0
             W_EE = 1.0
             tau = 0.02
+            h = 0.0
+            n = 2
+            s_0 = 30
             fixed_params = {'W_EE':W_EE, \
                             'b_E':base_I, \
                             'b_P':base_I, \
                             'b_S':base_I, \
                             'b_V':base_I, \
-                            'h_RUNE':0.0, \
-                            'h_RUNP':0.0, \
-                            'h_RUNS':0.0, \
-                            'h_RUNV':0.0, \
-                            'h_FFE':0.0, \
-                            'h_FFP':0.0, \
-                            'h_LATE':0.0, \
-                            'h_LATP':0.0, \
-                            'h_LATS':0.0, \
-                            'h_LATV':0.0, \
-                            'n':2.0, \
-                            's_0':30, \
+                            'h_RUNE':h, \
+                            'h_RUNP':h, \
+                            'h_RUNS':h, \
+                            'h_RUNV':h, \
+                            'h_FFE':h, \
+                            'h_FFP':h, \
+                            'h_LATE':h, \
+                            'h_LATP':h, \
+                            'h_LATS':h, \
+                            'h_LATV':h, \
+                            'n':n, \
+                            's_0':s_0, \
                             'tau':tau}
+            # These are arbitrary since no input other than base.
             c_vals=np.array([1.0])
             s_vals=np.array([5])
             r_vals=np.array([0.0])
-            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
+            # 1 condition == (len(c_vals)*len(s_vals)*len(r_vals))
             behavior = {'type':behavior_type, \
                         'mean':0.0, \
                         'std':0.25, \
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
-                        'r_vals':r_vals, \
+                       'r_vals':r_vals, \
                         'silenced':silenced}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
-            T = 100
-            dt = 0.005
-            init_conds = np.random.normal(1.0, 0.01, (4,1))
-            print(behavior)
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+
         elif (behavior_type == "difference"):
+            raise NotImplementedError()
+            """
             isn_str = param_dict['ISN']
             silenced = param_dict['silenced']
             npzfile = np.load("data/V1/Zs_%s=0.npz" % silenced)
@@ -155,6 +183,7 @@ def get_system_from_template(sysname, param_dict):
             init_conds = np.random.normal(1.0, 0.01, (4,1))
             print(behavior)
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+            """
 
 
     elif (sysname == 'SCCircuit'):
@@ -198,6 +227,69 @@ def get_system_from_template(sysname, param_dict):
         raise NotImplementedError()
 
     return system
+
+
+
+
+def get_arch_from_template(sysname, param_dict):
+    """Returns template architecture given system-specific parameters.
+
+        # Arguments
+            sysname (string): System name. 
+              E.g. STGCircuit, V1Circuit, SCCircuit
+            param_dict (dict): Parameters for template.
+
+        # Returns
+            arch_dict (dict): Architecture from template parameterization.
+
+    """
+    if (sysname == "V1Circuit"):
+        """# Parameters
+               behavior_type - in {'ISN_coeff'}
+               silenced - in {'S', 'V'}
+               D - system dimensionality
+               repeats - real nvp arch repeats
+               nlayers - nn layers for real-nvp fs
+               upl - units per layer for real-nvp fs
+        """
+        behavior_type = param_dict["behavior_type"]
+        silenced = param_dict['silenced']
+        D = param_dict['D']
+        repeats = param_dict['repeats']
+        nlayers = param_dict['nlayers']
+        upl = param_dict['upl']
+        assert(silenced in ['S', 'V'])
+        if (behavior_type == 'ISN_coeff'):
+            # Fixed architecture template parameters
+            flow_type = "RealNVP"
+            post_affine = True
+            K = 1
+            real_nvp_arch = {
+                             'num_masks':8,
+                             'nlayers':nlayers,
+                             'upl':upl,
+                            }
+            # Use informed initialization:
+            init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
+            npzfile = np.load(init_param_fn)
+            mu_init = npzfile['mean']
+            sigma_init = npzfile['std']
+
+            arch_dict = {
+                "D": D,
+                "mu_init": mu_init,
+                "sigma_init": sigma_init,
+                "flow_type": flow_type,
+                "repeats": repeats,
+                "post_affine": True,
+                "K": K,
+                "real_nvp_arch":real_nvp_arch,
+            }
+
+    return arch_dict
+
+
+
 
 def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirstr, conv_dict):
     num_sigmas = len(sigma_inits)
@@ -492,7 +584,9 @@ def rvs(dim):
         return K
 
 
-def initialize_nf(system, arch_dict, sigma_init, random_seed):
+def initialize_nf(system, arch_dict, random_seed):
+    sigma_init = arch_dict['sigma_init']
+
     if (system.density_network_bounds is not None):
         a, b = system.density_network_bounds
     else:
@@ -500,26 +594,26 @@ def initialize_nf(system, arch_dict, sigma_init, random_seed):
         b = None
     if (type(sigma_init) == float):
         sigma_init = sigma_init*np.ones((system.D))
+        arch_dict.update({'sigma_init':sigma_init})
+
     initdir = get_initdir(arch_dict,
                           random_seed,
                           init_type='gauss',
-                          mu=system.density_network_init_mu,
-                          sigma=sigma_init,
                           a=a,
                           b=b)
     initialized = check_init(initdir)
     if (not initialized):
         initialize_gauss_nf(system.D,
                             arch_dict,
-                            sigma_init,
                             random_seed,
                             initdir,
-                            mu=system.density_network_init_mu,
                             bounds=system.density_network_bounds)
     return initdir
 
 
-def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu=None, bounds=None):
+def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
+    mu_init = arch_dict['mu_init']
+    sigma_init = arch_dict['sigma_init']
     if (bounds is not None):
         # make this more flexible for single bounds
         fam_class = family_from_str("truncated_normal")
@@ -528,11 +622,11 @@ def initialize_gauss_nf(D, arch_dict, sigma_init, random_seed, gauss_initdir, mu
         fam_class = family_from_str("normal")
         family = fam_class(D)
 
-    if (mu is None):
-        mu = np.zeros((D,))
+    if (mu_init is None):
+        mu_init = np.zeros((D,))
 
     params = {
-        "mu": mu,
+        "mu": mu_init,
         "Sigma": np.diag(np.square(sigma_init)),
         "dist_seed": 0,
     }

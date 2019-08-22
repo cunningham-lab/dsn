@@ -45,7 +45,6 @@ def train_dsn(
     arch_dict,
     n=1000,
     AL_it_max=10,
-    sigma_init=1.0,
     c_init_order=0,
     AL_fac=4.0,
     min_iters=1000,
@@ -65,7 +64,6 @@ def train_dsn(
             arch_dict (dict): Specifies structure of approximating density network.
             n (int): Batch size.
             AL_it_max (int): Number of augmented Lagrangian iterations.
-            sigma_init (float): Gaussian initialization standard deviation.
             c_init_order (float): Augmented Lagrangian trade-off parameter initialization.
             min_iters (int): Minimum number of training iterations per AL epoch.
             max_iters (int): Maximum number of training iterations per AL epoch.
@@ -100,6 +98,18 @@ def train_dsn(
     K = arch_dict['K']
     mixture = K > 1
 
+    # Create model save directory if doesn't exist.
+    if (savedir is None):
+        savedir = get_savedir(
+            system, arch_dict, c_init_order, random_seed, dir_str
+        )
+    save_fname = savedir + 'opt_info.npz'
+    param_fname = savedir + 'params.npz'
+    if not os.path.exists(savedir):
+        print("Making directory %s ." % savedir)
+        os.makedirs(savedir)
+
+
     # Look for model initialization.  If not found, optimize the init.
     if (K > 1 and (not arch_dict['shared'])):
         initdirs = []
@@ -107,13 +117,11 @@ def train_dsn(
             print('Initializing %d/%d...' % (rs, K))
             initdirs.append(initialize_nf(system,
                                           arch_dict, 
-                                          sigma_init,
                                           rs))
     else:
         print('Initializing...')
         initdirs = [initialize_nf(system,
                                   arch_dict, 
-                                  sigma_init,
                                   random_seed)]
 
 
@@ -127,17 +135,6 @@ def train_dsn(
     # Load nf initialization
     W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
 
-    # Create model save directory if doesn't exist.
-    if (savedir is None):
-        savedir = get_savedir(
-            system, arch_dict, sigma_init, c_init_order, random_seed, dir_str
-        )
-    save_fname = savedir + 'opt_info.npz'
-    param_fname = savedir + 'params.npz'
-
-    if not os.path.exists(savedir):
-        print("Making directory %s ." % savedir)
-        os.makedirs(savedir)
 
     # Construct density network parameters.
     if (system.has_support_map):
@@ -532,7 +529,7 @@ def train_dsn(
                         check_rate=check_rate,
                         epoch_inds=epoch_inds,
                         n=n,
-                        sigma_init=sigma_init,
+                        arch_dict=arch_dict,
                         c_init_order=c_init_order,
                         AL_fac=AL_fac,
                         min_iters=min_iters,
@@ -710,7 +707,7 @@ def train_dsn(
         check_rate=check_rate,
         epoch_inds=epoch_inds,
         n=n,
-        sigma_init=sigma_init,
+        arch_dict=arch_dict,
         c_init_order=c_init_order,
         AL_fac=AL_fac,
         min_iters=min_iters,
