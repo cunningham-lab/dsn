@@ -407,8 +407,9 @@ def train_dsn(
         log_base_q_zs[0, :] = _log_base_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
 
-        bn_mus[0] = np.array(_batch_norm_mus)
-        bn_sigmas[0] = np.array(_batch_norm_sigmas)
+        if (batch_norm):
+            bn_mus[0] = np.array(_batch_norm_mus)
+            bn_sigmas[0] = np.array(_batch_norm_sigmas)
 
         if (MODEL_SAVE):
             print("Saving model at beginning.")
@@ -477,8 +478,9 @@ def train_dsn(
                         log_base_q_zs[check_it, :] = _log_base_q_z[0, :]
                         T_xs[check_it, :, :] = _T_x[0]
 
-                        bn_mus[check_it] = np.array(_batch_norm_mus)
-                        bn_sigmas[check_it] = np.array(_batch_norm_sigmas)
+                        if (batch_norm):
+                            bn_mus[check_it] = np.array(_batch_norm_mus)
+                            bn_sigmas[check_it] = np.array(_batch_norm_sigmas)
 
                         if (MODEL_SAVE):
                             print("Saving model at iter %d." % cur_ind)
@@ -596,6 +598,11 @@ def train_dsn(
                 log_q_zs[k + 1, :] = _log_q_z[0, :]
                 log_base_q_zs[k + 1, :] = _log_base_q_z[0, :]
                 T_xs[k + 1, :, :] = _T_x[0]
+
+                if (batch_norm):
+                    bn_mus[k+1] = np.array(_batch_norm_mus)
+                    bn_sigmas[k+1] = np.array(_batch_norm_sigmas)
+
             _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
             _R = np.mean(_T_x_mu_centered[0], 0)
             _lambda = _lambda + _c * _R
