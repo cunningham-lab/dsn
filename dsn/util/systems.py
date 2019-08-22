@@ -351,7 +351,7 @@ class STGCircuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"dt": 0.025, "T": 280, "fft_start": 40, "w": 40},
+        model_opts={"dt": 0.025, "T": 200, "fft_start": 20, "w": 20},
     ):
         self.model_opts = model_opts
         super().__init__(fixed_params, behavior)
@@ -398,7 +398,8 @@ class STGCircuit(system):
 
         """
         if self.behavior["type"] == "freq":
-            T_x_labels = [r"$f_{h}$", r"$f_{h}^2$"]
+            T_x_labels = [r"$f_{f1}", r"$f_{f2}", r"$f_{h}$", r"$f_{s1}", r"$f_{s2}", \
+                          r"$f_{f1}^2", r"$f_{f2}^2", r"$f_{h}^2$", r"$f_{s1}^2", r"$f_{s2}^2"]
         else:
             raise NotImplementedError
         return T_x_labels
@@ -716,7 +717,7 @@ class STGCircuit(system):
         first_moment = mean
         second_moment = mean ** 2 + variance
         if self.behavior["type"] == "freq":
-            mu = np.array([first_moment, second_moment])
+            mu = np.concatenate((first_moment, second_moment), axis=0)
         else:
             raise NotImplementedError
         return mu
