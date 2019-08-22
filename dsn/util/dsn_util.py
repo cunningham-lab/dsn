@@ -6,7 +6,7 @@ from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
 from tf_util.tf_util import get_archstring, get_initdir, check_init
 import scipy.linalg
-from dsn.util.systems import V1Circuit, SCCircuit, STGCircuit
+from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit
 from dsn.util.plot_util import assess_constraints_mix
 
 from tf_util.families import family_from_str
@@ -73,7 +73,18 @@ def get_system_from_template(sysname, param_dict):
             system (system): System from template parameterization.
 
     """
-    if (sysname == "V1Circuit"):
+    if (sysname == "Linear2D"):
+        """# Parameters
+               omega - frequency
+        """
+        omega = param_dict['omega']
+        fixed_params = {"tau": 1.0}
+        means = np.array([0.0, 2 * np.pi * omega])
+        variances = np.array([1.0, 1.0])
+        behavior = {"type": "oscillation", "means": means, "variances": variances}
+        system = Linear2D(fixed_params, behavior)
+
+    elif (sysname == "V1Circuit"):
         """# Parameters
                behavior_type - in {'ISN_coeff'}
                silenced - in {'S', 'V'}
@@ -243,6 +254,34 @@ def get_arch_from_template(sysname, param_dict):
             arch_dict (dict): Architecture from template parameterization.
 
     """
+
+    if (sysname == "Linear2D"):
+        D = param_dict['D']
+        repeats = param_dict['repeats']
+        nlayers = param_dict['nlayers']
+        sigma_init = param_dict['sigma_init']
+
+        flow_type = "RealNVP"
+        post_affine = True
+        K = 1
+        real_nvp_arch = {
+                 'num_masks':4,
+                 'nlayers':nlayers,
+                 'upl':10,
+                }
+        mu_init = np.zeros((D,))
+
+        arch_dict = {
+                "D": D,
+                "flow_type": flow_type,
+                "repeats": repeats,
+                "post_affine": True,
+                "K": K,
+                "real_nvp_arch":real_nvp_arch,
+                "mu_init": mu_init,
+                "sigma_init": sigma_init,
+            }
+
     if (sysname == "V1Circuit"):
         """# Parameters
                behavior_type - in {'ISN_coeff'}
@@ -277,13 +316,13 @@ def get_arch_from_template(sysname, param_dict):
 
             arch_dict = {
                 "D": D,
-                "mu_init": mu_init,
-                "sigma_init": sigma_init,
                 "flow_type": flow_type,
                 "repeats": repeats,
                 "post_affine": True,
                 "K": K,
                 "real_nvp_arch":real_nvp_arch,
+                "mu_init": mu_init,
+                "sigma_init": sigma_init,
             }
 
     return arch_dict
