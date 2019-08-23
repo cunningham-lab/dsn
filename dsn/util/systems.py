@@ -362,7 +362,7 @@ class STGCircuit(system):
         self.T = model_opts["T"]
         self.fft_start = model_opts["fft_start"]
         self.w = model_opts["w"]
-        self.density_network_init_mu = np.array([2.0, 2.0])
+        self.density_network_init_mu = np.array([5.0, 4.0])
         a = np.zeros((self.D,))
         b = np.array([10.0, 8.0])
         self.density_network_bounds = [a, b]
