@@ -344,8 +344,6 @@ def train_dsn(
             print('Initializing batch norm parameters.')
             num_batch_norms = len(batch_norm_mus)
             for j in range(num_batch_norms):
-                #_batch_norm_mus[j] = sess.run(batch_norm_layer_means[j], feed_dict)
-                #_batch_norm_sigmas[j] = np.sqrt(sess.run(batch_norm_layer_vars[j], feed_dict))
                 feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
                 feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
 
@@ -370,15 +368,6 @@ def train_dsn(
         _log_base_q_z = _args[8]
         summary = _args[9]
         
-        # Update batch norm params
-        if (batch_norm):
-            mom = 0.99
-            _batch_norm_layer_means = _args[10]
-            _batch_norm_layer_vars = _args[11]
-            for j in range(num_batch_norms):
-                _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_layer_means[j]
-                _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_layer_vars[j])
-
         summary_writer.add_summary(summary, 0)
         #log_grads(_cost_grads, cost_grad_vals, 0)
         if (db):
@@ -447,8 +436,15 @@ def train_dsn(
 
                 # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind + 1, check_rate) == 0:
-                    _H, _base_H, _sld_H, _T_x, _Z, _log_q_z, _log_base_q_z = \
-                        sess.run([H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density], feed_dict)
+                    args = [H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
+                    if (batch_norm):
+                        args.append(batch_norm_layer_means)
+                        args.append(batch_norm_layer_vars)
+                    _args = sess.run(args, feed_dict)
+                    if (batch_norm):
+                        _batch_norm_layer_means = _args[7]
+                        _batch_norm_layer_vars = _args[8]
+
                     print(42 * "*")
                     print("it = %d " % (cur_ind + 1))
                     if (mixture):
@@ -457,10 +453,10 @@ def train_dsn(
                     print("H", _H, "cost", cost_i)
                     sys.stdout.flush()
                     
-                    Hs[check_it] = _H
-                    base_Hs[check_it] = _base_H
-                    sum_log_det_Hs[check_it] = _sld_H
-                    mean_T_xs[check_it] = np.mean(_T_x[0], 0)
+                    Hs[check_it] = _args[0]
+                    base_Hs[check_it] = _args[1]
+                    sum_log_det_Hs[check_it] = _args[2]
+                    mean_T_xs[check_it] = np.mean(_args[3][0], 0)
 
                     if (db):
                         if (mixture):
@@ -470,17 +466,17 @@ def train_dsn(
                             #mus[check_it,:,:] = _mu
                             #sigmas[check_it,:,:] = _sigma
                             Cs[check_it,:,:] = _C
-                        Zs[check_it, :, :] = _Z[0, :, :]
-                        log_q_zs[check_it, :] = _log_q_z[0, :]
-                        log_base_q_zs[check_it, :] = _log_base_q_z[0, :]
-                        T_xs[check_it, :, :] = _T_x[0]
+                        Zs[check_it, :, :] = _args[4][0, :, :]
+                        log_q_zs[check_it, :] = _args[5][0, :]
+                        log_base_q_zs[check_it, :] = _args[6][0, :]
+                        T_xs[check_it, :, :] = _args[3][0]
 
                         if (batch_norm):
                             bn_mus[check_it] = np.array(_batch_norm_mus)
                             bn_sigmas[check_it] = np.array(_batch_norm_sigmas)
 
                         if (MODEL_SAVE):
-                            print("Saving model at iter %d." % cur_ind)
+                            print("Saving model at iter %d." % (cur_ind+1))
                             saver.save(sess, savedir + "model", global_step=check_it)
                             np.savez(
                                     param_fname,
@@ -557,22 +553,39 @@ def train_dsn(
                                                         cur_ind)
                         wrote_graph = True
                 else:
-                    ts, cost_i, _cost_grads = sess.run([train_step, cost, cost_grads], feed_dict)
+                    args = [train_step, cost]
+                    if (batch_norm):
+                        args.append(batch_norm_layer_means)
+                        args.append(batch_norm_layer_vars)
+                    _args = sess.run(args, feed_dict)
+                    ts = _args[0]
+                    cost_it = args[1]
+                    if (batch_norm):
+                        _batch_norm_layer_means = _args[2]
+                        _batch_norm_layer_vars = _args[3]
 
                 if np.mod(cur_ind + 1, check_rate) == 0:
                     costs[check_it] = cost_i
                     check_it += 1
 
-                if np.mod(cur_ind, check_rate) == 0:
-                    end_time = time.time()
-                    print("Iteration took %.4f seconds." % (end_time - start_time))
+                # Update batch norm params
+                if (batch_norm):
+                    mom = 0.99
+                    for j in range(num_batch_norms):
+                        _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_layer_means[j]
+                        _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_layer_vars[j])
 
-                #log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
                 if (batch_norm):
                     for j in range(num_batch_norms):
                         feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
                         feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
+
+                #log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
+
+                if np.mod(cur_ind, check_rate) == 0:
+                    end_time = time.time()
+                    print("Iteration took %.4f seconds." % (end_time - start_time))
 
                 sys.stdout.flush()
                 i += 1
@@ -586,10 +599,10 @@ def train_dsn(
             if (not db):
                 if (mixture):
                     #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
-                    _alpha, _C = sess.run([alpha, C], {G:g_i})
-                    alphas[k+1,:] = _alpha
                     #mus[k+1,:] = _mu
                     #sigmas[k+1,:] = _sigma
+                    _alpha, _C = sess.run([alpha, C], {G:g_i})
+                    alphas[k+1,:] = _alpha
                     Cs[k+1,:,:] = _C
                 Zs[k + 1, :, :] = _Z[0, :, :]
                 log_q_zs[k + 1, :] = _log_q_z[0, :]
