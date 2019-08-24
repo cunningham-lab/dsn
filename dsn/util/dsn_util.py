@@ -1,10 +1,11 @@
 import tensorflow as tf
 import numpy as np
+import time
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
-from tf_util.tf_util import get_archstring, get_initdir, check_init
+from tf_util.tf_util import get_archstring, get_initdir, check_init, load_dgm
 import scipy.linalg
 from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit
 from dsn.util.plot_util import assess_constraints_mix
@@ -395,7 +396,8 @@ def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirs
             sigma_init = sigma_inits[j]
             for k in range(num_rs):
                 rs = random_seeds[k]
-                savedir = get_savedir(system, arch_dict, sigma_init, c_init_order, rs, dirstr)
+                arch_dict.update({'sigma_init':sigma_init})
+                savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
                 model_dirs.append(savedir)
                 
     first_its, ME_its, MEs = assess_constraints_mix(model_dirs, 
@@ -431,6 +433,42 @@ def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirs
         first_it = first_its[max_ind]
     
     return best_model, max_ME, ME_it, first_it
+
+def load_DSNs(model_dirs, load_its):
+    num_models = len(model_dirs)
+    sessions = []
+    tf_vars = []
+    feed_dicts = []
+    for i in range(num_models):
+        model_dir = model_dirs[i]
+        load_it = load_its[i]
+
+        sess = tf.Session()
+        if i==0:
+            load_time1 = time.time()
+        collection = load_dgm(sess, model_dir, load_it)
+        if i==0:
+            load_time2 = time.time()
+            print('Loaded DGM in %.2f seconds' % (load_time2-load_time1))
+        W, Z, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+
+        num_batch_norms = len(batch_norm_mus)
+        param_fname = model_dir + 'params.npz' % load_it
+        paramfile = np.load(param_fname)
+        _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
+        _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
+        
+        feed_dict = {}
+        for j in range(num_batch_norms):
+            feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
+            feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
+
+        sessions.append(sess)
+        tf_vars.append([W, Z, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
+                        batch_norm_layer_means, batch_norm_layer_vars])
+        feed_dicts.append(feed_dict)
+
+    return sessions, tf_vars, feed_dicts
     
     
                 
