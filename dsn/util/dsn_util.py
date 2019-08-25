@@ -316,7 +316,7 @@ def get_arch_from_template(sysname, param_dict):
         sigma_init = param_dict['sigma_init']
 
         flow_type = "RealNVP"
-        repeats = 1
+        repeats = 2
         post_affine = True
         K = 1
         real_nvp_arch = {
