@@ -304,19 +304,21 @@ def get_arch_from_template(sysname, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
+                     "mo":0.99,
+                     "init_mo":0.99,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
                     }
 
     elif (sysname == "STGCircuit"):
         D = param_dict['D']
+        repeats = param_dict['repeats']
         num_masks = param_dict['num_masks']
         nlayers = param_dict['nlayers']
         mu_init = param_dict['mu_init']
         sigma_init = param_dict['sigma_init']
 
         flow_type = "RealNVP"
-        repeats = 2
         post_affine = True
         K = 1
         real_nvp_arch = {
@@ -332,6 +334,8 @@ def get_arch_from_template(sysname, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
+                     "mo":0.99,
+                     "init_mo":1.0,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
                     }
@@ -375,6 +379,8 @@ def get_arch_from_template(sysname, param_dict):
                          "post_affine": post_affine,
                          "K": K,
                          "real_nvp_arch":real_nvp_arch,
+                         "mo":0.99,
+                         "init_mo":0.99,
                          "mu_init": mu_init,
                          "sigma_init": sigma_init,
                         }
@@ -763,7 +769,7 @@ def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
     n = 1000
     lr_order = -3
     check_rate = 100
-    min_iters = 5000
+    min_iters = 20000
     max_iters = 50000
     converged = False
     while (not converged):

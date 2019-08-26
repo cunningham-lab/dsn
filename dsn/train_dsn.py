@@ -114,11 +114,15 @@ def train_dsn(
     if (K > 1 and (not arch_dict['shared'])):
         initdirs = []
         for rs in range(1, K+1):
+            # TODO add arch_dict mo init update
             print('Initializing %d/%d...' % (rs, K))
             initdirs.append(initialize_nf(system,
                                           arch_dict, 
                                           rs))
     else:
+        init_arch_dict = arch_dict.copy()
+        if ('init_mo' in arch_dict.keys()):
+            init_arch_dict['mo'] = arch_dict['init_mo']
         print('Initializing...')
         initdirs = [initialize_nf(system,
                                   arch_dict, 
@@ -559,7 +563,7 @@ def train_dsn(
                         args.append(batch_norm_layer_vars)
                     _args = sess.run(args, feed_dict)
                     ts = _args[0]
-                    cost_it = args[1]
+                    cost_i = args[1]
                     if (batch_norm):
                         _batch_norm_layer_means = _args[2]
                         _batch_norm_layer_vars = _args[3]
@@ -570,7 +574,7 @@ def train_dsn(
 
                 # Update batch norm params
                 if (batch_norm):
-                    mom = 0.99
+                    mom = arch_dict['mo']
                     for j in range(num_batch_norms):
                         _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_layer_means[j]
                         _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_layer_vars[j])
@@ -728,9 +732,10 @@ def train_dsn(
     )
 
     # make training movie
-    step = 1
-    video_fname = savedir + get_savestr(system, arch_dict, c_init_order, random_seed) + "_video"
-    make_training_movie(savedir, system, step, save_fname=video_fname)
+    if (db):
+        step = 1
+        video_fname = savedir + get_savestr(system, arch_dict, c_init_order, random_seed) + "_video"
+        make_training_movie(savedir, system, step, save_fname=video_fname)
 
     if (system.behavior["type"] == "feasible"):
         return costs, _Z, is_feasible
