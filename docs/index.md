@@ -187,7 +187,7 @@ T_xs, _, axs = dsn_pairplots(model_dirs, 'T_xs', system, ME_its)
 The real part of the primary eigenvalue is centered at zero with variance 1, and the imaginary part is centered at $$2\pi$$ with variance 1, as we had conditioned on.
 
 ## Behavioral robustness via the Hessian ##
-This probabilistic approach to system analysis allows us to analyze the Hessian, $$\frac{\partial^2 q_\theta(z)}{\partial z \partial z^\top}, for different $$z$$s and conditioned on various emergent properties $$\mathcal{B}$$.  You can calculate the hessian using the `dgm_hessian` function.
+This probabilistic approach to system analysis allows us to analyze the Hessian, $$\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$$, for different $$z$$s and conditioned on various emergent properties $$\mathcal{B}$$.  You can calculate the hessian using the `dgm_hessian` function.
 
 ```python
 sessions, tf_vars, feed_dicts = load_DSNs(model_dirs, ME_its)
@@ -203,7 +203,7 @@ Below, the solid line shows the Hessian eigenmode of greatest degeneracy, and th
 
 ![oscillating linear systems](images/DSN_Linear2D_hess.png)
 
-This code uses [Fast hessians for deep generative models](#linktoblog).
+This code uses [Fast hessians for deep generative models](https://srbittner.github.io/2019/08/13/dgm_hessians/).
 
 # Installation #
 
