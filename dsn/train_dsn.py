@@ -125,7 +125,7 @@ def train_dsn(
             init_arch_dict['mo'] = arch_dict['init_mo']
         print('Initializing...')
         initdirs = [initialize_nf(system,
-                                  arch_dict, 
+                                  init_arch_dict, 
                                   random_seed)]
 
 
