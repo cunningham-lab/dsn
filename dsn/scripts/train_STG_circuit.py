@@ -34,8 +34,8 @@ arch_dict = get_arch_from_template(sysname, param_dict)
 
 AL_it_max = 10
 AL_fac = 4.0
-iters = 10000
-batch_size = 200
+iters = 2000
+batch_size = 300 
 lr_order = -3
 check_rate = 100
 
