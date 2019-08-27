@@ -162,7 +162,7 @@ def train_dsn(
     # havent implemented mixture flows for real nvp archs yet
     if (not mixture):
         init_param_fname = initdirs[0] + 'theta.npz'
-        init_param_file =  np.load(init_param_fname)
+        init_param_file =  np.load(init_param_fname, allow_pickle=True)
         init_thetas = init_param_file['theta'][()]
 
         final_thetas = {}
