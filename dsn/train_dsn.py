@@ -440,7 +440,7 @@ def train_dsn(
 
                 # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind + 1, check_rate) == 0:
-                    args = [H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
+                    args = [cost, H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
                     if (batch_norm):
                         args.append(batch_norm_layer_means)
                         args.append(batch_norm_layer_vars)
@@ -454,13 +454,15 @@ def train_dsn(
                     if (mixture):
                         _alpha = sess.run(alpha)
                         print('alpha', _alpha)
-                    print("H", _H, "cost", cost_i)
+                    cost_i = _args[0]
+                    _H = _args[1]
+                    print("H", _H)
                     sys.stdout.flush()
                     
-                    Hs[check_it] = _args[0]
-                    base_Hs[check_it] = _args[1]
-                    sum_log_det_Hs[check_it] = _args[2]
-                    mean_T_xs[check_it] = np.mean(_args[3][0], 0)
+                    Hs[check_it] = _H
+                    base_Hs[check_it] = _args[2]
+                    sum_log_det_Hs[check_it] = _args[3]
+                    mean_T_xs[check_it] = np.mean(_args[4][0], 0)
 
                     if (db):
                         if (mixture):
@@ -470,10 +472,10 @@ def train_dsn(
                             #mus[check_it,:,:] = _mu
                             #sigmas[check_it,:,:] = _sigma
                             Cs[check_it,:,:] = _C
-                        Zs[check_it, :, :] = _args[4][0, :, :]
-                        log_q_zs[check_it, :] = _args[5][0, :]
-                        log_base_q_zs[check_it, :] = _args[6][0, :]
-                        T_xs[check_it, :, :] = _args[3][0]
+                        Zs[check_it, :, :] = _args[5][0, :, :]
+                        log_q_zs[check_it, :] = _args[6][0, :]
+                        log_base_q_zs[check_it, :] = _args[7][0, :]
+                        T_xs[check_it, :, :] = _args[8][0]
 
                         if (batch_norm):
                             bn_mus[check_it] = np.array(_batch_norm_mus)
@@ -563,12 +565,13 @@ def train_dsn(
                         args.append(batch_norm_layer_vars)
                     _args = sess.run(args, feed_dict)
                     ts = _args[0]
-                    cost_i = args[1]
+                    cost_i = _args[1]
                     if (batch_norm):
                         _batch_norm_layer_means = _args[2]
                         _batch_norm_layer_vars = _args[3]
 
                 if np.mod(cur_ind + 1, check_rate) == 0:
+                    print('cost', cost_i)
                     costs[check_it] = cost_i
                     check_it += 1
 
