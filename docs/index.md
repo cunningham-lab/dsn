@@ -28,7 +28,6 @@ Consider model parameterization $$z$$ and data $$x$$ generated from some theoret
 \end{equation}
 by making a deep generative approximation $$q_\theta(z)$$ to $$p(z \mid \mathcal{B})$$.  So, over the degenerate solution distribution $$q_\theta(z)$$ of model $$p(x \mid z)$$ for behavior $$\mathcal{B}$$, the elements of vector T(x) (think sufficient statistics) are constrained in expectation to the corresponding elements of $$\mu$$.  The dimensionality of the image of $$T$$ and of $$\mu$$ is the total constraints enforced by $$\mathcal{B}$$.
 
-
  In deep generative models, a simple random variable $$w \sim p_0$$ is mapped deterministically via a function $$f_\theta$$ parameterized by a neural network to the support of the distribution of interest where $$z = f_{\theta}(\omega) = f_l(..f_1(\omega))$$.
 
 ![degenerate solution network](images/DSN.png)
@@ -166,7 +165,7 @@ figs, ME_its = plot_opt(model_dirs, frac_samps=0.5);
 ![linear system entropy](images/linear2D_H_opt.png)
 ![linear system constraints](images/linear2D_constraints_opt.png)
 
-Each augmented Lagrangian epoch runs for 50,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of the DSN optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy may decrease, and structural pathologies in the distribution may be introduced.
+Each augmented Lagrangian epoch runs for 5,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of the DSN optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy may decrease, and structural pathologies in the distribution may be introduced.
 
 ## DSN posterior ##
 Here, we plot the distribution learned by the DSN.  This is the distribution of $$z$$ at a point of the optimization where the constraint satisfaction null hypotheses are accepted that is maximum entropy (dotted line above).  
