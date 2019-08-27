@@ -244,14 +244,69 @@ __Returns__
 ```python
 STGCircuit(self, fixed_params, behavior, model_opts={'dt': 0.025, 'T': 200, 'fft_start': 20, 'w': 20})
 ```
-5-neuron STG circuit.
-
-Describe model
+5-neuron STG circuit from [Gutierrez et al. 2013](#Gutierrez2013multiple).
 
 ![STG circuit](images/models/STGCircuit.png)
 
+Each neurons membrane potential is the solution of the following differential equation.
 
- [add equations]
+$$ C_m \frac{\partial V_m}{\partial t} = - \left[ I_{leak} + I_{Ca} + I_K + I_h + I_{elec} + I_{syn}\right] $$
+
+The membrane potential of each neuron is a affected by the leak, Calcium, Potassium, hyperpolarization,
+electrical and synaptic currents, respectively.
+
+The capictance of the circuit is set to $$C_m = 1nF$$.  All of these fixed parameters at the level of
+model specification can seemlessly be set as free parameters of a DSN with simple
+modifications of this system class.
+
+Each current has an associated reversal potential: $$V_{leak} = -40mV$$, $$V_{Ca} = 100mV$$,
+$$V_K = -80mV$$, $$V_h = -20mV$$, and $$V_{syn} = -75mV$$. Each current is a function of the
+difference in membrane and reversal potential multiplied by a conductance:
+
+$$ I_{leak} = g_{leak} (V_m - V_{leak}) $$
+
+$$ I_{elec} = g_{el} (V_m^{post} - V_m^{pre}) $$
+
+$$ I_{syn} = g_{syn} S_\infty^{pre} (V_m^{post} - V_{syn}) $$
+
+$$ I_{Ca} = g_{Ca} M_\infty (V_m - V_{Ca}) $$
+
+$$ I_K = g_K N (V_m - V_K) $$
+
+$$ I_h = g_h H(V_m - V_h) $$
+
+where $$g_{el}$$ and $$g_{syn}$$ are DSN-focused parameters, $$g_{leak} = 1 \times 10^{-4} \mu S$$,
+and $$g_{Ca}$$, $$g_{K}$$, and $$g_{h}$$ have different values based on fast, intermediate (hub)
+or slow neuron.  Fast: $$g_{Ca} = 1.9 \times 10^{-2}$$, $$ g_K = 3.9 \times 10^{-2} $$,
+and $$ g_h = 2.5 \times 10^{-2} $$.  Intermediate: $$g_{Ca} = 1.7 \times 10^{-2}$$,
+$$ g_K = 1.9 \times 10^{-2} $$, and $$ g_h = 8.0 \times 10^{-3} $$.  Intermediate:
+$$g_{Ca} = 8.5 \times 10^{-3}$$, $$ g_K = 1.5 \times 10^{-2} $$, and $$ g_h = 1.0 \times 10^{-2} $$.
+
+The Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics
+dependent on steady-state gating varibles $$M_\infty$$, $$N_\infty$$ and $$H_\infty$$,
+respectively.
+
+$$ M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{V_m - v_1}{v_2} \right) \right) $$
+
+$$ \frac{\partial N}{\partial t} = \lambda_N (N_\infty - N) $$
+
+$$ N_\infty = 0.5 \left( 1 + \tanh \left( \frac{V_m - v_3}{v_4} \right) \right) $$
+
+$$ \lambda_N = \phi_N \cosh \left( \frac{V_m - v_3}{2 v_4} \right) $$
+
+$$ \frac{\partial H}{\partial t} = \frac{\left( H_\infty - H \right)}{\tau_h} $$
+
+$$ H_\infty = \frac{1}{1 + \exp \left( \frac{V_m + v_5}{v_6} \right)} $$
+
+$$ \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-V_m + v_7}{v_8} \right)} \right) $$
+
+where $$v_1 = 0mV$$, $$v_2  = 20mV$$, $$v_3 = 0mV$$, $$v_4 = 15mV$$, $$v_5 = 78.3mV$$,
+$$v_6 = 10.5mV$$, $$v_7 = -42.2mV$$, $$v_8 = 87.3mV$$, $$v_9 = 5mV$$, and $$v_{th} = -25mV$$.
+
+Finally, there is a synaptic gating variable as well:
+
+$$ S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - V_m}{v_9} \right)} $$
+
 
 __Attributes__
 
@@ -306,7 +361,7 @@ __Returns__
 ```python
 STGCircuit.simulate(self, z, db=False)
 ```
-Simulate the V1 4-neuron circuit given parameters z.
+Simulate the STG circuit given parameters z.
 
 __Arguments__
 
@@ -380,10 +435,10 @@ __Returns__
 
 ## <a name="V1Circuit"> </a> V1Circuit
 ```python
-V1Circuit(self, fixed_params, behavior, model_opts={'g_FF': 'c', 'g_LAT': 'linear', 'g_RUN': 'r'}, T=100, dt=0.02, init_conds=array([[1.00103364],
-       [0.97713982],
-       [0.9827959 ],
-       [1.00099762]]))
+V1Circuit(self, fixed_params, behavior, model_opts={'g_FF': 'c', 'g_LAT': 'linear', 'g_RUN': 'r'}, T=100, dt=0.02, init_conds=array([[1.00506511],
+       [1.00599704],
+       [1.01756709],
+       [1.0027543 ]]))
 ```
 4-neuron V1 circuit.
 
@@ -620,7 +675,7 @@ __Returns__
 ```python
 SCCircuit(self, fixed_params, behavior, model_opts={'params': 'reduced', 'C': 1, 'N': 100})
 ```
-4-neuron SC circuit.
+4-neuron SC circuit from [Duan et al. 2018](#Duan2018collicular).
 
 This is a 4-neuron rate model of SC activity across two hemispheres
  - LP: Left, Pro
@@ -630,7 +685,15 @@ This is a 4-neuron rate model of SC activity across two hemispheres
 
 ![SC circuit](images/models/SCCircuit.png)
 
- [add equations]
+$$V_i(t) = \eta(t)\left(\frac{1}{2}\tanh\left(\frac{U_i(t) - \theta}{eta}\right)+ \frac{1}{2} \right)$$
+
+$$v = \begin{bmatrix} V_{LP} \\ V_{LA} \\ V_{RA} \\ V_{RP} \end{bmatrix} \hspace{2cm} u = \begin{bmatrix} U_{LP} \\ U_{LA} \\ U_{RA} \\ U_{RP} \end{bmatrix}$$
+
+$$\tau \frac{\partial u}{\partial t} = -u + Wv + I + \sigma \partial W$$
+
+$$ W = \begin{bmatrix} sW_P & vW_{PA} &  dW_{PA} & hW_P \\ vW_{AP}  & sW_A & hW_A  & dW_{AP} \\ dW_{AP} & hW_P & sW_A & vW_{AP}  \\  hW_A & dW_{PA} & vW_{PA}  & sW_P \end{bmatrix}$$
+
+$$ I = I_{\text{constant}} + I_{\text{pro-bias}} + I_{\text{rule}} + I_{\text{choice-period}} + I_{\text{light}} $$
 
 __Attributes__
 
@@ -942,7 +1005,14 @@ __Returns__
 
 Dipoppa, Mario, et al. *[Vision and locomotion shape the interactions between neuron types in mouse visual cortex](https://www.sciencedirect.com/science/article/pii/S0896627318302435){:target="_blank"}*. Neuron 98.3 (2018): 602-615. <a name="Dipoppa2018Vision"></a>
 
-Pfeffer, Carsten K., et al. [Inhibition of inhibition in visual cortex: the logic of connections between molecularly distinct interneurons](https://www.nature.com/articles/nn.3446){:target="_blank"}*." Nature neuroscience 16.8 (2013): 1068. <a name="Pfeffer2013Inhibition"></a>
+Duan, Chunyu A., et al. *[Collicular circuits for flexible sensorimotor
+routing](https://www.biorxiv.org/content/10.1101/245613v1.abstract)*. bioRxiv (2018): 245613. <a
+name="Duan2018collicular"></a>
+
+Gutierrez, Gabrielle J., Timothy O’Leary, and Eve Marder. *[Multiple mechanisms switch an electrically coupled,
+synaptically inhibited neuron between competing rhythmic
+oscillators](https://www.sciencedirect.com/science/article/pii/S0896627313000822)*. Neuron 77.5 (2013): 845-858. <a
+name="Gutierrez2013multiple"></a>
 
 Mastrogiuseppe, Francesca, and Srdjan Ostojic. *[Linking connectivity, dynamics, and computations in low-rank recurrent neural networks](https://www.sciencedirect.com/science/article/pii/S0896627318305439){:target="_blank"}*. Neuron 99.3 (2018): 609-623. <a name="Mastrogiuseppe2018Linking"></a>
 
