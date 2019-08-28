@@ -1,14 +1,8 @@
 #!/bin/bash
-for K in 10 20
+for num_masks in 2 4
 do
-  for rs in {1..2}
+  for rs in {1..4}
   do
-    for sigma_init in 2.0 3.0
-    do 
-      for sigma0 in 0.1
-      do
-        sbatch train_STG_circuit.sh 10 2 $K $sigma_init $rs $sigma0
-      done
-    done
+    sbatch train_STG_circuit.sh $num_masks 2 2 $rs
   done
 done

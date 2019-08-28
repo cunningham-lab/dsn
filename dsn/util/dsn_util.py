@@ -35,6 +35,8 @@ def get_savestr(system, arch_dict, c_init_order, random_seed, randsearch=False):
                 sysparams += "_%s" % system.free_params[i]
 
     sigma_init = arch_dict['sigma_init']
+    print('here')
+    print(sigma_init)
     if (type(sigma_init) == float or type(sigma_init) == np.float64):
         sigma_str = '_sigma=%.2f' % sigma_init
     elif (type(sigma_init) == np.ndarray and np.all(sigma_init == sigma_init[0])):
@@ -89,7 +91,7 @@ def get_system_from_template(sysname, param_dict):
         freq = param_dict['freq']
         if (freq == "med"):
             T = 500
-            mean = 0.525*np.ones((5,))
+            mean = 0.55*np.ones((5,))
             variance = (.025)**2*np.ones((5,))
         else:
             print('Error: freq not med or high.')
@@ -315,8 +317,6 @@ def get_arch_from_template(sysname, param_dict):
         repeats = param_dict['repeats']
         num_masks = param_dict['num_masks']
         nlayers = param_dict['nlayers']
-        mu_init = param_dict['mu_init']
-        sigma_init = param_dict['sigma_init']
 
         flow_type = "RealNVP"
         post_affine = True
@@ -326,6 +326,12 @@ def get_arch_from_template(sysname, param_dict):
                          'nlayers':nlayers,
                          'upl':10,
                         }
+
+        # Use informed initialization:
+        init_param_fn = 'data/STG/med_gauss_init.npz'
+        npzfile = np.load(init_param_fn)
+        mu_init = npzfile['mean']
+        sigma_init = npzfile['std']
 
         arch_dict = {
                      "D": D,
