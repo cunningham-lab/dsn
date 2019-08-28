@@ -174,16 +174,40 @@ Zs, log_q_zs, axs = dsn_pairplots(model_dirs, 'Zs', system, ME_its)
 ```
 ![oscillating linear systems](images/DSN_Linear2D.png)
 
- Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution. More subtle model-behavior combinations will have even more complexity, further motivating DSNs.
-
-We can visually verify that this posterior produces a distribution of behavior that our convergence criteria have asserted.
-
+Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.
+With $$\tau=1$$, we constrained $$E_{z \sim q_\theta} \left[\text{real}(\lambda_1) \right] = \frac{a_1 + a_4}{2} = 0$$.
+We see that the DSN posterior results in an approximately gaussian posterior distribution of the real and imaginary
+components of $$\lambda_1$$.
 ```python
 T_xs, _, axs = dsn_pairplots(model_dirs, 'T_xs', system, ME_its)
 ```
 ![oscillating linear systems](images/DSN_Linear2D_T_x.png)
 
-The real part of the primary eigenvalue is centered at zero with variance 1, and the imaginary part is centered at $$2\pi$$ with variance 1, as we had conditioned on.
+In the plot below, we draw a black line at $$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$$, a dotted black line at
+the standard deviation $$\frac{a_1 + a_4}{2} \pm 1$$, and a grey line at twice the standard deviation
+$$\frac{a_1 + a_4}{2} \pm 2 $$
+![std lines 1](images/DSN_Linear2D_stds1.png)
+
+The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
+$$a_1$$ and $$a_4$$.  To explain the sturcture in the bimodality of the DSN posterior, we can look at the imaginary component of
+$$\lambda_1$$.  When $$\omega = 1$$ and $$\frac{a_1 + a_4}{2} = 0$$, we have
+
+$$ \text{imag}(\lambda_1) = \begin{cases}
+                             0 & \text{if } a_2 a_3 < a_1 a_4 \\
+                             \sqrt{\frac{a_1 a_4 - a_2 a_3}{\tau}},              & \text{otherwise}
+                         \end{cases} $$
+ 
+
+When $$\tau=1$$, $$a_1 a_4 > a_2 a_3$$, and $$a_1 a_4 = 0$$ (center of distribution above), we have the following equation for the
+the other two dimensions: 
+
+$$\text{imag}(\lambda_1)^2 = a_2 a_3 = -(2\pi)^2$$ 
+
+![std lines 2](images/DSN_Linear2D_stds2.png)
+
+We take steps in negative standard deviation of $$a_1 a_4$$ (dotted and gray lines), since there are few positive
+values $$a_1 a_4$$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating DSNs.
+
 
 ## Behavioral robustness via the Hessian ##
 This probabilistic approach to system analysis allows us to analyze the Hessian, $$\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$$, for different $$z$$s and conditioned on various emergent properties $$\mathcal{B}$$.  You can calculate the hessian using the `dgm_hessian` function.
@@ -198,7 +222,7 @@ T_xs = system.compute_suff_stats(Z)
 H = dgm_hessian(log_q_Z, W, Z, Z_INV)
 ```
 
-Below, the solid line shows the Hessian eigenmode of greatest degeneracy, and the dotted line shows the dimension of least degeneracy.
+Below, the solid line shows the Hessian eigenmode of greatest degeneracy (summation degeneracy of $$a_1$$ and $$a_4$$), and the dotted line shows the dimension of least degeneracy.
 
 ![oscillating linear systems](images/DSN_Linear2D_hess.png)
 
