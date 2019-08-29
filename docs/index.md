@@ -80,7 +80,7 @@ To provide intuition for DSNs to the reader, we discuss degenerate parameterizat
 
  
 \begin{equation}
-E_{x\sim p(x \mid z)}\left[T(x)\right] = g(z) =  \begin{bmatrix} \text{real}(\lambda_1) \\\\ \frac{\text{imag}(\lambda_1)}{2 \pi} \\\\ \text{real}(\lambda_1)^2 \\\\ (\frac{\text{imag}(\lambda_1)}{2 \pi})^2 \end{bmatrix}
+E_{x\sim p(x \mid z)}\left[T(x)\right] = g(z) =  \begin{bmatrix} \text{real}(\lambda_1) \\\\ \frac{\text{imag}(\lambda_1)}{2 \pi} \\\\ \text{real}(\lambda_1)^2 \\\\ (\frac{\text{imag}(\lambda_1)}{2 \pi})^2 \end{bmatrix} = E \begin{bmatrix} c \\\\ \omega \\\\ c^2 \\\\ \omega^2 \end{bmatrix}
 \end{equation}
 
 \begin{equation} 
@@ -89,7 +89,10 @@ E_{x\sim p(x \mid z)}\left[T(x)\right] = g(z) =  \begin{bmatrix} \text{real}(\la
 
 Where $$\lambda_1$$ and $$\lambda_2$$ are eigenvalues of the dynamics matrix ordered by their real parts.
 
- Even though we can compute $$E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right]$$ in closed form via $$g(z)$$, we cannot derive the distribution $$q^*_\theta$$, since the backward mapping from the mean parameters $$\mu$$ to the natural parameters $$\eta$$ of this exponential family is unknown.  Instead, we can train a DSN to learn the degenerate linear system parameterization.
+ Even though we can compute $$E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right]$$ in closed form
+ via $$g(z)$$, we cannot derive the distribution $$q^*_\theta$$, since the backward mapping from the mean parameters
+ $$\mu$$ to the natural parameters $$\eta$$ of this exponential family is unknown.  Instead, we can train a DSN to learn
+ the linear system posterior conditioned on the desired statistics of $$c$$ and $$\omega$$.
 
 First, import the following libraries.
 ```python
@@ -184,24 +187,34 @@ T_xs, _, axs = dsn_pairplots(model_dirs, 'T_xs', system, ME_its)
 ![oscillating linear systems](images/DSN_Linear2D_T_x.png)
 
 In the plot below, we draw a black line at $$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$$, a dotted black line at
-the standard deviation $$\frac{a_1 + a_4}{2} \pm 1$$, and a grey line at twice the standard deviation
-$$\frac{a_1 + a_4}{2} \pm 2 $$
+the standard deviation $$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 1$$, and a grey line at twice the standard deviation
+$$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2 $$.  Here the lines denote the _set_ of solutions at fixed behaviors (delta
+distributions), which overlay the probabilistic solution _distribution_ of the DSN conditioned on statistical descriptions of
+the behavior.
+
 ![std lines 1](images/DSN_Linear2D_stds1.png)
 
 The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
-$$a_1$$ and $$a_4$$.  To explain the sturcture in the bimodality of the DSN posterior, we can look at the imaginary component of
-$$\lambda_1$$.  When $$\omega = 1$$ and $$\frac{a_1 + a_4}{2} = 0$$, we have
+$$a_1$$ and $$a_4$$. Intuitively, the degenerate sets of points have similar log densities.  
+
+To explain the structure in the bimodality of the DSN posterior, we can look at the imaginary component of
+$$\lambda_1$$.  When $$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$$, we have
 
 $$ \text{imag}(\lambda_1) = \begin{cases}
-                             0 & \text{if } a_2 a_3 < a_1 a_4 \\
-                             \sqrt{\frac{a_1 a_4 - a_2 a_3}{\tau}},              & \text{otherwise}
+                             \sqrt{\frac{a_1 a_4 - a_2 a_3}{\tau}},  & \text{if } a_1 a_4 < a_2 a_3 \\
+                             0 & \text{otherwise } \\
                          \end{cases} $$
  
 
-When $$\tau=1$$, $$a_1 a_4 > a_2 a_3$$, and $$a_1 a_4 = 0$$ (center of distribution above), we have the following equation for the
+When $$\tau=1$$ and $$a_1 a_4 > a_2 a_3$$ (center of distribution above), we have the following equation for the
 the other two dimensions: 
 
-$$\text{imag}(\lambda_1)^2 = a_2 a_3 = -(2\pi)^2$$ 
+$$\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3$$
+
+For the trained DSN, we constrained $$E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$$ (with $$\omega=1$$)  We can plot contours of
+the equation $$\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$$ for various $$a_1 a_4$$. If $$\sigma_{1,4} =
+E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$$, then we plot the contours as $$a_1 a_4 = 0$$ (black), $$a_1 a_4 =
+-\sigma_{1,4}$$ (black dotted), and $$a_1 a_4 = -2\sigma_{1,4}$$ (grey dotted).
 
 ![std lines 2](images/DSN_Linear2D_stds2.png)
 
