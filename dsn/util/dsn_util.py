@@ -340,7 +340,7 @@ def get_arch_from_template(sysname, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
-                     "mo":0.99,
+                     "mo":1.0,
                      "init_mo":1.0,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
