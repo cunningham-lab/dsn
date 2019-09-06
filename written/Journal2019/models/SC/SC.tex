@@ -1,0 +1,71 @@
+% You should title the file with a .tex extension (hw1.tex, for example)
+\documentclass[11pt]{article}
+
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{tikz-qtree}
+\usepackage{tikz-qtree-compat}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usepackage{graphicx}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+\setcounter{MaxMatrixCols}{20}
+
+
+\oddsidemargin0cm
+\topmargin-2cm     %I recommend adding these three lines to increase the 
+\textwidth16.5cm   %amount of usable space on the page (and save trees)
+\textheight23.5cm  
+
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
+
+\newcommand{\myname}{Sean Bittner}
+\newcommand{\myandrew}{srb2201@columbia.edu}
+\newcommand{\myhwnum}{12}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+ 
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+ %
+\pagestyle{fancyplain}
+\rhead{\fancyplain{}{\myname\\ \myandrew}}
+
+\begin{document}
+
+\medskip                        % Skip a "medium" amount of space
+                                % (latex determines what medium is)
+                                % Also try: \bigskip, \littleskip
+
+\thispagestyle{plain}
+\begin{center}                  % Center the following lines
+{\Large 3.3 Discovering sufficient mechanisms of task learning} \\
+Sean Bittner and John Cunningham, August 27, 2019 \\
+\end{center}
+
+\vspace{-.5cm}
+\begin{wrapfigure}{b}{.58\textwidth}
+  \begin{center}  
+  \vspace{-.8cm}
+\includegraphics[scale=0.3]{SC_Fig/SC_Fig.pdf}
+\vspace{-0.8cm}
+\caption{\footnotesize \protect\input{SC_caption.tex}}
+\end{center}
+\vspace{-1.2cm}
+\end{wrapfigure}
+\small
+\input{SC_text.tex}
+
+\bibliography{sc}
+\bibliographystyle{unsrt}
+
+\end{document}
+

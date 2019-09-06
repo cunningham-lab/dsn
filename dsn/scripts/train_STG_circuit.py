@@ -13,29 +13,28 @@ freq = str(sys.argv[1])
 num_masks = int(sys.argv[2])
 nlayers = int(sys.argv[3])
 c_init_order = int(sys.argv[4])
-sigma_init = float(sys.argv[5])
-random_seed = int(sys.argv[6])
+random_seed = int(sys.argv[5])
 
 # Get STG system
 sysname = "STGCircuit"
 param_dict = {"freq":freq}
 system = get_system_from_template(sysname, param_dict)
 
+repeats = 2
 # Get DSN architecture
 arch_params = {
                'D':system.D,
+               'repeats':repeats,
                'num_masks':num_masks,
                'nlayers':nlayers,
-               'mu_init':system.density_network_init_mu,
-               'sigma_init':sigma_init,
               }
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(sysname, param_dict)
 
 AL_it_max = 10
 AL_fac = 4.0
-iters = 10000
-batch_size = 200
+iters = 2000
+batch_size = 300 
 lr_order = -3
 check_rate = 100
 

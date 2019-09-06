@@ -114,14 +114,18 @@ def train_dsn(
     if (K > 1 and (not arch_dict['shared'])):
         initdirs = []
         for rs in range(1, K+1):
+            # TODO add arch_dict mo init update
             print('Initializing %d/%d...' % (rs, K))
             initdirs.append(initialize_nf(system,
                                           arch_dict, 
                                           rs))
     else:
+        init_arch_dict = arch_dict.copy()
+        if ('init_mo' in arch_dict.keys()):
+            init_arch_dict['mo'] = arch_dict['init_mo']
         print('Initializing...')
         initdirs = [initialize_nf(system,
-                                  arch_dict, 
+                                  init_arch_dict, 
                                   random_seed)]
 
 
@@ -158,7 +162,7 @@ def train_dsn(
     # havent implemented mixture flows for real nvp archs yet
     if (not mixture):
         init_param_fname = initdirs[0] + 'theta.npz'
-        init_param_file =  np.load(init_param_fname)
+        init_param_file =  np.load(init_param_fname, allow_pickle=True)
         init_thetas = init_param_file['theta'][()]
 
         final_thetas = {}
@@ -436,7 +440,7 @@ def train_dsn(
 
                 # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind + 1, check_rate) == 0:
-                    args = [H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
+                    args = [cost, H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
                     if (batch_norm):
                         args.append(batch_norm_layer_means)
                         args.append(batch_norm_layer_vars)
@@ -450,13 +454,15 @@ def train_dsn(
                     if (mixture):
                         _alpha = sess.run(alpha)
                         print('alpha', _alpha)
-                    print("H", _H, "cost", cost_i)
+                    cost_i = _args[0]
+                    _H = _args[1]
+                    print("H", _H)
                     sys.stdout.flush()
                     
-                    Hs[check_it] = _args[0]
-                    base_Hs[check_it] = _args[1]
-                    sum_log_det_Hs[check_it] = _args[2]
-                    mean_T_xs[check_it] = np.mean(_args[3][0], 0)
+                    Hs[check_it] = _H
+                    base_Hs[check_it] = _args[2]
+                    sum_log_det_Hs[check_it] = _args[3]
+                    mean_T_xs[check_it] = np.mean(_args[4][0], 0)
 
                     if (db):
                         if (mixture):
@@ -466,10 +472,10 @@ def train_dsn(
                             #mus[check_it,:,:] = _mu
                             #sigmas[check_it,:,:] = _sigma
                             Cs[check_it,:,:] = _C
-                        Zs[check_it, :, :] = _args[4][0, :, :]
-                        log_q_zs[check_it, :] = _args[5][0, :]
-                        log_base_q_zs[check_it, :] = _args[6][0, :]
-                        T_xs[check_it, :, :] = _args[3][0]
+                        Zs[check_it, :, :] = _args[5][0, :, :]
+                        log_q_zs[check_it, :] = _args[6][0, :]
+                        log_base_q_zs[check_it, :] = _args[7][0, :]
+                        T_xs[check_it, :, :] = _args[8][0]
 
                         if (batch_norm):
                             bn_mus[check_it] = np.array(_batch_norm_mus)
@@ -559,18 +565,19 @@ def train_dsn(
                         args.append(batch_norm_layer_vars)
                     _args = sess.run(args, feed_dict)
                     ts = _args[0]
-                    cost_it = args[1]
+                    cost_i = _args[1]
                     if (batch_norm):
                         _batch_norm_layer_means = _args[2]
                         _batch_norm_layer_vars = _args[3]
 
                 if np.mod(cur_ind + 1, check_rate) == 0:
+                    print('cost', cost_i)
                     costs[check_it] = cost_i
                     check_it += 1
 
                 # Update batch norm params
                 if (batch_norm):
-                    mom = 0.99
+                    mom = arch_dict['mo']
                     for j in range(num_batch_norms):
                         _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_layer_means[j]
                         _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_layer_vars[j])
@@ -728,9 +735,10 @@ def train_dsn(
     )
 
     # make training movie
-    step = 1
-    video_fname = savedir + get_savestr(system, arch_dict, c_init_order, random_seed) + "_video"
-    make_training_movie(savedir, system, step, save_fname=video_fname)
+    if (db):
+        step = 1
+        video_fname = savedir + get_savestr(system, arch_dict, c_init_order, random_seed) + "_video"
+        make_training_movie(savedir, system, step, save_fname=video_fname)
 
     if (system.behavior["type"] == "feasible"):
         return costs, _Z, is_feasible

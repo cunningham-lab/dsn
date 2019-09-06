@@ -1,0 +1,13 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Background}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Dynamic mean field theory \(DMFT\) in neuroscience}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Low rank RNNs}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Derivation of important DMFT variables}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{DMFT solvers}{}% 6
+\BOOKMARK [2][-]{subsection.3.1}{Rank 1 sponatneous stationary solutions}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.2}{Rank1 sponatneous chaotic solutions}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.3}{Rank 1 with input chaotic solutions}{section.3}% 9
+\BOOKMARK [2][-]{subsection.3.4}{Integration of a noisy stimulus}{section.3}% 10
+\BOOKMARK [2][-]{subsection.3.5}{Rank 2 networks have the following consistency equations for 0 and }{section.3}% 11
+\BOOKMARK [2][-]{subsection.3.6}{Context-dependent discrimination}{section.3}% 12
+\BOOKMARK [2][-]{subsection.3.7}{Chaotic limit cycles}{section.3}% 13
