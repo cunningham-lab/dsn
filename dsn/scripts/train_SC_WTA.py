@@ -16,17 +16,17 @@ c_init_order = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
-std = 0.05
+std = 0.15
 var = std**2
-AL_it_max = 20
+AL_it_max = 40
 
-dir_str = 'test_SC_WTA_%s' % inact_str
+dir_str = 'SC_WTA_%s' % inact_str
 batch_size = 300
 AL_fac = 4.0
 min_iters=5000
 max_iters=5000
 
-nlayers = 2
+nlayers = 10
 K = 1 
 sigma0 = 0.1
 N = 500
@@ -42,7 +42,6 @@ param_dict = {
 system = get_system_from_template('SCCircuit', param_dict)
 
 # set up DSN architecture
-"""
 flow_type = 'PlanarFlow';
 arch_dict = {'D':system.D, \
              'K':K, \
@@ -70,6 +69,7 @@ arch_dict = {
     "post_affine": True,
     "shared":False,
 }
+"""
 
 lr_order = -3
 

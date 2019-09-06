@@ -3,7 +3,7 @@
 #SBATCH --job-name=SC_DSN
 #SBATCH -c 1
 #SBATCH --gres=gpu
-#SBATCH --time=11:59:00
+#SBATCH --time=23:59:00
 #SBATCH --mem-per-cpu=5gb
 
 module load cuda90/toolkit
