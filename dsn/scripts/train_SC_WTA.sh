@@ -11,4 +11,4 @@ module load cuda90/blas
 module load cudnn/7.0.5
 
 source activate dsn_gpu
-python3 train_SC_WTA.py $1 $2 $3 $4 $5 $6
+python3 train_SC_WTA.py $1 $2 $3 $4 $5 $6 $7

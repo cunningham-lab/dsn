@@ -1,11 +1,14 @@
 #!/bin/bash
-for p in 0.5 0.6 0.7 0.9
+for p in 0.9
 do
-  for c in 2
+  for c in 2 
   do
-    for rs in {6..10}
+    for rs in {1..5}
     do
-      sbatch train_SC_WTA.sh full $p NI $c 1.0 $rs
+      for upl in 10 15
+      do
+        sbatch train_SC_WTA.sh full $p NI $c $upl 1.0 $rs
+      done
     done
   done
 done
