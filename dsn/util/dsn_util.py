@@ -12,6 +12,7 @@ from dsn.util.plot_util import assess_constraints_mix
 
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
+import os
 
 
 def get_savedir(
@@ -268,19 +269,18 @@ def get_system_from_template(sysname, param_dict):
 
 
 
-def get_arch_from_template(sysname, param_dict):
+def get_arch_from_template(system, param_dict):
     """Returns template architecture given system-specific parameters.
 
         # Arguments
-            sysname (string): System name. 
-              E.g. STGCircuit, V1Circuit, SCCircuit
+            system (system): the system being dsned
             param_dict (dict): Parameters for template.
 
         # Returns
             arch_dict (dict): Architecture from template parameterization.
 
     """
-
+    sysname = system.name
     if (sysname == "Linear2D"):
         D = param_dict['D']
         repeats = param_dict['repeats']
@@ -326,10 +326,7 @@ def get_arch_from_template(sysname, param_dict):
                         }
 
         # Use informed initialization:
-        init_param_fn = 'data/STG/med_gauss_init.npz'
-        npzfile = np.load(init_param_fn)
-        mu_init = npzfile['mean']
-        sigma_init = npzfile['std']
+        mu_init, sigma_init = get_gauss_init(system)
 
         arch_dict = {
                      "D": D,
@@ -371,10 +368,18 @@ def get_arch_from_template(sysname, param_dict):
                              'upl':upl,
                             }
             # Use informed initialization:
+            """
             init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
             npzfile = np.load(init_param_fn)
             mu_init = npzfile['mean']
             sigma_init = npzfile['std']
+            """
+
+            mu_init, sigma_init = get_gauss_init(system)
+            print('mu_init')
+            print(mu_init)
+            print('sigma_init')
+            print(sigma_init)
 
             arch_dict = {
                          "D": D,
@@ -384,7 +389,7 @@ def get_arch_from_template(sysname, param_dict):
                          "K": K,
                          "real_nvp_arch":real_nvp_arch,
                          "mo":0.99,
-                         "init_mo":0.99,
+                         "init_mo":1.0,
                          "mu_init": mu_init,
                          "sigma_init": sigma_init,
                         }
@@ -423,6 +428,22 @@ def get_arch_from_template(sysname, param_dict):
 
     return arch_dict
 
+def get_gauss_init(system):
+    init_param_dir = 'data/%s/' % system.name
+    init_param_fname = init_param_dir + '%s_init_param.npz' % system.behavior_str
+    if (not os.path.isfile(init_param_fname)):
+        print('Running grid search to determine DSN initialization.')
+        Z_thresh, mu_init, sigma_init = grid_search(system)
+        if (not os.path.exists(init_param_dir)):
+            os.mkdir(init_param_dir)
+        np.savez(init_param_fname, mu_init=mu_init, sigma_init=sigma_init)
+    else:
+        npzfile = np.load(init_param_fname)
+        mu_init = npzfile['mu_init']
+        sigma_init = npzfile['sigma_init']
+    return mu_init, sigma_init
+
+
 
 def get_grid_search_bounds(system):
     if (not system.has_support_map):
@@ -438,6 +459,15 @@ def get_grid_search_bounds(system):
             r_alpha = system.mu[2]
             T_x_a = np.array([ISN_mean-2*ISN_std, np.NINF, np.NINF])
             T_x_b = np.array([ISN_mean+2*ISN_std, np.PINF, 1e-2])
+    
+    elif (system.name == 'STGCircuit'):
+        if (system.behavior['type'] == 'freq'):
+            f_mean = system.mu[:5]
+            f_sec_mom = system.mu[5:]
+            f_var = f_sec_mom - np.square(f_mean)
+            f_std = np.sqrt(f_var)
+            T_x_a = np.concatenate((f_mean - 2*f_std, np.NINF*np.ones((5,))), axis=0)
+            T_x_b = np.concatenate((f_mean + 2*f_std, np.PINF*np.ones((5,))), axis=0)
 
     return Z_a, Z_b, T_x_a, T_x_b
 
@@ -838,9 +868,13 @@ def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
     if (mu_init is None):
         mu_init = np.zeros((D,))
 
+    # Sigma init is either a covariance matrix or the element wise standard devs
+    if (len(sigma_init.shape) == 1):
+        sigma_init = np.diag(np.square(sigma_init))
+        
     params = {
         "mu": mu_init,
-        "Sigma": np.diag(np.square(sigma_init)),
+        "Sigma": sigma_init,
         "dist_seed": 0,
     }
     n = 1000
