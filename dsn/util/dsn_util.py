@@ -92,6 +92,12 @@ def get_system_from_template(sysname, param_dict):
             T = 500
             mean = 0.55*np.ones((5,))
             variance = (.025)**2*np.ones((5,))
+        elif (freq == "high"):
+            T = 500
+            high_freq = 0.75
+            low_freq = 0.375
+            mean = np.array([high_freq, high_freq, high_freq, low_freq, low_freq])
+            variance = (.025)**2*np.ones((5,))
         else:
             print('Error: freq not med or high.')
             exit()
