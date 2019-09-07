@@ -35,8 +35,6 @@ def get_savestr(system, arch_dict, c_init_order, random_seed, randsearch=False):
                 sysparams += "_%s" % system.free_params[i]
 
     sigma_init = arch_dict['sigma_init']
-    print('here')
-    print(sigma_init)
     if (type(sigma_init) == float or type(sigma_init) == np.float64):
         sigma_str = '_sigma=%.2f' % sigma_init
     elif (type(sigma_init) == np.ndarray and np.all(sigma_init == sigma_init[0])):
@@ -391,8 +389,81 @@ def get_arch_from_template(sysname, param_dict):
                          "sigma_init": sigma_init,
                         }
 
+    elif (sysname == "SCCircuit"):
+        behavior_type = param_dict["behavior_type"]
+        D = param_dict['D']
+        repeats = param_dict['repeats']
+        nlayers = param_dict['nlayers']
+        upl = param_dict['upl']
+        sigma_init = param_dict['sigma_init']
+        if (behavior_type == 'WTA'):
+            flow_type = "RealNVP"
+            post_affine = True
+            K = 1
+            real_nvp_arch = {
+                             'num_masks':8,
+                             'nlayers':nlayers,
+                             'upl':upl,
+                            }
+            mu_init = np.zeros((D,))
+            arch_dict = {
+                         "D": D,
+                         "flow_type": flow_type,
+                         "repeats": repeats,
+                         "post_affine": post_affine,
+                         "K": K,
+                         "real_nvp_arch":real_nvp_arch,
+                         "mo":0.99,
+                         "init_mo":0.99,
+                         "mu_init": mu_init,
+                         "sigma_init": sigma_init,
+                        } 
+        else:
+            raise NotImplementedError()
+
     return arch_dict
 
+
+def get_grid_search_bounds(system):
+    if (not system.has_support_map):
+        print('Error: System has no support mapping.')
+        return None
+    Z_a, Z_b = system.density_network_bounds
+
+    if (system.name == 'V1Circuit'):
+        if (system.behavior['type'] == 'ISN_coeff'):
+            ISN_mean = system.mu[0]
+            ISN_var = system.mu[1]
+            ISN_std = np.sqrt(ISN_var)
+            r_alpha = system.mu[2]
+            T_x_a = np.array([ISN_mean-2*ISN_std, np.NINF, np.NINF])
+            T_x_b = np.array([ISN_mean+2*ISN_std, np.PINF, 1e-2])
+
+    return Z_a, Z_b, T_x_a, T_x_b
+
+def grid_search(system, n=10000):
+    Z = tf.placeholder(tf.float64, (1,None,system.D))
+    T_x = system.compute_suff_stats(Z)
+
+    # get bounds
+    Z_a, Z_b, T_x_a, T_x_b = get_grid_search_bounds(system)
+    _Z = np.zeros((1,n,system.D))
+    for i in range(system.D):
+        _Z[0,:,i] = np.random.uniform(Z_a[i], Z_b[i], (n,))
+
+    with tf.Session() as sess:
+        _T_x = sess.run(T_x, {Z:_Z})
+    inds = []
+    for j in range(system.num_suff_stats):
+        inds_j = np.logical_and(T_x_a[j] <= _T_x[0,:,j], _T_x[0,:,j] <= T_x_b[j])
+        inds.append(inds_j)
+    thresh_inds = np.prod(np.array(inds), axis=0) == 1
+    print("num thresh", np.sum(thresh_inds))
+    Z_thresh = _Z[0,thresh_inds,:]
+    print(Z_thresh.shape)
+    mu = np.mean(Z_thresh, axis=0)
+    Sigma = np.cov(Z_thresh.T)
+    return Z_thresh, mu, Sigma
 
 
 
