@@ -29,7 +29,7 @@ arch_params = {
                'nlayers':nlayers,
               }
 param_dict.update(arch_params)
-arch_dict = get_arch_from_template(sysname, param_dict)
+arch_dict = get_arch_from_template(system, param_dict)
 
 AL_it_max = 10
 AL_fac = 4.0

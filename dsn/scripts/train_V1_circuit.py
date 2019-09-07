@@ -26,12 +26,15 @@ param_dict = {
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
-arch_params = {'D':system.D,
+arch_params = {
+               'D':system.D,
                'repeats':repeats,
                'nlayers':nlayers,
-               'upl':upl}
+               'upl':upl
+              }
+
 param_dict.update(arch_params)
-arch_dict = get_arch_from_template(sysname, param_dict)
+arch_dict = get_arch_from_template(system, param_dict)
 
 AL_it_max = 20
 batch_size = 1000

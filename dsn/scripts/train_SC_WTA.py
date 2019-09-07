@@ -45,7 +45,7 @@ arch_params = {
               }
 
 param_dict.update(arch_params)
-arch_dict = get_arch_from_template(sysname, param_dict)
+arch_dict = get_arch_from_template(system, param_dict)
 
 
 batch_size = 300

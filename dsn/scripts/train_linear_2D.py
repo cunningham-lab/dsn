@@ -27,7 +27,7 @@ arch_params = {
                'sigma_init':sigma_init,
               }
 param_dict.update(arch_params)
-arch_dict = get_arch_from_template(sysname, param_dict)
+arch_dict = get_arch_from_template(system, param_dict)
 
 n = 1000
 AL_it_max = 4
