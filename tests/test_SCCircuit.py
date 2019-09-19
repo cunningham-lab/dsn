@@ -99,7 +99,12 @@ def test_SCCircuit():
     std = 0.05
     var = std**2
     inact_str = "NI"
-    param_dict = {"behavior_type": "WTA", "p": p, "var": var, "inact_str": inact_str}
+    N = 500
+    param_dict = {"behavior_type": "WTA", 
+                  "p": p, 
+                  "var": var, 
+                  "inact_str": inact_str,
+                  "N":N}
 
     system = get_system_from_template("SCCircuit", param_dict)
 
