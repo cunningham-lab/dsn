@@ -316,9 +316,8 @@ class Linear2D(system):
 
         """
         means = self.behavior["means"]
-        #variances = self.behavior["variances"]
-        #mu = np.concatenate((means, variances), axis=0)
-        mu = np.concatenate((means, np.ones((2,))), axis=0)
+        variances = self.behavior["variances"]
+        mu = np.concatenate((means, variances), axis=0)
         return mu
 
     def support_mapping(self, inputs):
