@@ -4,11 +4,6 @@ from dsn.util.tf_langevin import (
     langevin_dyn,
     bounded_langevin_dyn,
     bounded_langevin_dyn_np,
-    langevin_dyn_rank1_spont_static,
-    langevin_dyn_rank1_spont_chaos,
-    langevin_dyn_rank1_input_chaos,
-    langevin_dyn_rank2_CDD_chaos,
-    langevin_dyn_rank2_CDD_static,
 )
 from tf_util.stat_util import approx_equal
 
