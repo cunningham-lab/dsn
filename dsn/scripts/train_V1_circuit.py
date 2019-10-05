@@ -9,20 +9,27 @@ import sys, os
 
 os.chdir("../")
 
-silenced = str(sys.argv[1])
+sigma_init = float(sys.argv[1])
 repeats = int(sys.argv[2])
 nlayers = int(sys.argv[3])
 upl = int(sys.argv[4])
 c_init_order = int(sys.argv[5])
 random_seed = int(sys.argv[6])
 
+silenced = False
+
 # Get V1 system
 sysname = "V1Circuit"
 behavior_type = 'ISN_coeff'
-param_dict = {
-    "behavior_type":behavior_type,
-    "silenced":silenced,
-}
+if silenced:
+    param_dict = {
+        "behavior_type":behavior_type,
+        "silenced":silenced,
+    }
+else:
+    param_dict = {
+        "behavior_type":behavior_type,
+    }
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
@@ -30,7 +37,8 @@ arch_params = {
                'D':system.D,
                'repeats':repeats,
                'nlayers':nlayers,
-               'upl':upl
+               'upl':upl,
+               'sigma_init':sigma_init*np.ones((system.D,))
               }
 
 param_dict.update(arch_params)

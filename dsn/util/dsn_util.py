@@ -123,8 +123,7 @@ def get_system_from_template(sysname, param_dict):
                silenced - in {'S', 'V'}
         """
         behavior_type = param_dict["behavior_type"]
-        silenced = param_dict['silenced']
-        assert(silenced in ['S', 'V'])
+
         if (behavior_type == 'ISN_coeff'):
             # Simulation parameters
             T = 100
@@ -163,11 +162,12 @@ def get_system_from_template(sysname, param_dict):
             # 1 condition == (len(c_vals)*len(s_vals)*len(r_vals))
             behavior = {'type':behavior_type, \
                         'mean':0.0, \
-                        'std':0.25, \
+                        'std':0.5, \
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
-                       'r_vals':r_vals, \
-                        'silenced':silenced}
+                       'r_vals':r_vals}
+            if ('silenced' in param_dict.keys()):
+                behavior.update({'silenced':param_dict['silenced']})
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
@@ -357,12 +357,10 @@ def get_arch_from_template(system, param_dict):
                upl - units per layer for real-nvp fs
         """
         behavior_type = param_dict["behavior_type"]
-        silenced = param_dict['silenced']
         D = param_dict['D']
         repeats = param_dict['repeats']
         nlayers = param_dict['nlayers']
         upl = param_dict['upl']
-        assert(silenced in ['S', 'V'])
         if (behavior_type == 'ISN_coeff'):
             # Fixed architecture template parameters
             flow_type = "RealNVP"
@@ -381,11 +379,9 @@ def get_arch_from_template(system, param_dict):
             sigma_init = npzfile['std']
             """
 
-            mu_init, sigma_init = get_gauss_init(system)
-            print('mu_init')
-            print(mu_init)
-            print('sigma_init')
-            print(sigma_init)
+            #mu_init, sigma_init = get_gauss_init(system)
+            mu_init = 10.0*np.ones((D,))
+            sigma_init = param_dict['sigma_init']
 
             arch_dict = {
                          "D": D,
@@ -501,31 +497,50 @@ def grid_search(system, n=10000):
     Sigma = np.cov(Z_thresh.T)
     return Z_thresh, mu, Sigma
 
+def abc_sample(system, n=10000, sigma=1.0, inds=None):
+    if inds is None:
+        inds = np.array(system.num_suff_stats*[True])
+    Z = tf.placeholder(tf.float64, (1,None,system.D))
+    T_x = system.compute_suff_stats(Z)
 
+    # get bounds
+    Z_a, Z_b = system.density_network_bounds
+    mu = np.expand_dims(np.expand_dims(system.mu, 0), 0)
+    _Z = np.zeros((1,n,system.D))
+    for i in range(system.D):
+        _Z[0,:,i] = np.random.uniform(Z_a[i], Z_b[i], (n,))
 
-def get_ME_model(system, arch_dict, c_init_ords, sigma_inits, random_seeds, dirstr, conv_dict):
-    num_sigmas = len(sigma_inits)
+    with tf.Session() as sess:
+        _T_x = sess.run(T_x, {Z:_Z})
+
+    u = np.sqrt(np.sum(np.square(_T_x[:,:,inds] - mu[:,:,inds]), axis=2))[0]
+    k_u = np.exp(-0.5*u**2 / (2.0*sigma**2)) / np.sqrt(2.0*np.pi)
+    K = 1.0 / (np.sqrt(2.0*np.pi) * sigma)
+    p = k_u / K
+    r = np.random.uniform(0,1,(n,))
+    accept = r < p
+
+    Z_abc = _Z[0,accept,:]
+    return Z_abc
+
+def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict):
     num_cs = c_init_ords.shape[0]
     num_rs = random_seeds.shape[0]
     
     model_dirs = []
     for i in range(num_cs):
         c_init_order = c_init_ords[i]
-        for j in range(num_sigmas):
-            sigma_init = sigma_inits[j]
-            for k in range(num_rs):
-                rs = random_seeds[k]
-                arch_dict.update({'sigma_init':sigma_init})
-                savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
-                model_dirs.append(savedir)
-                
+        for k in range(num_rs):
+            rs = random_seeds[k]
+            savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
+            model_dirs.append(savedir)
+    print(model_dirs)           
     first_its, ME_its, MEs = assess_constraints_mix(model_dirs, 
                                                     tol=conv_dict['tol'], 
                                                     tol_inds=conv_dict['tol_inds'],
                                                     alpha=conv_dict['alpha'], 
                                                     frac_samps=conv_dict['frac_samples']
                                                     )
-    print(first_its, ME_its, MEs)
     num_models = len(model_dirs)
     # Find the model that had maximum entropy while satisfying convergence criteria
     # iterate because of Nones
@@ -909,3 +924,58 @@ def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
         else:
             max_iters = 4*max_iters
     return converged
+
+def get_perturb_bounds(system, v, z0):
+    assert(system.has_support_map)
+    a, b = system.density_network_bounds
+    border_scales_a = (a - z0) / v
+    border_scales_b = (b - z0) / v
+        
+    all_scales = np.concatenate((border_scales_a, border_scales_b), axis=0)
+    neg_scales = all_scales[all_scales<0]
+    pos_scales = all_scales[all_scales>0]
+        
+    lim1 = np.max(neg_scales)
+    lim2 = np.min(pos_scales)
+
+    alpha = np.abs(min(np.abs(lim1), lim2))
+        
+    return -alpha, alpha
+
+def get_perturbs(system, V, z0, n):
+    num_vs = V.shape[1]
+    Z = tf.placeholder(tf.float64, (1, None, system.D))
+    print('creating graph')
+    T_x = system.compute_suff_stats(Z)
+    print('graph ready')
+    Z_perturbs = np.zeros((num_vs,n,system.D))
+    delta_perturbs = np.zeros((num_vs, n))
+    T_x_perturbs = np.zeros((num_vs,n,system.num_suff_stats))
+    with tf.Session() as sess:
+        for j in range(num_vs):
+            print('v', j+1)
+            v = V[:,j]
+
+            #lim1, lim2 = get_perturb_bounds(system, v, z0)
+            #delta = np.linspace(lim1, lim2+((lim2-lim1)/n), n)
+            delta = np.linspace(-1,1.00001, n)
+            for i in range(system.D):
+                Z_perturbs[j,:,i] = delta*v[i] + z0[0,0,i]
+            T_x_perturbs[j] = sess.run(T_x, {Z:np.expand_dims(Z_perturbs[j,:,:], 0)})
+            delta_perturbs[j] = delta
+            print('got perturb')
+
+    return T_x_perturbs, delta_perturbs, Z_perturbs
+
+
+def compute_r2(y, X, beta):
+    y_mean = np.mean(y)
+    TSS = np.sum(np.square(y - y_mean))
+    RSS = np.sum(np.square(y - np.dot(X, beta)))
+    return 1.0 - (RSS / TSS)
+
+def linregress(y, X):
+    X = np.concatenate((X, np.ones((X.shape[0],1))), axis=1)
+    beta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), y)
+    r2 = compute_r2(y, X, beta)
+    return beta, r2

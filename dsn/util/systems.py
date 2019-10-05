@@ -771,6 +771,10 @@ class STGCircuit(system):
         variance = self.behavior["variance"]
         first_moment = mean
         second_moment = mean ** 2 + variance
+        print('first_moment')
+        print(first_moment)
+        print('second_moment')
+        print(second_moment)
         if self.behavior["type"] == "freq":
             mu = np.concatenate((first_moment, second_moment), axis=0)
         else:
