@@ -855,7 +855,13 @@ class V1Circuit(system):
             self.has_support_map = True
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
         else:
-            self.density_network_init_mu = np.zeros((self.D,))
+            val = 20.0
+            a = -val * np.ones((self.D,))
+            b =  val * np.ones((self.D,))
+            self.density_network_bounds = [a, b]
+            self.has_support_map = True
+            self.density_network_init_mu = 0.0 * np.ones((self.D,))
+            #self.density_network_init_mu = np.zeros((self.D,))
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -998,35 +1004,11 @@ class V1Circuit(system):
             for i in range(len(label_inds)):
                 T_x_labels.append(all_T_x_labels[label_inds[i]])
         elif self.behavior["type"] == "difference":
-            num_c = len(self.behavior["c_vals"])
-            num_s = len(self.behavior["s_vals"])
-            num_r = len(self.behavior["r_vals"])
-            assert num_c == 1
-            assert num_r == 2
-            mean_T_x_labels = []
-            square_T_x_labels = []
-            """
-            for i in range(num_s):
-                s_i = self.behavior["s_vals"][i]
-                mean_T_x_labels += [
-                    r"$d_{E,ss}(s=%d)$" % int(s_i),
-                    r"$d_{P,ss}(s=%d)$" % int(s_i),
-                    r"$d_{S,ss}(s=%d)$" % int(s_i),
-                    r"$d_{V,ss}(s=%d)$" % int(s_i),
-                ]
-                square_T_x_labels += [
-                    r"$d_{E,ss}(s=%d)^2$" % int(s_i),
-                    r"$d_{P,ss}(s=%d)^2$" % int(s_i),
-                    r"$d_{S,ss}(s=%d)^2$" % int(s_i),
-                    r"$d_{V,ss}(s=%d)^2$" % int(s_i),
-                ]
-            T_x_labels = mean_T_x_labels + square_T_x_labels
-            """
+            alpha = self.behavior['alpha']
             T_x_labels = [
-                    r"$d_{E,ss}$",
-                    r"$(d_{E,ss}-\mu)^2$",
-                    r"$d_{%s,ss}$" % self.behavior['silenced']
-                    ]
+                          r"$d_{%s,ss}$" % alpha,
+                          r"$(d_{%s,ss}-\mu)^2$" % alpha
+                         ]
         else:
             raise NotImplementedError
         return T_x_labels
@@ -1476,27 +1458,21 @@ class V1Circuit(system):
             T_x = tf.concat((diff_ss, tf.square(diff_ss)), 2)
 
         elif self.behavior["type"] == "difference":
-            D = 4
             r_shape = tf.shape(r_t)
             M = r_shape[2]
-            if (self.behavior['silenced'] == 'S'):
-                sil_ind = 2
-            elif (self.behavior['silenced'] == 'V'):
-                sil_ind = 3
+            if (self.behavior['alpha'] == 'E'):
+                alpha_ind = 0
+            elif (self.behavior['alpha'] == 'P'):
+                alpha_ind = 1
+            elif (self.behavior['alpha'] == 'S'):
+                alpha_ind = 2
+            elif (self.behavior['alpha'] == 'V'):
+                alpha_ind = 3
 
-            r_ss = r_t[-1]  # C x M x 2 x 1
-            r_ss = tf.transpose(r_ss, [1, 2, 0, 3])  # M x D x C x 1
-            r_ss = tf.reshape(
-                r_ss, (M, self.D, self.C // 2, 2)
-            )  # stationary, locomotion in last dim
-            diff_ss = r_ss[:, :, :, 1] - r_ss[:, :, :, 0]  # M x D x C//2
-            diff_ss = tf.reshape(
-                tf.transpose(diff_ss, [0, 2, 1]), (M, self.D * (self.C // 2))
-            )  # (M, CD)
-            diff_ss_E = tf.expand_dims(tf.expand_dims(diff_ss[:,0], 0), 2)
-            diff_ss_sil = tf.expand_dims(tf.expand_dims(diff_ss[:,sil_ind], 0), 2)
+            r_ss = r_t[-1,:,:,:,0]  # C x M x D
+            diff_ss = tf.expand_dims(r_ss[1, :, alpha_ind] - r_ss[0, :, alpha_ind], 0)  # M x D
             mu_targ = self.mu[0]
-            T_x = tf.concat((diff_ss_E, tf.square(diff_ss_E - mu_targ), diff_ss_sil), 2)
+            T_x = tf.stack((diff_ss, tf.square(diff_ss - mu_targ)), 2)
 
         return T_x
 
@@ -1544,7 +1520,7 @@ class V1Circuit(system):
             mean = self.behavior['mean']
             std = self.behavior['std']
             variance = np.square(std)
-            mu = np.array([mean, variance, 0.0])
+            mu = np.array([mean, variance])
 
         return mu
 
@@ -1582,9 +1558,9 @@ class V1Circuit(system):
                     behavior_str += "_"
                 behavior_str += "%d" % s_vals[i]
             """
-            isn_str = self.behavior['ISN']
-            silenced = self.behavior['silenced']
-            behavior_str = 'diff_%sISN_%s=0_%.2E_%.2E' % (isn_str, silenced, self.mu[0], self.mu[1])
+            alpha_str = self.behavior['alpha']
+            ind = self.behavior['ind']
+            behavior_str = '%s_diff_%.2E_%.2E_ind%d' % (alpha_str, self.mu[0], self.mu[1], ind)
         return behavior_str
 
 

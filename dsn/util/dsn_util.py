@@ -172,17 +172,12 @@ def get_system_from_template(sysname, param_dict):
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
         elif (behavior_type == "difference"):
-            raise NotImplementedError()
-            """
-            isn_str = param_dict['ISN']
-            silenced = param_dict['silenced']
-            npzfile = np.load("data/V1/Zs_%s=0.npz" % silenced)
-            if (isn_str == 'pos'):
-                Z = npzfile['pos_ISN_Z']
-            elif (isn_str == 'neg'):
-                Z = npzfile['neg_ISN_Z']
-            else:
-                raise NotImplementedError()
+            alpha = param_dict['alpha']
+            ind = param_dict['ind']
+            npzfile = np.load("data/V1/V1_Zs.npz")
+            j = npzfile['inds'][ind]
+            Z = npzfile['Z'][j,:]
+            print('Z', Z)
 
             base_I = 1.0
             W_EE = 1.0
@@ -216,18 +211,17 @@ def get_system_from_template(sysname, param_dict):
             behavior = {'type':behavior_type, \
                         'mean': 0.1, \
                         'std':0.01, \
+                        'ind':ind, \
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                         'r_vals':r_vals, \
-                        'ISN':isn_str, \
-                        'silenced':silenced}
+                        'alpha':alpha}
             model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
             T = 100
             dt = 0.005
             init_conds = np.random.normal(1.0, 0.01, (4,1))
             print(behavior)
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
-            """
 
 
     elif (sysname == 'SCCircuit'):
@@ -363,38 +357,43 @@ def get_arch_from_template(system, param_dict):
         upl = param_dict['upl']
         if (behavior_type == 'ISN_coeff'):
             # Fixed architecture template parameters
-            flow_type = "RealNVP"
-            post_affine = True
-            K = 1
-            real_nvp_arch = {
-                             'num_masks':8,
-                             'nlayers':nlayers,
-                             'upl':upl,
-                            }
-            # Use informed initialization:
-            """
-            init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
-            npzfile = np.load(init_param_fn)
-            mu_init = npzfile['mean']
-            sigma_init = npzfile['std']
-            """
-
-            #mu_init, sigma_init = get_gauss_init(system)
+            num_masks = 8
             mu_init = 10.0*np.ones((D,))
-            sigma_init = param_dict['sigma_init']
+        elif (behavior_type == 'difference'):
+            num_masks = 4
+            mu_init = np.zeros((D,))
 
-            arch_dict = {
-                         "D": D,
-                         "flow_type": flow_type,
-                         "repeats": repeats,
-                         "post_affine": post_affine,
-                         "K": K,
-                         "real_nvp_arch":real_nvp_arch,
-                         "mo":0.99,
-                         "init_mo":1.0,
-                         "mu_init": mu_init,
-                         "sigma_init": sigma_init,
+        flow_type = "RealNVP"
+        post_affine = True
+        K = 1
+        real_nvp_arch = {
+                         'num_masks':num_masks,
+                         'nlayers':nlayers,
+                         'upl':upl,
                         }
+        # Use informed initialization:
+        """
+        init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
+        npzfile = np.load(init_param_fn)
+        mu_init = npzfile['mean']
+        sigma_init = npzfile['std']
+        """
+
+        #mu_init, sigma_init = get_gauss_init(system)
+        sigma_init = param_dict['sigma_init']
+
+        arch_dict = {
+                     "D": D,
+                     "flow_type": flow_type,
+                     "repeats": repeats,
+                     "post_affine": post_affine,
+                     "K": K,
+                     "real_nvp_arch":real_nvp_arch,
+                     "mo":0.99,
+                     "init_mo":1.0,
+                     "mu_init": mu_init,
+                     "sigma_init": sigma_init,
+                    }
 
     elif (sysname == "SCCircuit"):
         behavior_type = param_dict["behavior_type"]
@@ -461,6 +460,12 @@ def get_grid_search_bounds(system):
             r_alpha = system.mu[2]
             T_x_a = np.array([ISN_mean-2*ISN_std, np.NINF, np.NINF])
             T_x_b = np.array([ISN_mean+2*ISN_std, np.PINF, 1e-2])
+        elif (system.behavior['type'] == 'difference'):
+            mean = system.mu[0]
+            var = system.mu[1]
+            std = np.sqrt(var)
+            T_x_a = np.array([mean-2*std, np.NINF])
+            T_x_b = np.array([mean+2*std, np.PINF])
     
     elif (system.name == 'STGCircuit'):
         if (system.behavior['type'] == 'freq'):
