@@ -12,4 +12,4 @@ module load cudnn/7.0.5
 
 source activate dsn_gpu
 
-python3 train_V1_diff.py $1 $2 $3 $4 $5
+python3 train_V1_diff.py $1 $2 $3 $4

@@ -13,8 +13,7 @@ os.chdir("../")
 alpha_str = str(sys.argv[1])
 ind = int(sys.argv[2])
 c_init_order = int(sys.argv[3])
-sigma_init = float(sys.argv[4])
-random_seed = int(sys.argv[5])
+random_seed = int(sys.argv[4])
 
 nlayers = 2
 upl = 10
@@ -35,7 +34,6 @@ arch_params = {
                'repeats':repeats,
                'nlayers':nlayers,
                'upl':upl,
-               'sigma_init':sigma_init*np.ones((system.D,))
               }
 
 param_dict.update(arch_params)

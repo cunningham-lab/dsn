@@ -359,9 +359,15 @@ def get_arch_from_template(system, param_dict):
             # Fixed architecture template parameters
             num_masks = 8
             mu_init = 10.0*np.ones((D,))
+            sigma_init = param_dict['sigma_init']
         elif (behavior_type == 'difference'):
             num_masks = 4
-            mu_init = np.zeros((D,))
+            """
+            init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
+            npzfile = np.load(init_param_fn)
+            mu_init = npzfile['mean']
+            sigma_init = npzfile['std']
+            """
 
         flow_type = "RealNVP"
         post_affine = True
@@ -371,16 +377,9 @@ def get_arch_from_template(system, param_dict):
                          'nlayers':nlayers,
                          'upl':upl,
                         }
-        # Use informed initialization:
-        """
-        init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
-        npzfile = np.load(init_param_fn)
-        mu_init = npzfile['mean']
-        sigma_init = npzfile['std']
-        """
 
-        #mu_init, sigma_init = get_gauss_init(system)
-        sigma_init = param_dict['sigma_init']
+        mu_init, sigma_init = get_gauss_init(system)
+        sigma_init = 0.01*sigma_init
 
         arch_dict = {
                      "D": D,
