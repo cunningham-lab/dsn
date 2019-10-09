@@ -7,7 +7,7 @@ from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
 from tf_util.tf_util import get_archstring, get_initdir, check_init, load_dgm
 import scipy.linalg
-from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit
+from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit, LowRankRNN
 from dsn.util.plot_util import assess_constraints_mix
 
 from tf_util.families import family_from_str
@@ -261,6 +261,49 @@ def get_system_from_template(sysname, param_dict):
             system = SCCircuit(fixed_params, behavior, model_opts)
         else:
             raise NotImplementedError()
+    elif (sysname == 'LowRankRNN'):
+        rank = param_dict['rank']
+        input_type = param_dict['input_type']
+        behavior_type = param_dict["behavior_type"]
+        if (behavior_type == 'ND'):
+            fixed_params = {'MI':0.0, \
+                            'SmI':0.0, \
+                            'Sperp':0.0}
+            means = np.array([0.6])
+            variances = np.array([0.01])
+            behavior = {"type": behavior_type, "means": means, "variances": variances}
+            model_opts = {'rank':rank, 'input_type':input_type}
+
+            system = LowRankRNN(fixed_params, 
+                                behavior, 
+                                model_opts=model_opts, 
+                                solve_its=25, 
+                                solve_eps=0.8)
+
+        elif (behavior_type == 'BI'):
+            solve_its = param_dict['solve_its']
+            solve_eps = param_dict['solve_eps']
+            gauss_newton = param_dict['gauss_newton']
+            fixed_params = {'g':2.0,
+                            'Mm':0.0,
+                            'Mn':0.0,
+                            'Sm':1.0,
+                            'Sn':1.0,
+                            'SmI':0.0,
+                            'Sperp':0.0}
+            means = np.array([0.5, 0.1])
+            variances = np.array([0.1, 0.1])
+            behavior = {"type": behavior_type, "means": means, "variances": variances}
+            model_opts = {'rank':rank, 'input_type':input_type, 'gauss_newton':gauss_newton}
+
+            system = LowRankRNN(fixed_params, 
+                                behavior, 
+                                model_opts=model_opts, 
+                                solve_its=solve_its, 
+                                solve_eps=solve_eps)
+        else:
+            raise NotImplementedError()
+
     else:
         raise NotImplementedError()
 
@@ -388,7 +431,7 @@ def get_arch_from_template(system, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
-                     "mo":0.99,
+                     "mo":1.0,
                      "init_mo":1.0,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
