@@ -173,24 +173,22 @@ def get_system_from_template(sysname, param_dict):
 
         elif (behavior_type == "difference"):
             alpha = param_dict['alpha']
-            ind = param_dict['ind']
             npzfile = np.load("data/V1/V1_Zs.npz")
-            j = npzfile['inds'][ind]
-            Z = npzfile['Z'][j,:]
-            print('Z', Z)
+            Z = npzfile['Z_allen']
 
             base_I = 1.0
-            W_EE = 1.0
             tau = 0.02
-            fixed_params = {'W_EE':W_EE, \
-                            'W_XE':Z[0], \
-                            'W_EP':Z[1], \
-                            'W_PP':Z[2], \
-                            'W_VP':Z[3], \
-                            'W_ES':Z[4], \
-                            'W_PS':Z[5], \
-                            'W_VS':Z[6], \
-                            'W_SV':Z[7], \
+            fixed_params = {'W_EE':Z[0], \
+                            'W_PE':Z[1], \
+                            'W_SE':Z[2], \
+                            'W_VE':Z[3], \
+                            'W_EP':Z[4], \
+                            'W_PP':Z[5], \
+                            'W_VP':Z[6], \
+                            'W_ES':Z[7], \
+                            'W_PS':Z[8], \
+                            'W_VS':Z[9], \
+                            'W_SV':Z[10], \
                             'b_E':base_I, \
                             'b_P':base_I, \
                             'b_S':base_I, \
@@ -211,12 +209,11 @@ def get_system_from_template(sysname, param_dict):
             behavior = {'type':behavior_type, \
                         'mean': 0.1, \
                         'std':0.01, \
-                        'ind':ind, \
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                         'r_vals':r_vals, \
                         'alpha':alpha}
-            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE":False}
             T = 100
             dt = 0.005
             init_conds = np.random.normal(1.0, 0.01, (4,1))
@@ -411,6 +408,8 @@ def get_arch_from_template(system, param_dict):
             mu_init = npzfile['mean']
             sigma_init = npzfile['std']
             """
+            mu_init, sigma_init = get_gauss_init(system)
+            sigma_init = sigma_init
 
         flow_type = "RealNVP"
         post_affine = True
@@ -421,8 +420,6 @@ def get_arch_from_template(system, param_dict):
                          'upl':upl,
                         }
 
-        mu_init, sigma_init = get_gauss_init(system)
-        sigma_init = 0.01*sigma_init
 
         arch_dict = {
                      "D": D,
@@ -474,9 +471,9 @@ def get_arch_from_template(system, param_dict):
 def get_gauss_init(system):
     init_param_dir = 'data/%s/' % system.name
     init_param_fname = init_param_dir + '%s_init_param.npz' % system.behavior_str
-    if (not os.path.isfile(init_param_fname)):
+    if (True): #not os.path.isfile(init_param_fname)):
         print('Running grid search to determine DSN initialization.')
-        Z_thresh, mu_init, sigma_init = grid_search(system)
+        Z_thresh, mu_init, sigma_init = grid_search(system, n=100000)
         if (not os.path.exists(init_param_dir)):
             os.mkdir(init_param_dir)
         np.savez(init_param_fname, mu_init=mu_init, sigma_init=sigma_init)
@@ -499,9 +496,8 @@ def get_grid_search_bounds(system):
             ISN_mean = system.mu[0]
             ISN_var = system.mu[1]
             ISN_std = np.sqrt(ISN_var)
-            r_alpha = system.mu[2]
-            T_x_a = np.array([ISN_mean-2*ISN_std, np.NINF, np.NINF])
-            T_x_b = np.array([ISN_mean+2*ISN_std, np.PINF, 1e-2])
+            T_x_a = np.array([ISN_mean-2*ISN_std, np.NINF])
+            T_x_b = np.array([ISN_mean+2*ISN_std, np.PINF])
         elif (system.behavior['type'] == 'difference'):
             mean = system.mu[0]
             var = system.mu[1]

@@ -833,7 +833,7 @@ class V1Circuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r"},
+        model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r", "XE":True},
         T=100,
         dt=0.02,
         init_conds=np.random.normal(1.0, 0.01, (4,1)),
@@ -855,7 +855,7 @@ class V1Circuit(system):
             self.has_support_map = True
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
         else:
-            val = 20.0
+            val = 5.0
             a = -val * np.ones((self.D,))
             b =  val * np.ones((self.D,))
             self.density_network_bounds = [a, b]
@@ -867,7 +867,7 @@ class V1Circuit(system):
         """Returns ordered list of all system parameters and individual element labels.
 
          - $$W_{EE}$$ - strength of excitatory-to-excitatory projection
-         - $$W_{XE}$$ - strength of excitatory-to-VIP projection
+         - $$W_{XE}$$ - strength of excitatory-to-X projection
          - $$W_{EP}$$ - strength of parvalbumin-to-excitatory projection
          - $$W_{PP}$$ - strength of parvalbumin-to-parvalbumin projection 
          - $$W_{VP}$$ - strength of parvalbumin-to-VIP projection
@@ -901,62 +901,126 @@ class V1Circuit(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        all_params = [
-            "W_EE",
-            "W_XE",
-            "W_EP",
-            "W_PP",
-            "W_VP",
-            "W_ES",
-            "W_PS",
-            "W_VS",
-            "W_SV",
-            "b_E",
-            "b_P",
-            "b_S",
-            "b_V",
-            "h_FFE",
-            "h_FFP",
-            "h_LATE",
-            "h_LATP",
-            "h_LATS",
-            "h_LATV",
-            "h_RUNE",
-            "h_RUNP",
-            "h_RUNS",
-            "h_RUNV",
-            "tau",
-            "n",
-            "s_0",
-        ]
-        all_param_labels = {
-            "W_EE": [r"$W_{EE}$"],
-            "W_XE": [r"$W_{XE}$"],
-            "W_EP": [r"$W_{EP}$"],
-            "W_PP": [r"$W_{PP}$"],
-            "W_VP": [r"$W_{VP}$"],
-            "W_ES": [r"$W_{ES}$"],
-            "W_PS": [r"$W_{PS}$"],
-            "W_VS": [r"$W_{VS}$"],
-            "W_SV": [r"$W_{SV}$"],
-            "b_E": [r"$b_{E}$"],
-            "b_P": [r"$b_{P}$"],
-            "b_S": [r"$b_{S}$"],
-            "b_V": [r"$b_{V}$"],
-            "h_FFE": [r"$h_{FF,E}$"],
-            "h_FFP": [r"$h_{FF,P}$"],
-            "h_LATE": [r"$h_{LAT,E}$"],
-            "h_LATP": [r"$h_{LAT,P}$"],
-            "h_LATS": [r"$h_{LAT,S}$"],
-            "h_LATV": [r"$h_{LAT,V}$"],
-            "h_RUNE": [r"$h_{RUN,E}$"],
-            "h_RUNP": [r"$h_{RUN,P}$"],
-            "h_RUNS": [r"$h_{RUN,S}$"],
-            "h_RUNV": [r"$h_{RUN,V}$"],
-            "tau": [r"$\tau$"],
-            "n": [r"$n$"],
-            "s_0": [r"$s_0$"],
-        }
+        if (self.model_opts['XE']):
+            all_params = [
+                "W_EE",
+                "W_XE",
+                "W_EP",
+                "W_PP",
+                "W_VP",
+                "W_ES",
+                "W_PS",
+                "W_VS",
+                "W_SV",
+                "b_E",
+                "b_P",
+                "b_S",
+                "b_V",
+                "h_FFE",
+                "h_FFP",
+                "h_LATE",
+                "h_LATP",
+                "h_LATS",
+                "h_LATV",
+                "h_RUNE",
+                "h_RUNP",
+                "h_RUNS",
+                "h_RUNV",
+                "tau",
+                "n",
+                "s_0",
+            ]
+        else:
+            all_params = [
+                "W_EE",
+                "W_PE",
+                "W_SE",
+                "W_VE",
+                "W_EP",
+                "W_PP",
+                "W_VP",
+                "W_ES",
+                "W_PS",
+                "W_VS",
+                "W_SV",
+                "b_E",
+                "b_P",
+                "b_S",
+                "b_V",
+                "h_FFE",
+                "h_FFP",
+                "h_LATE",
+                "h_LATP",
+                "h_LATS",
+                "h_LATV",
+                "h_RUNE",
+                "h_RUNP",
+                "h_RUNS",
+                "h_RUNV",
+                "tau",
+                "n",
+                "s_0",
+            ]
+        if (self.model_opts['XE']):
+            all_param_labels = {
+                "W_EE": [r"$W_{EE}$"],
+                "W_XE": [r"$W_{XE}$"],
+                "W_EP": [r"$W_{EP}$"],
+                "W_PP": [r"$W_{PP}$"],
+                "W_VP": [r"$W_{VP}$"],
+                "W_ES": [r"$W_{ES}$"],
+                "W_PS": [r"$W_{PS}$"],
+                "W_VS": [r"$W_{VS}$"],
+                "W_SV": [r"$W_{SV}$"],
+                "b_E": [r"$b_{E}$"],
+                "b_P": [r"$b_{P}$"],
+                "b_S": [r"$b_{S}$"],
+                "b_V": [r"$b_{V}$"],
+                "h_FFE": [r"$h_{FF,E}$"],
+                "h_FFP": [r"$h_{FF,P}$"],
+                "h_LATE": [r"$h_{LAT,E}$"],
+                "h_LATP": [r"$h_{LAT,P}$"],
+                "h_LATS": [r"$h_{LAT,S}$"],
+                "h_LATV": [r"$h_{LAT,V}$"],
+                "h_RUNE": [r"$h_{RUN,E}$"],
+                "h_RUNP": [r"$h_{RUN,P}$"],
+                "h_RUNS": [r"$h_{RUN,S}$"],
+                "h_RUNV": [r"$h_{RUN,V}$"],
+                "tau": [r"$\tau$"],
+                "n": [r"$n$"],
+                "s_0": [r"$s_0$"],
+            }
+        else:
+            all_param_labels = {
+                "W_EE": [r"$W_{EE}$"],
+                "W_PE": [r"$W_{PE}$"],
+                "W_SE": [r"$W_{SE}$"],
+                "W_VE": [r"$W_{VE}$"],
+                "W_EP": [r"$W_{EP}$"],
+                "W_PP": [r"$W_{PP}$"],
+                "W_VP": [r"$W_{VP}$"],
+                "W_ES": [r"$W_{ES}$"],
+                "W_PS": [r"$W_{PS}$"],
+                "W_VS": [r"$W_{VS}$"],
+                "W_SV": [r"$W_{SV}$"],
+                "b_E": [r"$b_{E}$"],
+                "b_P": [r"$b_{P}$"],
+                "b_S": [r"$b_{S}$"],
+                "b_V": [r"$b_{V}$"],
+                "h_FFE": [r"$h_{FF,E}$"],
+                "h_FFP": [r"$h_{FF,P}$"],
+                "h_LATE": [r"$h_{LAT,E}$"],
+                "h_LATP": [r"$h_{LAT,P}$"],
+                "h_LATS": [r"$h_{LAT,S}$"],
+                "h_LATV": [r"$h_{LAT,V}$"],
+                "h_RUNE": [r"$h_{RUN,E}$"],
+                "h_RUNP": [r"$h_{RUN,P}$"],
+                "h_RUNS": [r"$h_{RUN,S}$"],
+                "h_RUNV": [r"$h_{RUN,V}$"],
+                "tau": [r"$\tau$"],
+                "n": [r"$n$"],
+                "s_0": [r"$s_0$"],
+            }
 
         if self.model_opts["g_FF"] == "saturate":
             all_params += ["a", "c_50"]
@@ -1045,6 +1109,12 @@ class V1Circuit(system):
                 W_EE = tf.tile(z[:, :, ind], [self.C, 1])
             elif free_param == "W_XE":
                 W_XE = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_PE":
+                W_PE = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_SE":
+                W_SE = tf.tile(z[:, :, ind], [self.C, 1])
+            elif free_param == "W_VE":
+                W_VE = tf.tile(z[:, :, ind], [self.C, 1])
 
             # W_XP column
             elif free_param == "W_EP":
@@ -1120,6 +1190,18 @@ class V1Circuit(system):
                 W_EE = self.fixed_params[fixed_param] * tf.ones((self.C, M), dtype=DTYPE)
             elif fixed_param == "W_XE":
                 W_XE = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_PE":
+                W_PE = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_SE":
+                W_SE = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
+            elif fixed_param == "W_VE":
+                W_VE = self.fixed_params[fixed_param] * tf.ones(
                     (self.C, M), dtype=DTYPE
                 )
             elif fixed_param == "W_EP":
@@ -1202,21 +1284,38 @@ class V1Circuit(system):
 
         # Gather weights into the dynamics matrix W [C,M,4,4]
         W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2)
-        W_PX = tf.stack(
-            [W_XE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
-        )
-        W_SX = tf.stack(
-            [
-                W_XE,
-                tf.zeros((self.C, M), dtype=DTYPE),
-                tf.zeros((self.C, M), dtype=DTYPE),
-                -W_SV,
-            ],
-            axis=2,
-        )
-        W_VX = tf.stack(
-            [W_XE, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
-        )
+        if (self.model_opts['XE']):
+            W_PX = tf.stack(
+                [W_XE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            )
+            W_SX = tf.stack(
+                [
+                    W_XE,
+                    tf.zeros((self.C, M), dtype=DTYPE),
+                    tf.zeros((self.C, M), dtype=DTYPE),
+                    -W_SV,
+                ],
+                axis=2,
+            )
+            W_VX = tf.stack(
+                [W_XE, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            )
+        else:
+            W_PX = tf.stack(
+                [W_PE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            )
+            W_SX = tf.stack(
+                [
+                    W_SE,
+                    tf.zeros((self.C, M), dtype=DTYPE),
+                    tf.zeros((self.C, M), dtype=DTYPE),
+                    -W_SV,
+                ],
+                axis=2,
+            )
+            W_VX = tf.stack(
+                [W_VE, -W_VP, -W_VS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+            )
         W = tf.stack([W_EX, W_PX, W_SX, W_VX], axis=2)
 
         # Gather inputs into b [K,M,4,1]
@@ -1559,8 +1658,7 @@ class V1Circuit(system):
                 behavior_str += "%d" % s_vals[i]
             """
             alpha_str = self.behavior['alpha']
-            ind = self.behavior['ind']
-            behavior_str = '%s_diff_%.2E_%.2E_ind%d' % (alpha_str, self.mu[0], self.mu[1], ind)
+            behavior_str = '%s_diff_%.2E_%.2E' % (alpha_str, self.mu[0], self.mu[1])
         return behavior_str
 
 
@@ -2387,8 +2485,8 @@ class LowRankRNN(system):
         self.name = "LowRankRNN"
         self.solve_its = solve_its
         self.solve_eps = solve_eps
-        self.a, self.b = self.get_a_b()
-        self.warm_start_grid_step = 0.5
+        #self.a, self.b = self.get_a_b()
+        #self.warm_start_grid_step = 0.5
         self.has_support_map = True
 
     def get_a_b(self,):
@@ -2448,7 +2546,7 @@ class LowRankRNN(system):
                 "Sm": [r"$\Sigma_m$"],
             }
         elif self.model_opts["rank"] == 1 and self.model_opts["input_type"] == "input":
-            all_params = ["g", "Mm", "Mn", "MI", "Sm", "Sn", "SmI", "Sperp"]
+            all_params = ["g", "Mm", "Mn", "MI", "Sm", "Sn", "SmI", "SnI", "Sperp"]
             all_param_labels = {
                 "g": [r"$g$"],
                 "Mm": [r"$M_m$"],
@@ -2457,6 +2555,7 @@ class LowRankRNN(system):
                 "Sm": [r"$\Sigma_m$"],
                 "Sn": [r"$\Sigma_n$"],
                 "SmI": [r"$\Sigma_{m,I}$"],
+                "SnI": [r"$\Sigma_{n,I}$"],
                 "Sperp": [r"$\Sigma_\perp$"],
             }
         elif (
@@ -2497,11 +2596,19 @@ class LowRankRNN(system):
                 r"$(\Delta_T)^2$",
             ]
         elif self.behavior["type"] == "ND":
+            # TODO needs a redesign (make SnI param and c_A, c_B diff)
             T_x_labels = [
                 r"$\kappa_{HI}  -\kappa_{LO}$",
                 # r"$\Delta_T$",
                 r"$(\kappa_{HI}  -\kappa_{LO})^2$",
                 # r"$\Delta_T^2$",
+            ]
+        elif self.behavior["type"] == "BI":
+            T_x_labels = [
+                r"$\mu$",
+                r"$\Delta_T$",
+                r"var $\mu$",
+                r"var $\Delta_T$",
             ]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
@@ -2580,6 +2687,8 @@ class LowRankRNN(system):
                     Sn = z[:, :, ind]
                 elif free_param == "SmI":
                     SmI = z[:, :, ind]
+                elif free_param == "SnI":
+                    SnI = z[:, :, ind]
                 elif free_param == "Sperp":
                     Sperp = z[:, :, ind]
                 else:
@@ -2603,6 +2712,8 @@ class LowRankRNN(system):
                     Sn = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "SmI":
                     SmI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
+                elif fixed_param == "SnI":
+                    SnI = self.fixed_params[fixed_param] * tf.ones((1, M), dtype=DTYPE)
                 elif fixed_param == "Sperp":
                     Sperp = self.fixed_params[fixed_param] * tf.ones(
                         (1, M), dtype=DTYPE
@@ -2611,7 +2722,7 @@ class LowRankRNN(system):
                     print("Error: unknown fixed parameter: %s." % fixed_param)
                     raise NotImplementedError
 
-            return g, Mm, Mn, MI, Sm, Sn, SmI, Sperp
+            return g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp
 
         elif (
             self.model_opts["rank"] == 2
@@ -2749,6 +2860,7 @@ class LowRankRNN(system):
                 raise NotImplementedError
 
         elif self.behavior["type"] == "ND":
+            # TODO needs a redesign (make SnI param and c_A, c_B diff)
             assert self.model_opts["input_type"] == "input"
             num_conds = 2
             c_LO = 0.25
@@ -2796,6 +2908,44 @@ class LowRankRNN(system):
             first_moments = tf.stack([kappa_HI - kappa_LO], axis=1)
             second_moments = tf.square(first_moments)
             T_x = tf.expand_dims(tf.concat((first_moments, second_moments), axis=1), 0)
+
+        elif self.behavior["type"] == "BI":
+            assert self.model_opts["input_type"] == "input"
+            g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp = self.filter_Z(z)
+
+            mu_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            kappa_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            delta_0_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            delta_inf_init = 4.0 * tf.ones((M,), dtype=DTYPE)
+
+            mu, kappa, delta_0, delta_inf, xs = rank1_input_chaotic_solve(
+                mu_init,
+                kappa_init,
+                delta_0_init,
+                delta_inf_init,
+                g[0, :],
+                Mm[0, :],
+                Mn[0, :],
+                MI[0, :],
+                Sm[0, :],
+                Sn[0, :],
+                SmI[0, :],
+                SnI[0,:],
+                Sperp[0, :],
+                self.solve_its,
+                self.solve_eps,
+                gauss_quad_pts=50,
+                db=True,
+            )
+
+            mu = tf.expand_dims(mu, 0)
+            delta_T = tf.expand_dims(delta_0 - delta_inf, 0)
+
+            mu_var = tf.square(mu - self.mu[0])
+            delta_T_var = tf.square(delta_T - self.mu[1])
+
+            T_x = tf.stack((mu, delta_T, mu_var, delta_T_var), axis=2)
+            return T_x, xs
 
         elif self.behavior["type"] == "CDD":
             num_conds = 2
@@ -2867,14 +3017,17 @@ class LowRankRNN(system):
 
         """
 
-        if self.behavior["type"] in ["struct_chaos", "ND", "CDD"]:
+        if self.behavior["type"] in ["struct_chaos", "ND", "BI", "CDD"]:
             means = self.behavior["means"]
             variances = self.behavior["variances"]
         else:
             raise NotImplementedError
-        first_moments = means
-        second_moments = np.square(means) + variances
-        mu = np.concatenate((first_moments, second_moments), axis=0)
+        if (self.behavior["type"] == "BI"):
+            mu = np.concatenate((means, variances), axis=0)
+        else:
+            first_moments = means
+            second_moments = np.square(means) + variances
+            mu = np.concatenate((first_moments, second_moments), axis=0)
         return mu
 
     def support_mapping(self, inputs):

@@ -11,9 +11,8 @@ import sys, os
 os.chdir("../")
 
 alpha_str = str(sys.argv[1])
-ind = int(sys.argv[2])
-c_init_order = int(sys.argv[3])
-random_seed = int(sys.argv[4])
+c_init_order = int(sys.argv[2])
+random_seed = int(sys.argv[3])
 
 nlayers = 2
 upl = 10
@@ -24,7 +23,6 @@ behavior_type = 'difference'
 param_dict = {
     "behavior_type":behavior_type,
     "alpha":alpha_str,
-    "ind":ind,
 }
 system = get_system_from_template(sysname, param_dict)
 
