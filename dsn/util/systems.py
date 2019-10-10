@@ -10,6 +10,7 @@ from dsn.util.tf_DMFT_solvers import (
     rank1_input_chaotic_solve,
     rank2_CDD_chaotic_solve,
     rank2_CDD_static_solve,
+    warm_start,
 )
 import os
 DTYPE = tf.float64
@@ -2485,8 +2486,9 @@ class LowRankRNN(system):
         self.name = "LowRankRNN"
         self.solve_its = solve_its
         self.solve_eps = solve_eps
-        #self.a, self.b = self.get_a_b()
-        #self.warm_start_grid_step = 0.5
+        self.a, self.b = self.get_a_b()
+        self.density_network_bounds = [self.a, self.b]
+        self.warm_start_grid_step = 0.5
         self.has_support_map = True
 
     def get_a_b(self,):
@@ -2509,6 +2511,30 @@ class LowRankRNN(system):
                       "betan":1.0, 
                       "gammaLO":ub, 
                       "gammaHI":ub}
+            for i in range(self.D):
+                a[i] = a_dict[self.free_params[i]]
+                b[i] = b_dict[self.free_params[i]]
+        elif (self.model_opts['rank'] == 1 and self.behavior['type'] == 'BI'):
+            lb = -5.0
+            ub = 5.0
+            a_dict = {"g":0.0, 
+                      "Mm":lb, 
+                      "Mn":lb, 
+                      "MI":lb, 
+                      "Sm":0.0, 
+                      "Sn":0.0, 
+                      "SmI":0.0,
+                      "SnI":0.0,
+                      "Sperp":0.0}
+            b_dict = {"g":ub, 
+                      "Mm":ub, 
+                      "Mn":ub, 
+                      "MI":ub, 
+                      "Sm":ub, 
+                      "Sn":ub, 
+                      "SmI":ub,
+                      "SnI":ub,
+                      "Sperp":ub}
             for i in range(self.D):
                 a[i] = a_dict[self.free_params[i]]
                 b[i] = b_dict[self.free_params[i]]
@@ -2913,10 +2939,15 @@ class LowRankRNN(system):
             assert self.model_opts["input_type"] == "input"
             g, Mm, Mn, MI, Sm, Sn, SmI, SnI, Sperp = self.filter_Z(z)
 
-            mu_init = 5.0 * tf.ones((M,), dtype=DTYPE)
+            """mu_init = 5.0 * tf.ones((M,), dtype=DTYPE)
             kappa_init = 5.0 * tf.ones((M,), dtype=DTYPE)
             delta_0_init = 5.0 * tf.ones((M,), dtype=DTYPE)
-            delta_inf_init = 4.0 * tf.ones((M,), dtype=DTYPE)
+            delta_inf_init = 4.0 * tf.ones((M,), dtype=DTYPE)"""
+            _, _, warm_start_inits, _ = self.get_warm_start_inits(z, beta=100.0)
+            mu_init = warm_start_inits[:,0]
+            kappa_init = warm_start_inits[:,1]
+            delta_0_init = warm_start_inits[:,2]
+            delta_inf_init = warm_start_inits[:,3]
 
             mu, kappa, delta_0, delta_inf, xs = rank1_input_chaotic_solve(
                 mu_init,
@@ -3041,7 +3072,7 @@ class LowRankRNN(system):
         """
         return SoftPlusFlow([], inputs)
 
-    def get_warm_start_inits(self, z):
+    def get_warm_start_inits(self, z, beta=100.0):
         """Calculates warm start initialization for parameter sample.
 
         # Arguments:
@@ -3050,22 +3081,25 @@ class LowRankRNN(system):
         # Returns
             inits (list): list of (M,) tf.tensor solver inits
         """
-
-        # TODO need to make this soft selection per input combination
-        ws_filename, _ = warm_start(system)
+        
+        ws_filename, _ = warm_start(self)
         ws_file = np.load(ws_filename)
         param_grid = ws_file['param_grid']
         solution_grid = ws_file['solution_grid']
 
         # take dot product and make approx one-hot
-        z_dot_pg = tf.matmul(z[0], param_grid)
-        alpha = 100
-        z_dot_pg_pow = tf.pow(z_dot_pg, alpha)
-        z_dot_pg_one_hot = z_dot_pg_pow / tf.expand_dims(tf.reduce_sum(z_dot_pg_pow, 1), 1)
-        warm_start_inits = tf.matmul(z_dot_pg_one_hot, solution_grid)
+        z = tf.transpose(z, [1,0,2])
+        param_grid = np.expand_dims(np.transpose(param_grid), 0)
+        diffs = tf.reduce_sum(tf.square(z - param_grid), axis=2)
+        print(diffs.shape)
+        sim_kernel = tf.exp(-beta*diffs)
+        one_hot = sim_kernel / tf.expand_dims(tf.reduce_sum(sim_kernel, 1), 1)
+        param_select = tf.matmul(one_hot, param_grid[0])
+        warm_start_inits = tf.matmul(one_hot, solution_grid)
 
         # soft-select the solution grid to be the initializations.
-        return warm_start_inits
+        return diffs, param_select, warm_start_inits, param_grid
+
 
 def system_from_str(system_str):
     if system_str in ["Linear2D"]:

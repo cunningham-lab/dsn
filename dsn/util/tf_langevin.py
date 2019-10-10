@@ -15,6 +15,7 @@
 # ==============================================================================
 import numpy as np
 import tensorflow as tf
+import time
 
 
 def langevin_dyn(f, x0, eps, num_its, db=False):
@@ -37,28 +38,31 @@ def bounded_langevin_dyn(f, x0, eps, num_its, non_neg, db=False):
 
         # Returns
             x_i (tf.tensor): (M,d) consistency equation solution
-        """
+    """
+    MAX_VAL = 150.0
     d = len(non_neg)
+    M = tf.shape(x0)[0]
+    clip_mins = np.zeros((d,))
+    clip_maxs = MAX_VAL*np.ones((d,))
+    for j in range(d):
+        if non_neg[j]:
+            clip_mins[j] = 0.0
+        else:
+            clip_mins[j] = -MAX_VAL
+
+    clip_min = tf.constant(np.expand_dims(clip_mins, 0))
+    clip_max = tf.constant(np.expand_dims(clip_maxs, 0))
+    clip_min = tf.tile(clip_min, [M,1])
+    clip_max = tf.tile(clip_max, [M,1])
+
     x_i = x0
     if db:
         xs = [x0]
     for i in range(num_its):
         f_x = f(x_i)
-        x_next = []
-        for j in range(d):
-            if (non_neg[j]):
-                x_next.append(
-                    tf.clip_by_value(
-                        (1.0 - eps) * x_i[:, j] + eps * f_x[:, j], 0.0, MAXVAL
-                    )
-                )
-            else:
-                x_next.append(
-                    tf.clip_by_value(
-                        (1.0 - eps) * x_i[:, j] + eps * f_x[:, j], -MAXVAL, MAXVAL
-                    )
-                )
-        x_i = tf.stack(x_next, axis=1)
+        x_i = tf.clip_by_value(
+                (1.0 - eps) * x_i + eps * f_x, clip_min, clip_max,
+               )
         if db:
             xs.append(x_i)
     
@@ -85,6 +89,7 @@ def bounded_langevin_dyn_np(f, x0, eps, num_its, non_neg, db=False):
     if db:
         xs = [x0]
     for i in range(num_its):
+        t1 = time.time()
         f_x = f(x_i)
         x_next = []
         for j in range(d):
@@ -101,6 +106,9 @@ def bounded_langevin_dyn_np(f, x0, eps, num_its, non_neg, db=False):
                     )
                 )
         x_i = np.stack(x_next, axis=1)
+        t2 = time.time()
+        if (np.mod(i, 100)==0):
+            print('i', i, '%.4f seconds' % (t2-t1))
         if db:
             xs.append(x_i)
     

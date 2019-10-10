@@ -281,15 +281,14 @@ def get_system_from_template(sysname, param_dict):
             solve_its = param_dict['solve_its']
             solve_eps = param_dict['solve_eps']
             gauss_newton = param_dict['gauss_newton']
-            fixed_params = {'g':2.0,
-                            'Mm':0.0,
-                            'Mn':0.0,
+            fixed_params = {'MI':0.5,
                             'Sm':1.0,
                             'Sn':1.0,
                             'SmI':0.0,
+                            'SnI':1.0,
                             'Sperp':0.0}
-            means = np.array([0.5, 0.1])
-            variances = np.array([0.1, 0.1])
+            means = np.array([0.5, 1.0])
+            variances = np.array([0.01, 0.01])
             behavior = {"type": behavior_type, "means": means, "variances": variances}
             model_opts = {'rank':rank, 'input_type':input_type, 'gauss_newton':gauss_newton}
 
@@ -465,6 +464,38 @@ def get_arch_from_template(system, param_dict):
                         } 
         else:
             raise NotImplementedError()
+    elif (sysname == "LowRankRNN"):
+        D = param_dict['D']
+        repeats = param_dict['repeats']
+        nlayers = param_dict['nlayers']
+        upl = param_dict['upl']
+
+        num_masks = 3
+        mu_init, sigma_init = get_gauss_init(system)
+        sigma_init = sigma_init
+
+        flow_type = "RealNVP"
+        post_affine = True
+        K = 1
+        real_nvp_arch = {
+                         'num_masks':num_masks,
+                         'nlayers':nlayers,
+                         'upl':upl,
+                        }
+
+
+        arch_dict = {
+                     "D": D,
+                     "flow_type": flow_type,
+                     "repeats": repeats,
+                     "post_affine": post_affine,
+                     "K": K,
+                     "real_nvp_arch":real_nvp_arch,
+                     "mo":1.0,
+                     "init_mo":1.0,
+                     "mu_init": mu_init,
+                     "sigma_init": sigma_init,
+                    }
 
     return arch_dict
 
@@ -514,11 +545,23 @@ def get_grid_search_bounds(system):
             T_x_a = np.concatenate((f_mean - 2*f_std, np.NINF*np.ones((5,))), axis=0)
             T_x_b = np.concatenate((f_mean + 2*f_std, np.PINF*np.ones((5,))), axis=0)
 
+    elif (system.name == "LowRankRNN"):
+        if (system.model_opts['rank'] == 1 and system.behavior['type'] == "BI"):
+            mu_mean = system.mu[0]
+            deltaT_mean = system.mu[1]
+            mu_var = system.mu[2]
+            deltaT_var = system.mu[3]
+            mu_std = np.sqrt(mu_var)
+            deltaT_std = np.sqrt(deltaT_var)
+
+            T_x_a = np.array([mu_mean-2*mu_std, deltaT_mean-2*deltaT_std, np.NINF, np.NINF])
+            T_x_b = np.array([mu_mean+2*mu_std, deltaT_mean+2*deltaT_std, np.PINF, np.PINF])
+
     return Z_a, Z_b, T_x_a, T_x_b
 
 def grid_search(system, n=10000):
     Z = tf.placeholder(tf.float64, (1,None,system.D))
-    T_x = system.compute_suff_stats(Z)
+    T_x, xs = system.compute_suff_stats(Z)
 
     # get bounds
     Z_a, Z_b, T_x_a, T_x_b = get_grid_search_bounds(system)
