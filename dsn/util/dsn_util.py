@@ -502,7 +502,7 @@ def get_arch_from_template(system, param_dict):
 def get_gauss_init(system):
     init_param_dir = 'data/%s/' % system.name
     init_param_fname = init_param_dir + '%s_init_param.npz' % system.behavior_str
-    if (True): #not os.path.isfile(init_param_fname)):
+    if (not os.path.isfile(init_param_fname)):
         print('Running grid search to determine DSN initialization.')
         Z_thresh, mu_init, sigma_init = grid_search(system, n=100000)
         if (not os.path.exists(init_param_dir)):
@@ -561,7 +561,7 @@ def get_grid_search_bounds(system):
 
 def grid_search(system, n=10000):
     Z = tf.placeholder(tf.float64, (1,None,system.D))
-    T_x, xs = system.compute_suff_stats(Z)
+    T_x = system.compute_suff_stats(Z)
 
     # get bounds
     Z_a, Z_b, T_x_a, T_x_b = get_grid_search_bounds(system)

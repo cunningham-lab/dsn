@@ -2976,7 +2976,7 @@ class LowRankRNN(system):
             delta_T_var = tf.square(delta_T - self.mu[1])
 
             T_x = tf.stack((mu, delta_T, mu_var, delta_T_var), axis=2)
-            return T_x, xs
+            return T_x
 
         elif self.behavior["type"] == "CDD":
             num_conds = 2
