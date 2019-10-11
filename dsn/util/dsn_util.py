@@ -173,6 +173,7 @@ def get_system_from_template(sysname, param_dict):
 
         elif (behavior_type == "difference"):
             alpha = param_dict['alpha']
+            inc_val = param_dict['inc_val']
             npzfile = np.load("data/V1/V1_Zs.npz")
             Z = npzfile['Z_allen']
 
@@ -207,7 +208,7 @@ def get_system_from_template(sysname, param_dict):
             r_vals=np.array([0.0, 1.0])
             C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
             behavior = {'type':behavior_type, \
-                        'mean': 0.1, \
+                        'mean': inc_val, \
                         'std':0.01, \
                         'c_vals':c_vals, \
                         's_vals':s_vals, \

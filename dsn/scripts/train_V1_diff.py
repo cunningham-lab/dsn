@@ -23,6 +23,7 @@ behavior_type = 'difference'
 param_dict = {
     "behavior_type":behavior_type,
     "alpha":alpha_str,
+    "inc_val":0.5,
 }
 system = get_system_from_template(sysname, param_dict)
 
