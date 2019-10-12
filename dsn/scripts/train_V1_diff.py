@@ -19,6 +19,7 @@ upl = 10
 repeats = 1
 # Get V1 system
 sysname = "V1Circuit"
+dirstr = "V1Circuit_test"
 behavior_type = 'difference'
 param_dict = {
     "behavior_type":behavior_type,
@@ -56,6 +57,6 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
-    dir_str="V1Circuit",
+    dir_str=dirstr,
     db=False
 )

@@ -104,7 +104,7 @@ def train_dsn(
             system, arch_dict, c_init_order, random_seed, dir_str
         )
     save_fname = savedir + 'opt_info.npz'
-    param_fname = savedir + 'params.npz'
+    param_fname = savedir + 'params'
     if not os.path.exists(savedir):
         print("Making directory %s ." % savedir)
         os.makedirs(savedir)
@@ -231,10 +231,11 @@ def train_dsn(
         grads_and_vars.append((cost_grads[i], all_params[i]))
 
     # Compute inverse of dgm if known
+    Z_input = tf.placeholder(tf.float64, (1,None,system.D))
     if (FIM and not mixture):
         if (arch_dict['flow_type'] == 'RealNVP'):
             print('computing inverse of realNVP')
-            Z_INV = Z
+            Z_INV = Z_input
             layer_ind = len(flow_layers) - 1
             while (layer_ind > -1):
                 layer = flow_layers[layer_ind]
@@ -250,6 +251,7 @@ def train_dsn(
     tf.add_to_collection("Z", Z)
     tf.add_to_collection("log_q_z", log_q_z)
     if (FIM and not mixture):
+        tf.add_to_collection("Z_input", Z_input)
         tf.add_to_collection("Z_INV", Z_INV)
     if (batch_norm):
         num_batch_norms = len(batch_norm_mus)
@@ -403,9 +405,11 @@ def train_dsn(
 
         if (MODEL_SAVE):
             print("Saving model at beginning.")
+            for ii in range(nparams):
+                final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
             saver.save(sess, savedir + "model", global_step=0)
             np.savez(
-                    param_fname,
+                    param_fname + '%d.npz' % 0,
                     theta=final_thetas,
                     batch_norm_mus=bn_mus,
                     batch_norm_sigmas=bn_sigmas,
@@ -482,10 +486,12 @@ def train_dsn(
                             bn_sigmas[check_it] = np.array(_batch_norm_sigmas)
 
                         if (MODEL_SAVE):
+                            for ii in range(nparams):
+                                final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
                             print("Saving model at iter %d." % (cur_ind+1))
                             saver.save(sess, savedir + "model", global_step=check_it)
                             np.savez(
-                                    param_fname,
+                                    param_fname + '%d.npz' % check_it,
                                     theta=final_thetas,
                                     batch_norm_mus=bn_mus,
                                     batch_norm_sigmas=bn_sigmas,
@@ -632,9 +638,11 @@ def train_dsn(
             # save the model
             print("saving to", savedir)
             if (MODEL_SAVE and not db):
+                for ii in range(nparams):
+                    final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
                 saver.save(sess, savedir + "model", global_step=(k+1))
                 np.savez(
-                        param_fname,
+                        param_fname  + '%d.npz' % (k+1),
                         theta=final_thetas,
                         batch_norm_mus=bn_mus,
                         batch_norm_sigmas=bn_sigmas,
@@ -684,13 +692,15 @@ def train_dsn(
 
         if (MODEL_SAVE):
             print("Saving model before exit")
+            for ii in range(nparams):
+                final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
             if db:
                 global_step = check_it
             else:
                 global_step = k+1
             saver.save(sess, savedir + "model", global_step=global_step)
             np.savez(
-                    param_fname,
+                    param_fname  + '%d.npz' % global_step,
                     theta=final_thetas,
                     batch_norm_mus=bn_mus,
                     batch_norm_sigmas=bn_sigmas,

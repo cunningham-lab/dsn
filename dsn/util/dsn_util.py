@@ -621,7 +621,6 @@ def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict
             rs = random_seeds[k]
             savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
             model_dirs.append(savedir)
-    print(model_dirs)           
     first_its, ME_its, MEs = assess_constraints_mix(model_dirs, 
                                                     tol=conv_dict['tol'], 
                                                     tol_inds=conv_dict['tol_inds'],
@@ -671,10 +670,10 @@ def load_DSNs(model_dirs, load_its):
         if i==0:
             load_time2 = time.time()
             print('Loaded DGM in %.2f seconds' % (load_time2-load_time1))
-        W, Z, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+        W, Z, Z_input, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
 
         num_batch_norms = len(batch_norm_mus)
-        param_fname = model_dir + 'params.npz' % load_it
+        param_fname = model_dir + 'params%d.npz' % load_it
         paramfile = np.load(param_fname)
         _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
         _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
@@ -685,7 +684,7 @@ def load_DSNs(model_dirs, load_its):
             feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
 
         sessions.append(sess)
-        tf_vars.append([W, Z, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
+        tf_vars.append([W, Z, Z_input, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                         batch_norm_layer_means, batch_norm_layer_vars])
         feed_dicts.append(feed_dict)
 
