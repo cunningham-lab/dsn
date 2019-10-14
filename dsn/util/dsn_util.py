@@ -168,7 +168,7 @@ def get_system_from_template(sysname, param_dict):
                        'r_vals':r_vals}
             if ('silenced' in param_dict.keys()):
                 behavior.update({'silenced':param_dict['silenced']})
-            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r"}
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE":True}
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
         elif (behavior_type == "difference"):
