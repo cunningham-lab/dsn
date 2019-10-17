@@ -393,6 +393,7 @@ def get_arch_from_template(system, param_dict):
         D = param_dict['D']
         repeats = param_dict['repeats']
         nlayers = param_dict['nlayers']
+        flow_type = "RealNVP"
         upl = param_dict['upl']
         if (behavior_type == 'ISN_coeff'):
             # Fixed architecture template parameters
@@ -616,6 +617,10 @@ def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict
             rs = random_seeds[k]
             savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
             model_dirs.append(savedir)
+    if ('tol' not in conv_dict.keys()):
+        conv_dict['tol'] = None
+    if ('tol_inds' not in conv_dict.keys()):
+        conv_dict['tol_inds'] = []
     first_its, ME_its, MEs = assess_constraints_mix(model_dirs, 
                                                     tol=conv_dict['tol'], 
                                                     tol_inds=conv_dict['tol_inds'],

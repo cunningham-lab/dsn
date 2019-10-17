@@ -34,7 +34,6 @@ def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
     ME_its = []
     MEs = []
     for i in range(n_fnames):
-        print(i, model_dirs[i])
         AL_conv_fname = model_dirs[i] + 'AL_conv.npz'
         if (os.path.isfile(AL_conv_fname)):
             AL_conv_file = np.load(AL_conv_fname)
@@ -139,19 +138,21 @@ def assess_constraints_mix(model_dirs, tol, tol_inds, alpha, frac_samps):
 
 def plot_opt(
     model_dirs,
-    legendstrs=[],
+    legendstrs=None,
     con_method="mix",
     frac_samps=0.2,
     maxconlim=3.0,
     alpha=0.05,
     plotR2=False,
-    fontsize=14,
+    fontsize=16,
     tol=0.1,
     tol_inds=[],
     T_x_labels=None,
 ):
     max_legendstrs = 10
     n_fnames = len(model_dirs)
+    if (legendstrs is None):
+        legendstrs = n_fnames*['']
     fnames = []
     for i in range(n_fnames):
         fnames.append(model_dirs[i] + 'opt_info.npz')
@@ -178,6 +179,7 @@ def plot_opt(
                 npzfile = np.load(fname)
             except:
                 n_fnames = n_fnames - 1
+                print('Could not read %s. Skipping.' % fname)
                 continue
         else:
             n_fnames = n_fnames - 1
@@ -212,10 +214,11 @@ def plot_opt(
     figs = []
 
     # plot cost, entropy and r^2
-    num_panels = 3 if plotR2 else 2
+    num_panels = 2 if plotR2 else 1
     figsize = (num_panels * 4, 4)
     fig, axs = plt.subplots(1, num_panels, figsize=figsize)
     figs.append(fig)
+    """
     ax = axs[0]
     for i in range(n_fnames):
         costs = costs_list[i]
@@ -225,8 +228,11 @@ def plot_opt(
     ax.set_ylabel("cost", fontsize=fontsize)
     ax.spines["right"].set_visible(False)
     ax.spines["top"].set_visible(False)
-
-    ax = axs[1]
+    """
+    if (plotR2):
+        ax = axs[0]
+    else:
+        ax = axs
     for i in range(n_fnames):
         Hs = Hs_list[i]
         epoch_inds = epoch_inds_list[i]
@@ -249,12 +255,12 @@ def plot_opt(
                 "k--",
             )
     ax.set_xlabel("iterations", fontsize=fontsize)
-    ax.set_ylabel("H", fontsize=fontsize)
+    ax.set_ylabel(r"$H(q_\theta(z))$", fontsize=fontsize)
     ax.spines["right"].set_visible(False)
     ax.spines["top"].set_visible(False)
 
     if plotR2:
-        ax = axs[2]
+        ax = axs[1]
         for i in range(n_fnames):
             last_ind = last_inds[i]
             R2s = R2s_list[i]
@@ -278,7 +284,8 @@ def plot_opt(
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
 
-    ax.legend(fontsize=fontsize)
+    if (not legendstrs[0] == ''):
+        ax.legend(fontsize=fontsize)
     plt.tight_layout()
     plt.show()
 
@@ -340,7 +347,6 @@ def plot_opt(
                         ME_it = epoch_inds[ME_its[j]]
                     else:
                         ME_it = iterations[ME_its[j]]
-                    print(line_min, line_max)
                     ax.plot([ME_it, ME_it], [line_min, line_max], "k--")
 
         ax.plot([iterations[0], iterations[max(last_inds)]], [mu[i], mu[i]], "k-")
@@ -353,11 +359,12 @@ def plot_opt(
         else:
             ax.set_ylim(max(ymin, mu[i] - maxconlim), min(ymax, mu[i] + maxconlim))
         if (T_x_labels is not None):
-            ax.set_ylabel(T_x_labels[i], fontsize=fontsize)
+            ax.set_ylabel(r'$E_{z\sim q_\theta}[$' + T_x_labels[i] + '$]$', fontsize=(fontsize+4))
         else:
             ax.set_ylabel(r"$E[T_%d(z)]$" % (i + 1), fontsize=fontsize)
         if i == (n_cols - 1):
-            ax.legend(fontsize=fontsize)
+            if (not legendstrs[0] == ''):
+                ax.legend(fontsize=fontsize)
         if i > n_suff_stats - n_cols - 1:
             ax.set_xlabel("iterations", fontsize=fontsize)
 
@@ -370,7 +377,6 @@ def plot_opt(
 
 
 def coloring_from_str(c_str, system, npzfile, AL_final_it):
-    print(c_str)
     cm = plt.cm.get_cmap("viridis")
     vmin = None
     vmax = None
@@ -476,8 +482,10 @@ def dist_from_str(dist_str, f_str, system, npzfile, AL_final_it):
 
 
 def filter_outliers(c, num_stds=4):
-    c_mean = np.mean(c)
-    c_std = np.std(c)
+    max_stat = 10e5
+    _c = c[np.logical_and(c < max_stat, c > -max_stat)]
+    c_mean = np.mean(_c)
+    c_std = np.std(_c)
     all_inds = np.arange(c.shape[0])
     below_inds = all_inds[c < c_mean - num_stds * c_std]
     over_inds = all_inds[c > c_mean + num_stds * c_std]
@@ -564,22 +572,27 @@ def dsn_pairplots(
     model_dirs,
     dist_str,
     system,
-    D,
+    AL_final_its,
+    D = None,
     f_str="identity",
-    c_str=None,
+    c_str='log_q_z',
     legendstrs=[],
-    AL_final_its=[],
     xlims=None,
     ylims=None,
     ticks=None,
     fontsize=14,
-    tri=True,
     ellipses=False,
+    tri=True,
     outlier_stds=2,
     pfnames=None,
     figsize=(10,10),
 ):
     n_fnames = len(model_dirs)
+    if D is None:
+        if (dist_str == 'Zs'):
+            D = system.D
+        elif (dist_str == 'T_xs'):
+            D = system.num_suff_stats
 
     # make sure D is greater than 1
     #if D < 2:
@@ -642,6 +655,7 @@ def dsn_pairplots(
                     else:
                         ax = axs[i, j - 1]
                     if j > i:
+                        """
                         ax.scatter(
                             dist[below_inds, j],
                             dist[below_inds, i],
@@ -656,6 +670,7 @@ def dsn_pairplots(
                             edgecolors="k",
                             linewidths=0.25,
                         )
+                        """
                         h = ax.scatter(
                             dist[plot_inds, j],
                             dist[plot_inds, i],
@@ -778,7 +793,6 @@ def pairplot(
         c = c[rand_order]
         plot_inds, below_inds, over_inds = filter_outliers(c, outlier_stds)
 
-    size = 40 
     fig, axs = plt.subplots(num_dims - 1, num_dims - 1, figsize=figsize)
     for i in range(num_dims - 1):
         dim_i = dims[i]
@@ -804,7 +818,6 @@ def pairplot(
                         c="w",
                         edgecolors="k",
                         linewidths=0.25,
-                        s=size,
                     )
                     ax.scatter(
                         Z[over_inds, dim_j],
@@ -812,7 +825,6 @@ def pairplot(
                         c="k",
                         edgecolors="k",
                         linewidths=0.25,
-                        s=size,
                     )
                     h = ax.scatter(
                         Z[plot_inds, dim_j],
@@ -821,7 +833,6 @@ def pairplot(
                         cmap=cmap,
                         edgecolors="k",
                         linewidths=0.25,
-                        s=size,
                     )
                 else:
                     h = ax.scatter(
@@ -855,6 +866,153 @@ def pairplot(
     #plt.savefig(pfname)
     plt.show()
     return fig
+
+def contour_pairplot(
+    Z,
+    c,
+    dims,
+    labels,
+    origin=False,
+    xlims=None,
+    ylims=None,
+    ticks=None,
+    c_label=None,
+    cmap=None,
+    fontsize=12,
+    figsize=(12, 12),
+    N=20,
+    alpha=1.0,
+    levels=None,
+    pfname="images/temp.png",
+    fig=None,
+    axs=None,
+):
+    num_dims = len(dims)
+    rand_order = np.random.permutation(Z.shape[0])
+    Z = Z[rand_order, :]
+
+    if (fig is None) or (axs is None):
+        fig, axs = plt.subplots(num_dims - 1, num_dims - 1, figsize=figsize)
+    for i in range(num_dims - 1):
+        dim_i = dims[i]
+        for j in range(1, num_dims):
+            if (num_dims == 2):
+                ax = plt.gca()
+            else:
+                ax = axs[i, j - 1]
+            if j > i:
+                dim_j = dims[j]
+                if (xlims is not None) and (ylims is not None) and origin:
+                    ax.plot(xlims, [0, 0], c=0.5 * np.ones(3), linestyle="--")
+                    ax.plot([0, 0], ylims, c=0.5 * np.ones(3), linestyle="--")
+                h = ax.tricontourf(Z[:, dim_j], Z[:, dim_i], c, N, 
+                                   alpha=alpha, cmap=cmap, levels=levels)
+                if i + 1 == j:
+                    ax.set_xlabel(labels[j], fontsize=fontsize)
+                    ax.set_ylabel(labels[i], fontsize=fontsize)
+                else:
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
+
+                if ticks is not None:
+                    ax.set_xticks(ticks)
+                    ax.set_yticks(ticks)
+
+                if xlims is not None:
+                    ax.set_xlim(xlims)
+                if ylims is not None:
+                    ax.set_ylim(ylims)
+            else:
+                ax.axis("off")
+
+    if c is not None:
+        fig.subplots_adjust(right=0.90)
+        cbar_ax = fig.add_axes([0.92, 0.15, 0.04, 0.7])
+        clb = fig.colorbar(h, cax=cbar_ax)
+        a = (1.01 / (num_dims - 1)) / (0.9 / (num_dims - 1))
+        b = (num_dims - 1) * 1.15
+        plt.text(a, b, c_label, {"fontsize": fontsize}, transform=ax.transAxes)
+    #plt.savefig(pfname)
+    return fig, axs
+
+def imshow_pairplot(
+    c,
+    dims,
+    labels,
+    lb,
+    ub,
+    a,
+    b,
+    ticks=None,
+    c_label=None,
+    cmap=None,
+    fontsize=12,
+    figsize=(12, 12),
+    alpha=1.0,
+    levels=None,
+    pfname="images/temp.png",
+    fig=None,
+    axs=None,
+    vmin_fac=0.0,
+    ):
+
+    def marginalize_mesh(c,ax1,ax2):
+        D = len(c.shape)
+        for i in range(D-1,-1, -1):
+            if (not (i==ax1 or i==ax2)):
+                c = np.mean(c, i)
+        return c
+
+    num_dims = len(dims)
+    K = c.shape[0]
+
+    if (fig is None) or (axs is None):
+        fig, axs = plt.subplots(num_dims - 1, num_dims - 1, figsize=figsize)
+    
+    for i in range(num_dims - 1):
+        dim_i = dims[i]
+        pix_i = int(K*(ub[i]-lb[i])/(b[i]-a[i]))
+        I_start_i = int(pix_i*((a[i]-lb[i]) / (ub[i]-lb[i])))
+        for j in range(1, num_dims):
+            pix_j = int(K*(ub[j]-lb[j])/(b[j]-a[j]))
+            I_start_j = int(pix_j*((a[j]-lb[j]) / (ub[j]-lb[j])))
+            if (num_dims == 2):
+                ax = plt.gca()
+            else:
+                ax = axs[i, j - 1]
+            if j > i:
+                dim_j = dims[j]
+                c_ij = marginalize_mesh(c,i,j)
+                min_c = np.min(c_ij)
+                max_c = np.max(c_ij)
+                vmin = vmin_fac*max_c + (1-vmin_fac)*min_c
+                I = vmin*np.ones((pix_i, pix_j))
+                I[I_start_i:(I_start_i+K),I_start_j:(I_start_j+K)] = c_ij
+                extent = [lb[i], ub[i], lb[j], ub[j]]
+                ax.imshow(I, extent=extent, cmap=cmap, alpha=alpha,
+                          origin='lower', vmin=vmin)
+                if i + 1 == j:
+                    ax.set_xlabel(labels[j], fontsize=fontsize)
+                    ax.set_ylabel(labels[i], fontsize=fontsize)
+                else:
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
+
+                if ticks is not None:
+                    ax.set_xticks(ticks)
+                    ax.set_yticks(ticks)
+            else:
+                ax.axis("off")
+    """
+    if c is not None:
+        fig.subplots_adjust(right=0.90)
+        cbar_ax = fig.add_axes([0.92, 0.15, 0.04, 0.7])
+        clb = fig.colorbar(h, cax=cbar_ax)
+        a = (1.01 / (num_dims - 1)) / (0.9 / (num_dims - 1))
+        b = (num_dims - 1) * 1.15
+        plt.text(a, b, c_label, {"fontsize": fontsize}, transform=ax.transAxes)
+    #plt.savefig(pfname)"""
+    return fig, axs
 
 
 def dsn_tSNE(
@@ -1015,6 +1173,68 @@ def get_default_axlims(sysname):
         ylims = [-5, 5]
 
     return xlims, ylims
+
+def plot_V1_vec(v, label, save_fname=None):
+    black = 'k'
+    blue = np.array([71, 105, 160]) / 255.0
+    red = np.array([175, 58, 49]) / 255.0
+    green = np.array([39, 124, 49]) / 255.0
+
+    c = [['k', blue, red, green], \
+             ['k', blue, red, green], \
+             ['k', blue, red, green], \
+             ['k', blue, red, green]]
+    space = 0.01
+
+    plt.figure()
+    x = space*np.arange(0, 4)
+    y = space*np.arange(3, -1, -1)
+    X, Y = np.meshgrid(x, y)
+    red = [0.8, 0, 0]
+    blue = [0, 0, 0.8]
+    green = [0.0, 0.8, 0.0]
+    s = np.array([0.0,  v[1], v[4], 0.0, \
+                  v[0], v[2], v[5], 0.0, \
+                  v[0],  0.0,  0.0, v[7], \
+                  v[0], v[3], v[6], 0.0])
+    vinds = [None, 1, 4, None, \
+             0, 2, 5, None, \
+             0, None, None, 7, \
+             0, 3, 6, None]
+    for ii in range(4):
+        for jj in range(4):
+            ind = 4*ii + jj
+            if (vinds[ind] is not None and v[vinds[ind]] < 0.0):
+                marker = '_'
+            else:
+                marker = '+'
+
+            plt.scatter(X[ii,jj], Y[ii,jj], marker=marker, 
+                        c=c[ii][jj], s=2500.0*abs(s[ind]), 
+                        linewidth=5.0)
+    lw = 8
+    plt.plot([-space/2, -space/2], [-space/2, np.max(x)+space/2], 'k-', lw=lw)
+    plt.plot([-space/2, -space/8], [-space/2, -space/2], 'k-', lw=lw)
+    plt.plot([-space/2, -space/8], [np.max(x)+space/2, np.max(x)+space/2], 'k-', lw=lw)
+    plt.plot([np.max(y) + space/2, np.max(y)+space/2], [-space/2, np.max(x)+space/2], 'k-', lw=lw)
+    plt.plot([np.max(y) + space/2, np.max(y) + space/8], [-space/2, -space/2], 'k-', lw=lw)
+    plt.plot([np.max(y) + space/2, np.max(y) + space/8], [np.max(x)+space/2, np.max(x)+space/2], 'k-', lw=lw)
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlim([-space/2, np.max(y) + space/2])
+    ax.set_ylim([-space/2, np.max(y) + space/2])
+    ax.set_title(label, fontsize=30)
+
+    if (save_fname is not None):
+        plt.savefig(save_fname, transparent=True)
+
+    plt.show()
+    return None
 
 
 def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=None):
