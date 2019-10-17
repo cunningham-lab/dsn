@@ -218,7 +218,6 @@ def get_system_from_template(sysname, param_dict):
             T = 100
             dt = 0.005
             init_conds = np.random.normal(1.0, 0.01, (4,1))
-            print(behavior)
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
 
@@ -410,8 +409,6 @@ def get_arch_from_template(system, param_dict):
             """
             mu_init, sigma_init = get_gauss_init(system)
             sigma_init = sigma_init
-
-        flow_type = "RealNVP"
         post_affine = True
         K = 1
         real_nvp_arch = {
@@ -428,7 +425,7 @@ def get_arch_from_template(system, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
-                     "mo":1.0,
+                     "mo":0.99,
                      "init_mo":1.0,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
@@ -577,9 +574,7 @@ def grid_search(system, n=10000):
         inds_j = np.logical_and(T_x_a[j] <= _T_x[0,:,j], _T_x[0,:,j] <= T_x_b[j])
         inds.append(inds_j)
     thresh_inds = np.prod(np.array(inds), axis=0) == 1
-    print("num thresh", np.sum(thresh_inds))
     Z_thresh = _Z[0,thresh_inds,:]
-    print(Z_thresh.shape)
     mu = np.mean(Z_thresh, axis=0)
     Sigma = np.cov(Z_thresh.T)
     return Z_thresh, mu, Sigma
