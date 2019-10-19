@@ -220,6 +220,51 @@ def get_system_from_template(sysname, param_dict):
             init_conds = np.random.normal(1.0, 0.01, (4,1))
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
+        elif (behavior_type == "rates"):
+            fac = param_dict["fac"]
+            s = param_dict["s"]
+            npzfile = np.load("data/V1/V1_Zs.npz")
+            Z = npzfile['Z_allen']
+
+            tau = 0.02
+            fixed_params = {'W_EE':Z[0], \
+                            'W_PE':Z[1], \
+                            'W_SE':Z[2], \
+                            'W_VE':Z[3], \
+                            'W_EP':Z[4], \
+                            'W_PP':Z[5], \
+                            'W_VP':Z[6], \
+                            'W_ES':Z[7], \
+                            'W_PS':Z[8], \
+                            'W_VS':Z[9], \
+                            'W_SV':Z[10], \
+                            'h_RUNE':0.0, \
+                            'h_RUNP':0.0, \
+                            'h_RUNS':0.0, \
+                            'h_RUNV':0.0, \
+                            'h_FFE':0.0, \
+                            'h_FFP':0.0, \
+                            'h_LATE':0.0, \
+                            'h_LATP':0.0, \
+                            'h_LATS':0.0, \
+                            'h_LATV':0.0, \
+                            's_0':30, \
+                            'tau':tau}
+            c_vals=np.array([1.0])
+            s_vals=np.array([s])
+            r_vals=np.array([0.0])
+            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
+            behavior = {'type':behavior_type, \
+                        'c_vals':c_vals, \
+                        's_vals':s_vals, \
+                        'r_vals':r_vals, \
+                        'fac':fac}
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE":False}
+            T = 100
+            dt = 0.005
+            init_conds = np.random.normal(1.0, 0.01, (4,1))
+            system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
+
 
     elif (sysname == 'SCCircuit'):
         behavior_type = param_dict["behavior_type"]
