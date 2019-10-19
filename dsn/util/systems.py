@@ -772,10 +772,6 @@ class STGCircuit(system):
         variance = self.behavior["variance"]
         first_moment = mean
         second_moment = mean ** 2 + variance
-        print('first_moment')
-        print(first_moment)
-        print('second_moment')
-        print(second_moment)
         if self.behavior["type"] == "freq":
             mu = np.concatenate((first_moment, second_moment), axis=0)
         else:
@@ -855,6 +851,19 @@ class V1Circuit(system):
             self.density_network_bounds = [a, b]
             self.has_support_map = True
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
+        elif (behavior['type'] == 'rates'):
+            val = 5.0
+            pfac = 2 
+            a = np.array([0.0, 0.0, 0.0, 0.0, 0.5])
+            b = np.array([1.5, 1.5, 3.0, 4.0, 3.0])
+            #a = np.array([0.0, -pfac*val, -2.0, 0.0])
+            #b = np.array([5.0, val, 2.0, val])
+            # s = 10
+            #a = np.array([0.0, 0.0, 0.0, 0.0])
+            #b = np.array([1.5, 1.5, 3.0, 4.0])
+            self.density_network_bounds = [a, b]
+            self.has_support_map = True
+            self.density_network_init_mu = 0.0 * np.ones((self.D,))
         else:
             val = 5.0
             a = -val * np.ones((self.D,))
@@ -1042,7 +1051,6 @@ class V1Circuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        print(self.behavior["type"])
         if (self.behavior["type"] == "ISN_coeff"):
             T_x_labels = ["ISN", "(ISN-E[ISN])^2"]
             if ('silenced' in self.behavior.keys()):
@@ -1073,6 +1081,17 @@ class V1Circuit(system):
             T_x_labels = [
                           r"$d_{%s,ss}$" % alpha,
                           r"$(d_{%s,ss}-\mu)^2$" % alpha
+                         ]
+        elif self.behavior["type"] == "rates":
+            T_x_labels = [
+                          r"$r_{E,ss}$",
+                          r"$r_{P,ss}$",
+                          r"$r_{S,ss}$",
+                          r"$r_{V,ss}$",
+                          r"$(r_{E,ss}-\mu)^2$",
+                          r"$(r_{P,ss}-\mu)^2$",
+                          r"$(r_{S,ss}-\mu)^2$",
+                          r"$(r_{V,ss}-\mu)^2$",
                          ]
         else:
             raise NotImplementedError
@@ -1507,7 +1526,7 @@ class V1Circuit(system):
 
         """
 
-        if self.behavior["type"] in ["data", "difference", "ISN_coeff"]:
+        if self.behavior["type"] in ["rates", "difference", "ISN_coeff"]:
             T_x = self.simulation_suff_stats(z)
         else:
             raise NotImplementedError
@@ -1574,6 +1593,12 @@ class V1Circuit(system):
             mu_targ = self.mu[0]
             T_x = tf.stack((diff_ss, tf.square(diff_ss - mu_targ)), 2)
 
+        elif self.behavior["type"] == "rates":
+            r_ss = r_t[-1,0,:,:,0]  # M x D
+            mu_targ = np.expand_dims(self.mu[:4], 0)
+            r_ss_var = tf.square(r_ss - mu_targ)
+            T_x = tf.expand_dims(tf.concat((r_ss, r_ss_var), axis=1), 0)
+
         return T_x
 
     def compute_mu(self,):
@@ -1597,30 +1622,34 @@ class V1Circuit(system):
             first_moments = means
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
-        elif self.behavior["type"] == "difference":
-            assert approx_equal(self.behavior["r_vals"], np.array([0.0, 1.0]), 1e-16)
-            # fac = self.behavior['fac']
-            """
-            datadir = "data/V1/"
-            fname = datadir + "ProcessedData.mat"
-            M = sio.loadmat(fname)
-            s_data = M["ProcessedData"]["StimulusSize_deg"][0, 0][0]
-            DifferenceLS = M["ProcessedData"]["DifferenceLS"][0, 0]
-            SEMDifferenceLS = M["ProcessedData"]["SEMDifferenceLS"][0, 0]
-            s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
+        elif self.behavior["type"] in ["difference", "rates"] :
+            fac = self.behavior['fac']
+            if (self.behavior["type"] == "rates"):
+                assert approx_equal(self.behavior["r_vals"], np.array([0.0]), 1e-16)
+                datadir = "data/V1/"
+                fname = datadir + "ProcessedData.mat"
+                M = sio.loadmat(fname)
+                s_data = M["ProcessedData"]["StimulusSize_deg"][0, 0][0]
+                MeanResponse = M["ProcessedData"]["MeanResponse"][0, 0][:,:,0]
+                SEMMeanResponse = M["ProcessedData"]["SEMMeanResponse"][0, 0][:,:,0]
+                s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
 
-            cell_ord = [3, 2, 0, 1]
-            DifferenceLS = DifferenceLS[cell_ord, s_inds].T  # C x D
-            SEMDifferenceLS = SEMDifferenceLS[cell_ord, s_inds].T  # C x D
+                cell_ord = [3, 2, 0, 1]
+                MeanResponse = MeanResponse[cell_ord, s_inds].T  # C x D
+                SEMMeanResponse = SEMMeanResponse[cell_ord, s_inds].T  # C x D
 
-            D = 4
-            means = np.reshape(DifferenceLS, ((self.C // 2) * D))
-            stds = np.reshape(SEMDifferenceLS, ((self.C // 2) * D))
-            """
-            mean = self.behavior['mean']
-            std = self.behavior['std']
-            variance = np.square(std)
-            mu = np.array([mean, variance])
+                D = 4
+                means = fac*np.reshape(MeanResponse, (self.C*D))
+                stds = fac*np.reshape(MeanResponse, (self.C*D))
+                variances = np.square(stds)
+                mu = np.concatenate((means, stds), axis=0)
+            else:
+                assert approx_equal(self.behavior["r_vals"], np.array([0.0, 1.0]), 1e-16)
+                mean = self.behavior['mean']
+                std = self.behavior['std']
+                variance = np.square(std)
+                mu = np.array([mean, variance])
+            print('mu', mu.shape, mu)
 
         return mu
 
@@ -1660,6 +1689,8 @@ class V1Circuit(system):
             """
             alpha_str = self.behavior['alpha']
             behavior_str = '%s_diff_%.2E_%.2E' % (alpha_str, self.mu[0], self.mu[1])
+        else:
+            behavior_str = super().get_behavior_str()
         return behavior_str
 
 
