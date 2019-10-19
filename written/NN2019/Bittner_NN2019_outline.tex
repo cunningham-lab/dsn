@@ -1,0 +1,156 @@
+% You should title the file with a .tex extension (hw1.tex, for example)
+\documentclass[11pt]{article}
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{fancyhdr}
+\usepackage{tikz-qtree}
+\usepackage{tikz-qtree-compat}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usepackage{graphicx}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+
+\oddsidemargin0cm
+\topmargin-2cm     %I recommend adding these three lines to increase the 
+\textwidth16.5cm   %amount of usable space on the page (and save trees)
+\textheight23.5cm  
+
+\newcommand{\question}[2] {\vspace{.25in} \hrule\vspace{0.5em}
+\noindent{\bf #1: #2} \vspace{0.5em}
+\hrule \vspace{.10in}}
+\renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
+\linespread{1.5}
+
+\newcommand{\myname}{Anonymous Authors}
+\newcommand{\myhwnum}{12}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+ 
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+
+\pagestyle{fancyplain}
+
+\begin{document}
+
+\medskip                        % Skip a "medium" amount of space
+                                % (latex determines what medium is)
+                                % Also try: \bigskip, \littleskip
+
+\thispagestyle{plain}
+{\Large Statistical inference in theoretical models of cognition} \\
+Sean, Agostina, Alex, Chunyu, Francesca, Srdjan, Carlos, Ken, and John
+\section{Abstract}
+Theoretical neuroscientists often design circuit models of neural activity with the hopes of producing some emergent property observed in data.  However, the standard inference toolkit is designed to condition on data points collected in an experiment with a phenomenological observational model, rather than the abstract notion of an emergent property in a biologically realistic model.  We introduce a novel machine learning methodology called degenerate solution networks (DSNs), which learn a distribution of neural circuit model parameterizations that produces the emergent property of interest, and is otherwise as random as possible.  We use DSNs to advance theoretical understanding of the stomatogastric ganglion (STG), primary visual cortex (V1), superior colliculus (SC), and low rank recurrent neural networks (RNNs).  As models continue to increase in complexity and become less tractable in terms of conventional analytic and theoretical approaches, DSNs will be a useful tool for theorists to interrogate their models
+
+\section{Introduction}
+\textbf{Introduce theoretical neuroscience, the gold standard}
+\begin{itemize}
+\item Theoretical modeling is/has been rising in neuroscience \cite{abbott2008theoretical}. 
+\item Define theory of neural computation   
+\item Explain idealized practice of theory -- analytic derivation.
+\item Provide historical examples of the idealized approach: \cite{hopfield1984neurons}, \cite{sompolinsky1988chaos}, and  \cite{tsodyks1997paradoxical}.  
+\item \textit{Transition}: Unfortunately, as biological realism is introduced into neural circuit models, theory through analytic derivation becomes infeasible.
+\end{itemize}
+
+\textbf{The central challenge of theoretical neuroscience}
+\begin{itemize}
+\item In fact, neural circuit models are designed in the context of misaligned, competing incentives.  
+\begin{itemize}
+\item Simplicity (e.g. symmetry, gaussianity), help for analytic derivations.  
+\item Complexity gives biological realism at the cost analytic tractability.  
+\end{itemize}
+\item When biological realism matters and analysis becomes intractable, standard practice is to examine simulated activity \cite{gutierrez2013multiple} (cite a bunch here).  
+\item \textit{Transition} Visualizations and regression are used to provide insights on how parameters govern system activity, however theorists strive for a more formalized understanding of these complex systems.
+\end{itemize}
+
+\textbf{Careful inference vs careful models}
+\begin{itemize}
+\item Bayesian inference is a candidate for formalizing this mapping using probability.
+\item Introduce modern inference engine.  It's use in neuroscience.
+\item Such careful inference and practical modeling is juxtaposed with the standard practices of the theoretical neuroscience where... 
+\item Can we start doing \textit{careful} inference in \textit{careful} models?
+\end{itemize}
+
+\textbf{Introduce approach/method and summarize contribution}
+\begin{itemize}
+\item Here, we use the state-of-the-art Bayesian inference engines, to learn formal proababilistic relationships between carefully modeled neural circuit parameters and their emergent properties.
+\item We present a novel machine learning method, DSNs, which ...
+\item  In this study, we use DSNs to provide novel theoretical insights using biological models of list of biological models along with emergent properties studied.
+\end{itemize}
+
+\textbf{Figure 1}
+We should have a figure to accompany the introduction section.  People seem to like the practice in neural data analysis vs theoretical neuroscience comparison.  Maybe put that in Figure 1 along with icons for the four modelsand emergent properties we'll be analyzing?
+
+\section{Results}
+\subsection{Degenerate solution networks}
+\begin{itemize}
+\item To translate progress in neural data analysis to theoretical neuro, need to key steps.
+\begin{itemize}
+\item 1. Need to learn parameter distributions of biologically realistic (not just phenom.) models.
+\item 2. Must be able to condition on emergent properties of interest, not simply computationally convenient sufficient statistics of data sets.
+\end{itemize}
+\item Bayesian data scientists will say experimental data is all that matters.  
+\item \textit{Transition}: This is untrue when working in a creative, exploratory modeling setting.
+\end{itemize}
+
+\textbf{Edgy contrarian point about theorists and data}
+\begin{itemize}
+\item Common misconception: theoreticians rarely attempt to directly reproduce experimental data. 
+\item Instead, they work with (abstracted?) mathematical definitions of emergent properties.  
+\end{itemize}
+
+\textbf{DSNs}
+\begin{itemize}
+\item We introduce DSNs, which bridge methodology in these subfields of comp neuro.
+\item  Combine ideas from MEFNs (cite Gabe) and LFVI (cite Dustin) to learn a deep probability distribution of theoretical model parameterizations $z$ that produce the emergent properties of interest $T(x)$ (see Appendix).  
+\item Explain deep probability distributions.
+\item DSNs are deep probability distributions of theoretical model parameters, which are optimized to be maximally random (maximum entropy) while producing the specified value of emergent properties:
+\begin{equation}
+\begin{split}
+q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
+ &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
+ \end{split}
+\end{equation}
+\end{itemize}
+
+\textbf{Worked example: STG}
+\begin{itemize}
+\item For example, consider the STG.
+\item Explain this STG circuit, emergent property of interest.
+\item  For our choices of STG as model and network syncing as emergent property, we use a DSN to learn a distribution on STG conductance parameters that produces network syncing.  
+\item Emphasize utility of DSN using Hessian.
+\item An equivalent conceptualization is that DSNs do Bayesian inference (see Appendix).
+\item Punchline about DSNs and transition to V1.
+\end{itemize}
+
+\subsection{Exploratory analysis of a theoretical model}
+Will focus on this once result finalized.  Have a lot of text to pull from.
+
+\subsection{Identifying sufficient mechanisms of task learning}
+Will focus on this once V1 and LRRNN finalized.  Have a lot of text to pull from.
+
+\subsection{Conditioning on computation with interpretable models of RNNs}
+Will focus on this once result finalized.  Have a lot of text to pull from.
+
+\section{Discussion}
+\begin{itemize}
+\item Summarize the key methodlogical demonstrations from the results section.
+\item Talk big picture: If we know we can't analytically derive these things, we need an alternative characterization.  Simulate and examine isn't cutting it.  We need to be leveraging the modern inference engine to gain this understanding.  Bayesian probability is the framework we should use for this formalism.
+\item Expand on idea of posterior predictive checks / hypothesis testing / exploratory analyses of models themselves.  Give the whole, we don't even understand the models we're developing pitch.
+\item Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
+\item Summarize the respective strengths SNPE and DSN.
+\item Link conditioning on task execution with work done today with RNNs.  Basically, we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations.
+\item A paragraph on bridging large scale recordings with theory.
+\end{itemize}
+
+\bibliography{dsn}
+\bibliographystyle{unsrt}
+
+\end{document}
+
+
