@@ -162,7 +162,7 @@ def get_system_from_template(sysname, param_dict):
             # 1 condition == (len(c_vals)*len(s_vals)*len(r_vals))
             behavior = {'type':behavior_type, \
                         'mean':0.0, \
-                        'std':0.5, \
+                        'std':0.25, \
                         'c_vals':c_vals, \
                         's_vals':s_vals, \
                        'r_vals':r_vals}
