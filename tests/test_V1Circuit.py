@@ -183,6 +183,8 @@ def test_V1Circuit():
     assert(approx_equal(_T_x, np.expand_dims(T_x_true, 0), 1e-6))
 
     # Check that mu matches data
+    # Local test. Cant put this data on github.
+    """
     s_list = [5, [5], [10], np.array([60])]
     fac_list = [1.0, 0.5, 100.0]
     num_s = len(s_list)
@@ -201,7 +203,7 @@ def test_V1Circuit():
             system = get_system_from_template(sysname, param_dict)
             assert(len(system.T_x_labels) == system.num_suff_stats)
             assert(system.mu.shape[0] == system.num_suff_stats)
-            approx_equal(mu_true, system.mu, EPS)
+            approx_equal(mu_true, system.mu, EPS)"""
 
 
 
