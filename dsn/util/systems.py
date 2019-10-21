@@ -832,7 +832,7 @@ class V1Circuit(system):
         behavior,
         model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r", "XE":True},
         T=100,
-        dt=0.02,
+        dt=0.005,
         init_conds=np.random.normal(1.0, 0.01, (4,1)),
     ):
         self.model_opts = model_opts
@@ -853,9 +853,11 @@ class V1Circuit(system):
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
         elif (behavior['type'] == 'rates'):
             val = 5.0
-            pfac = 2 
-            a = np.array([0.0, 0.0, 0.0, 0.0, 0.5])
-            b = np.array([1.5, 1.5, 3.0, 4.0, 3.0])
+            a = np.array([-val, -val, -val, -val, 0])
+            b = np.array([val, val, val, val, 3.0])
+            #pfac = 2 
+            #a = np.array([0.0, 0.0, 0.0, 0.0, 0.5])
+            #b = np.array([1.5, 1.5, 3.0, 4.0, 3.0])
             #a = np.array([0.0, -pfac*val, -2.0, 0.0])
             #b = np.array([5.0, val, 2.0, val])
             # s = 10
@@ -1623,8 +1625,8 @@ class V1Circuit(system):
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
         elif self.behavior["type"] in ["difference", "rates"] :
-            fac = self.behavior['fac']
             if (self.behavior["type"] == "rates"):
+                fac = self.behavior['fac']
                 assert approx_equal(self.behavior["r_vals"], np.array([0.0]), 1e-16)
                 datadir = "data/V1/"
                 fname = datadir + "ProcessedData.mat"
@@ -1635,12 +1637,12 @@ class V1Circuit(system):
                 s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
 
                 cell_ord = [3, 2, 0, 1]
-                MeanResponse = MeanResponse[cell_ord, s_inds].T  # C x D
-                SEMMeanResponse = SEMMeanResponse[cell_ord, s_inds].T  # C x D
+                MeanResponse = MeanResponse[cell_ord][:, s_inds].T  # C x D
+                SEMMeanResponse = SEMMeanResponse[cell_ord][:, s_inds].T  # C x D
 
                 D = 4
                 means = fac*np.reshape(MeanResponse, (self.C*D))
-                stds = fac*np.reshape(MeanResponse, (self.C*D))
+                stds = fac*np.reshape(SEMMeanResponse, (self.C*D))
                 variances = np.square(stds)
                 mu = np.concatenate((means, stds), axis=0)
             else:
@@ -1649,7 +1651,6 @@ class V1Circuit(system):
                 std = self.behavior['std']
                 variance = np.square(std)
                 mu = np.array([mean, variance])
-            print('mu', mu.shape, mu)
 
         return mu
 
@@ -3122,7 +3123,6 @@ class LowRankRNN(system):
         z = tf.transpose(z, [1,0,2])
         param_grid = np.expand_dims(np.transpose(param_grid), 0)
         diffs = tf.reduce_sum(tf.square(z - param_grid), axis=2)
-        print(diffs.shape)
         sim_kernel = tf.exp(-beta*diffs)
         one_hot = sim_kernel / tf.expand_dims(tf.reduce_sum(sim_kernel, 1), 1)
         param_select = tf.matmul(one_hot, param_grid[0])
