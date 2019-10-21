@@ -137,7 +137,6 @@ def train_dsn(
     tf.set_random_seed(random_seed)
 
     # Load nf initialization
-    W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
 
 
     # Construct density network parameters.
@@ -147,6 +146,7 @@ def train_dsn(
         support_mapping = None
 
     if (mixture):
+        W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
         np.random.seed(random_seed)
         G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
         #Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, Mu, Sigma, C = mixture_density_network(
@@ -154,6 +154,8 @@ def train_dsn(
             G, W, arch_dict, support_mapping, initdirs=initdirs
         )
     else: # mixture
+        W = tf.placeholder(tf.float64, shape=(1, None, system.D), name="W")
+        np.random.seed(random_seed)
         Z, sum_log_det_jacobian, flow_layers = density_network(
             W, arch_dict, support_mapping, initdir=initdirs[0]
         )
