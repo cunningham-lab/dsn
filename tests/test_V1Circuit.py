@@ -119,7 +119,7 @@ def read_W(source):
 
 
 def test_V1Circuit():
-    os.chdir('../dsn/')
+    os.chdir('dsn/')
     np.random.seed(0)
     M = 100
     sysname = 'V1Circuit'
@@ -196,7 +196,6 @@ def test_V1Circuit():
             means_true = fac*means
             stds_true = fac*stds
             vars_true = np.square(stds_true)
-            print(means_true.shape, vars_true.shape)
             mu_true = np.concatenate((means_true, vars_true), axis=0)
             param_dict = {'behavior_type':behavior_type,'fac':fac,'s':s}
             system = get_system_from_template(sysname, param_dict)
