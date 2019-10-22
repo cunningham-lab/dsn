@@ -423,6 +423,7 @@ def train_dsn(
 
         total_its = 1
         for k in range(AL_it_max):
+            print(k, 'check it', check_it)
             print("AL iteration %d" % (k + 1))
             cs.append(_c)
             lambdas.append(_lambda)
@@ -445,7 +446,8 @@ def train_dsn(
                     feed_dict.update({G: g_i})
 
                 # Log diagnostics for W draw before gradient step
-                if np.mod(cur_ind + 1, check_rate) == 0:
+                if np.mod(cur_ind, check_rate) == 0:
+                    print('mode check rate', 'cur_ind', cur_ind, 'check_it', check_it)
                     args = [cost, H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
                     if (batch_norm):
                         args.append(batch_norm_layer_means)
@@ -456,13 +458,17 @@ def train_dsn(
                         _batch_norm_layer_vars = _args[8]
 
                     print(42 * "*")
-                    print("it = %d " % (cur_ind + 1))
+                    print("it = %d " % (cur_ind))
                     if (mixture):
                         _alpha = sess.run(alpha)
                         print('alpha', _alpha)
                     cost_i = _args[0]
                     _H = _args[1]
                     print("H", _H)
+                    print("cost", cost_i)
+                    print('baseH', _args[2])
+                    print('sum_log_det_Hs', _args[3])
+                    print('mean Tx',  np.mean(_args[4][0], 0))
                     sys.stdout.flush()
                     
                     Hs[check_it] = _H
@@ -471,6 +477,7 @@ def train_dsn(
                     mean_T_xs[check_it] = np.mean(_args[4][0], 0)
 
                     if (db):
+                        raise NotImplementedError()
                         if (mixture):
                             #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
                             _alpha, _C = sess.run([alpha, C], {G:g_i})
@@ -490,7 +497,7 @@ def train_dsn(
                         if (MODEL_SAVE):
                             for ii in range(nparams):
                                 final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
-                            print("Saving model at iter %d." % (cur_ind+1))
+                            print("Saving model at iter %d." % (cur_ind))
                             saver.save(sess, savedir + "model", global_step=check_it)
                             np.savez(
                                     param_fname + '%d.npz' % check_it,
@@ -548,7 +555,7 @@ def train_dsn(
 
                     print(42 * "*")
 
-                if np.mod(cur_ind, check_rate) == 0:
+                if np.mod(cur_ind-1, check_rate) == 0:
                     start_time = time.time()
 
                 if (TB_SAVE and np.mod(cur_ind, TB_SAVE_EVERY) == 0):
@@ -578,7 +585,7 @@ def train_dsn(
                         _batch_norm_layer_means = _args[2]
                         _batch_norm_layer_vars = _args[3]
 
-                if np.mod(cur_ind + 1, check_rate) == 0:
+                if np.mod(cur_ind, check_rate) == 0:
                     print('cost', cost_i)
                     costs[check_it] = cost_i
                     check_it += 1
