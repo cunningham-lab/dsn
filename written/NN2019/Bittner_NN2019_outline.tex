@@ -11,6 +11,7 @@
 \usepackage[normalem]{ulem}
 \usepackage{tikz}
 \usepackage{graphicx}
+\usepackage{lineno}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator*{\argmax}{argmax}
 
@@ -36,55 +37,27 @@
 \pagestyle{fancyplain}
 
 \begin{document}
-
 \medskip                        % Skip a "medium" amount of space
                                 % (latex determines what medium is)
                                 % Also try: \bigskip, \littleskip
 
 \thispagestyle{plain}
-{\Large Statistical inference in theoretical models of cognition} \\
-Sean, Agostina, Alex, Chunyu, Francesca, Srdjan, Carlos, Ken, and John
+{\Large Theories of neural computation are enhanced by the modern inference engine.} \\
+Sean R. Bittner, Agostina Palmigiano, Alex T. Piet, Chunyu A. Duan, Francesca Mastrogiuseppe, Srdjan Ostojic, Carlos D. Brody, Kenneth D. Miller, and John P. Cunningham.
+
+\linenumbers
 \section{Abstract}
-Theoretical neuroscientists often design circuit models of neural activity with the hopes of producing some emergent property observed in data.  However, the standard inference toolkit is designed to condition on data points collected in an experiment with a phenomenological observational model, rather than the abstract notion of an emergent property in a biologically realistic model.  We introduce a novel machine learning methodology called degenerate solution networks (DSNs), which learn a distribution of neural circuit model parameterizations that produces the emergent property of interest, and is otherwise as random as possible.  We use DSNs to advance theoretical understanding of the stomatogastric ganglion (STG), primary visual cortex (V1), superior colliculus (SC), and low rank recurrent neural networks (RNNs).  As models continue to increase in complexity and become less tractable in terms of conventional analytic and theoretical approaches, DSNs will be a useful tool for theorists to interrogate their models
+To understand brain function, theoretical neuroscientists design mathematical models of neural activity, which capture the signature features of computation.  Historically, the gold standard of theoretical neuroscience has been to analytically derive the relationship between model parameters and emergent properties of computation. However, this becomes infeasible as biologically realistic constraints are included in the neural system model.  Therefore, research on such realistic models focuses on the examination of simulated activity.  To attain a more formalized and interpretable understanding of realistic neuroscientific models, we propose the widespread adoption of the modern inference engine - technological advancements from probabilistic machine learning - to learn distributions of parameters that map to the emergent properties of computation.  We demonstrate that the modern inference engine can usher in a new era of theoretical neuroscience by producing novel insights into network syncing in the stomatogastric ganglion, neuron-type input-responsivity in primary visual cortex, rapid task switching in superior colliculus, and approximate Bayesian inference in recurrent neural networks. \\
+(150 word limit) \\
 
 \section{Introduction}
-\textbf{Introduce theoretical neuroscience, the gold standard}
-\begin{itemize}
-\item Theoretical modeling is/has been rising in neuroscience \cite{abbott2008theoretical}. 
-\item Define theory of neural computation   
-\item Explain idealized practice of theory -- analytic derivation.
-\item Provide historical examples of the idealized approach: \cite{hopfield1984neurons}, \cite{sompolinsky1988chaos}, and  \cite{tsodyks1997paradoxical}.  
-\item \textit{Transition}: Unfortunately, as biological realism is introduced into neural circuit models, theory through analytic derivation becomes infeasible.
-\end{itemize}
+Mathematical modeling has become a key part of modern neuroscience \cite{abbott2008theoretical}. A theory of neural computation describes a neural system with a set of equations (i.e. a model) motivated by the laws of nature and neurophysiological observations.  The key challenge for theorists is the description of how the model parameters govern the computational function of the neural system, which is characterized by mathematically defined features or ``emergent properties" of computation.  In idealized practice, theorists analytically derive how model parameters govern these emergent properties.  Historical examples of this gold standard of theory include derivations of memory capacity in associative neural networks  \cite{hopfield1984neurons}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in E/I networks \cite{tsodyks1997paradoxical}.  Unfortunately, as biological realism is introduced into neural circuit models, theory through analytic derivation becomes infeasible. \\
 
-\textbf{The central challenge of theoretical neuroscience}
-\begin{itemize}
-\item In fact, neural circuit models are designed in the context of misaligned, competing incentives.  
-\begin{itemize}
-\item Simplicity (e.g. symmetry, gaussianity), help for analytic derivations.  
-\item Complexity gives biological realism at the cost analytic tractability.  
-\end{itemize}
-\item When biological realism matters and analysis becomes intractable, standard practice is to examine simulated activity \cite{gutierrez2013multiple} (cite a bunch here).  
-\item \textit{Transition} Visualizations and regression are used to provide insights on how parameters govern system activity, however theorists strive for a more formalized understanding of these complex systems.
-\end{itemize}
+In fact, neural circuit models are designed in the context of misaligned incentives.  Models are kept simplistic with unrealistic assumptions (e.g. symmetry, gaussianity) to facilitate analytic derivations.  On the other hand, complexity is introduced for biological relevance. In models, simplicity sacrifices biological realism for derivations, and complexity sacrifices derivations for biological realism. When biological realism is the focus of a study, standard practice is to examine simulated activity from the model \cite{gutierrez2013multiple} (cite a bunch here).  Visualization or regression is used to understand the model, however theorists strive for a more formalized understanding of these complex models. \\
 
-\textbf{Careful inference vs careful models}
-\begin{itemize}
-\item Bayesian inference is a candidate for formalizing this mapping using probability.
-\item Introduce modern inference engine.  It's use in neuroscience.
-\item Such careful inference and practical modeling is juxtaposed with the standard practices of the theoretical neuroscience where... 
-\item Can we start doing \textit{careful} inference in \textit{careful} models?
-\end{itemize}
+Classically, statistical inference is a formalized way of describing the probabilistic relationship between observed data and model parameters.  However, statistical inference is impracticable in neural system models, because the likelihood functions are generally intractable.  Research in neural data analysis, which has enhanced our knowledge of a[kass], b[brown], c[paninski], d[jpcunni], e[pillow], focuses on the development of statistically inferable models for neural data sets, where such likelihood functions are tractable. Likelihood function intractability thus creates a gap between the models analyzed by theoreticians (motivated by laws of nature and physiology) and the probabilistic models developed by neural data scientists (constrained by tractability of inference) (Figure 1?).   Theoretical neuroscientists are careful about model creation, where neural data analysts are practical.  Neural data analysts are careful about inference of model parameters, where theoretical neuroscientists are practical.  This motivates the question: can we start doing \emph{careful} inference in \emph{careful} models? \\
 
-\textbf{Introduce approach/method and summarize contribution}
-\begin{itemize}
-\item Here, we use the state-of-the-art Bayesian inference engines, to learn formal proababilistic relationships between carefully modeled neural circuit parameters and their emergent properties.
-\item We present a novel machine learning method, DSNs, which ...
-\item  In this study, we use DSNs to provide novel theoretical insights using biological models of list of biological models along with emergent properties studied.
-\end{itemize}
-
-\textbf{Figure 1}
-We should have a figure to accompany the introduction section.  People seem to like the practice in neural data analysis vs theoretical neuroscience comparison.  Maybe put that in Figure 1 along with icons for the four modelsand emergent properties we'll be analyzing?
+Advancements in probabilistic machine learning have led to transformative changes in industrial applications like image processing (sparse cite), speech recognition (sparse cite), text classification (sparse cite), and more.  We call the generalizable components of this groundbreaking technology (deep learning, stochastic gradient descent, GPU parallelization, etc.) the ``modern inference engine." (Point to work from Cunningham/Paninski using modern inference engine for neuroscientific phenomenological models (PfLDS, BehaveNET)?) In this study, we use the modern inference engine to bypass the perceived intractability of statistical inference in realistic models of neural systems.  (Introduce SDNs?)  We demonstrate the widespread applicability of this approach by producing novel insights into network syncing in the stomatogastric ganglion (STG), neuron-type input-responsivity in primary visual cortex (V1), rapid task switching in superior colliculus (SC), and approximate Bayesian inference in recurrent neural networks (RNNs). \\
 
 \section{Results}
 \subsection{Degenerate solution networks}
