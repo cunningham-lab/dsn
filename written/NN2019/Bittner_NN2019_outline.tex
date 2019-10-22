@@ -42,7 +42,7 @@
                                 % Also try: \bigskip, \littleskip
 
 \thispagestyle{plain}
-{\Large Theories of neural computation are enhanced by the modern inference engine.} \\
+{\Large Interrogating theoretical models of computation with deep learning} \\
 Sean R. Bittner, Agostina Palmigiano, Alex T. Piet, Chunyu A. Duan, Francesca Mastrogiuseppe, Srdjan Ostojic, Carlos D. Brody, Kenneth D. Miller, and John P. Cunningham.
 
 \linenumbers
@@ -51,7 +51,10 @@ The cornerstone of theoretical neuroscience is the circuit model: a system of eq
 %(150 word limit) we can ignore that for now up to about 50% \\
 
 \section{Introduction}
-Mathematical modeling has become a key part of modern neuroscience \cite{abbott2008theoretical}. A theory of neural computation describes a neural system with a set of equations (i.e. a model) motivated by the laws of nature and neurophysiological observations.  The key challenge for theorists is the description of how the model parameters govern the computational function of the neural system, which is characterized by mathematically defined features or ``emergent properties" of computation.  In idealized practice, theorists analytically derive how model parameters govern these emergent properties.  Historical examples of this gold standard of theory include derivations of memory capacity in associative neural networks  \cite{hopfield1984neurons}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in E/I networks \cite{tsodyks1997paradoxical}.  Unfortunately, as biological realism is introduced into neural circuit models, theory through analytic derivation becomes infeasible. \\
+
+The fundamental purpose of theoretical neuroscience is to use a mathematical \emph{model} to understand neural computation, whether that computation enables inbound perception, effects outbound action, or solves an internal and potentially abstract calculation \cite{abbott2008theoretical}.  A theory of a neural computation is systematized with a set of equations -- the model -- and these equations are chosen with respect to any number of behavioral, biophysical, or conceptual considerations.   The function of this system is governed by the choice of model parameters, which when configured \emph{just so}, give rise to some measurable signature of a computation.  For concreteness, consider the idealized practice: a theorist considers a model carefully and analytically derives how model parameters governs the computation.  Celebrated examples of this gold standard include our field's understanding of memory capacity in associative neural networks  \cite{hopfield1984neurons}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}.  
+
+Unfortunately, as biological realism is introduced into neural circuit models, theory through analytic derivation becomes infeasible. [Now connect to practice... define measurable signal as emergent property\\
 
 In fact, neural circuit models are designed in the context of misaligned incentives.  Models are kept simplistic with unrealistic assumptions (e.g. symmetry, gaussianity) to facilitate analytic derivations.  On the other hand, complexity is introduced for biological relevance. In models, simplicity sacrifices biological realism for derivations, and complexity sacrifices derivations for biological realism. When biological realism is the focus of a study, standard practice is to examine simulated activity from the model \cite{gutierrez2013multiple} (cite a bunch here).  Visualization or regression is used to understand the model, however theorists strive for a more formalized understanding of these complex models. \\
 
