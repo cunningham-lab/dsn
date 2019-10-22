@@ -3002,6 +3002,8 @@ class LowRankRNN(system):
                 db=True,
             )
 
+            self.xs = xs
+
             mu = tf.expand_dims(mu, 0)
             delta_T = tf.expand_dims(delta_0 - delta_inf, 0)
 

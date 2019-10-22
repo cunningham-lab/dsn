@@ -559,7 +559,7 @@ def warm_start(system):
                 grid[6],
                 grid[7],
                 grid[8],
-                system.solve_its,
+                ws_its,
                 system.solve_eps,
                 gauss_quad_pts=50,
                 db=True,
