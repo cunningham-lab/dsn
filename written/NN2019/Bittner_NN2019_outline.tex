@@ -70,6 +70,14 @@ In parallel, this same tradeoff has been confronted in many scientific fields, w
 
 Classically, statistical inference is a formalized way of describing the probabilistic relationship between observed data and model parameters.  However, statistical inference is impracticable in neural system models, because the likelihood functions are generally intractable.  Research in neural data analysis, which has enhanced our knowledge of a[kass], b[brown], c[paninski], d[jpcunni], e[pillow], focuses on the development of statistically inferable models for neural data sets, where such likelihood functions are tractable. Likelihood function intractability thus creates a gap between the models analyzed by theoreticians (motivated by laws of nature and physiology) and the probabilistic models developed by neural data scientists (constrained by tractability of inference) (Figure 1?).   Theoretical neuroscientists are careful about model creation, where neural data analysts are practical.  Neural data analysts are careful about inference of model parameters, where theoretical neuroscientists are practical.  This motivates the question: can we start doing \emph{careful} inference in \emph{careful} models? \\
 
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.2]{figs/fig1/fig1.pdf}
+\end{center}
+\caption{\small A. \textit{Neural data analysis}: To identify structure in experimentally recorded neural data sets (left), neural data analysts use the modern inference engine (center) -- a collection of tools like convex optimization theory and deep learning from the machine learning literature -- to carefully execute Bayesian inference on a phenomenological generative model of the data.  Neural data analysts impose practical constraints to these phenomenological models so that Bayesian inference can be done. \textit{Theoretical Neuroscience}: Theoretical neuroscientists design systems of equations reflecting biological reality comprising a model (right, e.g. the STG) with the hopes of reproducing emergent properties of neural computation found in data (left).  In standard practice, models are evaluated by simulating them for many choices of parameters on a server (center).  To gain an understanding for how parameters of the model govern such emergent properties, theoretical neuroscientists are left to measure correlations or find other structure in the simulated activity. In this study, we introduce DSNs, which use the modern inference engine to learn distributions of model solutions given emergent properties of neural computations (yellow boxes).  B. We use DSNs to provide novel insights to popular models in theoretical neuroscience.  We examine network syncing in the STG, blah in a dynamic four neuron-type population model of primary visual cortex (V1), information routing in the superior colliculus (SC), and blah in low-rank recurrent neural networks (RNNs).}
+\end{figure}
+
+
 Advancements in probabilistic machine learning have led to transformative changes in industrial applications like image processing (sparse cite), speech recognition (sparse cite), text classification (sparse cite), and more.  We call the generalizable components of this groundbreaking technology (deep learning, stochastic gradient descent, GPU parallelization, etc.) the ``modern inference engine." (Point to work from Cunningham/Paninski using modern inference engine for neuroscientific phenomenological models (PfLDS, BehaveNET)?) In this study, we use the modern inference engine to bypass the perceived intractability of statistical inference in realistic models of neural systems.  (Introduce SDNs?)  We demonstrate the widespread applicability of this approach by producing novel insights into network syncing in the stomatogastric ganglion (STG), neuron-type input-responsivity in primary visual cortex (V1), rapid task switching in superior colliculus (SC), and approximate Bayesian inference in recurrent neural networks (RNNs). \\
 
 \section{Results}
@@ -104,6 +112,14 @@ q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
 \end{equation}
 \end{itemize}
 
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.4]{figs/fig2/fig2.pdf}
+\end{center}
+\caption{A. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$.  DSNs are the result of a constrained stochastic optimization, in which emergent properties $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and DSN samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  DSNs distributions maximize randomness through entropy. B. For a choice of model (STG) and emergent property (network syncing), a DSN learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing.}
+\textbf{SB Comment}: In A, we have gaussian noise being fed into the deep probability distribution, and in B, we have a choice of model and emergent property predicating what the DSN is going to do.  There should be a way to depict these ideas without creating confusion on what the input to the DSN is.
+\end{figure}
+
 \textbf{Worked example: STG}
 \begin{itemize}
 \item For example, consider the STG.
@@ -133,6 +149,28 @@ Will focus on this once result finalized.  Have a lot of text to pull from.
 \item Link conditioning on task execution with work done today with RNNs.  Basically, we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations.
 \item A paragraph on bridging large scale recordings with theory.
 \end{itemize}
+
+\appendix
+
+\section{Supplement}
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.7]{figs/figS1/figS1.pdf}
+\end{center}
+Fig. S1: A. DSN distribution of STG model parameters producing network syncing.  B. Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.
+\end{figure}
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{figs/figS2/figS2.pdf}
+\end{center}
+Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented lagrangian epoch, the emergent property moments move closer to their constraints.
+\end{figure}
+
+
+
 
 \bibliography{dsn}
 \bibliographystyle{unsrt}
