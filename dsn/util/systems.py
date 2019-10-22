@@ -853,7 +853,7 @@ class V1Circuit(system):
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
         elif (behavior['type'] == 'rates'):
             val = 5.0
-            a = np.array([-val, -val, -val, -val, 0])
+            a = np.array([-val, -val, -val, -val, 0.001])
             b = np.array([val, val, val, val, 3.0])
             #pfac = 2 
             #a = np.array([0.0, 0.0, 0.0, 0.0, 0.5])
@@ -1462,8 +1462,9 @@ class V1Circuit(system):
         # [K,M,4,1]
 
         # construct the input
+        pow_eps = 1e-16
         def f(r, t):
-            drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h), n), tau)
+            drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h) + pow_eps, n), tau)
             return tf.clip_by_value(drdt, -1e30, 1e30)
 
         # worst-case cost is about

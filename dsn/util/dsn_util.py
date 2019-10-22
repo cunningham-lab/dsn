@@ -251,7 +251,16 @@ def get_system_from_template(sysname, param_dict):
                             's_0':30, \
                             'tau':tau}
             c_vals=np.array([1.0])
-            s_vals=np.array([s])
+            s_type = type(s)
+            if (s_type == list):
+                s_vals=np.array(s)
+            elif (s_type == np.ndarray):
+                s_vals=s
+            elif (s_type == int):
+                s_vals=np.array([s])
+            else:
+                raise TypeError()
+
             r_vals=np.array([0.0])
             C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
             behavior = {'type':behavior_type, \
@@ -445,7 +454,7 @@ def get_arch_from_template(system, param_dict):
             num_masks = 8
             mu_init = 10.0*np.ones((D,))
             sigma_init = param_dict['sigma_init']
-        elif (behavior_type == 'difference'):
+        elif (behavior_type in ['difference', 'rates']):
             num_masks = 4
             """
             init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
@@ -454,7 +463,6 @@ def get_arch_from_template(system, param_dict):
             sigma_init = npzfile['std']
             """
             mu_init, sigma_init = get_gauss_init(system)
-            sigma_init = sigma_init
         post_affine = True
         K = 1
         real_nvp_arch = {
@@ -548,7 +556,9 @@ def get_gauss_init(system):
     init_param_fname = init_param_dir + '%s_init_param.npz' % system.behavior_str
     if (not os.path.isfile(init_param_fname)):
         print('Running grid search to determine DSN initialization.')
-        Z_thresh, mu_init, sigma_init = grid_search(system, n=100000)
+        n_gs = 1000000
+        Z_thresh, mu_init, sigma_init = grid_search(system, n=n_gs)
+        print('%d / %d' % (Z_thresh.shape[0], n_gs))
         if (not os.path.exists(init_param_dir)):
             os.mkdir(init_param_dir)
         np.savez(init_param_fname, mu_init=mu_init, sigma_init=sigma_init)
@@ -579,6 +589,12 @@ def get_grid_search_bounds(system):
             std = np.sqrt(var)
             T_x_a = np.array([mean-2*std, np.NINF])
             T_x_b = np.array([mean+2*std, np.PINF])
+        elif (system.behavior['type'] == 'rates'):
+            mean = system.mu[:4]
+            var = system.mu[4:]
+            std = np.sqrt(var)
+            T_x_a = np.concatenate((mean-std, np.NINF*np.ones((4,))), axis=0)
+            T_x_b = np.concatenate((mean+std, np.PINF*np.ones((4,))), axis=0)
     
     elif (system.name == 'STGCircuit'):
         if (system.behavior['type'] == 'freq'):
@@ -1084,7 +1100,6 @@ def get_perturbs(system, V, z0, n):
     T_x_perturbs = np.zeros((num_vs,n,system.num_suff_stats))
     with tf.Session() as sess:
         for j in range(num_vs):
-            print('v', j+1)
             v = V[:,j]
 
             #lim1, lim2 = get_perturb_bounds(system, v, z0)
@@ -1094,7 +1109,6 @@ def get_perturbs(system, V, z0, n):
                 Z_perturbs[j,:,i] = delta*v[i] + z0[0,0,i]
             T_x_perturbs[j] = sess.run(T_x, {Z:np.expand_dims(Z_perturbs[j,:,:], 0)})
             delta_perturbs[j] = delta
-            print('got perturb')
 
     return T_x_perturbs, delta_perturbs, Z_perturbs
 
