@@ -152,7 +152,7 @@ def IntPrimPrim(mu, delta0, deltainf, num_pts=200):  # Performs the external int
     delta0 = np.expand_dims(np.expand_dims(delta0, 1), 2)
     deltainf = np.expand_dims(np.expand_dims(deltainf, 1), 2)
     inner_integrand = np.log(
-        np.math.cosh(
+        np.cosh(
             mu
             + np.sqrt(delta0 - deltainf) * gauss_points_inner
             + np.sqrt(deltainf) * gauss_points_outer
