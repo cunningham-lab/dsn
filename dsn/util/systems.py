@@ -3132,7 +3132,9 @@ class LowRankRNN(system):
         z = tf.transpose(z, [1,0,2])
         param_grid = np.expand_dims(np.transpose(param_grid), 0)
         diffs = tf.reduce_sum(tf.square(z - param_grid), axis=2)
-        sim_kernel = tf.exp(-beta*diffs)
+        # avoid the spectre of nan
+        kernel_eps = 1e-16
+        sim_kernel = tf.exp(-beta*diffs) + kernel_eps
         one_hot = sim_kernel / tf.expand_dims(tf.reduce_sum(sim_kernel, 1), 1)
         param_select = tf.matmul(one_hot, param_grid[0])
         warm_start_inits = tf.matmul(one_hot, solution_grid)
