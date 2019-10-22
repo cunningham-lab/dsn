@@ -334,16 +334,17 @@ def get_system_from_template(sysname, param_dict):
         elif (behavior_type == 'BI'):
             solve_its = param_dict['solve_its']
             solve_eps = param_dict['solve_eps']
+            variance = param_dict['variance']
             gauss_newton = param_dict['gauss_newton']
-            fixed_params = {'MI':0.5,
+            fixed_params = {'MI':2.0,
                             'Sm':1.0,
                             'Sn':1.0,
                             'SmI':0.0,
                             'SnI':1.0,
                             'Sperp':0.0}
-            means = np.array([0.5, 1.0])
-            variances = np.array([0.01, 0.01])
-            behavior = {"type": behavior_type, "means": means, "variances": variances}
+            prior = np.array([4.0, 1.0])
+            variances = variance*np.ones((2,))
+            behavior = {"type": behavior_type, "prior": prior, "variances": variances}
             model_opts = {'rank':rank, 'input_type':input_type, 'gauss_newton':gauss_newton}
 
             system = LowRankRNN(fixed_params, 
@@ -522,9 +523,10 @@ def get_arch_from_template(system, param_dict):
         nlayers = param_dict['nlayers']
         upl = param_dict['upl']
 
-        num_masks = 3
-        mu_init, sigma_init = get_gauss_init(system)
-        sigma_init = sigma_init
+        num_masks = 2
+        #mu_init, sigma_init = get_gauss_init(system)
+        mu_init = np.array([2.5, 0.0, 0.0])
+        sigma_init = param_dict['sigma_init']*np.ones(D,)
 
         flow_type = "RealNVP"
         post_affine = True
@@ -543,7 +545,7 @@ def get_arch_from_template(system, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
-                     "mo":1.0,
+                     "mo":0.99,
                      "init_mo":1.0,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,

@@ -3081,12 +3081,20 @@ class LowRankRNN(system):
 
         """
 
-        if self.behavior["type"] in ["struct_chaos", "ND", "BI", "CDD"]:
+        if self.behavior["type"] in ["struct_chaos", "ND", "CDD"]:
             means = self.behavior["means"]
             variances = self.behavior["variances"]
-        else:
-            raise NotImplementedError
         if (self.behavior["type"] == "BI"):
+            prior = self.behavior["prior"]
+            variances = self.behavior["variances"]
+            MI = self.fixed_params["MI"]
+            SI = self.fixed_params["SnI"]
+            M0 = prior[0]
+            S0 = prior[1]
+            denom = (1.0/S0) + (1.0/SI)
+            Mpost = (M0/S0 + MI/SI)  / denom
+            Spost = 1 / denom
+            means = np.array([Mpost, Spost])
             mu = np.concatenate((means, variances), axis=0)
         else:
             first_moments = means

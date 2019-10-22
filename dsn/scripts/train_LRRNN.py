@@ -9,13 +9,15 @@ import sys, os
 
 os.chdir("../")
 
-c_init_order = int(sys.argv[1])
-random_seed = int(sys.argv[2])
+repeats = int(sys.argv[1])
+sigma_init = float(sys.argv[2])
+variance = float(sys.argv[3])
+c_init_order = int(sys.argv[4])
+random_seed = int(sys.argv[5])
 
 # Real NVP arch params
 nlayers = 2
 upl = 10
-repeats = 1
 
 # Get Low Rank RNN system
 sysname = 'LowRankRNN'
@@ -26,6 +28,7 @@ param_dict = {'rank':rank,
               'input_type':input_type,
               'behavior_type':behavior_type,
               'solve_its':50,
+              'variance':variance,
               'gauss_newton':False,
               'solve_eps':0.2}
 system = get_system_from_template(sysname, param_dict)
@@ -33,6 +36,7 @@ system = get_system_from_template(sysname, param_dict)
 # Get DSN architecture
 arch_params = {
                'D':system.D,
+               'sigma_init':sigma_init,
                'repeats':repeats,
                'nlayers':nlayers,
                'upl':upl,
