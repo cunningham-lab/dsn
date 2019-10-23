@@ -27,7 +27,7 @@ behavior_type = 'BI'
 param_dict = {'rank':rank,
               'input_type':input_type,
               'behavior_type':behavior_type,
-              'solve_its':50,
+              'solve_its':10,
               'variance':variance,
               'gauss_newton':False,
               'solve_eps':0.2}

@@ -3113,7 +3113,8 @@ class LowRankRNN(system):
         # Returns
             Z (np.array): Samples from the DSN at the final layer.
         """
-        return SoftPlusFlow([], inputs)
+        a, b = self.density_network_bounds
+        return IntervalFlow([], inputs, a, b)
 
     def get_warm_start_inits(self, z, beta=100.0):
         """Calculates warm start initialization for parameter sample.
