@@ -385,7 +385,10 @@ def coloring_from_str(c_str, system, npzfile, AL_final_it):
         c_label_str = r"$log(q(z))$"
     elif c_str == "T_x1":
         c = npzfile["T_xs"][AL_final_it,:,0]
-        c_label_str = r"$T(x)_1$"
+        c_label_str = system.T_x_labels[0]
+    elif c_str == "T_x2":
+        c = npzfile["T_xs"][AL_final_it,:,1]
+        c_label_str = system.T_x_labels[1]
     elif c_str == "real part":
         c = npzfile["T_xs"][AL_final_it, :, 0]
         cm = plt.cm.get_cmap("Reds")
@@ -815,14 +818,14 @@ def pairplot(
                     ax.scatter(
                         Z[below_inds, dim_j],
                         Z[below_inds, dim_i],
-                        c="w",
+                        c="k",
                         edgecolors="k",
                         linewidths=0.25,
                     )
                     ax.scatter(
                         Z[over_inds, dim_j],
                         Z[over_inds, dim_i],
-                        c="k",
+                        c="w",
                         edgecolors="k",
                         linewidths=0.25,
                     )
@@ -864,8 +867,7 @@ def pairplot(
         b = (num_dims - 1) * 1.15
         plt.text(a, b, c_label, {"fontsize": fontsize}, transform=ax.transAxes)
     #plt.savefig(pfname)
-    plt.show()
-    return fig
+    return fig, axs
 
 def contour_pairplot(
     Z,
@@ -953,7 +955,8 @@ def imshow_pairplot(
     pfname="images/temp.png",
     fig=None,
     axs=None,
-    vmin_fac=0.0,
+    vmins=None,
+    q=75,
     ):
 
     def marginalize_mesh(c,ax1,ax2):
@@ -983,24 +986,23 @@ def imshow_pairplot(
             if j > i:
                 dim_j = dims[j]
                 c_ij = marginalize_mesh(c,i,j)
-                min_c = np.min(c_ij)
-                max_c = np.max(c_ij)
-                vmin = vmin_fac*max_c + (1-vmin_fac)*min_c
+                print(np.max(c_ij))
+                vmin = np.percentile(c_ij, q)
                 I = vmin*np.ones((pix_i, pix_j))
                 I[I_start_i:(I_start_i+K),I_start_j:(I_start_j+K)] = c_ij
-                extent = [lb[i], ub[i], lb[j], ub[j]]
+                extent = [lb[j], ub[j], lb[i], ub[i]]
                 ax.imshow(I, extent=extent, cmap=cmap, alpha=alpha,
-                          origin='lower', vmin=vmin)
+                          origin='lower', vmin=vmin, interpolation='bilinear')
                 if i + 1 == j:
                     ax.set_xlabel(labels[j], fontsize=fontsize)
                     ax.set_ylabel(labels[i], fontsize=fontsize)
-                else:
-                    ax.set_xticklabels([])
-                    ax.set_yticklabels([])
+                #else:
+                    #ax.set_xticklabels([])
+                    #ax.set_yticklabels([])
 
-                if ticks is not None:
-                    ax.set_xticks(ticks)
-                    ax.set_yticks(ticks)
+                #if ticks is not None:
+                #    ax.set_xticks(ticks)
+                #    ax.set_yticks(ticks)
             else:
                 ax.axis("off")
     """
@@ -1433,3 +1435,14 @@ def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=No
     print('Video complete after %.3f seconds.' % (end_time - start_time))
     return None
 
+def get_log_q_z_mesh(Z_grid, W, Z_input, Z_INV, log_q_Z, sess, feed_dict, K):
+    M = Z_grid.shape[1]
+        
+    _W = np.zeros((1,M,system.D))
+    feed_dict.update({Z_input:_Z_grid, W:_W})
+    _Z_INV = sess.run(Z_INV, feed_dict)
+    
+    feed_dict.update({W:_Z_INV})
+    _log_q_z = sess.run(log_q_Z, feed_dict)
+    log_q_z_mesh = np.reshape(_log_q_z[0], (K,K,K,K))
+    return log_q_z_mesh
