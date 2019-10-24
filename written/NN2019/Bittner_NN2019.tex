@@ -516,6 +516,65 @@ P_{ij} = \sum_{k=1}^r \frac{m_i^{(k)}n_j^{(k)}}{N}
 \end{equation}
 We use this theory to compute $T(x)$ when training DSNs to learn maximum entropy distributions of network connectivities that solve a task.  While the theory is currently used to design low-rank solutions to tasks, we are able to learn the full distribution of low-rank RNN parameterizations that solve a given task.
 
+(This stuff is critical for people understanding what I did and implementing it on their own, understanding what the code does.)
+
+Rank-1 vectors $m$ and $n$ have elements drawn
+\[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
+\[n_i \sim \mathcal{N}(M_n, \Sigma_n)\]
+The current has the following statistics:
+\[I = M_I + \frac{\Sigma_{mI}}{\Sigma_m}x_1 + \frac{\Sigma_{nI}}{\Sigma_n}x_2 + \Sigma_\perp h\]
+where $x_1$, $x_2$, and $h$ are standard normal random variables.
+
+\textbf{Parameters:} \\
+\[z = \begin{bmatrix} g & M_m & M_n & M_I & \Sigma_m & \Sigma_n & \Sigma_{mI} & \Sigma_{nI} & \Sigma_\perp \end{bmatrix}^\top \]
+
+(expansion of 98 of M \& O) \\
+The $\ddot{\Delta}$ equation is broken into the equation for $\Delta_0$ and $\Delta_\infty$ by the autocorrelation dynamics assertions.
+\[\ddot{\Delta(\tau)} = - \frac{\partial V}{\partial \Delta} \]
+\[\ddot{\Delta} = \Delta - \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \tau) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace \]
+
+We can write out the potential function by integrating the negated RHS.
+\[V(\Delta, \Delta_0) = \int \mathcal{D} \Delta \frac{\partial V(\Delta, \Delta_0)}{\partial \Delta}\]
+\[V(\Delta, \Delta_0) = -\frac{\Delta^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t + \tau) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta + C \]
+ 
+
+We assume that as time goes to infinity, the potential relaxes to a steady state.
+\[\frac{\partial V(\Delta_\infty, \Delta_0)}{\partial \Delta}  = 0 \]
+\[\frac{\partial V(\Delta_\infty, \Delta_0)}{\partial \Delta} = - \Delta + \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \infty) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace = 0\]
+\[\Delta_\infty = g^2 \langle \left[ \phi_i(t) \phi_i(t + \infty) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \]
+\[\Delta_\infty = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \]
+
+Also, we assume that the energy of the system is perserved throughout the entirety of its evolution. 
+\[V(\Delta_0, \Delta_0) = V(\Delta_\infty, \Delta_0)\]
+\[-\frac{\Delta_0^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta_0 + C = -\frac{\Delta_\infty^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta_\infty + C   \]
+\[\frac{\Delta_0^2-\Delta_\infty^2}{2} = g^2 \left( \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle - \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle \right) + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty)\]
+
+\[\frac{\Delta_0^2-\Delta_\infty^2}{2} = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \] 
+\[+ (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty)\]
+
+\textbf{Consistency equations:} \\ 
+\begin{equation}
+\begin{split}
+\mu = F(\mu, \kappa, \Delta_0, \Delta_\infty) = M_m \kappa + M_I \\
+\kappa = G(\mu, \kappa, \Delta_0, \Delta_\infty) = M_n \langle \left[ \phi_i \right] \rangle + \Sigma_{nI} \langle \left[ \phi_i' \right] \rangle \\
+\frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\mu, \kappa, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
++ (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty) \\
+\Delta_\infty = L(\mu, \kappa, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2
+\end{split} 
+\end{equation}
+
+\textbf{Solver:}
+\begin{equation}
+\begin{split}
+x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
+\Delta_0(t) = \sqrt{2x(t) + \Delta_\infty(t)^2} \\
+\dot{\mu}(t) = -\mu(t) + F(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\kappa}(t) = -\kappa + G(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{x}(t) = -x(t) + H(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t)) \\
+\dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t))
+\end{split}
+\end{equation}
+
 
 \subsection{Supplementary Figures}
 
