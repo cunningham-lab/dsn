@@ -159,13 +159,158 @@ Will focus on this once result finalized.  Have a lot of text to pull from.
 
 \section{Supplement}
 
+\subsection{Models}
+Here I'll explain all the models that we looked at.
+
+\subsubsection{Stomatogastric ganglion}
+
+\subsubsection{Primary visual cortex}
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory}.  A current challenge in theoretical neuroscience is understanding the distributed role of inhibition stabilization across these subtypes.  
+
+The dynamics of each neural populations average rate
+$x = \begin{bmatrix} x_E \\ x_P \\ x_S \\ x_V \end{bmatrix}$
+are given by:
+\begin{equation}
+\tau \frac{dx}{dt} = -x + [W x+ h]_+^n
+\end{equation}
+
+In some cases, these neuron types do not send projections to one of the other types \cite{pfeffer2013inhibition}.  Estimates of the of the probability of connection and strength of connection from the Allen institute result in an estimate of $W$ of 
+\begin{equation}
+W = \begin{bmatrix} 0.0576 &  0.19728 & 0.13144 & 0 \\
+                                0.58855 & 0.30668 & 0.4285 & 0 \\
+                                0.15652 & 0 & 0 & 0.2 \\
+                                0.13755 & 0.0902 &  0.4004 &  0 \end{bmatrix}
+\end{equation}
+
+[Establish that we care about what inputs to this system make each neuron type respond at a fixed point.]  Sound analytic derivations can give us the linear approximation to the response, which is valuable close to the fixed point.  We can describe the dynamics of this system more generally by
+\begin{equation}
+\dot{x}_i = -x_i + f(u_i)
+\end{equation}
+where the input to each neuron is
+\begin{equation}
+u_i = \sum_j W_{ij} x_j + h_i
+\end{equation}
+Let $F_{ij} = \gamma_i \delta(i,j)$, where $\gamma_i = f'(u_i)$.  Then, the linear response is
+\begin{equation}
+\frac{\partial x}{\partial h} = F(W\frac{\partial x}{\partial h} + I)
+\end{equation}
+which is calculable by
+\begin{equation}
+\frac{\partial x}{\partial h} = (F^{-1} - W)^{-1}
+\end{equation}
+
+However, as we get further away from the fixed point, the linear approximation to the system response becomes less accurate.
+
+We compare this linear prediction to the DSN distribution of inputs resulting in a given increase in neuron type population firing rate.
+
+We measure this increase by simulating the system at $b = \begin{bmatrix} 1,1,1,1 \end{bmatrix}^\top$ and $b + dh$, for T=100 time steps using Euler intergration with $dt = 5$ms and $\tau = 20$ms, where we initialize the system to $x(0)_i \sim \mathcal{N}(1, 0.01)$.
+
+
+
+\subsubsection{Superior colliculus}
+There are four total units: two in each hemisphere corresponding to the PRO/CONTRA and ANTI/IPSI populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
+\begin{equation}
+x_i(t) =\psi(t)\left(\frac{1}{2}\tanh\left(\frac{u_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
+\end{equation}
+$\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, repsectively, and $\psi(t)$ is the optogenetic inactivation function.
+
+We can order the elements of $x_i$ and $u_i$ into vectors $x$ and $u$ with elements
+\begin{equation}
+x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} u = \begin{bmatrix} u_{LP} \\ u_{LA} \\ u_{RP} \\ u_{RA} \end{bmatrix}
+\end{equation}
+
+ The internal variables follow dynamics:
+\begin{equation}
+\tau \frac{\partial u}{\partial t} = -u + Wx + h + \sigma \partial B
+\end{equation}
+with time constant $\tau = 0.09s$ and gaussian noise $\sigma \partial B$ controlled by the magnitude of $\sigma$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$,  related to the depiction in Fig. 2:
+\begin{equation}
+W = \begin{bmatrix} sW_P & vW_{PA} & hW_P & dW_{PA}  \\ vW_{AP}  & sW_A & dW_{AP}  & hW_A \\ hW_P & dW_{PA}  & sW_P & vW_{PA}  \\ dW_{AP}  & hW_A & vW_{AP}  & sW_A \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+h = h_{\text{constant}} + h_{\text{pro-bias}} + h_{\text{rule}} + h_{\text{choice-period}} + h_{\text{light}}
+\end{equation}
+
+
+\begin{equation} h_{\text{constant}}(t) = I_{\text{constant}} \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top 
+\end{equation}
+\begin{equation} h_{\text{P,bias}}(t) = I_{\text{P,bias}} \begin{bmatrix} 1 & 0 & 0 & 1 \end{bmatrix}^\top 
+\end{equation}
+\begin{equation}h_{\text{P,rule}}(t) = \begin{cases}
+                           I_{\text{P,rule}} \begin{bmatrix} 1 & 0 & 0 & 1 \end{bmatrix}^\top,& \text{if } t\leq 1.2s \\
+                            0,              & \text{otherwise}
+                         \end{cases}
+\end{equation}
+\begin{equation} h_{\text{A,rule}}(t) = \begin{cases}
+                           I_{\text{A,rule}} \begin{bmatrix} 0 & 1 & 1 & 0 \end{bmatrix}^\top,& \text{if } t\leq 1.2s \\
+                            0,              & \text{otherwise}
+                         \end{cases}
+\end{equation}
+\begin{equation} h_{\text{choice}}(t) = \begin{cases}
+                           I_{\text{choice}} \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top,& \text{if } t > 1.2s \\
+                            0,              & \text{otherwise}
+                         \end{cases}
+\end{equation}
+                         
+\begin{equation}  h_{\text{light}}(t) = \begin{cases}
+                           I_{\text{light}} \begin{bmatrix} 1 & 1 & 0 & 0 \end{bmatrix}^\top,& \text{if } t > 1.2s \text{ and Left} \\
+                           I_{\text{light}} \begin{bmatrix} 0 & 0 & 1 & 1 \end{bmatrix}^\top,& \text{if } t > 1.2s \text{ and Right} \\
+                            0,              & t \leq 1.2s
+                         \end{cases} 
+\end{equation}
+
+In the write-up I sent a couple months ago, I suggested that we could model the choices (and neural responses) as Bernoulli variables.  That is, in Pro trials the corresponding Pro neuron responds with a value close to 1 for correct choices, and a value close to 0 for incorrect choices.  Importantly, the Pro neuron in the opposite hemisphere should respond with the opposite value (1 and 0, respectively) on such trials.
+
+It seemed plausible that we could train DSNs to learn distributions of parameterizations of this 4-dimensional dynamical model that produce Bernoulli responses with a given rate and have opposite Left, Right responses in the Pro neurons.  This would need to be checked in practice.
+
+Let's say that we want to learn the parameters that produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition.  (We can generalize this to either cue, or stimulus condition).  We'll let $\hat{p}_i$ be the empirical average steady state (ss) response (final $V_{LP}$ at end of task) over M=100 gaussian noise draws for a given SC model parameterization $z_i$:
+
+\begin{equation}
+ \hat{p}_i = E_{\sigma \partial W} \left[ V_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M V_{LP,\text{ss}}(s=L, c=P, z_i, \sigma \partial W_j)
+ \end{equation}
+
+The noise is fixed at $\sigma = 0.3$ (the average of satisfactory parameterizations from Duan et al.).  For the 1st constraint, we certainly want the average over DSN samples (from $q_\phi(z)$) to be $p_{LP}$:
+\begin{equation}
+E_{z_i \sim q_\phi} \left[ E_{\sigma \partial W} \left[ V_{LP,\text{ss}} \mid s=L, c=P, z_i \right] \right] = E_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
+\end{equation}
+
+We can then ask that the variance of the steady state responses across gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}$.
+\begin{equation}
+ Var_{\sigma \partial W} \left[ V_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \hat{p}_i(1 - \hat{p}_i)
+\end{equation}
+
+With DSNs, we enforce constraints in expectation over DSN samples, so we can force Bernoulli responses with this 2nd constraint:
+\begin{equation}
+E_{z \sim q\phi} \left[ Var_{\sigma \partial W} \left[ V_{LP,\text{ss}} \mid s=L, c=P, z_i \right] - \hat{p}_i(1 - \hat{p}_i) \right] = 0
+\end{equation}
+
+Since the maximum variance of a random variable bounded from 0 to 1 is the Bernoulli variance ($\hat{p}(1-\hat{p})$), in principle, we do not need to control the second moment (over DSN samples) of this test-static (the variance over gaussian draws).  In reality, these variables are dynamical system states and can only exponentially decay (or saturate) to 0 (or 1), so the Bernoulli variance constraint can only be undershot.  This is important to be mindful of when evaluating the convergence criteria.
+
+We have an additional constraint that the Pro neuron on the opposite hemisphere should have the opposite value.  We can enforce this with a final constraint:
+\begin{equation}
+E_{z \sim q\phi} \left[ E_{\sigma \partial W} \left[ (V_{LP,\text{ss}} - V_{RP,\text{ss}})^2  \mid s=L, c=P, z_i \right] \right] = 0
+\end{equation}
+
+Training DSNs to learn distributions of dynamical system parameterizations that produce Bernoulli responses at a given rate (with small variance around that rate) was harder to do than expected.  Long story short: there is a pathology in this optimization setup, where the learned distribution of weights is bimodal attributing a fraction $p$ of the samples to an expansive mode (which always sends $V_{LP}$ to 1), and a fraction $1-p$ to a decaying mode (which always sends $V_{LP}$ to 0).  This pathology was avoided using an inequality constraint prohibiting parameter samples that resulted in low variance of responses across noise.
+
+There are ten total constraints on the DSN visualized in section \ref{section:results}.  Two come from the error increases in the Pro and Anti condition.  We only measure this for left-hemisphere responses, since the right hemisphere is symmetric in the parameterization.  Four constraints come from the Bernoulli variance constraint on the model's responses to the PL, PR, AL, AR conditions.  The remaining four constraints force the responses of the left and right Pro neurons to be opposite for each of those same conditions.
+
+We did not see consistent convergence to a maximum entropy distribution across random initial seeds.  We will focus on this more directly as we come to a well-defined final goal for analysis with DSNs, since that level of diligence is more computationally expensive.
+
+
+\subsubsection{Rank-1 RNN}
+
+
+
+\subsection{Supplementary Figures}
+
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.7]{figs/figS1/figS1.pdf}
 \end{center}
 Fig. S1: A. DSN distribution of STG model parameters producing network syncing.  B. Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.
 \end{figure}
-
 
 \begin{figure}
 \begin{center}
