@@ -135,8 +135,28 @@ q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
 \item Punchline about DSNs and transition to V1.
 \end{itemize}
 
-\subsection{Exploratory analysis of a theoretical model}
-Will focus on this once result finalized.  Have a lot of text to pull from.
+\subsection{Input-responsivity in a nonlinear sensory system}
+\textbf{Introduction}
+\begin{itemize}
+\item E/I networks have been studied extensively. (Callback to gold standard tsodyks).
+\item They've been used to demonstrate other things (mostly Ken's group).
+\item Now people want to undertand this 4-neuron-type system (Ashok's 2016 paper).  
+\item This is how many sensory cortices e.g. barrel cortex in mice are set up, so this theory is relevant to these settings to.
+\end{itemize}
+
+\textbf{Motivation}
+\begin{itemize}
+\item This system is complicated.  It can't be analyzed easily.  Note the challenge of moving from 2D to 3-4D (cite Strogatz?).
+\item We can calculate linear response to input (ref to appendix), but they aren't super accurate away from FP. (Have figure panel B for this).
+\end{itemize}
+
+\textbf{DSN para}
+\begin{itemize}
+\item We train DSNs to learn the input that will make each type increase by a certain amount.
+\item The sensitivities and degeneracies are sometimes intuitive, sometimes complex and unexpected.
+\item This certainly tells us more than the analytic linear approx prediction (overlaid).
+\end{itemize}
+
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.4]{figs/fig3/fig3.pdf}
@@ -144,8 +164,26 @@ Will focus on this once result finalized.  Have a lot of text to pull from.
 \caption{A. V1 model B. Responses and why linear isnt good enough. C. DSN stuff.}
 \end{figure}
 
-\subsection{Identifying sufficient mechanisms of task learning}
-Will focus on this once V1 and LRRNN finalized.  Have a lot of text to pull from.
+\subsection{Identifying interpretable mechanisms of task learning.}
+\textbf{Introduction}
+\begin{itemize}
+\item Talk about how behavioral neuroscience works.
+\item Oftentimes the mice can't even get passed like 70 percent.
+\item We should think about different operating regimes of these circuits.
+\item This can also shed light on learning.
+\end{itemize}
+
+\textbf{SC circuit}
+\begin{itemize}
+\item Give concise, necessary background on this circuit.
+\item Ruthlessly refer to appendix
+\end{itemize}
+
+\textbf{DSN}
+\begin{itemize}
+\item talk about how we get the two clean interpretable changes to the weight matrix that improve performance. 
+\end{itemize}
+
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.4]{figs/fig4/fig4.pdf}
@@ -153,8 +191,11 @@ Will focus on this once V1 and LRRNN finalized.  Have a lot of text to pull from
 \caption{A.SC task B. SC model C. schur stuff. D. DSN time}
 \end{figure}
 
-\subsection{Conditioning on computation with interpretable models of RNNs}
-Will focus on this once result finalized.  Have a lot of text to pull from.
+\subsection{Understanding the nature of approximate inference biases in an RNN}
+\begin{itemize}
+\item Need to think a little more.
+\end{itemize}
+
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.4]{figs/fig5/fig5.pdf}
