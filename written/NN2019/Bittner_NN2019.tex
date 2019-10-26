@@ -74,7 +74,7 @@ This fact creates an unfavorable tradeoff for the theorist.  On the one hand, on
 Of course, this same tradeoff has been confronted in many scientific fields characterized by the need to do inference in complex models.  
 Notably, the machine learning community has made remarkable progress in recent years, via the use of deep neural networks as a powerful inference engine: a flexible function family that can map observed phenomena (in this case the measurable signal of some computation) back to probability distributions quantifying the likely parameter configurations.  
 One celebrated example of this approach from the machine learning community, from which we draw key inspiration for this work, is the variational autoencoder \cite{kingma2013auto, rezende2015variational}, which uses this concept to produce (approximate) posterior distributions on hidden variables in a latent variable model, given data. 
-%[I'd say no to GANs here. MCMC?  Is SMC ABC the deep learning ABC you refer to? Things like sequential neural likelihood (SNL, Leuckman/Papamakarios), LFVI (Dusting) and eventually SNPE will be covered more extensively in appendix, correct?].  
+%[I'd say no to GANs here. MCMC?  Is SMC ABC the deep learning ABC you refer to? Things like sequential neural likelihood (SNL, Leuckman/Papamakarios), LFVI (Dustin) and eventually SNPE will be covered more extensively in appendix, correct?].  
 Indeed, these tools have been used to great success in neuroscience as well, in particular for interrogating parameters (sometimes treated as hidden states) in models of both cortical population activity \cite{gao2016linear, pandarinath2018inferring} [Pick a few Pillow and Memming papers]  and animal behavior \cite{wiltschko2015mapping, johnson2016composing, batty2019behavenet}. 
 These works have used deep neural networks to expand the expressivity and accuracy of statistical models of neural data \cite{paninski2018neural}. 
 
@@ -161,6 +161,12 @@ The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, whic
 With EPI, we are able to learn the STG conductance parameters that produce network syncing (Fig. 2C). Previously, this parameter regime was only visualized from statistics of simulations. Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1).
 
 \subsection{Input-responsivity in a nonlinear sensory system}
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory}.
+
+
+
+
+
 \textbf{Introduction}
 \begin{itemize}
 \item E/I networks have been studied extensively. (Callback to gold standard tsodyks).
@@ -235,7 +241,7 @@ With EPI, we are able to learn the STG conductance parameters that produce netwo
 \item Expand on idea of posterior predictive checks / hypothesis testing / exploratory analyses of models themselves.  Give the whole, we don't even understand the models we're developing pitch.
 \item Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
 \item Summarize the respective strengths SNPE and DSN.
-\item Link conditioning on task execution with work done today with RNNs.  Basically, we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations.
+\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. Complementary body of work here \cite{zhao2016interpretable, duncker2019learning}.
 \item A paragraph on bridging large scale recordings with theory.
 \end{itemize}
 
