@@ -42,7 +42,7 @@
                                 % Also try: \bigskip, \littleskip
 
 \thispagestyle{plain}
-{\Large Interrogating theoretical models of computation with deep learning} \\
+{\Large Interrogating theoretical models of computation with emergent property inference} \\
 Sean R. Bittner, Agostina Palmigiano, Alex T. Piet, Chunyu A. Duan, Francesca Mastrogiuseppe, Srdjan Ostojic, Carlos D. Brody, Kenneth D. Miller, and John P. Cunningham.
 
 \linenumbers
@@ -61,7 +61,7 @@ More generally, this work moves us away from the tradeoff of biological realism 
 \section{Introduction}
 
 The fundamental practice of theoretical neuroscience is to use a mathematical \emph{model} to understand neural computation, whether that computation enables perception, action, or some intermediate processing \cite{abbott2008theoretical}.  
-In this field, a neural computation is systematized with a set of equations -- the model -- and these equations are motivated by biophysics, neurophysiology, and/or other conceptual considerations.
+In this field, a neural computation is systematized with a set of equations -- the model -- and these equations are motivated by biophysics, neurophysiology, and other conceptual considerations.
 The function of this system is governed by the choice of model parameters, which when configured in some special way, give rise to some measurable signature of a computation.   
 The work of analyzing a model then becomes the inverse problem: given a computation of interest, how can we reason about these special parameter configurations -- their likely values, their uniquenesses and degeneracies, their attractor states and phase transitions, and more?  
 
@@ -79,31 +79,30 @@ Indeed, these tools have been used to great success in neuroscience as well, in 
 These works have used deep neural networks to expand the expressivity and accuracy of statistical models of neural data \cite{paninski2018neural}. 
 
 However, these inference tools have not significantly influenced the study of theoretical neuroscience models, for at least three reasons.  
-First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools (for example mean field blah blah \cite{???}) typically produce a narrow (though useful) set of insights into these models.  
+First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools (for example mean field blah blah \cite{???}) typically produce a narrow set of insights into these models.  
 Indeed, only in the last few years has the deep learning toolkit expanded to a point of relevance to this class of problem.
 Second, the object of interest from a theoretical model is not typically data itself, but rather a qualitative phenomenon -- inspection of model behavior, or better, a measurable signature of some computation -- an \emph{emergent property} of the model.  
 Third, because theoreticians work carefully to construct a model that has biological relevance, such a model as a result often does not fit cleanly into the framing of a statistical model.  
-Technically, because many such models stipulate a noisy system of differential equations that can only be sampled or realized through forward simulation, they lack the explicit priors and likelihood terms that are central to the probabilistic modeling toolkit.  
+Technically, because many such models stipulate a noisy system of differential equations that can only be sampled or realized through forward simulation, they lack the explicit likelihood and priors central to the probabilistic modeling toolkit.  
 
 % now we've constructed the tension that theory models need this and statistical models know how to do this... now connect!
-To address these three challenges, we developed inference methodology -- the `parameter solution distribution degenerate etc network' -- that provides a distribution over parameter configurations in a theoretical model that give rise to a specified emergent property.  
-First, we stipulate a deep neural network that induces a flexible family of probability distributions over model parameterizations.   We will insist on being able to quantify the probability of various model parameter configurations, and thus we choose the deep neural network to be of the (bijective) normalizing flow class \cite{???}. 
+To address these three challenges, we developed an inference methodology -- `emergent property inference (EPI)' -- which provides a distribution over parameter configurations in a theoretical model that give rise to a specified emergent property.  
+First, we stipulate a deep neural network that induces a flexible family of probability distributions over model parameterizations.   We will insist on being able to quantify the probability of various model parameter configurations, and thus we choose the deep neural network to be of the (bijective) normalizing flow class \cite{rezende2015variational}.
 Second, we quantify the notion of emergent properties as a set of moment constraints on datasets generated by the model.  
-Thus an emergent property is a phenomenon or a feature of the model rather than a single data realization, which is not the central object of interest to the theorist (unlike say the statistical neuroscientist).  
-The requirement to condition on an emergent property requires the adaptation of deep probabilistic inference methods, and we adapt recent tools to do so \cite{MEFN}.   % sentence is not quite right but ok for now
-Third,  because we can not assume the theoretical model has explicit likelihood on data or the emergent property of interest, we use stochastic gradient techniques in the spirit of likelihood free variational inference \cite{tran}.    
-Taken together, the [new DSN name here] network provides a methodology for inferring and then reasoning about parameter configurations that give rise to particular emergent phenomena in theoretical models.   
-The [new DSN] network is described schematically in Fig 1A.
+Thus an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is the central object of interest to the theorist (unlike say the statistical neuroscientist).  
+The requirement to condition on an emergent property requires the adaptation of deep probabilistic inference methods, and we adapt recent tools to do so \cite{loaiza2017maximum}.
+Third,  because we can not assume the theoretical model has explicit likelihood on data or the emergent property of interest, we use stochastic gradient techniques in the spirit of likelihood free variational inference \cite{tran2017hierarchical}.    
+Taken together, emergent property inference provides a methodology for inferring and then reasoning about parameter configurations that give rise to particular emergent phenomena in theoretical models.   
+Emergent property inference is described schematically in Fig 1A.
 
-Equipped with this methodology, we investigate four models of historical and current importance to the theoretical community.  
-These models are chosen to demonstrate a range of complexity (four neuron models up to large recurrent neural networks), a range of neural system (from pattern generators to abstract cortical function), and a range of <something else interesting... scientiifc applicability, mathematical difficulty?>.
-First, to clarify the contribution of [new DSN], we investigate network syncing in a classic model of the stomatogastric ganglion \cite{marder}.  
-[new DSN] provide a novel insight into how the parameterization of this model can be adjusted with minimal (or maximal) effect to the emergent property of network syncing. 
-
-Second, SC 1-2 sentences
-Third, V1 1-2 sentences.
-Fourth, LRRNN 1-2 sentences. 
-The novel scientific insights offered by [new DSN] contextualize and clarify the previous studies exploring these models and offer a quantitative grounding for theoretical models generally going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
+Equipped with this methodology, we investigated four models of historical and current importance in theoretical neuroscience.
+These models were chosen to demonstrate generality through ranges of biological realism (conductance-based biophysics to recurrent neural networks), neural system function (pattern generatoration to abstract cognitive function), and network scale (four to infinite neurons).
+First, to clarify the contribution of emergent property inference, we investigate network syncing in a classic model of the stomatogastric ganglion (STG) \cite{gutierrez2013multiple}.  
+EPI provides a novel insight into how the parameterization of this model can be adjusted with minimal (or maximal) effect to the emergent property of network syncing.   
+Second, we display the expanded perspective afforded by EPI compared to available analytic techniques by studying input-responsivity in a four neuron-type dynamical model of primary visual cortex (V1).  
+Third, we demonstrate how the systematic application of EPI to levels of behavioral accuracy can generate experimentally testable hypotheses regarding connectivity in superior colliculus (SC).  
+Fourth, we leverage the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network (RNN) executing Bayesian inference.  
+The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models and more generally offer a quantitative grounding for theoretical models  going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
 
 Interestingly, we note that simultaneously with this work (and in preliminary versions cite cosyne and bernstein posters) is the work of [macke group].  
 While these are similar at the broadest level, firstly they do cellular and we do circuit.  
