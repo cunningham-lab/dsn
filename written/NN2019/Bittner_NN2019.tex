@@ -116,14 +116,6 @@ Thirdly though all this really does is emphasize the increased importance and ti
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
 
-%Taking a cue from this work in machine learning as well as in computational neuroscience, we develop new deep neural networks to the problem facing theoretical neuroscience.   We create and train a neural network architecture that acts as an inference engine for theoretical models.  Specifically, we consider the computation 
-
- %it's timely and it's important, we're bringing these tools together...
-
-% now our problem.  
-
-%Classically, statistical inference is a formalized way of describing the probabilistic relationship between observed data and model parameters.  However, statistical inference is impracticable in neural system models, because the likelihood functions are generally intractable.  Research in neural data analysis, which has enhanced our knowledge of a[kass], b[brown], c[paninski], d[jpcunni], e[pillow], focuses on the development of statistically inferable models for neural data sets, where such likelihood functions are tractable. Likelihood function intractability thus creates a gap between the models analyzed by theoreticians (motivated by laws of nature and physiology) and the probabilistic models developed by neural data scientists (constrained by tractability of inference) (Figure 1?).   Theoretical neuroscientists are careful about model creation, where neural data analysts are practical.  Neural data analysts are careful about inference of model parameters, where theoretical neuroscientists are practical.  This motivates the question: can we start doing \emph{careful} inference in \emph{careful} models? \\
-
 %\begin{figure}
 %\begin{center}
 %\includegraphics[scale=0.2]{figs/fig1/fig1.pdf}
@@ -131,46 +123,29 @@ Thirdly though all this really does is emphasize the increased importance and ti
 %\caption{\small A. \textit{Neural data analysis}: To identify structure in experimentally recorded neural data sets (left), neural data analysts use the modern inference engine (center) -- a collection of tools like convex optimization theory and deep learning from the machine learning literature -- to carefully execute Bayesian inference on a phenomenological generative model of the data.  Neural data analysts impose practical constraints to these phenomenological models so that Bayesian inference can be done. \textit{Theoretical Neuroscience}: Theoretical neuroscientists design systems of equations reflecting biological reality comprising a model (right, e.g. the STG) with the hopes of reproducing emergent properties of neural computation found in data (left).  In standard practice, models are evaluated by simulating them for many choices of parameters on a server (center).  To gain an understanding for how parameters of the model govern such emergent properties, theoretical neuroscientists are left to measure correlations or find other structure in the simulated activity. In this study, we introduce DSNs, which use the modern inference engine to learn distributions of model solutions given emergent properties of neural computations (yellow boxes).  B. We use DSNs to provide novel insights to popular models in theoretical neuroscience.  We examine network syncing in the STG, blah in a dynamic four neuron-type population model of primary visual cortex (V1), information routing in the superior colliculus (SC), and blah in low-rank recurrent neural networks (RNNs).}
 %\end{figure}
 
-
-%Advancements in probabilistic machine learning have led to transformative changes in industrial applications like image processing (sparse cite), speech recognition (sparse cite), text classification (sparse cite), and more.  We call the generalizable components of this groundbreaking technology (deep learning, stochastic gradient descent, GPU parallelization, etc.) the ``modern inference engine." (Point to work from Cunningham/Paninski using modern inference engine for neuroscientific phenomenological models (PfLDS, BehaveNET)?) In this study, we use the modern inference engine to bypass the perceived intractability of statistical inference in realistic models of neural systems.  (Introduce SDNs?)  We demonstrate the widespread applicability of this approach by producing novel insights into network syncing in the stomatogastric ganglion (STG), neuron-type input-responsivity in primary visual cortex (V1), rapid task switching in superior colliculus (SC), and approximate Bayesian inference in recurrent neural networks (RNNs). \\
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \section{Results}
-\subsection{Degenerate solution networks}
-\begin{itemize}
-\item To translate progress in neural data analysis to theoretical neuro, need to key steps.
-\begin{itemize}
-\item 1. Need to learn parameter distributions of biologically realistic (not just phenom.) models.
-\item 2. Must be able to condition on emergent properties of interest, not simply computationally convenient sufficient statistics of data sets.
-\end{itemize}
-\item Bayesian data scientists will say experimental data is all that matters.  
-\item \textit{Transition}: This is untrue when working in a creative, exploratory modeling setting.
-\end{itemize}
+\subsection{Emergent property inference}
+Models in theoretical neuroscience are currently designed amidst a sea of technical constraints related to feasibility of analysis.
+In such settings, we propose a shift of focus from analytic derivations to probabilistic modeling, in which the modern inference engine is used to explain how biologically realistic model parameters govern the emergent properties of computation.
+Here, we introduce emergent property inference (EPI), an inference methodology that  leverages modern machine learning to largely circumvent these considerations, opening the toolbox of Bayesian model selection and revision for theoretical models of neural computation.  
 
-\textbf{Edgy contrarian point about theorists and data}
-\begin{itemize}
-\item Common misconception: theoreticians rarely attempt to directly reproduce experimental data. 
-\item Instead, they work with (abstracted?) mathematical definitions of emergent properties.  
-\end{itemize}
+Here, we use of the emerging and transformative technology of deep probability distributions (Fig. 2A) \cite{best_image_DGM, wavenet}.
+A deep probability distribution of model parameters $z$ arises from a sequence of deterministic mappings $z = f_\theta(\omega) = f_l(...(f_2(f_1(\omega)))$ of a simple random variable $\omega \sim q_0$ (usually $\omega \sim \mathcal{N}(0, I)$), where $f_i$ are neural network layers  with weights and biases $\theta$.
+The structure of the distribution comes from the neural network, and the randomness from $\omega$.
+We use a class of neural network layers called normalizing flows \cite{rezende2015variational}, which admit tractable log densities of samples $z$.
 
-\textbf{DSNs}
-\begin{itemize}
-\item We introduce DSNs, which bridge methodology in these subfields of comp neuro.
-\item  Combine ideas from MEFNs (cite Gabe) and LFVI (cite Dustin) to learn a deep probability distribution of theoretical model parameterizations $z$ that produce the emergent properties of interest $T(x)$ (see Appendix).  
-\item Explain deep probability distributions.
-\item DSNs are deep probability distributions of theoretical model parameters, which are optimized to be maximally random (maximum entropy) while producing the specified value of emergent properties:
+In EPI, the weights and biases $\theta$ of the deep neural network are optimized to produce a deep probability distribution that produces an emergent property of interest (Fig. 2B). 
 \begin{equation}
 \begin{split}
 q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
  &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
  \end{split}
 \end{equation}
-\end{itemize}
+We define an emergent property as the emergent property statistics $T(x)$ of the model activity $x$ being constrainted on average to the emergent property values $\mu$ .  The emergent property statistics should measure the signature properties of the model activity pertinent to the computation being studied.  These emergent property statistics and values can be adaptively defined facilitating the type of exploratory analyses of models that are necessary in practice.  Additionally, the deep probability distribution is optimally randomized via the sensible criteria of entropy, although other metrics can be suitable. (ref to appendix section about VI in an EF?) This optimization for randomness allows us to identify degeneracies in the model parameterization with respect to emergent properties, and complementarily, the sensitivies in their absence.
 
 \begin{figure}
 \begin{center}
@@ -180,15 +155,9 @@ q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
 \textbf{SB Comment}: In A, we have gaussian noise being fed into the deep probability distribution, and in B, we have a choice of model and emergent property predicating what the DSN is going to do.  There should be a way to depict these ideas without creating confusion on what the input to the DSN is.
 \end{figure}
 
-\textbf{Worked example: STG}
-\begin{itemize}
-\item For example, consider the STG.
-\item Explain this STG circuit, emergent property of interest.
-\item  For our choices of STG as model and network syncing as emergent property, we use a DSN to learn a distribution on STG conductance parameters that produces network syncing.  
-\item Emphasize utility of DSN using Hessian.
-\item An equivalent conceptualization is that DSNs do Bayesian inference (see Appendix).
-\item Punchline about DSNs and transition to V1.
-\end{itemize}
+\subsection{Parametric robustness in the stomatogastric ganglion}
+For example, consider a model of the stomatogastric ganglion (STG) circuit of the crustacean, which is involved in generating multiple rhythmic muscle activation patterns for digestion (Fig. 2B, cite Gutierrez).  The two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other.  Electrical and synaptic conductance parameters $g_{\text{el}}$ and $g_{\text{synA}}$ govern the coupling of the hub neuron to the fast or slow oscillator.  There is an interesting regime of circuit activity, in which all neurons phase lock and oscillate at an intermediate synced frequency (i.e. network syncing).  For our choices of STG as model and network syncing as emergent property, we use a DSN to learn a distribution on STG conductance parameters that produces network syncing.  Once a DSN is trained, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. S1).  So long as we have a differentiable theoretical model simulator $x \sim p(x \mid z)$ and emergent property statistic calculation $T(x)$, we can train the DSN to maximize randomness of the deep probability distribution while satisfying the emergent property constraints.  An equivalent conceptualization is that DSNs execute Bayesian inference conditioned on emergent property values (see Appendix).  DSNs enable a new class of exploratory analyses of neural circuit models, which readily produce novel scientific insights.
+
 
 \subsection{Input-responsivity in a nonlinear sensory system}
 \textbf{Introduction}
