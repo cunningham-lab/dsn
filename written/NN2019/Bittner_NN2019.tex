@@ -152,19 +152,19 @@ The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, whic
 With EPI, we are able to learn the STG conductance parameters that produce network syncing (Fig. 2C). Previously, this parameter regime was only visualized from statistics of simulations. Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1).  This formal Bayesian treatment of stiffness and sloppiness in the parameter space of biologically realistic models can be informative about the realization of such values we should expect to see across crustaceans.
 
 \subsection{Input-responsivity in a nonlinear sensory system}
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory}.
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
 
+This dynamical state of this model is the firing rate of each neuron type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
+\begin{equation}
+\tau \frac{dx}{dt} = -x + [W x+ h]_+^n
+\end{equation}
+with effective connectivity weights $W$, input $h$, time constant $\tau = 20ms$, and dynamics coefficient $n = 2$.
+We can obtain an informative estimate of the effective connectivities between these neuron types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen}.
+This brings us to a key question for this model: Given these fixed parameter choices of $W$, $n$, and $\tau$, what inputs to the system $h = \begin{bmatrix} h_E & h_P & h_S & h_V \end{bmatrix}^\top$ drive each neuron type population.
 
+Analytic approaches to studying nonlinear dynamical system are profoundly more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. Yet, we are at least able to obtain via analysis the linearized response to input of the system $\frac{dx}{dh}$ at a given fixed point (see Methods).  However, this linear prediction is often misleading in such a complex, nonlinear model (Fig. 3B).
 
-
-
-\textbf{Introduction}
-\begin{itemize}
-\item E/I networks have been studied extensively. (Callback to gold standard tsodyks).
-\item They've been used to demonstrate other things (mostly Ken's group).
-\item Now people want to undertand this 4-neuron-type system (Ashok's 2016 paper).  
-\item This is how many sensory cortices e.g. barrel cortex in mice are set up, so this theory is relevant to these settings to.
-\end{itemize}
+Instead, we use emergent property inference to gain a fuller picture of the input-reponsivity of each neuron type.  1. Point out the obvious sensitivities to direct input to that neuron.  2. For dE, tight relationship between hE and hP.  3. For dP, reduction to hS is key, while dV is inconsequential, unless hS is positive.  4. More obervations.  Tie them back to panel B.
 
 \textbf{Motivation}
 \begin{itemize}
