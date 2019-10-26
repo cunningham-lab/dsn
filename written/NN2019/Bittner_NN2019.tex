@@ -204,17 +204,16 @@ In consideration of experimental measurements of the effective connectivity (via
 \end{figure}
 
 \subsection{Characterizing the sources of bias during approximate inference in RNNs}
-Recurrent neural networks are abstract, high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{sussillobarakpaper}.  The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity of a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.
+Recurrent neural networks are abstract, high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{sussillobarakpaper}.  The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity of a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  While fixed point identification and jacobian measurement yield intuitive portraits of the implemented computational algorithm, which are consistent across RNN architectures \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  To develop an understanding of the neural mechanisms at play using Bayesian model selection practices, we must work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
+One awesome theoretical work moving us in the right direction is Francesca + Srdjan's work.  These low rank geometric parameterizations allow us to link low-dimensional interpretable parameterizations of the network connectivity to the necessary dynamics for executing the behavioral task.  Here, we execute emergent property inference on a rank-1 RNN doing approximate Bayesian inference with gaussian observations with a gaussian prior (see Methods).
 
-
-They are universal approximators of dynamical systems.
-The scientific philosophy is as follows: brain produces responses during a task, train an RNN to do the same task.  Does the RNN activity look like the  brain?  Can we infer a neural mechanism from the fully analyzable RNN activity that is experimentally testable.
-Emphasize that neurons in RNN aren't really neurons in the brain, just units of a DS.  The latent factors and their evolution are really what we compare to brain activity.
-For the most part, this question of linking RNN connectivity to neural mechanism is unanswered.
-The high-dimensionality of RNNs is prohibitive to Bayesian model selection/revision practices.
-
-One awesome theoretical work moving us in the right direction is Francesca + Srdjan's work.
+Explain specifically the Bayesian inference problem.
+Emphasize the flexibility (product degeneracy curves) and multimodality in this posterior.
+Show how a clear interpretation of bias emerges. 
+1. product of Mm and Mn controls posterior mean bias.
+2. g controls chaos, but has cool, non-obvious interaction with Mm and Mn.  (Subtly say ``Hey look at all these bleeping integrals in the supplement, this is impossible to analyze mathematically")
+Show that theory is proved out in finite size realizations.  Won't worry for now about distribution replication.  Just take samples and show one has more chaos than the other, as well as with the posterior mean.
 
 \begin{figure}
 \begin{center}
