@@ -151,7 +151,7 @@ The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, whic
 
 With EPI, we are able to learn the STG conductance parameters that produce network syncing (Fig. 2C). Previously, this parameter regime was only visualized from statistics of simulations. Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1).  This formal Bayesian treatment of stiffness and sloppiness in the parameter space of biologically realistic models can be informative about the realization of such values we should expect to see across crustaceans.
 
-\subsection{Input-responsivity in a nonlinear sensory system}
+\subsection{Comprehensive input-responsivity in a nonlinear sensory system}
 Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
 
 This dynamical state of this model is the firing rate of each neuron type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
@@ -181,24 +181,21 @@ In the next section, we show how systematically conditioning on different values
 \end{figure}
 
 \subsection{Identifying interpretable mechanisms of task learning.}
-\textbf{Introduction}
-\begin{itemize}
-\item Talk about how behavioral neuroscience works.
-\item Oftentimes the mice can't even get passed like 70 percent.
-\item We should think about different operating regimes of these circuits.
-\item This can also shed light on learning.
-\end{itemize}
+Animals are examined while executing tasks or behaviors in order to investigate the underlying neural computations facilitating the action.   
+A key challenge for modeling neural circuits for these behaviors is the description of sufficient changes to biologically meaningful parameters that improve behavior, since such changes may indicate how the learning brain adapts.  
+With a data-inspired model of superior colliculus (SC), we use DSNs to identify sufficient, interpretable changes to network connectivity for learning rapid task switching, producing experimentally testable hypotheses.
 
-\textbf{SC circuit}
-\begin{itemize}
-\item Give concise, necessary background on this circuit.
-\item Ruthlessly refer to appendix
-\end{itemize}
+In a rapid task switching experiment, where rats are to respond right (R) or left (L) to the side of a light stimulus in the pro (P) task, and oppositely in the anti (A) task predicated by an auditory cue (Fig. 2A), neural recordings exhibited two population of neurons in each hemisphere of superior colliculus (SC) that simultaneously represented both task condition and motor response: the pro/contra and anti/ipsi neurons (Fig. 2B) \cite{duan2018collicular}. 
+We trained five DSNs on a 4-neuron dynamical model of SC proposed by Duan et al.,  constraining the task performance in both the pro and anti tasks to an accuracy $p$.  
+We constrained the network to emit Bernoulli responses (approximately 0.0 or 1.0 on a given trial), and have winner-take-all behavior between the pro neuron populations of each hemisphere (see Methods). 
+Altogether, these DSNs, optimized to be expansive and unbiased, learned posteriors of SC model weight matrix parameters, $z = W$, conditioned on different regimes of rapid task switching performance .
 
-\textbf{DSN}
-\begin{itemize}
-\item talk about how we get the two clean interpretable changes to the weight matrix that improve performance. 
-\end{itemize}
+A convenient property of this dynamical model is that the weight matrix always has the same Schur modes (Fig. 2C), albeit variable eigenvalues for each mode.  These Schur modes have intuitive roles with respect to processing in this task, and are accordingly named the \textit{all}, \textit{side}, \textit{task}, and \textit{diag} modes.  The degree of amplification of each processing mode in a task performance regime can be examined via $q(a_\alpha(z) \mid \mathcal{B}(p))$, where $a_\alpha(z)$, $\alpha \in \{\text{all}, \text{side}, \text{task}, \text{diag} \}$, is the eigenvalue of the matching Schur mode.   \\
+
+As learning progresses, the task mode is increasingly amplified, indicating the criticality of a distributed task representation at the time of stimulus presentation, (Fig. 2D, purple).  Stepping from task-naive 50\% networks to task-performing 60\% networks, there is a switch from amplified (pos. eigs.) to suppressed side mode (neg. eigs.) (Fig. 2D, orange).  Side mode suppression is also found in the regimes of greater accuracy, revealing the importance of side mode suppression in allowing a distributed task representation to exist.   Across all learning regimes, the diag mode is amplified (Fig. 2D, cyan), and the all mode is suppressed (Fig. 2D, black), which can be seen as signatures of Bernoulli winner-take-all networks.  We can conclude that side mode suppression allows rapid task switching, and that greater task-mode representation increases accuracy (Fig. S3).  
+
+Equipped with experimental measurements of the effective connectivity (via probability of connection and estimation of synaptic efficacy) between pro/contra and anti-ipsi neurons in rat SC at various stages of task peformance throughout learning, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of the Schur decomposition of such effective connectivity matrices.   While experimentally testable predictions are highly valuable, sometimes it is too challenging to design a biologically realistic model of a neural computation. In the next section, we show how to perform statistical inference on interpretable parameterizations of more general, abstract models of neural computation.
+
 
 \begin{figure}
 \begin{center}
@@ -207,10 +204,9 @@ In the next section, we show how systematically conditioning on different values
 \caption{A.SC task B. SC model C. schur stuff. D. DSN time}
 \end{figure}
 
-\subsection{Understanding the nature of approximate inference biases in an RNN}
-\begin{itemize}
-\item Need to think a little more.
-\end{itemize}
+\subsection{Characterizing the sources of bias during approximate inference in RNNs}
+ 
+  Common examples include the execution of 
 
 \begin{figure}
 \begin{center}
