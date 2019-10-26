@@ -103,24 +103,17 @@ Third, we demonstrate how the systematic application of EPI to levels of behavio
 Fourth, we leverage the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network (RNN) executing Bayesian inference.  
 The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models and more generally offer a quantitative grounding for theoretical models  going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
 
-Interestingly, we note that simultaneously with this work (and in preliminary versions cite cosyne and bernstein posters) is the work of [macke group].  
-While these are similar at the broadest level, firstly they do cellular and we do circuit.  
-Second technically very different.  
-Thirdly though all this really does is emphasize the increased importance and timeliness of both works.  
-
 
 
 %-------------------
 
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
-
-%\begin{figure}
-%\begin{center}
-%\includegraphics[scale=0.2]{figs/fig1/fig1.pdf}
-%\end{center}
-%\caption{\small A. \textit{Neural data analysis}: To identify structure in experimentally recorded neural data sets (left), neural data analysts use the modern inference engine (center) -- a collection of tools like convex optimization theory and deep learning from the machine learning literature -- to carefully execute Bayesian inference on a phenomenological generative model of the data.  Neural data analysts impose practical constraints to these phenomenological models so that Bayesian inference can be done. \textit{Theoretical Neuroscience}: Theoretical neuroscientists design systems of equations reflecting biological reality comprising a model (right, e.g. the STG) with the hopes of reproducing emergent properties of neural computation found in data (left).  In standard practice, models are evaluated by simulating them for many choices of parameters on a server (center).  To gain an understanding for how parameters of the model govern such emergent properties, theoretical neuroscientists are left to measure correlations or find other structure in the simulated activity. In this study, we introduce DSNs, which use the modern inference engine to learn distributions of model solutions given emergent properties of neural computations (yellow boxes).  B. We use DSNs to provide novel insights to popular models in theoretical neuroscience.  We examine network syncing in the STG, blah in a dynamic four neuron-type population model of primary visual cortex (V1), information routing in the superior colliculus (SC), and blah in low-rank recurrent neural networks (RNNs).}
-%\end{figure}
+Interestingly, we note that simultaneously with this study, work by (do we say ``Macke Group" or ``Greenberg et al. and Leukmann et al" \cite{lueckmann2019amortised, greenberg2019automatic},  has resulted in a broadly similar methodology for statistical inference in mechanistic models of neural circuits.
+While our research is similar in a broad sense, we have primarily focused on using emergent property inference for abstract systems-level theoretical modeling applications, while they have focused on doing Bayesian inference in neural circuit models at the highest degree of biological realism.
+Secondly, there are key technical differences in the approaches.  In their approach, a deep neural network is used as an amortized inference map, the parameters of which are optimized on a data set of interest.  
+While in EPI, a deep neural network is optimized to produce an emergent property adaptively defined by the theoretician. 
+This complementary methodology emphasizes the increased importance and timeliness of both works. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
