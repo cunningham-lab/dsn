@@ -162,10 +162,16 @@ with effective connectivity weights $W$, input $h$, time constant $\tau = 20ms$,
 We can obtain an informative estimate of the effective connectivities between these neuron types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen}.
 This brings us to a key question for this model: Given these fixed parameter choices of $W$, $n$, and $\tau$, what inputs to the system $h = \begin{bmatrix} h_E & h_P & h_S & h_V \end{bmatrix}^\top$ drive each neuron type population.
 
-Analytic approaches to studying nonlinear dynamical system are profoundly more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. Yet, we are at least able to obtain via analysis the linearized response to input of the system $\frac{dx}{dh}$ at a given fixed point (see Methods).  However, this linear prediction is often misleading in such a complex, nonlinear model (Fig. 3B).
+Analytic approaches to studying nonlinear dynamical system are profoundly more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
+Yet, we are at least able to obtain via analysis the linearized response to input of the system $\frac{dx}{dh}$ at a given fixed point (see Methods).  
+However, this linear prediction is often misleading in such a complex, nonlinear model (Fig. 3B). (Describe this panel with another sentence)
 
-Instead, we use emergent property inference to gain a fuller picture of the input-reponsivity of each neuron type.  1. Point out the obvious sensitivities to direct input to that neuron.  2. For dE, tight relationship between hE and hP.  3. For dP, reduction to hS is key, while dV is inconsequential, unless hS is positive.  4. More obervations.  Tie them back to panel B.  All of this insight was gained beyond what the analytic linear prediction told us (red lines that you can't see).
+Instead, we use emergent property inference to gain a fuller picture of the input-reponsivity of each neuron type.  1. Point out the obvious sensitivities to direct input to that neuron.  2. For dE, tight relationship between hE and hP.  3. For dP, reduction to hS is key, while dV is inconsequential, unless hS is positive.  4. More obervations.  Tie them back to panel B.  
 
+All of this insight was gained beyond what the analytic linear prediction told us (red lines that you can't see).  
+Here, we were able to gain an informative understanding of this model, though an exploratory analysis powered by EPI.  
+By flexibly conditioning on different emergent properties (the responses of each neuron type population), we see the comprehensive picture of how inputs to each neuron type population control this circuit.
+In the next section, we show how systematically conditioning on different values of an emergent property statistic can yield powerful conclusions about theoretical models and produce experimentally testable predictions.
 
 \begin{figure}
 \begin{center}
