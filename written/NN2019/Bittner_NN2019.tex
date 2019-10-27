@@ -211,25 +211,13 @@ In a rapid task switching experiment, where rats are to respond right (R) or lef
 We ran EPI to learn appproximate posteriors of SC model weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Methods).  The Schur decomposition of the weight matrix, a unique decomposition revealing the underlying directed structure between modes (the eigenvectors), has the same eigenvectors for all $W$s under this symmetric parameterization (Fig. 4C).
 These consistent Schur eigenvectors have intuitive roles in processing for this task, and the corresponding eigenvalues $a$ of each mode (which change according to $W$ indicate the amplification or supression of activity along that mode.  These Schur eigenvectors have intuitive roles with respect to processing in this task, and are accordingly named the \textit{all}, \textit{side}, \textit{task}, and \textit{diag} modes. 
 
-As learning progresses, the task mode is increasingly amplified, indicating the criticality of a distributed task representation at the time of stimulus presentation, (Fig. 4D, purple).  Stepping from task-naive 50\% networks to task-performing 60\% networks, there is a marked suppression of the side mode (Fig. 4D, orange).  Such side mode suppression remains in the regimes of greater accuracy, revealing its importance towards the existence of a distributed task representation.   Across all learning regimes, the diag mode is amplified (Fig. 4D, cyan), and the all mode is suppressed (Fig. 4D, black), which can be seen as signatures of Bernoulli winner-take-all networks (see Methods).  We can conclude that side mode suppression allows rapid task switching, and that greater task-mode representation increases accuracy (Fig. S3).
-
-In consideration of experimental measurements of the effective connectivity (via probability of connection and estimation of synaptic efficacy) between pro/contra and anti-ipsi neurons in rat SC at various stages of task peformance throughout learning, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of such effective connectivity matrices.   While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation. In the next section, we show how to perform statistical inference on interpretable parameterizations of more general, abstract models of neural computation.
+As learning progresses, the task mode is increasingly amplified, indicating the criticality of a distributed task representation at the time of stimulus presentation, (Fig. 4D, purple).  Stepping from task-naive 50\% networks to task-performing 60\% networks, there is a marked suppression of the side mode (Fig. 4D, orange).  Such side mode suppression remains in the regimes of greater accuracy, revealing its importance towards the existence of a distributed task representation.   Across all learning regimes, the diag mode is amplified (Fig. 4D, cyan), and the all mode is suppressed (Fig. 4D, black), which can be seen as signatures of Bernoulli winner-take-all networks (see Methods).  We can conclude that side mode suppression allows rapid task switching, and that greater task-mode representation increases accuracy (Fig. S3).  These findings motivate experimental predictions, in which we would expect the effective connectvity between these populations to change throughout learning in a way that increases the task mode and decreses the side mode eigenvalues.
 
 \subsection{Characterizing the sources of bias during approximate inference in RNNs}
-Recurrent neural networks are abstract, high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{sussillobarakpaper}.  The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity of a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  While fixed point identification and jacobian measurement yield intuitive portraits of the implemented computational algorithm, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  To develop an understanding of the neural mechanisms at play, we must work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
-
-Some theoretical work proceeding in that direction extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastroguiseppe2018linking}.
-This theory establishes a link between interpretable, geometric parameterizations of the RNN connectivity with its emerging dynamics.
-What's more, one can derive the RNN responses to parameterized inputs, allowing the design of low-rank RNNs to solve behavioral tasks studied in neuroscience like noisy integration and context-dependent decision making.
-
-Here, we execute emergent property inference on a rank-1 RNN doing approximate Bayesian inference with gaussian observations with a gaussian prior (see Methods).
-
-Explain specifically the Bayesian inference problem.
-Emphasize the flexibility (product degeneracy curves) and multimodality in this posterior.
-Show how a clear interpretation of bias emerges. 
-1. product of Mm and Mn controls posterior mean bias.
-2. g controls chaos, but has cool, non-obvious interaction with Mm and Mn.  (Subtly say ``Hey look at all these bleeping integrals in the supplement, this is impossible to analyze mathematically")
-Show that theory is proved out in finite size realizations.  Won't worry for now about distribution replication.  Just take samples and show one has more chaos than the other, as well as with the posterior mean.
+At a more abstract level, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
+Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the latent factors of the trained RNN are compared to recorded neural activity.  
+Recent theoretical work proceeding in that direction extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastroguiseppe2018linking}.
+This theory establishes a link between interpretable, geometric parameterizations of the RNN connectivity with the emerging dynamics.
 
 \begin{figure}
 \begin{center}
@@ -238,16 +226,42 @@ Show that theory is proved out in finite size realizations.  Won't worry for now
 \caption{A. RNN. B. LRRNN DSN.  C. Visualizing how the params affect the bias.  D. Finite size realizations proving out the DMFT theory.}
 \end{figure}
 
+Here, we use this theory along with EPI to characterize the mechanistic sources of bias during approximate Bayesian inference in a rank-1 RNN. The rank-1 RNN's connectivity is the sum of a random component with strength determined by $g$, and a structured component determined by vectors $m$ and $n$:
+\begin{equation}
+J = g\chi + \frac{1}{N}mn^\top
+\end{equation}
+where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$ and $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  The Bayesian inference problem for the rank-1 RNN to solve is to estimate a posterior on the mean of some gaussian distributed observations $x \sim \mathcal{N}(\mu_x, \sigma_x^2)$ given a prior of $\mu_x \sim \mathcal{N}(4, 1)$ (Fig. 5A).  When the observations take the distribution $x \sim \mathcal{N}(2, 1)$, the true posterior is $\mu_x \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$.  To execute approximate inference, we require that the rank-1 RNN produce its estimate of gaussian posterior mean and variance with its mean activity $\mu$ and amount of temporal variance $\Delta_T$, respectively (see Methods).
+
+We use EPI to learn the distribution of $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ that produces a distribution of rank-1 RNNs executing approximate Bayesian inference. 
+Intentionally, we include a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$ to get an variety of types of bias in the sampled rank-1 RNNs.  
+The posterior distribution is roughly symmetric in the $M_m$-$M_n$ plane which structure suggesting there is a degeneracy with respect to approximate Bayesian inference in the product of $M_m$ and $M_n$ (Fig. 5B).  
+The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right). 
+ Neither of these observations are obvious from the consistency equations afforded by DMFT (see Methods), the solvers of which we took gradients through to run EPI.  
+ 
+Finite-size realizations of networks from this posterior distribution indeed have the biases in their approximate inference procedures indicated by the DMFT (Fig. 5C). The network with parameter $z_1$ produces an overestimate of th  posterior mean and variance, while the network with parameter $z_2$ produces underestimates.  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S4).
+
+\subsection{EPI is powerfully general}
+range of biological realisms
+
+range of functions
+
+range of system dimensionalities
+
 \section{Discussion}
-\begin{itemize}
-\item Summarize the key methodlogical demonstrations from the results section.
-\item Talk big picture: If we know we can't analytically derive these things, we need an alternative characterization.  Simulate and examine isn't cutting it.  We need to be leveraging the modern inference engine to gain this understanding.  Bayesian probability is the framework we should use for this formalism.
-\item Expand on idea of posterior predictive checks / hypothesis testing / exploratory analyses of models themselves.  Give the whole, we don't even understand the models we're developing pitch.
-\item Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
-\item Summarize the respective strengths SNPE and DSN.
-\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
-\item A paragraph on bridging large scale recordings with theory.
-\end{itemize}
+
+ Talk big picture: If we know we can't analytically derive these things, we need an alternative characterization.  Simulate and examine isn't cutting it.  We need to be leveraging the modern inference engine to gain this understanding.  
+
+In consideration of experimental measurements of the effective connectivity (via probability of connection and estimation of synaptic efficacy) between pro/contra and anti-ipsi neurons in rat SC at various stages of task peformance throughout learning, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of such effective connectivity matrices.   While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation. In the next section, we show how to perform statistical inference on interpretable parameterizations of more general, abstract models of neural computation.
+
+The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity of a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  While fixed point identification and jacobian measurement yield intuitive portraits of the implemented computational algorithm, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  To develop an understanding of the neural mechanisms at play, we must work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
+
+Para about what we can achieve with LRRNNs and EPI.
+
+Expand on idea of posterior predictive checks / hypothesis testing / exploratory analyses of models themselves.  Give the whole, we don't even understand the models we're developing pitch.
+
+%\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
+%Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
+%A paragraph on bridging large scale recordings with theory.
 
 
 \bibliography{NN2019}
