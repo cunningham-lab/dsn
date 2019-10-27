@@ -162,21 +162,24 @@ With EPI, we are able to learn a distribution of the STG conductance parameters 
 Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1). 
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system}
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
 
-This dynamical state of this model is the firing rate of each neuron type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
+The dynamical state of this model is the firing rate of each neuron type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
-with effective connectivity weights $W$, input $h$, time constant $\tau = 20ms$, and dynamics coefficient $n = 2$.
-We can obtain an informative estimate of the effective connectivities between these neuron types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen}.
-This brings us to a key question for this model: Given these fixed parameter choices of $W$, $n$, and $\tau$, what inputs to the system $h = \begin{bmatrix} h_E & h_P & h_S & h_V \end{bmatrix}^\top$ drive each neuron type population.
+with effective connectivity weights $W$, input $h$, time constant $\tau = 20ms$, and dynamics coefficient $n = 2$.  
+We can obtain an informative estimate of the effective connectivities between these neuron types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen} (see Methods).
+This brings us to a key question for this model: Given these fixed parameter choices of $W$, $n$, and $\tau$ and a baseline input $b$, what differential inputs to the system $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}^\top$ drive each neuron type population where
+\begin{equation}
+h = b + dh
+\end{equation}
 
 Analytic approaches to studying nonlinear dynamical system are profoundly more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
-Yet, we are at least able to obtain via analysis the linearized response to input of the system $\frac{dx}{dh}$ at a given fixed point (see Methods).  
-However, this linear prediction is often misleading in such a complex, nonlinear model (Fig. 3B). (Describe this panel with another sentence)
+Yet, we are at least able to obtain via analysis the linearized response to input of the system $\frac{dx_{ss}}{dh}$ at a given fixed point (see Methods).  
+While this linear prediction is accurate for small differential inputs (Fig. 3B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for $b = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ is actually in the opposite direction for the V-population (Fig. 3B, right, green).
 
-Instead, we use emergent property inference to gain a fuller picture of the input-reponsivity of each neuron type.  1. Point out the obvious sensitivities to direct input to that neuron.  2. For dE, tight relationship between hE and hP.  3. For dP, reduction to hS is key, while dV is inconsequential, unless hS is positive.  4. More obervations.  Tie them back to panel B.  
+To obtain a more comprehensive picture of the input-reponsivity of each neuron type, we use emergent property inference .  1. Point out the obvious sensitivities to direct input to that neuron.  2. For dE, tight relationship between hE and hP.  3. For dP, reduction to hS is key, while dV is inconsequential, unless hS is positive.  4. More obervations.  Tie them back to panel B.  
 
 All of this insight was gained beyond what the analytic linear prediction told us (red lines that you can't see).  
 Here, we were able to gain an informative understanding of this model, though an exploratory analysis powered by EPI.  
@@ -185,7 +188,7 @@ In the next section, we show how systematically conditioning on different values
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.4]{figs/fig3/fig3.pdf}
+\includegraphics[scale=0.5]{figs/fig3/fig3.pdf}
 \end{center}
 \caption{A. V1 model B. Responses and why linear isnt good enough. C. DSN stuff.}
 \end{figure}
@@ -410,9 +413,13 @@ Another consideration is that the the frequency spectra of the hub neuron has se
 
 Finally, to differentiate through the maximum frequency identificiation step, we used a sum-of-powers normalization strategy: Let $\mathcal{X}_i \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_i \in \mathcal{R}^{N}$, where $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is \[u_i = \frac{|\mathcal{X}_i|^\alpha}{\sum_{k=1}^N |\mathcal{X}_i(k)|^\alpha} \].  The frequency is then calculated as $\Omega_i = u_i^\top \Phi$ with $\alpha = 100$.
 
-\subsubsection{Primary visual cortex}
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory}.  A current challenge in theoretical neuroscience is understanding the distributed role of inhibition stabilization across these subtypes.  
+Network syncing, like all other emergent properties in this work, are defined by the emergent property statistics and values.  The emergent property statistics are the first- and second-moments of the firing frequencies. The first moments are set to 0.55Hz, while the second moments are set to 0.025Hz$^2$.
+\begin{equation}
+E \begin{bmatrix} \Omega_{\text{f1}} \\ \Omega_{\text{f2}} \\ \Omega_{\text{hub}} \\ \Omega_{\text{s1}} \\ \Omega_{\text{s2}} \\ (\Omega_{\text{f1}} - 0.55)^2 \\ (\Omega_{\text{f2}} - 0.55)^2 \\ (\Omega_{\text{hub}} - 0.55)^2 \\ (\Omega_{\text{s1}} - 0.55)^2 \\ (\Omega_{\text{s2}} - 0.55)^2  \end{bmatrix} = \begin{bmatrix} 0.55 \\ 0.55 \\ 0.55 \\ 0.55 \\ 0.55 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}
+\end{equation}
+For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each.
 
+\subsubsection{Primary visual cortex} 
 The dynamics of each neural populations average rate
 $x = \begin{bmatrix} x_E \\ x_P \\ x_S \\ x_V \end{bmatrix}$
 are given by:
@@ -420,7 +427,15 @@ are given by:
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
 
-In some cases, these neuron types do not send projections to one of the other types \cite{pfeffer2013inhibition}.  Estimates of the of the probability of connection and strength of connection from the Allen institute result in an estimate of $W$ of 
+Some neuron types largely lack synaptic projections to other neuron types \cite{pfeffer2013inhibition}, and it is popular to only consider a subset of the effective connectivities \cite{litwin2016inhibitory}.
+\begin{equation}
+W = \begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\
+                                W_{PE} & W_{PP} & W_{PS} & 0 \\
+                                W_{SE} & 0 & 0 & W_{SV} \\
+                                W_{VE}z & W_{VP} &  W_{VS} &  0 \end{bmatrix}
+\end{equation}
+
+Estimates of the of the probability of connection and strength of connection from the Allen institute result in an estimate of the effective connectivity:
 \begin{equation}
 W = \begin{bmatrix} 0.0576 &  0.19728 & 0.13144 & 0 \\
                                 0.58855 & 0.30668 & 0.4285 & 0 \\
@@ -428,7 +443,13 @@ W = \begin{bmatrix} 0.0576 &  0.19728 & 0.13144 & 0 \\
                                 0.13755 & 0.0902 &  0.4004 &  0 \end{bmatrix}
 \end{equation}
 
-[Establish that we care about what inputs to this system make each neuron type respond at a fixed point.]  Sound analytic derivations can give us the linear approximation to the response, which is valuable close to the fixed point.  We can describe the dynamics of this system more generally by
+We look at how this four-dimensional nonlinear dynamical model of V1 responds to different inputs, and compare the predictions of the linear response to the approximate posteriors obtained through EPI.  The input to the system is the sum of a baseline input $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ and a differential input $dh$:
+\begin{equation}
+h = b + dh
+\end{equation}
+All simluations of this system had $T=100$ time points, a time step $dt = 5$ms, and time constant $\tau = 20$ms.  And the system was initialized to a random draw $x(0)_i \sim \mathcal{N}(1, 0.01)$.
+
+We can describe the dynamics of this system more generally by
 \begin{equation}
 \dot{x}_i = -x_i + f(u_i)
 \end{equation}
@@ -438,20 +459,19 @@ u_i = \sum_j W_{ij} x_j + h_i
 \end{equation}
 Let $F_{ij} = \gamma_i \delta(i,j)$, where $\gamma_i = f'(u_i)$.  Then, the linear response is
 \begin{equation}
-\frac{\partial x}{\partial h} = F(W\frac{\partial x}{\partial h} + I)
+\frac{\partial x_{ss}}{\partial h} = F(W\frac{\partial x_{ss}}{\partial h} + I)
 \end{equation}
 which is calculable by
 \begin{equation}
-\frac{\partial x}{\partial h} = (F^{-1} - W)^{-1}
+\frac{\partial x_{ss}}{\partial h} = (F^{-1} - W)^{-1}
 \end{equation}
 
-However, as we get further away from the fixed point, the linear approximation to the system response becomes less accurate.
-
-We compare this linear prediction to the DSN distribution of inputs resulting in a given increase in neuron type population firing rate.
-
-We measure this increase by simulating the system at $b = \begin{bmatrix} 1,1,1,1 \end{bmatrix}^\top$ and $b + dh$, for T=100 time steps using Euler intergration with $dt = 5$ms and $\tau = 20$ms, where we initialize the system to $x(0)_i \sim \mathcal{N}(1, 0.01)$.
-
-
+The emergent property we considered was the first and second moments of the change in rate $dr$ between the baseline input $h= b$ and $h = b + dh$.  We use the following notation to indicate that the emergent property statistics were set to the following values:
+\begin{equation}
+\mathcal{B}(\alpha, y) \leftrightarrow 
+E \begin{bmatrix} dr_\alpha \\ (dr_\alpha - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
+\end{equation}
+For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.
 
 \subsubsection{Superior colliculus}
 There are four total units: two in each hemisphere corresponding to the PRO/CONTRA and ANTI/IPSI populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
