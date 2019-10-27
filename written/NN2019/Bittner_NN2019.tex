@@ -216,9 +216,13 @@ As learning progresses, the task mode is increasingly amplified, indicating the 
 In consideration of experimental measurements of the effective connectivity (via probability of connection and estimation of synaptic efficacy) between pro/contra and anti-ipsi neurons in rat SC at various stages of task peformance throughout learning, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of such effective connectivity matrices.   While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation. In the next section, we show how to perform statistical inference on interpretable parameterizations of more general, abstract models of neural computation.
 
 \subsection{Characterizing the sources of bias during approximate inference in RNNs}
-Recurrent neural networks are abstract, high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{sussillobarakpaper}.  The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity of a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  While fixed point identification and jacobian measurement yield intuitive portraits of the implemented computational algorithm, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  To develop an understanding of the neural mechanisms at play using Bayesian model selection practices, we must work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
+Recurrent neural networks are abstract, high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{sussillobarakpaper}.  The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity of a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  While fixed point identification and jacobian measurement yield intuitive portraits of the implemented computational algorithm, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  To develop an understanding of the neural mechanisms at play, we must work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
-One awesome theoretical work moving us in the right direction is Francesca + Srdjan's work.  These low rank geometric parameterizations allow us to link low-dimensional interpretable parameterizations of the network connectivity to the necessary dynamics for executing the behavioral task.  Here, we execute emergent property inference on a rank-1 RNN doing approximate Bayesian inference with gaussian observations with a gaussian prior (see Methods).
+Some theoretical work proceeding in that direction extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastroguiseppe2018linking}.
+This theory establishes a link between interpretable, geometric parameterizations of the RNN connectivity with its emerging dynamics.
+What's more, one can derive the RNN responses to parameterized inputs, allowing the design of low-rank RNNs to solve behavioral tasks studied in neuroscience like noisy integration and context-dependent decision making (see EPI on such tasks, Fig. S4).
+
+Here, we execute emergent property inference on a rank-1 RNN doing approximate Bayesian inference with gaussian observations with a gaussian prior (see Methods).
 
 Explain specifically the Bayesian inference problem.
 Emphasize the flexibility (product degeneracy curves) and multimodality in this posterior.
@@ -525,6 +529,8 @@ and an input to the right or left-side depending on where the light stimulus is 
                          \end{cases} 
 \end{equation}
 The inpput parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A,rule}} = 10$,  $I_{\text{choice}} = 2$,  and $I_{\text{light}} = 1$
+
+TODO: this is probably a good place to explain the intuition behind the naming of the Schur eigenmodes.
 
 To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $V_{LP}$ at end of task) over M=500 gaussian noise draws for a given SC model parameterization $z_i$:
 
