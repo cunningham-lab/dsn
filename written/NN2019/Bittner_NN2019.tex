@@ -151,9 +151,15 @@ We define an emergent property as the emergent property statistics $T(x)$ of the
 \end{figure}
 
 \subsection{Parametric robustness in the stomatogastric ganglion}
-The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, which generates multiple rhythmic muscle activation patterns for digestion \cite{marder}. STG neuron membrane potentials are well-described by conductance-based biophysical model, and much theoretical work has been done to characterize how model parameters like conductances and synaptic strengths timescales govern the production of these rhythms \cite{more marder}.  In a 5-neuron model \cite{gutierrez2013multiple} (Fig. 2C, top-left),  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other.  Electrical and synaptic conductance parameters $g_{\text{el}}$ and $g_{\text{synA}}$ govern the coupling of the hub neuron to the fast or slow oscillator.  There is an interesting regime of circuit activity, in which all neurons phase lock and oscillate at an intermediate synced frequency (i.e. network syncing). 
+The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, which generates multiple rhythmic muscle activation patterns for digestion \cite{marder}. The evolution of STG neuron membrane potentials are well-described by a theoretical model, where dynanical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves by the biophysical conductance-based equation
+\begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
+\end{equation} 
+where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, respectively (see Methods).
+Theoretical work has been done to characterize how model parameters such as the electical conductance $g_{\text{el}}$ and synaptic strength $g_{\text{synA}}$ govern the production of these rhythms using visualization of statistics of simulated membrane potentials. \cite{gutierrez2013multiple}.  In this 5-neuron model,  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other  (Fig. 2C, top-left).   There is an interesting parameter regime of circuit activity, in which all neurons phase lock and oscillate at an intermediate synced frequency.
 
-With EPI, we are able to learn the STG conductance parameters that produce network syncing (Fig. 2C). Previously, this parameter regime was only visualized from statistics of simulations. Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1).  This formal Bayesian treatment of stiffness and sloppiness in the parameter space of biologically realistic models can be informative about the realization of such values we should expect to see across crustaceans.
+With EPI, we are able to learn the STG conductance parameters that produce the emergent property of network syncing (Fig. 2C).  
+
+Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1).  This formal Bayesian treatment of stiffness and sloppiness in the parameter space of biologically realistic models can be informative about the realization of such values we should expect to see across crustaceans.
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system}
 Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
@@ -221,7 +227,7 @@ Show that theory is proved out in finite size realizations.  Won't worry for now
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.4]{figs/fig5/fig5.pdf}
+\includegraphics[scale=0.6]{figs/fig5/fig5.pdf}
 \end{center}
 \caption{A. RNN. B. LRRNN DSN.  C. Visualizing how the params affect the bias.  D. Finite size realizations proving out the DMFT theory.}
 \end{figure}
@@ -358,25 +364,17 @@ q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \lambda^\top \left(E_{z \s
 \end{itemize}
 
 
-\subsection{Models}
-Here I'll explain all the models that we looked at.
+\subsection{Theoretical models}
+In this study, we used emerent property inferrence to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}
-Each neurons membrane potential is the solution of the following differential equation.
+Each neuron's membrane potential is the solution of the following differential equation.
 \begin{equation} C_m \frac{\partial x_m}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
 \end{equation} 
 
 The membrane potential of each neuron is a affected by the leak, Calcium, Potassium, hyperpolarization,
-electrical and synaptic currents, respectively.
-
-The capictance of the circuit is set to $C_m = 1nF$.  All of these fixed parameters at the level of
-model specification can seemlessly be set as free parameters of a DSN with simple
-modifications of this system class.
-
-Each current has an associated reversal potential: $V_{leak} = -40mV$, $V_{Ca} = 100mV$,
-$V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$. Each current is a function of the
+electrical and synaptic currents, respectively.  The capictance of the circuit is set to $C_m = 1nF$. Each current has an associated reversal potential: $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$. Each current is a function of the
 difference in membrane and reversal potential multiplied by a conductance:
-
 \begin{equation}  h_{leak} = g_{leak} (x_m - V_{leak}) 
 \end{equation} 
 \begin{equation}  h_{elec} = g_{el} (x_m^{post} - x_m^{pre})
@@ -388,64 +386,29 @@ difference in membrane and reversal potential multiplied by a conductance:
 \end{equation} 
 \begin{equation}  h_{hyp} = g_h H(x_m - V_{hyp})
 \end{equation} 
+where $g_{el}$ and $g_{syn}$ are DSN-focused parameters, $g_{leak} = 1 \times 10^{-4} \mu S$, and $g_{Ca}$, $g_{K}$, and $g_{hyp}$ have different values based on fast, intermediate (hub) or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $, and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$, $ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate: $g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
 
-where $g_{el}$ and $g_{syn}$ are DSN-focused parameters, $g_{leak} = 1 \times 10^{-4} \mu S$,
-and $g_{Ca}$, $g_{K}$, and $g_{hyp}$ have different values based on fast, intermediate (hub)
-or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $,
-and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$,
-$ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate:
-$g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
-
-The Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics
-dependent on steady-state gating varibles $M_\infty$, $N_\infty$ and $H_\infty$,
-respectively.
-
+The Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating varibles $M_\infty$, $N_\infty$ and $H_\infty$, respectively.
 \begin{equation}  M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_1}{v_2} \right) \right) \end{equation}
-
-\begin{equation}  \frac{\partial N}{\partial t} = \lambda_N (N_\infty - N) 
-\end{equation}
-
-\begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_3}{v_4} \right) \right) 
-\end{equation}
-
-\begin{equation}  \lambda_N = \phi_N \cosh \left( \frac{x_m - v_3}{2 v_4} \right) 
-\end{equation}
-
-\begin{equation}  \frac{\partial H}{\partial t} = \frac{\left( H_\infty - H \right)}{\tau_h} 
-\end{equation}
-
-\begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_m + v_5}{v_6} \right)} 
-\end{equation}
-
-\begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_m + v_7}{v_8} \right)} \right) 
-\end{equation}
-
+\begin{equation}  \frac{\partial N}{\partial t} = \lambda_N (N_\infty - N)  \end{equation}
+\begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_3}{v_4} \right) \right) \end{equation}
+\begin{equation}  \lambda_N = \phi_N \cosh \left( \frac{x_m - v_3}{2 v_4} \right) \end{equation}
+\begin{equation}  \frac{\partial H}{\partial t} = \frac{\left( H_\infty - H \right)}{\tau_h} \end{equation}
+\begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_m + v_5}{v_6} \right)} \end{equation}
+\begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_m + v_7}{v_8} \right)} \right) \end{equation}
 where $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
 $v_6 = 10.5mV$, $v_7 = -42.2mV$, $v_8 = 87.3mV$, $v_9 = 5mV$, and $v_{th} = -25mV$.
 
 Finally, there is a synaptic gating variable as well:
+\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_m}{v_9} \right)} \end{equation}
 
-\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_m}{v_9} \right)}
-\end{equation}
+In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken throught the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.
 
-In order to measure the frequency of the hub neuron, we must simulate the STG circuit for some number of time steps $T$ and time step $dt$.  We should certainly choose the greatest $dt$ that still gives us accurate circuit behavior.  I determined that to be $dt = 0.025$.  
+Our original approach to measuring frequency was to take the max of the fast Fourier transform (FFT) of the simulated time series.  There are a few key considerations here.  One is resolution in frequency space.  Each FFT entry will correspond to a signal frequency of $\frac{F_s k}{N}$, where N is the number of samples used for the FFT, $F_s = \frac{1}{dt}$, and $k \in \left[0, 1, ..., N-1\right]$.  Our resolution is improved by increasing $N$ and decreasing $dt$.  Increasing N = T-b, where $b$ is some fixed number of buffer burn-in inititaliziation samples, necessitates an increase in simulation time steps $T$, which directly increases computational cost.  Increasing $F_s$ (decreasing $dt$) increases system approximation accuracy, but requires more time steps before a full cycle is observed.  At the level of $dt = 0.025$, thousands of temporal samples were required for resolution of .01Hz.  These challenges in frequency resolution with the discrete Fourier transform motivated the use of an alternative basis of complex exponentials.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
-Our original approach to measuring frequency was to take the max of the fast Fourier transform of the simulated time series.  There are a few key considerations here.  One is resolution in frequency space.  Each FFT entry will correspond to a signal frequency of $\frac{F_s k}{N}$, where N is the number of samples used for the FFT, $F_s = \frac{1}{dt}$, and $k \in \left[0, 1, ..., N-1\right]$.  Our resolution is improved by increasing $N$ and decreasing $dt$.  Increasing N = T-b, where $b$ is some fixed number of buffer burn-in inititaliziation samples, necessitates an increase in simulation time steps $T$, which directly increases computational cost.  Increasing $F_s$ (decreasing $dt$) increases system approximation accuracy, but requires more time steps before a full cycle is observed.  At the level of $dt = 0.025$, thousands of temporal samples were required for resolution of .01Hz.  These challenges in frequency resolution with the discrete Fourier transform motivated the use of an alternative basis of complex exponentials.  Instead, I used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution.  
+Another consideration is that the the frequency spectra of the hub neuron has several peaks.  This is due to high-frequency sub-threshold activity. The maximum frequency was often not the firing frequency.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal is subsequently mean centered.  After this pre-processing, the maximum frequency in filter bank accurately reflected the firing frequency.
 
-Another consideration is that the the frequency spectra of the hub neuron has several peaks.  This is due to high-frequency sub-threshold activity.
-TODO (make this look nice in a supp fig)
-The maximum frequency was often not the firing frequency.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 40.  The signal is subsequently mean centered.  After this pre-processing, the maximum frequency in filter bank accurately reflected the firing frequency. (I'll make a nifty signals pic for this eventually).
-
-Now, it takes T = 280, b = 40, to closely replicate Figure 2 from \cite{gutierrez2013multiple}.
-
-(TODO make this look nice in the supp fig.)
-
-A key question is how to differentiate through the maximum frequency identificiation step.  I used a sum-of-powers normalization strategy:
-
-Let $x_h \in \mathcal{C}^N$ be the complex exponential filter bank dot products with the signal $x_h \in \mathcal{R}^N$.  The ``frequency identification" vector is 
-\[u = \frac{|x_h|^\alpha}{\sum_{k=1}^N |x_h(k)|^\alpha} \] and the frequencies associated with each element of $x_h$ are $f = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$.
-
-The frequency is then calculated as $f_h = u^\top f$.
+Finally, to differentiate through the maximum frequency identificiation step, we used a sum-of-powers normalization strategy: Let $\mathcal{X}_i \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_i \in \mathcal{R}^{N}$, where $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is \[u_i = \frac{|\mathcal{X}_i|^\alpha}{\sum_{k=1}^N |\mathcal{X}_i(k)|^\alpha} \].  The frequency is then calculated as $\Omega_i = u_i^\top \Phi$ with $\alpha = 100$.
 
 \subsubsection{Primary visual cortex}
 Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in V1.  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since I neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory}.  A current challenge in theoretical neuroscience is understanding the distributed role of inhibition stabilization across these subtypes.  
