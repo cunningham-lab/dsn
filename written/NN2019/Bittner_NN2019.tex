@@ -177,13 +177,16 @@ h = b + dh
 
 Analytic approaches to studying nonlinear dynamical system are profoundly more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
 Yet, we are at least able to obtain via analysis the linearized response to input of the system $\frac{dx_{ss}}{dh}$ at a given fixed point (see Methods).  
-While this linear prediction is accurate for small differential inputs (Fig. 3B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for $b = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ is actually in the opposite direction for the V-population (Fig. 3B, right, green).
+While this linear prediction is accurate for small differential inputs (Fig. 3B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B, right). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ is actually in the opposite direction for the V-population (Fig. 3B, right, green).
 
-To obtain a more comprehensive picture of the input-reponsivity of each neuron type, we use emergent property inference .  1. Point out the obvious sensitivities to direct input to that neuron.  2. For dE, tight relationship between hE and hP.  3. For dP, reduction to hS is key, while dV is inconsequential, unless hS is positive.  4. More obervations.  Tie them back to panel B.  
+To get a more comprehensive picture of the input-reponsivity of each neuron type, we use EPI to learn a distribution of inputs $dh$ that cause the rate of each neuron-type population $\alpha$ to increase by a value $y$ with some allowed variance.  We denote this emergent property of neuron-type responsivity as $\mathcal{B}(\alpha, y)$ (see Methods).  In Fig. 3C, each column visualizes the approximate posterior $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  Akin to the practice of exploratory analysis of neural data sets, in which we search for meaningful structure, we can do an exploratory analysis of this \emph{model} yielding a meaningful understanding of its operation.
 
-All of this insight was gained beyond what the analytic linear prediction told us (red lines that you can't see).  
-Here, we were able to gain an informative understanding of this model, though an exploratory analysis powered by EPI.  
-By flexibly conditioning on different emergent properties (the responses of each neuron type population), we see the comprehensive picture of how inputs to each neuron type population control this circuit.
+To visualize these four-dimensional distributions, we pairplot the two-dimensional marginal densities, which yield an insightful picture.  Primarily, there are salient sensitivities and degneracies in $dh$ with respect to neuron-type firing rate increases.  Of course, each neuron-type is sensitive to its direct input.  The E- and P-population are largely unaffected by $dh_V$, and the S-population is also largely unaffected by $dh_P$ for the rate increases examined.  Secondly, we observe a stabilization role by the P-population with respect to the E- and V-populations (the two it projects to besides itself).  This deduction is supported by the tight positive correlation between $dh_P$ and $dh_E$ for E-population increases and also between $dh_P$ and $dh_V$ for V-population increases.
+
+One may naively expect that increasing input to the E-population will increase the activity of the inhibitory populations, but this is far from the case. In actuality, EPI shows that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
+
+All of this insight was gained beyond what the analytic linear prediction told us (cyan lines that you can't see).  
+By flexibly conditioning on different emergent properties (the responses of each neuron type population), we were able to gain an informative understanding of this model.
 In the next section, we show how systematically conditioning on different values of an emergent property statistic can yield powerful conclusions about theoretical models and produce experimentally testable predictions.
 
 \begin{figure}
@@ -403,7 +406,9 @@ where $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
 $v_6 = 10.5mV$, $v_7 = -42.2mV$, $v_8 = 87.3mV$, $v_9 = 5mV$, and $v_{th} = -25mV$.
 
 Finally, there is a synaptic gating variable as well:
-\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_m}{v_9} \right)} \end{equation}
+\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_m}{v_9} \right)} 
+\end{equation}
+When the dynamic gating variables are considered, this is actually a 15-dimensional nonlinear dynamical system.
 
 In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken throught the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.
 
