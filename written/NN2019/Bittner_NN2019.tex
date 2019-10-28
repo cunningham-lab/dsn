@@ -240,12 +240,10 @@ The product of $M_m$ and $M_n$ almost completely determines the posterior mean (
  
 Finite-size realizations of networks from this posterior distribution indeed have the biases in their approximate inference procedures indicated by the DMFT (Fig. 5C). The network with parameter $z_1$ produces an overestimate of th  posterior mean and variance, while the network with parameter $z_2$ produces underestimates.  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S4).
 
-\subsection{EPI is powerfully general}
-range of biological realisms
+\subsection{EPI is a general tool for all of theoretical neuroscience}
+For decades, we have used statistical machine learning to discover meaningful structure in neural data sets.  Theoretical neuroscience has not appreciably been affected by these tools for technical reasons, but now that doesn't need to be the case.  When working in settings of close biological realism, with complex nonlinear dynamics, we show that we are still able to use modern deep learning techniques to produce a novel characterization of parameteric robustness in a model of the STG. Of course, this approach is not specific to models of serious biological realism, as we've shown application to RNNs, which are quite abstract.  We are able to condition both deterministic and stochastic models on all sorts of  emergent properties from membrane potential firing to execution of approximate inference, so long as these emergent property statistics are continuously differentiable with respect to the model parameters.
 
-range of functions
-
-range of system dimensionalities
+There are important technical considerations when considering the suitability of EPI for a particular modeling question.  First, how computationally expensive is the gradient of the emergent propety statistic with respect to the model parameters.  In the most suitable of cases, there is a simple closed form expression (ref linear 2d appendix section).  On the other end of the spectrum, you may require many a large number simulation iterations before a high quality measurement of the emergent property statistic is available as in measuring firing frequency in the STG (ref Methods section for STG).  In such cases, optimization will be expensive, and it is worth considering an alternative methodology (ref to appendix on this topic).   Secondly, the defined emergent property should not be under- or overconstrained.  If underconstrained, the posterior will will grow (in entropy) unstabily unless mapped to a finite support.  If overconstrained, and there is no support producing the emergent property, learning will fail.
 
 \section{Discussion}
 
