@@ -108,7 +108,7 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
 We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.
-%Interestingly, we note that along with this study, work by (do we say ``Macke Group" or ``Greenberg et al. and Leukmann et al" \cite{lueckmann2017flexible, greenberg2019automatic},  has resulted in a broadly similar methodology for statistical inference in mechanistic models of neural circuits.  %%% Whoa! This looks like you are saying that these guys have published this already and have been doing this since 2017, and this is our first publication.  That is way unfavorable to us.
+
 Scientifically, our work has focused primarily on systems-level theoretical models, while their focus is on lower-level cellular models.
 Secondly, there are several key technical differences in the approaches (which we articulate in Appendix ???), perhaps most notably is our focus on the emergent property -- the measurable signal of the computation in question, vs their focus on observed datasets; both certainly are worthy pursuits.
 The existence of these complementary methodologies emphasizes the increased importance and timeliness of both works. 
@@ -269,6 +269,7 @@ Expand on idea of posterior predictive checks / hypothesis testing / exploratory
 \section{Methods}
 
 \subsection{Emergent property inference (EPI)}\label{methods_EPI}
+\textbf{Draft in progress}: \\
 Emergent property inference (EPI) learn distributions of theoretical model parameters that produce emergent properties of interest.  They combine ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples are passed through a differentiable model simulator, which may lack a tractable likelihood function.
 
 Consider model parameterization $z$ and data $x$ generated from some theoretical model simulator represented as $p(x \mid z)$, which may be deterministic or stochastic.  Theoretical models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function due to the nonlinearities and dynamics. With EPI, a distribution on parameters $z$ is learned, that yields a behavior of interest $\mathcal{B}$,
@@ -291,6 +292,7 @@ q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
 TODO expand on this in terms of Fig. 2, in a way that complements 3.1.
 
 \subsubsection{Example: 2D LDS}\label{methods_2DLDS}
+\textbf{Draft in progress}: \\
 To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with 
 \[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\]
  that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\Omega$ and the growth/decay factor $d$ of the oscillating system (the real part of the complex conjugate pairs of eigenvalues).  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance 1, and oscillation frequency $\Omega$with mean 1 Hz with variance 1, the emergent property values would be set to:
@@ -330,6 +332,7 @@ When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have th
 Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S5A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted).  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
+\textbf{Draft in progress}: \\
 To optimize $q_\theta(z)$ in equation 1, the constrained optimization is performed using the augmented Lagrangian method.  The following objective is minimized:
 \begin{equation}
 L(\theta; \alpha, c) = -H(q_\theta) + \alpha^\top \delta(\theta) + \frac{c}{2}||\delta(\theta)||^2
@@ -339,6 +342,7 @@ where $\delta(\theta) = E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x
 The intention is that $c$ and $\lambda$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
 
 \subsubsection{Normalizing flows}\label{methods_NF}
+\textbf{Draft in progress}: \\
 Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the deep probability distribution.
 
 \begin{equation}
@@ -357,9 +361,11 @@ q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right
 However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizimg flows \cite{rezende2015variational} -- bijective functions with fast log determinant jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP \cite{dinh2017density}, which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast density evaluation.
 
 \subsubsection{Related work}\label{methods_related_work}
+\textbf{Draft in progress}: \\
 
 
 \subsubsection{Emergent property inference as VI in an exponential family}\label{methods_VI}
+\textbf{Draft in progress}: \\
 Exponential family for the posterior distribution.
 \begin{equation}
 \begin{split}
@@ -403,9 +409,11 @@ q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \lambda^\top \left(E_{z \s
 
 
 \subsection{Theoretical models}\label{methods_theoretical_models}
+\textbf{Draft in progress}: \\
 In this study, we used emerent property inferrence to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
+\textbf{Draft in progress}: \\
 Each neuron's membrane potential is the solution of the following differential equation.
 \begin{equation} C_m \frac{\partial x_m}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
 \end{equation} 
@@ -457,6 +465,7 @@ E \begin{bmatrix} \Omega_{\text{f1}} \\ \Omega_{\text{f2}} \\ \Omega_{\text{hub}
 For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each.
 
 \subsubsection{Primary visual cortex}\label{methods_V1}
+\textbf{Draft in progress}: \\
 The dynamics of each neural populations average rate
 $x = \begin{bmatrix} x_E \\ x_P \\ x_S \\ x_V \end{bmatrix}$
 are given by:
@@ -511,6 +520,7 @@ E \begin{bmatrix} dr_\alpha \\ (dr_\alpha - y)^2 \end{bmatrix} = \begin{bmatrix}
 For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.
 
 \subsubsection{Superior colliculus}\label{methods_SC}
+\textbf{Draft in progress}: \\
 There are four total units: two in each hemisphere corresponding to the PRO/CONTRA and ANTI/IPSI populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
 \begin{equation}
 x_i(t) =\left(\frac{1}{2}\tanh\left(\frac{u_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
@@ -603,6 +613,7 @@ In total, the emergent property of rapid task switching accuracy at level $p$ wa
 For each accuracy level $p$, we ran EPI for 10 different random seeds and selected the maximum entropy solution using an architecture of 10 planar flows with $c_0 = 2$. 
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
+\textbf{Draft in progress}: \\
 In neuroscientific studies, RNNs are often trained to execute dynamic computations via the performance of some task.  This is done with the intention of comparing the trained system's activity with that measured in the brain. There are a variety of methods used to train RNNs, and how these learning methods bias the learned connectivities (and potentially the implemented algorithm) within the broader solution space remains poorly understood. An assessment of the degenerate parameterizations of RNNs that solve a given task would be valuable for characterizing learning algorithm biases, as well as other analyses.  Recent work by (Matroguisseppe \& Ostojic, 2018) allows us to derive statistical properties of the behavior of recurrent neural networks (RNNs) given a low-rank parameterization of their connectivity.  This work builds on dynamic mean field theory (DMFT) for neural networks (Sompolinsky et al. 1988), which is exact in the limit of infinite neurons, but has been shown to yield accurate approximations for finite size networks.  We provide some brief background regarding DMFT and the recent theoretical advancements that facilitate our examination of the solution space of RNNs performing computations.
 
 Mean field theory (MFT) originated as a useful tool for physicists studying many-body problems, particularly interactions of many particles in proximity.  Deriving an equation for the probability of configurations of such systems of particles in equilibrium requires a partition function, which is essentially the normalizing constant of the probability distribution.  The partition function relies on the Hamiltonian, which is an expression for the total energy of the system.  Many body problems in physics are usually pairwise interaction models, resulting in  combinatoric growth issue in the calculation of the Hamiltonian.  A mean field assumption that some degrees of freedom of the system have independent probabilities makes approximations to the Hamilton tractable.  Importantly, when minimizing the free energy of the system (to find the equilibrium state), the mean field assumption allows the derivation of consistency equations.  For a given system parameterization, we can solve the consistency equations using an off-the-shelf nonlinear system of equations solver.
