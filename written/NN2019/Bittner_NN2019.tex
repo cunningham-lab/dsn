@@ -107,7 +107,7 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
-We note that, during our preparation and early presentation of this work \cite{bittnerCOSYNE2019, bittnerBernstein2019}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{mackeBernstein2019poster}.  We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.
+We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.
 %Interestingly, we note that along with this study, work by (do we say ``Macke Group" or ``Greenberg et al. and Leukmann et al" \cite{lueckmann2017flexible, greenberg2019automatic},  has resulted in a broadly similar methodology for statistical inference in mechanistic models of neural circuits.  %%% Whoa! This looks like you are saying that these guys have published this already and have been doing this since 2017, and this is our first publication.  That is way unfavorable to us.
 Scientifically, our work has focused primarily on systems-level theoretical models, while their focus is on lower-level cellular models.
 Secondly, there are several key technical differences in the approaches (which we articulate in Appendix ???), perhaps most notably is our focus on the emergent property -- the measurable signal of the computation in question, vs their focus on observed datasets; both certainly are worthy pursuits.
@@ -216,7 +216,7 @@ As learning progresses, the task mode is increasingly amplified, indicating the 
 \subsection{Characterizing the sources of bias during approximate inference in RNNs}
 At a more abstract level, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the latent factors of the trained RNN are compared to recorded neural activity.  
-Recent theoretical work proceeding in that direction extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastroguiseppe2018linking}.
+Recent theoretical work proceeding in that direction extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastrogiuseppe2018linking}.
 This theory establishes a link between interpretable, geometric parameterizations of the RNN connectivity with the emerging dynamics.
 
 \begin{figure}
@@ -311,7 +311,7 @@ Even though $E_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via 
 Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  The contours of the probability density can be derived from the emergent property statistics and values (Fig. S5).  In the $a_1-a_4$ plane, is a black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, a dotted black line at
 the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 1$, and a grey line at twice the standard deviation
 $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2 $ (Fig. S5A).  Here the lines denote the set of solutions at fixed behaviors, which overlay the posterior obtained through EPI.  The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
-$a_1$ and $a_4$. Intuitively, the parameters degenerate with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
+$a_1$ and $a_4$. Intuitively, the parameters equivalent with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
 
 To explain the structure in the bimodality of the DSN posterior, we can look at the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
 \begin{equation}
@@ -334,12 +334,12 @@ To optimize $q_\theta(z)$ in equation 1, the constrained optimization is perform
 \begin{equation}
 L(\theta; \alpha, c) = -H(q_\theta) + \alpha^\top \delta(\theta) + \frac{c}{2}||\delta(\theta)||^2
 \end{equation}
-where $\delta(\theta) = E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\lambda \in \mathcal{R}^m$ are the Lagrange multipliers and $c$ is the penalty coefficient.  For a fixed $(\alpha, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch. Similarly, $\alpha$ is tuned each epoch based on the constraint violations.  For the linear 2-dimensional system (Fig. S2C) optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\alpha_1 = 0$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||\delta(\theta_{k+1})||] > \gamma E[||\delta(\theta_{k})||]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the project, $\beta = 4.0$ and $\gamma = 0.25$ is used.  The other update rule is $\alpha_{k+1} = \alpha_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  Each augmented Lagrangian epoch runs for 5,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of the DSN optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy may decrease, and structural pathologies in the distribution may be introduced.
+where $\delta(\theta) = E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\alpha \in \mathcal{R}^m$ are the Lagrange multipliers and $c$ is the penalty coefficient.  For a fixed $(\alpha, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch -- a period of optimization with fixed $alpha$ and $c$ for a given number of stochastic optimziation iterations. Similarly, $\alpha$ is tuned each epoch based on the constraint violations.  For the linear 2-dimensional system (Fig. S4C) optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\alpha_1 = 0$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||\delta(\theta_{k+1})||] > \gamma E[||\delta(\theta_{k})||]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the project, $\beta = 4.0$ and $\gamma = 0.25$ is used.  The other update rule is $\alpha_{k+1} = \alpha_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 5,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of EPI optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy usually decreases, and structural pathologies in the distribution may be introduced.
 
-The intention is that $c$ and $\lambda$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before the DSN training, we otpimize the density network parameters to generate samples of an isotropic gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
+The intention is that $c$ and $\lambda$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
 
 \subsubsection{Normalizing flows}\label{methods_NF}
-Since we are optimizing parameters  $\theta$ of our deep probability distribution with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the DSN.
+Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the deep probability distribution.
 
 \begin{equation}
 H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = E_{z \sim q_\theta}\left[-\log(q_\theta(z)) \right] = E_{\omega \sim q_0}\left[-\log(q_\theta(f_\theta(\omega))) \right]
@@ -354,15 +354,12 @@ Deep probability models typically consist of several layers of fully connected n
 q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right| = q(z) \left| \det \frac{\partial f(z)}{\partial z} \right|^{-1}
 \end{equation}
 
-However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizimg flows (cite Rez and Mo) -- bijective functions with fast log determinant jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP (cite Dinh), which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast density evaluation.  For more background on normalizing flows, see (cite kobyzev).
-
+However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizimg flows \cite{rezende2015variational} -- bijective functions with fast log determinant jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP \cite{dinh2017density}, which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast density evaluation.
 
 \subsubsection{Related work}\label{methods_related_work}
 
 
-\subsubsection{DSNs as VI in an exponential family conditioned on $\mu$}\label{methods_VI}
-I'll clean this up. \\
-
+\subsubsection{Emergent property inference as VI in an exponential family}\label{methods_VI}
 Exponential family for the posterior distribution.
 \begin{equation}
 \begin{split}
@@ -713,8 +710,6 @@ Fig. S2: A. The mean Schur eigenvalues of each EPI posterior. B. For each EPI po
 \end{center}
 Fig. S3: A. EPI for rank-1 networks doing discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.
 \end{figure}
-\end{document}
-
 
 \begin{figure}
 \begin{center}
@@ -729,6 +724,8 @@ Fig. S4: A. Two-dimensional linear dynamical system model, where real entries of
 \end{center}
 Fig. S5: A. a1 and a4. B. a2 and a3.
 \end{figure}
+
 \end{document}
+
 
 
