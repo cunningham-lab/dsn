@@ -54,7 +54,7 @@ Historically, the gold standard has been to analytically derive the relationship
 However, this enterprise quickly becomes infeasible as biologically realistic constraints are included into the model, resulting often in \emph{ad hoc} approaches to understanding the relationship between model and computation.  
 We bring cutting edge machine learning -- the use of deep learning for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a logical and unbiased means to understand the implications of model parameter choices on computational properties of interest.  
-We use these techniques to produce a novel characterization of sensitivity in the stomatogastric ganglion, insights into neuron-type input-responsivity in primary visual cortex, new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in a low-rank recurrent neural network model. 
+We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  We then use it to generate insights into neuron-type input-responsivity in primary visual cortex, new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in a low-rank recurrent neural network model. 
 More generally, this work moves us away from the tradeoff of biological realism vs analytical tractability, and towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 %(150 word limit) we can ignore that for now up to about 50% \\
 
@@ -271,7 +271,7 @@ The posterior distribution was roughly symmetric in the $M_m$-$M_n$ plane which 
 The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right). 
  Neither of these observations were obvious from the consistency equations afforded by DMFT, the solvers of which we took gradients through to run EPI.  
  
-It is good practice to check that finite-size realizations of these infinite-size networks match the predictions from DMFT.  A 2,000-neuron network with parameters $z_1$ produced an overestimate of th  posterior mean and variance (mean activity (cyan), temporal variance of traces Fig. 5C, left), while a 2,000-neuron network with parameter $z_2$ produced underestimates (Fig. 5C, right).  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S4).
+It is good practice to check that finite-size realizations of these infinite-size networks match the predictions from DMFT.  A 2,000-neuron network with parameters $z_1$ produced an overestimate of th  posterior mean and variance (mean activity (cyan), temporal variance of traces Fig. 5C, left), while a 2,000-neuron network with parameter $z_2$ produced underestimates (Fig. 5C, right).  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \subsection{EPI is a general tool for all of theoretical neuroscience}
 For decades, we have used statistical machine learning to discover meaningful structure in neural data sets.  Theoretical neuroscience has not appreciably been affected by these tools for technical reasons, but now that doesn't need to be the case.  When working in settings of close biological realism, with complex nonlinear dynamics, we show that we are still able to use modern deep learning techniques to produce a novel characterization of parameteric robustness in a model of the STG. Of course, this approach is not specific to models of serious biological realism, as we've shown application to RNNs, which are quite abstract.  We are able to condition both deterministic and stochastic models on all sorts of  emergent properties from membrane potential firing to execution of approximate inference, so long as these emergent property statistics are continuously differentiable with respect to the model parameters.
@@ -345,11 +345,11 @@ g(z) = E_{x\sim p(x \mid z)}\left[T(x)\right] =  \begin{bmatrix} \text{real}(\la
 \lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}
 \end{equation}
 where $\lambda_1$ is the eigenvalue of $\frac{1}{\tau}A$ with greatest real part.
-Even though $E_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via $g(z)$, we cannot derive the distribution $q^*_\theta$, since the backward mapping from the mean parameters $\mu$ to the natural parameters $\eta$ of his exponential family is unknown \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S4B). 
+Even though $E_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via $g(z)$, we cannot derive the distribution $q^*_\theta$, since the backward mapping from the mean parameters $\mu$ to the natural parameters $\eta$ of his exponential family is unknown \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S2B). 
 
-Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  The contours of the probability density can be derived from the emergent property statistics and values (Fig. S5).  In the $a_1-a_4$ plane, is a black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, a dotted black line at
+Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  The contours of the probability density can be derived from the emergent property statistics and values (Fig. S3).  In the $a_1-a_4$ plane, is a black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, a dotted black line at
 the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 1$, and a grey line at twice the standard deviation
-$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2 $ (Fig. S5A).  Here the lines denote the set of solutions at fixed behaviors, which overlay the posterior obtained through EPI.  The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
+$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2 $ (Fig. S3A).  Here the lines denote the set of solutions at fixed behaviors, which overlay the posterior obtained through EPI.  The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
 $a_1$ and $a_4$. Intuitively, the parameters equivalent with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
 
 To explain the structure in the bimodality of the DSN posterior, we can look at the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
@@ -366,7 +366,7 @@ When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have th
 \text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3
 \end{equation}
 
-Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S5A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted).  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
+Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B).  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
 \textbf{Draft in progress}: \\
@@ -737,32 +737,32 @@ TODO explain the density network architectures used.
 %Fig. S1: A. DSN distribution of STG model parameters producing network syncing.  B. Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.
 %\end{figure}
 
-\begin{figure}
-\begin{center}
-\includegraphics[scale=0.5]{figs/figS3/figS3.pdf}
-\end{center}
-Fig. S2: A. The mean Schur eigenvalues of each EPI posterior. B. For each EPI posterior, we measured the correlation between rapid switching accuracy for a given condition and the Schur eigenvalues.
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%\includegraphics[scale=0.5]{figs/figS3/figS3.pdf}
+%\end{center}
+%Fig. S2: A. The mean Schur eigenvalues of each EPI posterior. B. For each EPI posterior, we measured the correlation between rapid switching accuracy for a given condition and the Schur eigenvalues.
+%\end{figure}
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figs/figS4/figS4.pdf}
 \end{center}
-Fig. S3: A. EPI for rank-1 networks doing discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.
+Fig. S1: A. EPI for rank-1 networks doing discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.
 \end{figure}
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figs/figS2/figS2.pdf}
 \end{center}
-Fig. S4: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented lagrangian epoch, the emergent property moments move closer to their constraints.
+Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented lagrangian epoch, the emergent property moments move closer to their constraints.
 \end{figure}
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figs/figS5/figS5.pdf}
 \end{center}
-Fig. S5: A. a1 and a4. B. a2 and a3.
+Fig. S3: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor. B. Probability contours in the $a_2-a_3$ plane can be derived from relationship to the emergent property statistic of oscillation frequency.
 \end{figure}
 
 \end{document}
