@@ -219,7 +219,6 @@ with effective connectivity weights $W$ and input $h$.  We set the time constant
 We obtained an informative estimate of the effective connectivities between these neuron types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen} (see Section \ref{methods_V1}).
 Given these fixed parameter choices of $W$, $n$, and $\tau$ and a baseline input $b$, we asked what differential inputs $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}^\top$ cause each neuron type population to increase its firing rate.
 
-Analytic approaches to studying nonlinear dynamical system are much more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
 Yet, we were at least able to derive the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
 While this linear prediction is accurate for small differential inputs (Fig. 3B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B, right). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ was actually in the opposite direction of the true response for the V-population (Fig. 3B, right, green).
 
@@ -306,34 +305,28 @@ If overconstrained, and there is no support producing the emergent property, EPI
 \textbf{Draft in progress}: \\ 
 Machine learning has played an effective, multifaceted role in neuroscientific progress. 
 Primarily, it has been used to reveal structure in large scale neural data sets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
-Secondarily, trained algorithms of varying degrees of biological similarity serve as fully-observable computational systems, that are compared to the brain \cite{ sussillo2013opening, yamins2016using}.  
-We believe theoretical neuroscientists are currently focused too heavily on this secondary role, and missing out on the primary benefit statistical machine learning can offer.  
-Specifically, deep learning for probabilistic inference has matured to a level in which it can help theorists understand their \textit{models} rather than data for which it is traditionally purposed.
+Secondarily, trained algorithms of varying degrees of biological relevace serve as fully-observable computational systems that are compared to the brain \cite{ sussillo2013opening, richards2019deep}.  
+Theoretical neuroscientists are currently focused too heavily on this secondary role, and missing out on the primary benefit statistical machine learning can offer.  
+Specifically, deep learning for probabilistic inference has matured to a level in which it can help theorists understand their \textit{models} rather than the experimental \emph{data sets} for which it is traditionally purposed.
 
-\textbf{Theoretical modeling is hard (V1)}
-\begin{itemize}
-\item Indeed modeling is hard.  Take V1 for example.
-\item Maybe say the general thing about how much harder it is to analyze nonlinear ds when going from 2->3->4 here.
-\item What we can get from analysis isn't enough.
-\item It took EPI to create the insight that produced testable hypotheses of model operation.
-\item By flexibly conditioning on different emergent properties, we performed an exploratory analysis of a \textit{model} rather than data.
-\end{itemize}
+For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1.  
+This should not be surprising, since analytic approaches to studying nonlinear dynamical systems are much more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
+We are not suggesting to forego the development and application of challenging analytic procedures.  
+However, we suggest the recognition of arduous mathematical challenges, and the alternative use of deep learning through EPI to gain the desired insights in such circumstances.
+In Section \ref{V1}, we showed that EPI was far more informative in this scenario than the predictions afforded through analysis.
+By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a data set, which generated a set of testable predictions.
 
-\textbf{Doing EPI at different levels of same stat (SC)}
-\begin{itemize}
-\item In contrast to the EPI analyses on the V1 model, we conditioned the same model of various levels of the same EP: task performance.
-\item This allowed us to identify experimentally testable predictions of changes in connectivity throughout learning.
-\end{itemize}
-%In consideration of experimental measurements of the effective connectivity (via probability of connection and estimation of synaptic efficacy) between pro/contra and anti-ipsi neurons in rat SC at various stages of task peformance throughout learning, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of such effective connectivity matrices.   While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation. In the next section, we show how to perform statistical inference on interpretable parameterizations of more general, abstract models of neural computation.
+Such exploratory analyses do not have to be so agnostic to the eventual hypothesis generation.  If one is interested in the mechanistic changes that occur in the brain throughout learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{SC}).
+This analysis identified experimentally testable predictions of changes in connectivity in SC throughout rapid task switching learning..
+Precisely, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of such effective connectivity matrices.   
 
-\textbf{RNN talk} \\
-Recurrent neural networks have become an increasingly popular tool in systems neuroscience research.  The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  While fixed point identification and jacobian measurement yield intuitive portraits of the implemented computational algorithm, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  To develop an understanding of the neural mechanisms at play, we must work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
+While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation (maybe cite RNN work on motor control and visual object recognition here?).
+Thusly, RNNs have become an increasingly popular tool in systems neuroscience research.  
+The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  
+While fixed point identification and jacobian measurement yield intuitive, consistent portraits of the implemented computational algorithm \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  
+To develop an understanding of the neural mechanisms at play, we should work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
-In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology leverages extensions of DMFT for RNNs developed by Francesca and Srdjan.  I want to say something about opening the Bayesian model selection toolkit for RNNs, but apparently I can't do that :(
-
-\textbf{What do we want to be  the punchline para of discussion?} \\
-This is what I was going for before -- 
-Expand on idea of posterior predictive checks / hypothesis testing / exploratory analyses of models themselves.  Give the whole, we don't even understand the models we're developing pitch.
+In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}.  Since this theory has been shown to enable design of low-rank RNNs for solving tasks from noisy detection to context-dependent evidence integration, it makes sense to leverage work to open the toolkit of prbabilistic model selection for RNNs.
 
 %\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
 %Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
