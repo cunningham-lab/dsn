@@ -145,9 +145,9 @@ We define an emergent property as the emergent property statistics $T(x)$ of the
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.4]{figs/fig2/fig2.pdf}
+\includegraphics[scale=0.35]{figs/fig2/fig2.pdf}
 \end{center}
-\caption{A. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$.  DSNs are the result of a constrained stochastic optimization, in which emergent properties $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and DSN samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  DSNs distributions maximize randomness through entropy. B. For a choice of model (STG) and emergent property (network syncing), a DSN learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing.}
+\caption{A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.  C. EPI solves a  a constrained stochastic optimization, in which emergent property statistics $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and parameter distribution samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  D. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$. }
 \end{figure}
 
 \subsection{Parametric robustness in the stomatogastric ganglion}
@@ -212,29 +212,29 @@ As learning progresses, the task mode is increasingly amplified, indicating the 
 \subsection{Characterizing the sources of bias during approximate inference in RNNs}
 At a more abstract level, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the latent factors of the trained RNN are compared to recorded neural activity.  
-Recent theoretical work proceeding in that direction extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastrogiuseppe2018linking}.
-This theory establishes a link between interpretable, geometric parameterizations of the RNN connectivity with the emerging dynamics.
+Recent theoretical work extends dynamic mean field theory (DMFT) from random \cite{sompolinsky1988chaos} to low rank RNNs \cite{mastrogiuseppe2018linking}.
+This theory establishes a link between interpretable, geometric parameterizations of the RNN connectivity with the emerging dynamics.  We used this theory along with EPI to characterize the mechanistic sources of bias during approximate Bayesian inference in rank-1 RNNs.
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.6]{figs/fig5/fig5.pdf}
+\includegraphics[scale=0.7]{figs/fig5/fig5.pdf}
 \end{center}
 \caption{A. RNN. B. LRRNN DSN.  C. Visualizing how the params affect the bias.  D. Finite size realizations proving out the DMFT theory.}
 \end{figure}
 
-Here, we use this theory along with EPI to characterize the mechanistic sources of bias during approximate Bayesian inference in a rank-1 RNN. The rank-1 RNN's connectivity is the sum of a random component with strength determined by $g$, and a structured component determined by vectors $m$ and $n$:
+The connectivity of a rank-1 RNN is the sum of a random component with strength determined by $g$, and a structured component determined by the outer product of vectors $m$ and $n$:
 \begin{equation}
 J = g\chi + \frac{1}{N}mn^\top
 \end{equation}
-where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$ and $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  The Bayesian inference problem for the rank-1 RNN to solve is to estimate a posterior on the mean of some gaussian distributed observations $x \sim \mathcal{N}(\mu_x, \sigma_x^2)$ given a prior of $\mu_x \sim \mathcal{N}(4, 1)$ (Fig. 5A).  When the observations take the distribution $x \sim \mathcal{N}(2, 1)$, the true posterior is $\mu_x \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$.  To execute approximate inference, we require that the rank-1 RNN produce its estimate of gaussian posterior mean and variance with its mean activity $\mu$ and amount of temporal variance $\Delta_T$, respectively (see Section \ref{methods_LRRNN})
+where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$ and $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  The rank-1 RNNs were to produce the posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$ in their mean activity $\mu$ and temporal variance $\Delta_T$ (see Section \ref{methods_LRRNN}).  The Bayesian inference problem was to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood of observations $y \sim \mathcal{N}(\mu_y, 1)$ given a single observation of $y=2$ and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 5A). The true posterior to this problem is $\mu_x \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although different parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ result in approximate inference procedures of varying biases in $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
 
-We use EPI to learn the distribution of $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ that produces a distribution of rank-1 RNNs executing approximate Bayesian inference. 
-Intentionally, we include a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$ to get an variety of types of bias in the sampled rank-1 RNNs.  
-The posterior distribution is roughly symmetric in the $M_m$-$M_n$ plane which structure suggesting there is a degeneracy with respect to approximate Bayesian inference in the product of $M_m$ and $M_n$ (Fig. 5B).  
+Weran EPI on rank-1 RNNs solving this Bayesian inference problem, whie allowing a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$.  
+This allowed us to study the mechanistic sources of bias in the sampled rank-1 RNNs executing the Bayesian inference computation inexactly.
+The posterior distribution was roughly symmetric in the $M_m$-$M_n$ plane which structure suggesting there is a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
 The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right). 
- Neither of these observations are obvious from the consistency equations afforded by DMFT, the solvers of which we took gradients through to run EPI.  
+ Neither of these observations were obvious from the consistency equations afforded by DMFT, the solvers of which we took gradients through to run EPI.  
  
-Finite-size realizations of networks from this posterior distribution indeed have the biases in their approximate inference procedures indicated by the DMFT (Fig. 5C). The network with parameter $z_1$ produces an overestimate of th  posterior mean and variance, while the network with parameter $z_2$ produces underestimates.  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S4).
+It is good practice to check that finite-size realizations of these infinite-size networks match the predictions from DMFT.  A 2,000-neuron network with parameters $z_1$ produced an overestimate of th  posterior mean and variance (mean activity (cyan), temporal variance of traces Fig. 5C, left), while a 2,000-neuron network with parameter $z_2$ produced underestimates (Fig. 5C, right).  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S4).
 
 \subsection{EPI is a general tool for all of theoretical neuroscience}
 For decades, we have used statistical machine learning to discover meaningful structure in neural data sets.  Theoretical neuroscience has not appreciably been affected by these tools for technical reasons, but now that doesn't need to be the case.  When working in settings of close biological realism, with complex nonlinear dynamics, we show that we are still able to use modern deep learning techniques to produce a novel characterization of parameteric robustness in a model of the STG. Of course, this approach is not specific to models of serious biological realism, as we've shown application to RNNs, which are quite abstract.  We are able to condition both deterministic and stochastic models on all sorts of  emergent properties from membrane potential firing to execution of approximate inference, so long as these emergent property statistics are continuously differentiable with respect to the model parameters.
@@ -614,14 +614,6 @@ For each accuracy level $p$, we ran EPI for 10 different random seeds and select
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
 \textbf{Draft in progress}: \\
-In neuroscientific studies, RNNs are often trained to execute dynamic computations via the performance of some task.  This is done with the intention of comparing the trained system's activity with that measured in the brain. There are a variety of methods used to train RNNs, and how these learning methods bias the learned connectivities (and potentially the implemented algorithm) within the broader solution space remains poorly understood. An assessment of the degenerate parameterizations of RNNs that solve a given task would be valuable for characterizing learning algorithm biases, as well as other analyses.  Recent work by (Matroguisseppe \& Ostojic, 2018) allows us to derive statistical properties of the behavior of recurrent neural networks (RNNs) given a low-rank parameterization of their connectivity.  This work builds on dynamic mean field theory (DMFT) for neural networks (Sompolinsky et al. 1988), which is exact in the limit of infinite neurons, but has been shown to yield accurate approximations for finite size networks.  We provide some brief background regarding DMFT and the recent theoretical advancements that facilitate our examination of the solution space of RNNs performing computations.
-
-Mean field theory (MFT) originated as a useful tool for physicists studying many-body problems, particularly interactions of many particles in proximity.  Deriving an equation for the probability of configurations of such systems of particles in equilibrium requires a partition function, which is essentially the normalizing constant of the probability distribution.  The partition function relies on the Hamiltonian, which is an expression for the total energy of the system.  Many body problems in physics are usually pairwise interaction models, resulting in  combinatoric growth issue in the calculation of the Hamiltonian.  A mean field assumption that some degrees of freedom of the system have independent probabilities makes approximations to the Hamilton tractable.  Importantly, when minimizing the free energy of the system (to find the equilibrium state), the mean field assumption allows the derivation of consistency equations.  For a given system parameterization, we can solve the consistency equations using an off-the-shelf nonlinear system of equations solver.
-
-Using the same modeling strategy as MFT, physicists developed dynamic mean field theory (DMFT) to describe dynamics of macroscopic spin glass properties. Later, this same formalism was used to describe dynamic properties of unstructured neural networks (Somp ’88).
-
-(TODO: Add some text here about how those equations are set up.)
-
 The network dynamics of neuron $i$'s rate $x$ evolve according to:
 \begin{equation}
 \dot{x}_i(t) = -x_i(t) + \sum_{j=1}^N J_{ij} \phi(x_j(t)) + I_i 
@@ -636,9 +628,7 @@ component is a sum of $r$ unit rank terms:
 \begin{equation}
 P_{ij} = \sum_{k=1}^r \frac{m_i^{(k)}n_j^{(k)}}{N}
 \end{equation}
-We use this theory to compute $T(x)$ when training DSNs to learn maximum entropy distributions of network connectivities that solve a task.  While the theory is currently used to design low-rank solutions to tasks, we are able to learn the full distribution of low-rank RNN parameterizations that solve a given task.
-
-(This stuff is critical for people understanding what I did and implementing it on their own, understanding what the code does.)
+We use this theory to compute $T(x)$ when running EPI.
 
 Rank-1 vectors $m$ and $n$ have elements drawn
 \[m_i \sim \mathcal{N}(M_m, \Sigma_m)\]
@@ -647,10 +637,6 @@ The current has the following statistics:
 \[I = M_I + \frac{\Sigma_{mI}}{\Sigma_m}x_1 + \frac{\Sigma_{nI}}{\Sigma_n}x_2 + \Sigma_\perp h\]
 where $x_1$, $x_2$, and $h$ are standard normal random variables.
 
-\textbf{Parameters:} \\
-\[z = \begin{bmatrix} g & M_m & M_n & M_I & \Sigma_m & \Sigma_n & \Sigma_{mI} & \Sigma_{nI} & \Sigma_\perp \end{bmatrix}^\top \]
-
-(expansion of 98 of M \& O) \\
 The $\ddot{\Delta}$ equation is broken into the equation for $\Delta_0$ and $\Delta_\infty$ by the autocorrelation dynamics assertions.
 \[\ddot{\Delta(\tau)} = - \frac{\partial V}{\partial \Delta} \]
 \[\ddot{\Delta} = \Delta - \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \tau) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace \]
@@ -685,7 +671,7 @@ Also, we assume that the energy of the system is perserved throughout the entire
 \end{split} 
 \end{equation}
 
-\textbf{Solver:}
+We can solve these equations by simulating the following Langevin dynamical system.
 \begin{equation}
 \begin{split}
 x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
@@ -696,17 +682,23 @@ x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t))
 \end{split}
 \end{equation}
+Then, the temporal variance is simply calculated via
+\begin{equation}
+\Delta_T = \Delta_0 - \Delta_\infty
+\end{equation}
 
-TODO Need to explain the warm starting and measurement of the DMFT solved coefficients here.
+TODO Need to explain the warm starting for the afficionados.
+
+TODO explain the density network architectures used.
 
 \subsection{Supplementary Figures}
 
-\begin{figure}
-\begin{center}
-\includegraphics[scale=0.7]{figs/figS1/figS1.pdf}
-\end{center}
-Fig. S1: A. DSN distribution of STG model parameters producing network syncing.  B. Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.
-\end{figure}
+%\begin{figure}
+%\begin{center}
+%\includegraphics[scale=0.7]{figs/figS1/figS1.pdf}
+%\end{center}
+%Fig. S1: A. DSN distribution of STG model parameters producing network syncing.  B. Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.
+%\end{figure}
 
 \begin{figure}
 \begin{center}
