@@ -117,6 +117,12 @@ The existence of these complementary methodologies emphasizes the increased impo
 %While in EPI, a deep neural network is optimized to produce an emergent property adaptively defined by the theoretician.
 %This 
 
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.4]{figs/fig2/fig2.pdf}
+\end{center}
+\caption{A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.  C. EPI solves a  a constrained stochastic optimization, in which emergent property statistics $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and parameter distribution samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  D. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$. }
+\end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -225,14 +231,14 @@ Identifying measurable biological changes that should occur for increased perfor
 We used EPI to learn connectivities distributions consistent with various levels of rapid task switching accuracy, resulting in a clear picture of connectivity changes which improve rapid task switching.
 Furthermore, this analysis produced experimentally testable predictions regarding effective connectivity throughout learning of this behavioral paradigm.
 
-In a rapid task switching experiment, where rats were to respond right (R) or left (L) to the side of a light stimulus in the pro (P) task, and oppositely in the anti (A) task predicated by an auditory cue (Fig. 4A), neural recordings exhibited two population of neurons in each hemisphere of superior colliculus (SC) that simultaneously represented both task condition and motor response: the pro/contra and anti/ipsi neurons \cite{duan2018collicular}.  Duan et al. propose a four-population dynamical model of superior colliculus with a Pro- and Anti-population in each hemisphere, where activities were bounded from 0-1, and a high output of the Pro population in a given hemisphere corresponds to the  contralateral response. The connectivity matrix is parameterized by the geometry of the population arrangement (Fig. 4B).
-
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.4]{figs/fig4/fig4.pdf}
 \end{center}
-\caption{A. Rapid task switching behavioral paradigm. In the Pro (Anti) condition indicated by an auditory cue, the rats are to respond to the same (opposite) side as the light stimulus that is provided after a delay to receive a reward. B. Model of superior collicullus (SC). Neurons: LP - left pro, RP - right pro, LA - left anti, RA - right anti.  Parameters: sW - self, hW - horizontal, vW -vertical, dW - diagonal weights. C. The Schur decompostion of the weight matrix. D. The marginal EPI posteriors of the Schur eigenvalues at each level of task accuracy.}
+\caption{A. Rapid task switching behavioral paradigm. In the Pro (Anti) condition indicated by an auditory cue, the rats are to respond to the same (opposite) side as the light stimulus that is provided after a delay to receive a reward. B. Model of superior collicullus (SC). Neurons: LP - left pro, RP - right pro, LA - left anti, RA - right anti.  Parameters: sW - self, hW - horizontal, vW -vertical, dW - diagonal weights. C. The Schur decompostion of the weight matrix. D. The marginal EPI distributions of the Schur eigenvalues at each level of task accuracy. E. The correlation of Schur eigenvalue with task performance.}
 \end{figure}
+
+In a rapid task switching experiment, where rats were to respond right (R) or left (L) to the side of a light stimulus in the pro (P) task, and oppositely in the anti (A) task predicated by an auditory cue (Fig. 4A), neural recordings exhibited two population of neurons in each hemisphere of superior colliculus (SC) that simultaneously represented both task condition and motor response: the pro/contra and anti/ipsi neurons \cite{duan2018collicular}.  Duan et al. propose a four-population dynamical model of superior colliculus with a Pro- and Anti-population in each hemisphere, where activities were bounded from 0-1, and a high output of the Pro population in a given hemisphere corresponds to the  contralateral response. The connectivity matrix is parameterized by the geometry of the population arrangement (Fig. 4B).
 
 We ran EPI to learn appproximate posteriors of SC model weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  The Schur decomposition of the weight matrix, a unique decomposition revealing the underlying directed structure between modes (the eigenvectors), has the same eigenvectors for all $W$s under this symmetric parameterization (Fig. 4C).
 These consistent Schur eigenvectors have intuitive roles in processing for this task, and the corresponding eigenvalues $a$ of each mode (which change according to $W$ indicate the amplification or supression of activity along that mode.  These Schur eigenvectors have intuitive roles with respect to processing in this task, and are accordingly named the \textit{all}, \textit{side}, \textit{task}, and \textit{diag} modes. 
@@ -250,7 +256,7 @@ This theory establishes a link between interpretable, geometric parameterization
 \begin{center}
 \includegraphics[scale=0.7]{figs/fig5/fig5.pdf}
 \end{center}
-\caption{A. RNN. B. LRRNN DSN.  C. Visualizing how the params affect the bias.  D. Finite size realizations proving out the DMFT theory.}
+\caption{A. We examined a rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posteior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
 \end{figure}
 
 The connectivity of a rank-1 RNN is the sum of a random component with strength determined by $g$, and a structured component determined by the outer product of vectors $m$ and $n$:
