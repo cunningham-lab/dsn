@@ -124,43 +124,72 @@ The existence of these complementary methodologies emphasizes the increased impo
 
 
 \section{Results}
-\subsection{Inferring model parameterizations using measurable emergent properties}
-Models in theoretical neuroscience are currently designed amidst a sea of technical constraints related to feasibility of analysis.
-In such settings, we propose a shift of focus from analytic derivations to probabilistic modeling, in which the modern inference engine is used to explain how biologically realistic model parameters govern the emergent properties of computation.
-Here, we introduce emergent property inference (EPI), an inference methodology that  leverages modern machine learning to largely circumvent these considerations, opening the toolbox of Bayesian model selection and revision for theoretical models of neural computation.  
 
-Here, we use of the powerful technology of deep probability distributions (Fig. 2A) \cite{best_image_DGM, wavenet}.
-A deep probability distribution of model parameters $z$ arises from a sequence of deterministic mappings $z = f_\theta(\omega) = f_l(...(f_2(f_1(\omega)))$ of a simple random variable $\omega \sim q_0$ (usually $\omega \sim \mathcal{N}(0, I)$), where $f_i$ are neural network layers  with weights and biases $\theta$.
-The structure of the distribution comes from the neural network, and the randomness from $\omega$.
-We use a class of neural network layers called normalizing flows \cite{rezende2015variational}, which admit tractable log densities of samples $z$.
+\subsection{Motivating emergent property inference of theoretical models}
 
-In EPI, the weights and biases $\theta$ of the deep neural network are optimized to produce a deep probability distribution that produces an emergent property of interest (Fig. 2B). 
-\begin{equation}
-\begin{split}
-q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
- &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
- \end{split}
-\end{equation}
-We define an emergent property as the emergent property statistics $T(x)$ of the model activity $x$ being constrainted on average to the emergent property values $\mu$ .  The emergent property statistics should measure the signature properties of the model activity pertinent to the computation being studied.  These emergent property statistics and values can be adaptively defined facilitating the type of exploratory analyses of models that are necessary in practice.  Additionally, the deep probability distribution is optimally randomized via the sensible criteria of entropy, although other metrics can be suitable. (ref to appendix section about VI in an EF?) This optimization for randomness allows us to identify degeneracies in the model parameterization with respect to emergent properties, and complementarily, the sensitivies in their absence.
+\begin{itemize}
+\item Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference. Traditionally, the theorist begins with a choice of theoretical model that, it is hypothesized, captures the computation of interest.   
+\item The second step is to define the emergent property: the measurable signature of the computation of scientific interest.  
+\item Third, shoddy phenomenology: either hunt-and-peck qualitative observations or brute force forward simulation to identify relevant pamaterizations.  
+\item Transition point: so is presented a key opportunity: condition on the emergent property to infer...  this is what EPI offers
+\item For concreteness, consider the STG circuit.  Now Fig 1 C becomes A, B, C: Steps 1 and 2 are in panel A, EPI is in panel B, out comes good science panel C {\bf which now contains that angle plot}.  Describe in brief this model and network syncing and so on.  
+\end{itemize}
 
-\begin{figure}
-\begin{center}
-\includegraphics[scale=0.35]{figs/fig2/fig2.pdf}
-\end{center}
-\caption{A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.  C. EPI solves a  a constrained stochastic optimization, in which emergent property statistics $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and parameter distribution samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  D. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$. }
-\end{figure}
+\subsection{EPI}
 
-\subsection{Parametric robustness in the stomatogastric ganglion}
-The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, which generates multiple rhythmic muscle activation patterns for digestion \cite{marder}. The evolution of STG neuron membrane potentials are well-described by a theoretical model, where dynanical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves by the biophysical conductance-based equation
-\begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
-\end{equation} 
-where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, respectively (see Methods).
-Theoretical work has been done to characterize how model parameters such as the electical conductance $g_{\text{el}}$ and synaptic conductance $g_{\text{synA}}$ govern the production of these rhythms using visualization of statistics of simulated membrane potentials. \cite{gutierrez2013multiple}.  In this 5-neuron model,  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other  (Fig. 2C, top-left).   There is an interesting parameter regime of circuit activity, in which all neurons phase lock and oscillate at an intermediate synced frequency.
+\begin{itemize}
+\item We must rationalize the above procedure into math.  First, we will define as a stochastic system of equations $\frac{\partial x}{\partial t} = g_z(x) + \epsilon$.  {\bf we need this system of equations... not just enough to say a likelihood is induced}.   This model, which is indexed by a set of parameters $z$, implies a (potentially intractable) likelihood $p(x|z)$.   This is a data generator...  
+\item make conrete in STG.
+\item Second (still tracking the 1,2,3 of the previous section) we have $E(T(x)) = \mu$... that has rationalized our EP.
+\item make conrete in STG.
+\item Third, now the key introduction.  We seek a distirbution over parameters z.  We want it to obey constraints.   This leads to the objective of Fig 1 D (currently 1B).   Explanation... explanation... the final detail of this is the choice of objective: which distribution $q_\theta$ to pick.  $H$ captures that.  Here we chose Shannon entropy as it has been well used for a variety of things [Elsayed, MEFN, Jaynes, Savin review]. but soften this to distance from ME bs.
+\item make conrete in STG.
+\item Stating such a problem is easy enough; finding a tractable and optimizable and suitably flexible family is hard.  We use norm flow deep learning blah blah blah, inducing the deep distribution Fig 1A  (is now Fig 1E.)
+\item Now we see how we get mechanically to Fig 1 C (the `scientific result' bit).
+\item Note that STG example is hard... time steps, frequencies, etc, etc.  Thus it is a good example.
+\end{itemize}
 
-With EPI, we are able to learn a distribution of the STG conductance parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$  that produce the emergent property of network syncing (Fig. 2C).  In order to execute EPI, we first select the 5-neuron STG as our theoretical model and network syncing emergent property of interest. To obtain a differentiable calculation of the firing frequencies (the emergent property statistics) given the model parameters (the conductances), we use soft-selection of a complex exponential basis applied to the simulated membrane potentials (see Methods).  This gradient is then used by the EPI algorithm to learn an approximate posterior distribution of the conductance parameters.
 
-Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1). 
 
+%
+%\subsection{Inferring model parameterizations using measurable emergent properties}
+%Models in theoretical neuroscience are currently designed amidst a sea of technical constraints related to feasibility of analysis.
+%In such settings, we propose a shift of focus from analytic derivations to probabilistic modeling, in which the modern inference engine is used to explain how biologically realistic model parameters govern the emergent properties of computation.
+%Here, we introduce emergent property inference (EPI), an inference methodology that  leverages modern machine learning to largely circumvent these considerations, opening the toolbox of Bayesian model selection and revision for theoretical models of neural computation.  
+%
+%Here, we use of the powerful technology of deep probability distributions (Fig. 2A) \cite{best_image_DGM, wavenet}.
+%A deep probability distribution of model parameters $z$ arises from a sequence of deterministic mappings $z = f_\theta(\omega) = f_l(...(f_2(f_1(\omega)))$ of a simple random variable $\omega \sim q_0$ (usually $\omega \sim \mathcal{N}(0, I)$), where $f_i$ are neural network layers  with weights and biases $\theta$.
+%The structure of the distribution comes from the neural network, and the randomness from $\omega$.
+%We use a class of neural network layers called normalizing flows \cite{rezende2015variational}, which admit tractable log densities of samples $z$.
+%
+%In EPI, the weights and biases $\theta$ of the deep neural network are optimized to produce a deep probability distribution that produces an emergent property of interest (Fig. 2B). 
+%\begin{equation}
+%\begin{split}
+%q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
+% &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
+% \end{split}
+%\end{equation}
+%We define an emergent property as the emergent property statistics $T(x)$ of the model activity $x$ being constrainted on average to the emergent property values $\mu$ .  The emergent property statistics should measure the signature properties of the model activity pertinent to the computation being studied.  These emergent property statistics and values can be adaptively defined facilitating the type of exploratory analyses of models that are necessary in practice.  Additionally, the deep probability distribution is optimally randomized via the sensible criteria of entropy, although other metrics can be suitable. (ref to appendix section about VI in an EF?) This optimization for randomness allows us to identify degeneracies in the model parameterization with respect to emergent properties, and complementarily, the sensitivies in their absence.
+%
+%\begin{figure}
+%\begin{center}
+%\includegraphics[scale=0.4]{figs/fig2/fig2.pdf}
+%\end{center}
+%\caption{A. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$.  DSNs are the result of a constrained stochastic optimization, in which emergent properties $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and DSN samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  DSNs distributions maximize randomness through entropy. B. For a choice of model (STG) and emergent property (network syncing), a DSN learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing.}
+%\end{figure}
+%
+%\subsection{Parametric robustness in the stomatogastric ganglion}
+%The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, which generates multiple rhythmic muscle activation patterns for digestion \cite{marder}. The evolution of STG neuron membrane potentials are well-described by a theoretical model, where dynanical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves by the biophysical conductance-based equation
+%\begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
+%\end{equation} 
+%where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, respectively (see Methods).
+%Theoretical work has been done to characterize how model parameters such as the electical conductance $g_{\text{el}}$ and synaptic conductance $g_{\text{synA}}$ govern the production of these rhythms using visualization of statistics of simulated membrane potentials. \cite{gutierrez2013multiple}.  In this 5-neuron model,  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other  (Fig. 2C, top-left).   There is an interesting parameter regime of circuit activity, in which all neurons phase lock and oscillate at an intermediate synced frequency.
+%
+%With EPI, we are able to learn a distribution of the STG conductance parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$  that produce the emergent property of network syncing (Fig. 2C).  In order to execute EPI, we first select the 5-neuron STG as our theoretical model and network syncing emergent property of interest. To obtain a differentiable calculation of the firing frequencies (the emergent property statistics) given the model parameters (the conductances), we use soft-selection of a complex exponential basis applied to the simulated membrane potentials (see Methods).  This gradient is then used by the EPI algorithm to learn an approximate posterior distribution of the conductance parameters.
+%
+%Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1). 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system}
 Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
 
@@ -189,6 +218,7 @@ To visualize these four-dimensional distributions, we pairploted the two-dimensi
 
 All of this insight was gained beyond what the analytic linear prediction told us (cyan lines that you can't see).  These analyses can generate experimentally testable hypotheses, that if confirmed, can be used to build a theory of V1 circuit operation.  For example, one could test the P-population's role in stabilization by optogenetically stimulating the E- and V-populations and measuring the P-population response. Additionally, one would predict that at some point, the V-population's response will flip sign as input to the E-population increases.
 
+%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Identifying neural mechanisms of behavioral learning.} 
 A key challenge for theorists modeling neural circuits underlying cognitive behavior is the description of sufficient changes to biologically meaningful parameters that result in improved behavoir.
 Identifying measurable biological changes that should occur for increased performance is critical for neuroscience, since they may indicate how the learning brain adapts.  
@@ -209,6 +239,7 @@ These consistent Schur eigenvectors have intuitive roles in processing for this 
 
 As learning progresses, the task mode is increasingly amplified, indicating the criticality of a distributed task representation at the time of stimulus presentation, (Fig. 4D, purple).  Stepping from task-naive 50\% networks to task-performing 60\% networks, there is a marked suppression of the side mode (Fig. 4D, orange).  Such side mode suppression remains in the regimes of greater accuracy, revealing its importance towards the existence of a distributed task representation.   Across all learning regimes, the diag mode is amplified (Fig. 4D, cyan), and the all mode is suppressed (Fig. 4D, black), which can be seen as signatures of Bernoulli winner-take-all networks.  We can conclude that side mode suppression allows rapid task switching, and that greater task-mode representation increases accuracy (Fig. S3).  These findings motivate experimental predictions, in which we would expect the effective connectvity between these populations to change throughout learning in a way that increases the task mode and decreses the side mode eigenvalues.
 
+%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing the sources of bias during approximate inference in RNNs}
 At a more abstract level, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the latent factors of the trained RNN are compared to recorded neural activity.  
@@ -729,6 +760,4 @@ Fig. S5: A. a1 and a4. B. a2 and a3.
 \end{figure}
 
 \end{document}
-
-
 
