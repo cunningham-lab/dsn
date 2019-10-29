@@ -273,10 +273,29 @@ The product of $M_m$ and $M_n$ almost completely determines the posterior mean (
  
 It is good practice to check that finite-size realizations of these infinite-size networks match the predictions from DMFT.  A 2,000-neuron network with parameters $z_1$ produced an overestimate of th  posterior mean and variance (mean activity (cyan), temporal variance of traces Fig. 5C, left), while a 2,000-neuron network with parameter $z_2$ produced underestimates (Fig. 5C, right).  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally executed on other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
-\subsection{EPI is a general tool for all of theoretical neuroscience}
-There are many considerations when assessing the feasibility of classical statistical inference in neuroscience such as conjugacy, scalability to large data-sets, and likelihood tractability. EPI is no exception, and we emphasize that it is practicable in most settings in theoretical neuroscience.  When working with models of close biological realism with complex nonlinear dynamics, EPI is capable of learning distributions of model parameters producing low-level signatures of computation as we have shown through our analysis of the STG. This approach is not specific to models of such biological realism, as we have its utility studying RNNs, which are quite abstract.  We are able to condition both deterministic and stochastic models on all sorts of  emergent properties from membrane potential firing to execution of approximate inference, so long as these emergent property statistics are continuously differentiable with respect to the model parameters.
+\subsection{EPI is a general tool for all theoretical neuroscience}
+There are many considerations when assessing the feasibility of classical statistical inference in neuroscience such as conjugacy, likelihood tractability, scalability to large data-sets. 
+EPI is no exception, but we emphasize that it is practicable in most settings of theoretical neuroscience.  
+Models of close biological fidelity often have complex nonlinear differential equations, making traditional statistical inference intractable. 
+In contrast, EPI is capable of learning distributions of such model parameters producing low-level signatures of computation as we have shown through our analysis of the STG. 
+This approach is not specific to models of such biological realism, as we have demonstrated its utility studying abstract models like RNNs.  
+We are able to condition both deterministic and stochastic models on all sorts of  emergent properties from membrane potential firing to execution of approximate inference.  
+In sum, EPI is feasible when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case.  
+This gradient does not even need to be derived by hand, since we use automatic differentiation tools available in tensorflow\cite{abadi2016tensorflow} and other similar software packages.
 
-There are important technical considerations when considering the suitability of EPI for a particular modeling question.  First, one must consider how computationally expensive the gradient of the emergent propety statistic is with respect to the model parameters.  In the most suitable of cases, there is a simple, closed form expression (e.g. Section \ref{methods_2DLDS}).  On the other end of the spectrum, you may require many a large number simulation iterations before a high quality measurement of the emergent property statistic is available as in measuring firing frequency in the STG (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive, and it is worth considering an alternative methodology (see Section \ref{methods_related_work}).   Secondly, the defined emergent property should always be appropriately conditioned.  Of course, learning can not occur when under- or overconstrained.  When underconstrained, the posterior grows (in entropy) unstabily unless mapped to a finite support.  If overconstrained, and there is no support producing the emergent property, EPI optimization will never converge.
+In this study, we have focused on applying EPI to low dimensional parameter spaces of models with low dimensional dynamical state.
+These choices were made to present the reader with a series of  interpretable conclusions, which is more challenging in high dimensional spaces.
+In fact, EPI scales well to high dimensional parameter spaces, as the underlying technology has produced state-of-the-art performance on texture generation \cite{loaiza2017maximum}.
+However, increasing the dimensionality of the dynamical state of the model makes optimization more expensive, and there is a practical limit there as with any machine learning approach.
+For systems with high dimensional state, we recommend using theoretical approaches (e.g. \cite{mastrogiuseppe2018linking}) to reason about reduced parameterizations of such high-dimensional (even infinite dimensional) systems.
+
+There are additional technical considerations when assessing the suitability of EPI for a particular modeling question.  
+First, one should consider how computationally expensive the gradient of the emergent propety statistic is with respect to the model parameters. 
+In the best circumstance, there is a simple, closed form expression (e.g. Section \ref{methods_2DLDS}) for the emergent property statistic given the model parameters.  
+On the other end of the spectrum, you may require a large number of simulation iterations before a high quality measurement of the emergent property statistic is available  (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive, and it is worth considering an alternative methodology (see Section \ref{methods_related_work}).   Secondly, the defined emergent property should always be appropriately conditioned.  
+Of course, learning can not occur when under- or overconstrained.  
+When underconstrained, the posterior grows (in entropy) unstabily unless mapped to a finite support.  
+If overconstrained, and there is no support producing the emergent property, EPI optimization will never converge.
 
 \section{Discussion}
 \textbf{Draft in progress}: \\ 
@@ -389,6 +408,8 @@ When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have th
 \end{equation}
 
 Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B).  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
+
+For futher validation of the underlying technology, see recovery of ground truth distributions with maximum entorpy flow networks \cite{loaiza2017maximum}.
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
 \textbf{Draft in progress}: \\
