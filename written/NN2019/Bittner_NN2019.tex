@@ -73,12 +73,12 @@ This fact creates an unfavorable tradeoff for the theorist.  On the one hand, on
 % now transition to ML...
 Of course, this same tradeoff has been confronted in many scientific fields characterized by the need to do inference in complex models.  
 Notably, the machine learning community has made remarkable progress in recent years, via the use of deep neural networks as a powerful inference engine: a flexible function family that can map observed phenomena (in this case the measurable signal of some computation) back to probability distributions quantifying the likely parameter configurations.  
-One celebrated example of this approach from the machine learning community, from which we draw key inspiration for this work, is the variational autoencoder \cite{kingma2013auto, rezende2015variational, not this one; cite the rezende and mohamed vae one from 2013}, which uses a deep neural network to induce an (approximate) posterior distribution on hidden variables in a latent variable model, given data. 
+One celebrated example of this approach from the machine learning community, from which we draw key inspiration for this work, is the variational autoencoder \cite{kingma2013auto, rezende2014stochastic}, which uses a deep neural network to induce an (approximate) posterior distribution on hidden variables in a latent variable model, given data. 
 Indeed, these tools have been used to great success in neuroscience as well, in particular for interrogating parameters (sometimes treated as hidden states) in models of both cortical population activity \cite{gao2016linear, zhao2017recursive, barello2018sparse, pandarinath2018inferring} and animal behavior \cite{wiltschko2015mapping, johnson2016composing, batty2019behavenet}. 
 These works have used deep neural networks to expand the expressivity and accuracy of statistical models of neural data \cite{paninski2018neural}. 
 
 However, these inference tools have not significantly influenced the study of theoretical neuroscience models, for at least three reasons.  
-First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools (for example mean field blah blah \cite{???}) typically produce a narrow set of insights into these models.  
+First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools (for example mean field variational inference) typically produce a narrow set of insights into these models \cite{blei2017variational}.  
 Indeed, only in the last few years has the deep learning toolkit expanded to a point of relevance to this class of problem.
 Second, the object of interest from a theoretical model is not typically data itself, but rather a qualitative phenomenon -- inspection of model behavior, or better, a measurable signature of some computation -- an \emph{emergent property} of the model.  
 Third, because theoreticians work carefully to construct a model that has biological relevance, such a model as a result often does not fit cleanly into the framing of a statistical model.  
@@ -110,7 +110,7 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.
 
 Scientifically, our work has focused primarily on systems-level theoretical models, while their focus is on lower-level cellular models.
-Secondly, there are several key technical differences in the approaches (which we articulate in Appendix ???), perhaps most notably is our focus on the emergent property -- the measurable signal of the computation in question, vs their focus on observed datasets; both certainly are worthy pursuits.
+Secondly, there are several key technical differences in the approaches (see Section \ref{methods_related_work}) perhaps most notably is our focus on the emergent property -- the measurable signal of the computation in question, vs their focus on observed datasets; both certainly are worthy pursuits.
 The existence of these complementary methodologies emphasizes the increased importance and timeliness of both works. 
 
 %  In their approach, a deep neural network is used as an amortized inference map, the parameters of which are optimized on a data set of interest.  
