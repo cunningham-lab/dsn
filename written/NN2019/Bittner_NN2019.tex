@@ -52,7 +52,7 @@ At its best, such a model will give rise to an experimentally observed phenomeno
 The operation of these circuits, like all models, critically depends on the choices of model parameters.  
 Historically, the gold standard has been to analytically derive the relationship between model parameters and computational properties.  
 However, this enterprise quickly becomes infeasible as biologically realistic constraints are included into the model, often resulting in \emph{ad hoc} approaches to understanding the relationship between model and computation.  
-We bring cutting edge machine learning -- the use of deep learning for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
+We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a logical and unbiased means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  We then use it to generate insights into neuron-type input-responsivity in primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in low-rank recurrent neural networks. 
 More generally, this work moves us away from the tradeoff of biological realism vs analytical tractability, and towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
@@ -139,28 +139,43 @@ To continue our running STG example, one such emergent property is the phenomeno
 Third, qualtitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done to describe different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for modern machine learning.  We can precisely quantify the emergent property as a statistical feature of the model, and we can infer a probability distribution over parameter configurations that produce this emergent property. 
 
-Before presenting technical details (in the following section), let us understand emergent property inference (EPI) schematically:  the black box in Figure 1A takes, as input, the model and the specified emergent property, and produces as output the parameter distribution shown in Figure 1B.  
+Before presenting technical details (in the following section), let us understand emergent property inference schematically:  the black box in Figure 1A takes, as input, the model and the specified emergent property, and produces as output the parameter distribution shown in Figure 1B.  
 This distribution -- represented for clarity as samples from the distribution -- is then a scientifically meaningful and mathematically tractable object.  
 It conveys parameter regions critical to the emergent property, directions in parameter space that will be invariant (or not) to that property, and more.  
 In the STG model, this distribution can be specifically queried to determine the prototypical parameter configuration for network syncing (the mode; Figure 1B star), and then how quickly network syncing will decay based on changes away that mode (Figure 1B, inset).  
 Of course, validation of this distribution is critical: we can also plot a metric of network syncing that is independent of this inference process, to show that this EPI distribution indeed captures that structure (Figure 1B, contour lines).
 Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last analysis step of the practice of theoretical neuroscience.
 
-\subsection{Technical details of emergent property inference}
+\subsection{A deep generative modeling approach to emergent property inference}
 
-\begin{itemize}
-\item We must rationalize the above procedure into math.  First, we will define as a stochastic system of equations $\frac{\partial x}{\partial t} = g_z(x) + \epsilon$.  {\bf we need this system of equations... not just enough to say a likelihood is induced}.   This model, which is indexed by a set of parameters $z$, implies a (potentially intractable) likelihood $p(x|z)$.   This is a data generator...  
-\item make conrete in STG.
-\item Second (still tracking the 1,2,3 of the previous section) we have $E(T(x)) = \mu$... that has rationalized our EP.
-\item make conrete in STG.
-\item Third, now the key introduction.  We seek a distirbution over parameters z.  We want it to obey constraints.   This leads to the objective of Fig 1 D (currently 1B).   Explanation... explanation... the final detail of this is the choice of objective: which distribution $q_\theta$ to pick.  $H$ captures that.  Here we chose Shannon entropy as it has been well used for a variety of things [Elsayed, MEFN, Jaynes, Savin review]. but soften this to distance from ME bs.
-\item make conrete in STG.
-\item Stating such a problem is easy enough; finding a tractable and optimizable and suitably flexible family is hard.  We use norm flow deep learning blah blah blah, inducing the deep distribution Fig 1A  (is now Fig 1E.)
-\item Now we see how we get mechanically to Fig 1 C (the `scientific result' bit).
-\item Note that STG example is hard... time steps, frequencies, etc, etc.  Thus it is a good example.
-\end{itemize}
+Emergent property inference (EPI) systematizes the three-step procedure of the previous section.
+First, we consider the model as a coupled set of differential (and potentially stochastic) equations.  In the running STG example the dynamical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
+\begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
+\end{equation} 
+where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $\theta$ (see Methods) [THIS NEEDS TO BE CLARIFIED].
+Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency (Figure 1A bottom) [REPETITIVE].  
+It is worth noting that theoretical work has characterized how model parameters such as the electrical conductance $g_{\text{el}}$ and synaptic conductance $g_{\text{synA}}$ govern the production of STG rhythms \cite{gutierrez2013multiple}.  
+In this 5-neuron model,  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other  (Figure 1A).   
+Quantifying this phenomenon is straightforward: we define [XXXXXXXXX statistics, values, and we insist on these being the measurable signatures of the EP... End up with a constraint function $E(T(X)) = \mu$ ....XXXXXXXXXXXXXX].
+Third, having rationalized the above components, we can introduce deep generative modeling for performing emergent property inference.
+We seek a distribution over parameter configurations $z$, and we insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation 1.  
+Thus results the following optimization program: 
+ \begin{equation}
+\begin{split}
+&\argmax_{q_\theta \in \mathcal{Q}} H(q_\theta(z)) \\
+ &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
+\end{split}
+\end{equation}
 
+The purpose of each element in this program is detailed in Figure 1D.  
+Stating such a problem is easy enough; finding a tractable and suitably flexible family of probability distributions ($\mathcal{Q}$) is hard.  
+We use norm flow deep learning [DETAIL HERE], inducing the deep distribution Fig 1E.
+Finally, we recognize that many distributions will satisfy the emergent property, so we require a normative principle to select amongst them.  
+This principle is captured in Equation [XXX] by the primal objective $H$.  
+Here we chose Shannon entropy as it has been well used for a variety of things [Elsayed, MEFN, Jaynes, Savin review], but the EPI methods (not the results) offered here are largely unaffected by this choice.
 
+[A few sentences about ... we run optimization... learning.... and then what results is the EPI distribution voila. ]
+Armed with this distribution, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
 
 %
 %\subsection{Inferring model parameterizations using measurable emergent properties}
@@ -202,7 +217,7 @@ Taken together, bringing careful inference to theoretical models offers deeper i
 %
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system}
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
+First, dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
 
 \begin{figure}
 \begin{center}
