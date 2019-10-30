@@ -116,7 +116,7 @@ The existence of these complementary methodologies emphasizes the increased impo
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.4]{figs/fig2/fig2.pdf}
+\includegraphics[scale=0.38]{figures/fig1/fig1.pdf}
 \end{center}
 \caption{A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.  C. EPI solves a  a constrained stochastic optimization, in which emergent property statistics $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and parameter distribution samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  D. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$. }
 \end{figure}
@@ -206,7 +206,7 @@ Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figs/fig3/fig3.pdf}
+\includegraphics[scale=0.5]{figures/fig2/fig2.pdf}
 \end{center}
 \caption{A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron types largely do not form synaptic projections to others Excitatory and inhibitory projections filled and unfilled, respectively.  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on $dh$ conditioned on neuron type $\alpha$ rate increases of $y$: $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}).}
 \end{figure}
@@ -237,7 +237,7 @@ Furthermore, this analysis produced experimentally testable predictions regardin
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.4]{figs/fig4/fig4.pdf}
+\includegraphics[scale=0.4]{figures/fig3/fig3.pdf}
 \end{center}
 \caption{A. Rapid task switching behavioral paradigm. In the Pro (Anti) condition indicated by an auditory cue, the rats are to respond to the same (opposite) side as the light stimulus that is provided after a delay to receive a reward. B. Model of superior collicullus (SC). Neurons: LP - left pro, RP - right pro, LA - left anti, RA - right anti.  Parameters: sW - self, hW - horizontal, vW -vertical, dW - diagonal weights. C. The Schur decompostion of the weight matrix. D. The marginal EPI distributions of the Schur eigenvalues at each level of task accuracy. E. The correlation of Schur eigenvalue with task performance.}
 \end{figure}
@@ -258,7 +258,7 @@ This theory establishes a link between interpretable, geometric parameterization
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.7]{figs/fig5/fig5.pdf}
+\includegraphics[scale=0.7]{figures/fig4/fig4.pdf}
 \end{center}
 \caption{A. We examined a rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posteior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
 \end{figure}
@@ -773,37 +773,23 @@ TODO explain the density network architectures used.
 
 \subsection{Supplementary Figures}
 
-%\begin{figure}
-%\begin{center}
-%\includegraphics[scale=0.7]{figs/figS1/figS1.pdf}
-%\end{center}
-%Fig. S1: A. DSN distribution of STG model parameters producing network syncing.  B. Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.
-%\end{figure}
-
-%\begin{figure}
-%\begin{center}
-%\includegraphics[scale=0.5]{figs/figS3/figS3.pdf}
-%\end{center}
-%Fig. S2: A. The mean Schur eigenvalues of each EPI posterior. B. For each EPI posterior, we measured the correlation between rapid switching accuracy for a given condition and the Schur eigenvalues.
-%\end{figure}
-
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figs/figS4/figS4.pdf}
+\includegraphics[scale=0.5]{figures/figS1/figS1.pdf}
 \end{center}
 Fig. S1: A. EPI for rank-1 networks doing discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.
 \end{figure}
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figs/figS2/figS2.pdf}
+\includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
 \end{center}
 Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented lagrangian epoch, the emergent property moments move closer to their constraints.
 \end{figure}
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figs/figS5/figS5.pdf}
+\includegraphics[scale=0.5]{figures/figS3/figS3.pdf}
 \end{center}
 Fig. S3: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor. B. Probability contours in the $a_2-a_3$ plane can be derived from relationship to the emergent property statistic of oscillation frequency.
 \end{figure}
