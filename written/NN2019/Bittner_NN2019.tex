@@ -131,14 +131,15 @@ The existence of these complementary methodologies emphasizes the increased impo
 \subsection{Motivating emergent property inference of theoretical models}
 
 Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference.  
-First, the theorist begins with a choice of model that, it is hypothesized, captures the computation of interest. 
- To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder}.  
+First, the theorist designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
+ To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{prinz2004similar}.  
  A standard model for the STG is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
 Second, the theorist defines the emergent property, the measurable signal of scientific interest.  
-To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the activity of the hub neuron $x_h$ matches that of the two other populations ($x_{f1},x_{f2}$ and $x_{s1},x_{s2}$).  This emergent property is shown in Figure 1A.
-Third, qualtitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, imprecise analysis or perhaps a brute force sweep of parameters is done to describe different parameter configurations that lead to the emergent property.  
+To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the activity of the hub neuron $x_h$ matches that of the fast ($x_{f1},x_{f2}$) and slow ($x_{s1},x_{s2}$) populations.  This emergent property is shown in Figure 1A.
+Third, qualtitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done to describe different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for modern machine learning.  We can precisely quantify the emergent property as a statistical feature of the model, and we can infer a probability distribution over parameter configurations that produce this emergent property. 
-Before presenting technical details (in the following section), let us understand emergent property inference (EPI) schematically:  the black box in Figure 1A takes, as input, the model and the specified emergent property, and produces, as output the parameter distribution shown in Figure 1B.  
+
+Before presenting technical details (in the following section), let us understand emergent property inference (EPI) schematically:  the black box in Figure 1A takes, as input, the model and the specified emergent property, and produces as output the parameter distribution shown in Figure 1B.  
 This distribution -- represented for clarity as samples from the distribution -- is then a scientifically meaningful and mathematically tractable object.  
 It conveys parameter regions critical to the emergent property, directions in parameter space that will be invariant (or not) to that property, and more.  
 In the STG model, this distribution can be specifically queried to determine the prototypical parameter configuration for network syncing (the mode; Figure 1B star), and then how quickly network syncing will decay based on changes away that mode (Figure 1B, inset).  
