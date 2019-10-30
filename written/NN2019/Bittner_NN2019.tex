@@ -91,13 +91,12 @@ Second, we quantify the notion of emergent properties as a set of moment constra
 Thus an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is the central object of interest to the theorist (unlike say the statistical neuroscientist).  
 The requirement to condition on an emergent property requires the adaptation of deep probabilistic inference methods, and we extend recent tools to do so \cite{loaiza2017maximum}.
 Third,  because we can not assume the theoretical model has explicit likelihood on data or the emergent property of interest, we use stochastic gradient techniques in the spirit of likelihood free variational inference \cite{tran2017hierarchical}.    
-Taken together, emergent property inference (EPI) provides a methodology for inferring and then reasoning about parameter configurations that give rise to particular emergent phenomena in theoretical models.   
-Emergent property inference is described schematically in Fig 1A.
+Taken together, emergent property inference (EPI) provides a methodology for inferring and then reasoning about parameter configurations that give rise to particular emergent phenomena in theoretical models.
 
 Equipped with this methodology, we investigated four models of historical and current importance in theoretical neuroscience.
 These models were chosen to demonstrate generality through ranges of biological realism (conductance-based biophysics to recurrent neural networks), neural system function (pattern generation to abstract cognitive function), and network scale (four to infinite neurons).
 First, to motivate the contribution of emergent property inference, we investigated network syncing in a classic model of the stomatogastric ganglion \cite{gutierrez2013multiple}.   
-Second, we coducted a exploratory analysis of a four neuron-type dynamical model of primary visual cortex resulting in testable predictions of nonliear population input-responsivity. 
+Second, we coducted an exploratory analysis of a four neuron-type dynamical model of primary visual cortex resulting in testable predictions of nonliear population input-responsivity. 
 Third, we demonstrated how the systematic application of EPI to levels of behavioral accuracy can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
 Fourth, we leveraged the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network executing Bayesian inference.  
 The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more generally offer a quantitative grounding for theoretical models  going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
@@ -106,7 +105,9 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
-We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.  Scientifically, our work has focused primarily on systems-level theoretical models, while their focus is on lower-level cellular models.
+We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  
+We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.  
+Scientifically, our work has focused primarily on systems-level theoretical models, while their focus has been on lower-level cellular models.
 Secondly, there are several key technical differences in the approaches (see Section \ref{methods_related_work}) perhaps most notably is our focus on the emergent property -- the measurable signal of the computation in question, vs their focus on observed datasets; both certainly are worthy pursuits.
 The existence of these complementary methodologies emphasizes the increased importance and timeliness of both works. 
 
@@ -223,21 +224,21 @@ First, dynamical models with two populations (excitatory (E) and inhibitory (I) 
 \begin{center}
 \includegraphics[scale=0.5]{figures/fig2/fig2.pdf}
 \end{center}
-\caption{A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron types largely do not form synaptic projections to others Excitatory and inhibitory projections filled and unfilled, respectively.  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on $dh$ conditioned on neuron type $\alpha$ rate increases of $y$: $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}).}
+\caption{A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others Excitatory and inhibitory projections filled and unfilled, respectively.  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on $dh$ conditioned on neuron-type $\alpha$ rate increases of $y$: $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}).}
 \end{figure}
 
-The dynamical state of this model is the firing rate of each neuron type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
+The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
 with effective connectivity weights $W$ and input $h$.  We set the time constant $\tau = 20ms$ and dynamics coefficient $n = 2$.  
-We obtained an informative estimate of the effective connectivities between these neuron types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen} (see Section \ref{methods_V1}).
-Given these fixed parameter choices of $W$, $n$, and $\tau$ and a baseline input $b$, we asked what differential inputs $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}^\top$ cause each neuron type population to increase its firing rate.
+We obtained an informative estimate of the effective connectivities between these neuron-types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen} (see Section \ref{methods_V1}).
+Given these fixed parameter choices of $W$, $n$, and $\tau$ and a baseline input $b$, we asked what differential inputs $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}^\top$ cause each neuron-type population to increase its firing rate.
 
 Yet, we were at least able to derive the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
 While this linear prediction is accurate for small differential inputs (Fig. 3B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B, right). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ was actually in the opposite direction of the true response for the V-population (Fig. 3B, right, green).
 
-To get a more comprehensive picture of the input-reponsivity of each neuron type, we used EPI to learn a distribution of inputs $dh$ that cause the rate of each neuron-type population $\alpha$ to increase by a value $y$ with some allowed variance.  We denote this emergent property of neuron-type responsivity as $\mathcal{B}(\alpha, y)$.  In Fig. 3C, each column visualizes the approximate posterior $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  Akin to the practice of exploratory analysis of neural data sets, in which we search for meaningful structure, we can do an exploratory analysis of this \emph{model} yielding a meaningful understanding of its operation.
+To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of inputs $dh$ that cause the rate of each neuron-type population $\alpha$ to increase by a value $y$ with some allowed variance.  We denote this emergent property of neuron-type responsivity as $\mathcal{B}(\alpha, y)$.  In Fig. 3C, each column visualizes the approximate posterior $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  Akin to the practice of exploratory analysis of neural data sets, in which we search for meaningful structure, we can do an exploratory analysis of this \emph{model} yielding a meaningful understanding of its operation.
 
 To visualize these four-dimensional distributions, we pairploted the two-dimensional marginal densities, which yield an insightful picture.  As expected, the inferred distributions revealed that each neuron-type's rate is sensitive to its direct input.  The E- and P-population are largely unaffected by $dh_V$, and the S-population by $dh_P$ for the rate increases examined.  Additionally, we observed that the P-population likely stabilizes the E- and V-populations (the two it projects to besides itself).  This deduction is supported by the tight positive correlation between $dh_P$ and $dh_E$ for E-population increases and also between $dh_P$ and $dh_V$ for V-population increases.  Finally, EPI showed that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
 
@@ -567,7 +568,7 @@ are given by:
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
 
-Some neuron types largely lack synaptic projections to other neuron types \cite{pfeffer2013inhibition}, and it is popular to only consider a subset of the effective connectivities \cite{litwin2016inhibitory}.
+Some neuron-types largely lack synaptic projections to other neuron-types \cite{pfeffer2013inhibition}, and it is popular to only consider a subset of the effective connectivities \cite{litwin2016inhibitory}.
 \begin{equation}
 W = \begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\
                                 W_{PE} & W_{PP} & W_{PS} & 0 \\
