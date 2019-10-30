@@ -304,29 +304,29 @@ If overconstrained, and there is no support producing the emergent property, EPI
 \section{Discussion}
 \textbf{Draft in progress}: \\ 
 Machine learning has played an effective, multifaceted role in neuroscientific progress. 
-Primarily, it has been used to reveal structure in large scale neural data sets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
+Primarily, has revealed structure in large scale neural data sets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
 Secondarily, trained algorithms of varying degrees of biological relevace serve as fully-observable computational systems that are compared to the brain \cite{ sussillo2013opening, richards2019deep}.  
-Theoretical neuroscientists are currently focused too heavily on this secondary role, and missing out on the primary benefit statistical machine learning can offer.  
-Specifically, deep learning for probabilistic inference has matured to a level in which it can help theorists understand their \textit{models} rather than the experimental \emph{data sets} for which it is traditionally purposed.
+Theoretical neuroscientists may currently be too focused on this secondary role, and thus missing out on the primary benefit statistical machine learning can offer.  
+Specifically, deep learning for probabilistic inference has matured to a level where theorists can use it to understand their \textit{models} rather than the experimental \emph{data sets} for which it is traditionally purposed.
 
 For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1.  
-This should not be surprising, since analytic approaches to studying nonlinear dynamical systems are much more complicated when moving from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
-We are not suggesting to forego the development and application of challenging analytic procedures.  
-However, we suggest the recognition of arduous mathematical challenges, and the alternative use of deep learning through EPI to gain the desired insights in such circumstances.
-In Section \ref{V1}, we showed that EPI was far more informative in this scenario than the predictions afforded through analysis.
+This should not be surprising, since analytic approaches to studying nonlinear dynamical systems complexify greatly when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
+We are not suggesting to forego the development or application of challenging analytic procedures in theoretical neuroscience.
+However, we suggest the judicious recognition of arduous mathematical challenges, and alternatively using deep learning through EPI to gain the desired insights.
+In Section \ref{V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through analysis.
 By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a data set, which generated a set of testable predictions.
 
-Such exploratory analyses do not have to be so agnostic to the eventual hypothesis generation.  If one is interested in the mechanistic changes that occur in the brain throughout learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{SC}).
-This analysis identified experimentally testable predictions of changes in connectivity in SC throughout rapid task switching learning..
+Exploratory analyses in theoretical neuroscience can certainly be less agnostic to the eventual hypothesis generated.  When interested in the mechanistic changes that occur in the brain throughout learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{SC}).
+This analysis identified experimentally testable predictions of changes in connectivity in SC throughout rapid task switching learning.
 Precisely, we would predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue of such effective connectivity matrices.   
 
-While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation (maybe cite RNN work on motor control and visual object recognition here?).
+While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation.
 Thusly, RNNs have become an increasingly popular tool in systems neuroscience research.  
 The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  
 While fixed point identification and jacobian measurement yield intuitive, consistent portraits of the implemented computational algorithm \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  
-To develop an understanding of the neural mechanisms at play, we should work in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
+Since neural activity generally lies on a low dimensional manifold \cite{gao2015simplicity}, we may attain an understanding of the neural mechanisms at play in cortical processing by working in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
-In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}.  Since this theory has been shown to enable design of low-rank RNNs for solving tasks from noisy detection to context-dependent evidence integration, it makes sense to leverage work to open the toolkit of prbabilistic model selection for RNNs.
+In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}.  This theory makes a direct like between a geometric description of the connectivity and the emerging dynamics.  These emerging dynamics in response to various inputs can be cast to perform noisy detection, context-dependent evidence integration and more.  With this methodology, we can finally open the probabilistic model selection toolkit reasoning about the connectivity of RNNs solving tasks.
 
 %\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
 %Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
