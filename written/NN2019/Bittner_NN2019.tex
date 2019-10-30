@@ -328,6 +328,12 @@ Since neural activity generally lies on a low dimensional manifold \cite{gao2015
 
 In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}.  This theory makes a direct like between a geometric description of the connectivity and the emerging dynamics.  These emerging dynamics in response to various inputs can be cast to perform noisy detection, context-dependent evidence integration and more.  With this methodology, we can finally open the probabilistic model selection toolkit reasoning about the connectivity of RNNs solving tasks.
 
+Some statements to inject somewhere
+\begin{itemize}
+\item If theory/practice of deep learning improves to a point where we converge to global optima more regularly, we could do cool reasoning about models (the hypothetico-deductive stuff from Gelman/Shalizi) using these max-ent distributions.
+\item We can think of the probability in these models as deviation from the mean constraint in the sufficient statistics.  See this proved out with the 2D LDS example.
+\end{itemize}
+
 %\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
 %Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
 %A paragraph on bridging large scale recordings with theory.
