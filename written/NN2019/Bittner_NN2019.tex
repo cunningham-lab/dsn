@@ -130,9 +130,9 @@ The existence of these complementary methodologies emphasizes the increased impo
 Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference.  
 First, the theorist designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
  To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.  
- A standard model for the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
-Second, the theorist defines the emergent property, the measurable signal of scientific interest.  
-To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the activity of the hub neuron $x_h$ matches that of the fast ($x_{f1},x_{f2}$) and slow ($x_{s1},x_{s2}$) populations.  This emergent property is shown in Figure 1A.
+ A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]^\top$.
+Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  Second, the theorist defines the emergent property, the measurable signal of scientific interest.  
+To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A.
 Third, qualtitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done to describe different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for modern machine learning.  We can precisely quantify the emergent property as a statistical feature of the model, and we can infer a probability distribution over parameter configurations that produce this emergent property. 
 
@@ -149,72 +149,34 @@ Emergent property inference (EPI) systematizes the three-step procedure of the p
 First, we consider the model as a coupled set of differential (and potentially stochastic) equations.  In the running STG example the dynamical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
 \begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
 \end{equation} 
-where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $\theta$ (see Methods) [THIS NEEDS TO BE CLARIFIED].
-Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency (Figure 1A bottom) [REPETITIVE].  
-It is worth noting that theoretical work has characterized how model parameters such as the electrical conductance $g_{\text{el}}$ and synaptic conductance $g_{\text{synA}}$ govern the production of STG rhythms \cite{gutierrez2013multiple}.  
-In this 5-neuron model,  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other  (Figure 1A).   
-Quantifying this phenomenon is straightforward: we define [XXXXXXXXX statistics, values, and we insist on these being the measurable signatures of the EP... End up with a constraint function $E(T(X)) = \mu$ ....XXXXXXXXXXXXXX].
-Third, having rationalized the above components, we can introduce deep generative modeling for performing emergent property inference.
-We seek a distribution over parameter configurations $z$, and we insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation 1.  
-Thus results the following optimization program: 
- \begin{equation}
+where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]^\top$ (see Methods).
+Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency (Figure 1A bottom).
+Quantifying this phenomenon is straightforward: we define network syncing to be that the firing rates of each neuron are close to an intermediate frequency of 0.55Hz.  Thus, our measurable signature of computation $T(x)$ -- the firing rates -- is a statistic of the membrane potential activity $x$ which we insist be near a particular value $\mu=0.55$.  This notion of an emergent property is then naturally embodied as a set of emergent property value constraints on emergent property statistics
+\begin{equation}\label{eq:EP}
+ E\left[T(x) \right] =\mu
+ \end{equation}
+  (comment about second moments here or save for Methods?).
+Third, having mathematically rationalized the above components, we can introduce deep generative modeling for performing emergent property inference.
+We seek a distribution over parameter configurations $z$, and insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation \ref{eq:EP}.  
+This results in the following optimization program: 
+ \begin{equation} \label{eq:EPI}
 \begin{split}
 &\argmax_{q_\theta \in \mathcal{Q}} H(q_\theta(z)) \\
  &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
 \end{split}
 \end{equation}
 
-The purpose of each element in this program is detailed in Figure 1D.  
+The purpose of each element in this program is detailed in (Fig. 1D).  
 Stating such a problem is easy enough; finding a tractable and suitably flexible family of probability distributions ($\mathcal{Q}$) is hard.  
-We use norm flow deep learning [DETAIL HERE], inducing the deep distribution Fig 1E.
+We use a particular class of deep neural networks called `normalizing flows' \cite{rezende2015variational}, which admit tractable sample density calculations, to induce the deep probability distribution (Fig. 1E).
 Finally, we recognize that many distributions will satisfy the emergent property, so we require a normative principle to select amongst them.  
-This principle is captured in Equation [XXX] by the primal objective $H$.  
-Here we chose Shannon entropy as it has been well used for a variety of things [Elsayed, MEFN, Jaynes, Savin review], but the EPI methods (not the results) offered here are largely unaffected by this choice.
+This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
+Here we chose Shannon entropy as it has been well used for a variety of things \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but the EPI methods (not the results) offered here are largely unaffected by this choice.  
 
-[A few sentences about ... we run optimization... learning.... and then what results is the EPI distribution voila. ]
-Armed with this distribution, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
+Throughout optimization in EPI, the weights and biases $\theta$ of the deep network are modified by the objective in Equation \ref{eq:EPI}.  The randomness of a deep probability distribution comes from an isotropic gaussian draw $\omega \sim q_0$, which is fed into the structure-inducing deep neural network. The optimization is complete when the sampled models produce activity consistent with the specified emergent property.  Stochastic constraint convergence is evaluated with a hypothesis testing criteria (see Section \ref{methods_AL_opt}). Armed with this distribution, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
 
-%
-%\subsection{Inferring model parameterizations using measurable emergent properties}
-%Models in theoretical neuroscience are currently designed amidst a sea of technical constraints related to feasibility of analysis.
-%In such settings, we propose a shift of focus from analytic derivations to probabilistic modeling, in which the modern inference engine is used to explain how biologically realistic model parameters govern the emergent properties of computation.
-%Here, we introduce emergent property inference (EPI), an inference methodology that  leverages modern machine learning to largely circumvent these considerations, opening the toolbox of Bayesian model selection and revision for theoretical models of neural computation.  
-%
-%Here, we use of the powerful technology of deep probability distributions (Fig. 2A) \cite{best_image_DGM, wavenet}.
-%A deep probability distribution of model parameters $z$ arises from a sequence of deterministic mappings $z = f_\theta(\omega) = f_l(...(f_2(f_1(\omega)))$ of a simple random variable $\omega \sim q_0$ (usually $\omega \sim \mathcal{N}(0, I)$), where $f_i$ are neural network layers  with weights and biases $\theta$.
-%The structure of the distribution comes from the neural network, and the randomness from $\omega$.
-%We use a class of neural network layers called normalizing flows \cite{rezende2015variational}, which admit tractable log densities of samples $z$.
-%
-%In EPI, the weights and biases $\theta$ of the deep neural network are optimized to produce a deep probability distribution that produces an emergent property of interest (Fig. 2B). 
-%\begin{equation}
-%\begin{split}
-%q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
-% &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
-% \end{split}
-%\end{equation}
-%We define an emergent property as the emergent property statistics $T(x)$ of the model activity $x$ being constrainted on average to the emergent property values $\mu$ .  The emergent property statistics should measure the signature properties of the model activity pertinent to the computation being studied.  These emergent property statistics and values can be adaptively defined facilitating the type of exploratory analyses of models that are necessary in practice.  Additionally, the deep probability distribution is optimally randomized via the sensible criteria of entropy, although other metrics can be suitable. (ref to appendix section about VI in an EF?) This optimization for randomness allows us to identify degeneracies in the model parameterization with respect to emergent properties, and complementarily, the sensitivies in their absence.
-%
-%\begin{figure}
-%\begin{center}
-%\includegraphics[scale=0.4]{figs/fig2/fig2.pdf}
-%\end{center}
-%\caption{A. Degenerate solution networks (DSNs) are deep probability distributions $q_\theta(z)$ of theoretical model parameterizations that produce emergent properties of interest.  The stochasticity of a deep probability distribution comes from a simple random variable $\omega \sim q_0$, where $q_0$ is often chosen to be an isotropic gaussian, and the structure comes from the deterministic transformation made by the deep neural network with optimized parameters $\theta$.  DSNs are the result of a constrained stochastic optimization, in which emergent properties $T(x)$ are fixed in expectation over model simulations $x \sim p(x \mid z)$ and DSN samples $z \sim q_\theta(z)$ to be a particular value $\mu$.  DSNs distributions maximize randomness through entropy. B. For a choice of model (STG) and emergent property (network syncing), a DSN learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing.}
-%\end{figure}
-%
-%\subsection{Parametric robustness in the stomatogastric ganglion}
-%The stomatogastric ganglion (STG) of crustaceans is a small neural circuit, which generates multiple rhythmic muscle activation patterns for digestion \cite{marder}. The evolution of STG neuron membrane potentials are well-described by a theoretical model, where dynanical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves by the biophysical conductance-based equation
-%\begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
-%\end{equation} 
-%where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, respectively (see Methods).
-%Theoretical work has been done to characterize how model parameters such as the electical conductance $g_{\text{el}}$ and synaptic conductance $g_{\text{synA}}$ govern the production of these rhythms using visualization of statistics of simulated membrane potentials. \cite{gutierrez2013multiple}.  In this 5-neuron model,  two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the slow neurons ($s1$ and $s2$), which also mutually inhibit each other  (Fig. 2C, top-left).   There is an interesting parameter regime of circuit activity, in which all neurons phase lock and oscillate at an intermediate synced frequency.
-%
-%With EPI, we are able to learn a distribution of the STG conductance parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$  that produce the emergent property of network syncing (Fig. 2C).  In order to execute EPI, we first select the 5-neuron STG as our theoretical model and network syncing emergent property of interest. To obtain a differentiable calculation of the firing frequencies (the emergent property statistics) given the model parameters (the conductances), we use soft-selection of a complex exponential basis applied to the simulated membrane potentials (see Methods).  This gradient is then used by the EPI algorithm to learn an approximate posterior distribution of the conductance parameters.
-%
-%Once we have run EPI, we can immediately identify dimensions of parameter space that are sensitive (or degenerate) with respect to network syncing by evaluating the Hessian of the DSN distribution at the mode (Fig. 2C, right).  The arrows indicate the direction of eigenvectors of the Hessian, and their length is inversely proportional to the magnitude of the corresponding eigenvalue (long and short correspond to degenerate and sensitive, respectively).  Indeed, the Hessian eigenvector with greater eigenvalue is sensitive to network syncing (Fig. S1). 
-%
-%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system}
-First, dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) of visual processing have been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 3A).
 
 \begin{figure}
 \begin{center}
@@ -504,14 +466,12 @@ As the lagrangian optimization proceeds, $\alpha$ should converge to $\tilde{\et
 In this study, we used emerent property inferrence to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
-\textbf{Draft in progress}: \\
-Each neuron's membrane potential is the solution of the following differential equation.
+Each neuron's membrane potential $x_m(t)$ is the solution of the following differential equation.
 \begin{equation} C_m \frac{\partial x_m}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
 \end{equation} 
 
-The membrane potential of each neuron is a affected by the leak, Calcium, Potassium, hyperpolarization,
-electrical and synaptic currents, respectively.  The capictance of the circuit is set to $C_m = 1nF$. Each current has an associated reversal potential: $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$. Each current is a function of the
-difference in membrane and reversal potential multiplied by a conductance:
+The membrane potential of each neuron is affected by the leak, calcium, potassium, hyperpolarization,
+electrical and synaptic currents, respectively.  The capictance of the cell membrane was set to $C_m = 1nF$. Each current is a function of the the neuron's membrane potential $x_m$ and the parameters of the circuit such as  $g_{el}$ and $g_{syn}$, whose affect on the circuit is considered in the motivational example of EPI in Fig. 1.  Specifically, the currents are the difference in the neuron's membrane potential and that current type's reversal potential multiplied by a conductance:
 \begin{equation}  h_{leak} = g_{leak} (x_m - V_{leak}) 
 \end{equation} 
 \begin{equation}  h_{elec} = g_{el} (x_m^{post} - x_m^{pre})
@@ -523,9 +483,9 @@ difference in membrane and reversal potential multiplied by a conductance:
 \end{equation} 
 \begin{equation}  h_{hyp} = g_h H(x_m - V_{hyp})
 \end{equation} 
-where $g_{el}$ and $g_{syn}$ are DSN-focused parameters, $g_{leak} = 1 \times 10^{-4} \mu S$, and $g_{Ca}$, $g_{K}$, and $g_{hyp}$ have different values based on fast, intermediate (hub) or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $, and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$, $ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate: $g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
+The reversal potentials were set to $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$.  The other conductance parameters were fixed to $g_{leak} = 1 \times 10^{-4} \mu S$. $g_{Ca}$, $g_{K}$, and $g_{hyp}$ had different values based on fast, intermediate (hub) or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $, and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$, $ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate: $g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
 
-The Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating varibles $M_\infty$, $N_\infty$ and $H_\infty$, respectively.
+Furthermore, the Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating varibles $M_\infty$, $N_\infty$ and $H_\infty$, respectively.
 \begin{equation}  M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_1}{v_2} \right) \right) \end{equation}
 \begin{equation}  \frac{\partial N}{\partial t} = \lambda_N (N_\infty - N)  \end{equation}
 \begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_3}{v_4} \right) \right) \end{equation}
@@ -533,19 +493,19 @@ The Calcium, Potassium, and hyperpolarization channels have time-dependent gatin
 \begin{equation}  \frac{\partial H}{\partial t} = \frac{\left( H_\infty - H \right)}{\tau_h} \end{equation}
 \begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_m + v_5}{v_6} \right)} \end{equation}
 \begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_m + v_7}{v_8} \right)} \right) \end{equation}
-where $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
-$v_6 = 10.5mV$, $v_7 = -42.2mV$, $v_8 = 87.3mV$, $v_9 = 5mV$, and $v_{th} = -25mV$.
+where we set $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
+$v_6 = 10.5mV$, $v_7 = -42.2mV$, $v_8 = 87.3mV$, $v_9 = 5mV$, and $v_{th} = -25mV$.  These are the same parameter values used in \cite{gutierrez2013multiple}.
 
 Finally, there is a synaptic gating variable as well:
 \begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_m}{v_9} \right)} 
 \end{equation}
 When the dynamic gating variables are considered, this is actually a 15-dimensional nonlinear dynamical system.
 
-In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken throught the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.
+In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken throught the simulation process, the number of time steps are kept as modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.
 
 Our original approach to measuring frequency was to take the max of the fast Fourier transform (FFT) of the simulated time series.  There are a few key considerations here.  One is resolution in frequency space.  Each FFT entry will correspond to a signal frequency of $\frac{F_s k}{N}$, where N is the number of samples used for the FFT, $F_s = \frac{1}{dt}$, and $k \in \left[0, 1, ..., N-1\right]$.  Our resolution is improved by increasing $N$ and decreasing $dt$.  Increasing N = T-b, where $b$ is some fixed number of buffer burn-in inititaliziation samples, necessitates an increase in simulation time steps $T$, which directly increases computational cost.  Increasing $F_s$ (decreasing $dt$) increases system approximation accuracy, but requires more time steps before a full cycle is observed.  At the level of $dt = 0.025$, thousands of temporal samples were required for resolution of .01Hz.  These challenges in frequency resolution with the discrete Fourier transform motivated the use of an alternative basis of complex exponentials.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
-Another consideration is that the the frequency spectra of the hub neuron has several peaks.  This is due to high-frequency sub-threshold activity. The maximum frequency was often not the firing frequency.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal is subsequently mean centered.  After this pre-processing, the maximum frequency in filter bank accurately reflected the firing frequency.
+Another consideration was that the frequency spectra of the hub neuron has several peaks.  This was due to high-frequency sub-threshold activity. The maximum frequency was often not the firing frequency.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal was subsequently mean centered.  After this pre-processing, the maximum frequency in the filter bank accurately reflected the firing frequency.
 
 Finally, to differentiate through the maximum frequency identificiation step, we used a sum-of-powers normalization strategy: Let $\mathcal{X}_i \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_i \in \mathcal{R}^{N}$, where $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is \[u_i = \frac{|\mathcal{X}_i|^\alpha}{\sum_{k=1}^N |\mathcal{X}_i(k)|^\alpha} \].  The frequency is then calculated as $\Omega_i = u_i^\top \Phi$ with $\alpha = 100$.
 
@@ -553,7 +513,7 @@ Network syncing, like all other emergent properties in this work, are defined by
 \begin{equation}
 E \begin{bmatrix} \Omega_{\text{f1}} \\ \Omega_{\text{f2}} \\ \Omega_{\text{hub}} \\ \Omega_{\text{s1}} \\ \Omega_{\text{s2}} \\ (\Omega_{\text{f1}} - 0.55)^2 \\ (\Omega_{\text{f2}} - 0.55)^2 \\ (\Omega_{\text{hub}} - 0.55)^2 \\ (\Omega_{\text{s1}} - 0.55)^2 \\ (\Omega_{\text{s2}} - 0.55)^2  \end{bmatrix} = \begin{bmatrix} 0.55 \\ 0.55 \\ 0.55 \\ 0.55 \\ 0.55 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}
 \end{equation}
-For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each.
+For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} 10 \\ 8 \end{bmatrix} \right]$  We have shown the EPI optimization that converged with maximum entropy across 2 random seeds and augmented Lagrangian coefficient initializations of $c_0$=0, 2, and 5.
 
 \subsubsection{Primary visual cortex}\label{methods_V1}
 \textbf{Draft in progress}: \\
