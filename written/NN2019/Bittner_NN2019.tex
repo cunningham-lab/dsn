@@ -111,10 +111,6 @@ Scientifically, our work has focused primarily on systems-level theoretical mode
 Secondly, there are several key technical differences in the approaches (see Section \ref{methods_related_work}) perhaps most notably is our focus on the emergent property -- the measurable signal of the computation in question, vs their focus on observed datasets; both certainly are worthy pursuits.
 The existence of these complementary methodologies emphasizes the increased importance and timeliness of both works. 
 
-%  In their approach, a deep neural network is used as an amortized inference map, the parameters of which are optimized on a data set of interest.  
-%While in EPI, a deep neural network is optimized to produce an emergent property adaptively defined by the theoretician.
-%This 
-
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.38]{figures/fig1/fig1.pdf}
@@ -133,8 +129,8 @@ The existence of these complementary methodologies emphasizes the increased impo
 
 Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference.  
 First, the theorist designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
- To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{prinz2004similar}.  
- A standard model for the STG is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
+ To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.  
+ A standard model for the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
 Second, the theorist defines the emergent property, the measurable signal of scientific interest.  
 To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the activity of the hub neuron $x_h$ matches that of the fast ($x_{f1},x_{f2}$) and slow ($x_{s1},x_{s2}$) populations.  This emergent property is shown in Figure 1A.
 Third, qualtitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done to describe different parameter configurations that lead to the emergent property.  
@@ -145,7 +141,7 @@ This distribution -- represented for clarity as samples from the distribution --
 It conveys parameter regions critical to the emergent property, directions in parameter space that will be invariant (or not) to that property, and more.  
 In the STG model, this distribution can be specifically queried to determine the prototypical parameter configuration for network syncing (the mode; Figure 1B star), and then how quickly network syncing will decay based on changes away that mode (Figure 1B, inset).  
 Of course, validation of this distribution is critical: we can also plot a metric of network syncing that is independent of this inference process, to show that this EPI distribution indeed captures that structure (Figure 1B, contour lines).
-Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last analysis step of the practice of theoretical neuroscience.
+Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.
 
 \subsection{A deep generative modeling approach to emergent property inference}
 
