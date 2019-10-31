@@ -389,7 +389,7 @@ def get_arch_from_template(system, param_dict):
         real_nvp_arch = {
                          'num_masks':4,
                          'nlayers':nlayers,
-                         'upl':10,
+                         'upl':15,
                         }
         mu_init = np.zeros((D,))
 

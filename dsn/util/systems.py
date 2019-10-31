@@ -188,8 +188,8 @@ class Linear2D(system):
     def __init__(self, fixed_params, behavior):
         super().__init__(fixed_params, behavior)
         self.name = "Linear2D"
-        a = -20.0 * np.ones((self.D,))
-        b =  20.0 * np.ones((self.D,))
+        a = -10.0 * np.ones((self.D,))
+        b =  10.0 * np.ones((self.D,))
         self.density_network_bounds = [a, b]
         self.has_support_map = True
         #self.has_support_map = False

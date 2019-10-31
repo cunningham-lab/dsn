@@ -10,14 +10,15 @@ import sys, os
 os.chdir("../")
 
 repeats = int(sys.argv[1])
-nlayers = int(sys.argv[2])
+c_init_order = int(sys.argv[2])
 sigma_init = float(sys.argv[3])
 random_seed = int(sys.argv[4])
 
+nlayers = 2
 
 sysname = "Linear2D"
 omega = 1.0
-d_std = 0.1
+d_std = 0.25
 omega_std = 0.1
 param_dict = {'omega':omega,
               'd_std':d_std,
@@ -34,8 +35,7 @@ param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
 
 n = 1000
-AL_it_max =10
-c_init_order = -1
+AL_it_max =20
 AL_fac = 4.0
 lr_order = -3
 min_iters = 2000
