@@ -323,9 +323,9 @@ In our final analysis, we present a novel procedure for doing statistical infere
 
 \subsection{Emergent property inference (EPI)}\label{methods_EPI}
 \textbf{Draft in progress}: \\
-Emergent property inference (EPI) learn distributions of theoretical model parameters that produce emergent properties of interest.  They combine ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples are passed through a differentiable model simulator, which may lack a tractable likelihood function.
+Emergent property inference (EPI) learn distributions of theoretical model parameters that produce emergent properties of interest.  EPI combines ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples ofte parameterize a differentiable model simulator, which may lack a tractable likelihood function.
 
-Consider model parameterization $z$ and data $x$ generated from some theoretical model simulator represented as $p(x \mid z)$, which may be deterministic or stochastic.  Theoretical models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function due to the nonlinearities and dynamics. With EPI, a distribution on parameters $z$ is learned, that yields a behavior of interest $\mathcal{B}$,
+Consider model parameterization $z$ and data $x$ generated from some theoretical model simulator represented as $p(x \mid z)$, which may be deterministic or stochastic.  Theoretical models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function due to the nonlinearities and dynamics. With EPI, a distribution on parameters $z$ is learned, that yields an emergent property of interest $\mathcal{B}$,
 \begin{equation}
 \mathcal{B}: E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
 \end{equation}
@@ -333,7 +333,7 @@ by making an approximation $q_\theta(z)$ to $p(z \mid \mathcal{B})$ (see Section
 
  In deep probability distributions, a simple random variable $w \sim p_0$ is mapped deterministically via a function $f_\theta$ parameterized by a neural network to the support of the distribution of interest where $z = f_{\theta}(\omega) = f_l(..f_1(\omega))$.  Given a theoretical model $p(x \mid z)$ and some behavior of interest $\mathcal{B}$, the deep probability distributions are trained by optimizing the neural network parameters $\theta$ to find a good approximation $q_{\theta}^*$ within the deep variational family $Q$ to $p(z \mid \mathcal{B})$.
 
-In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $p(T(x) \mid z)$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black}.  These types of methods called likelihood-free variational inference (LFVI, cite Tran) skate around the intractable likelihood function in situations where there is a differentiable simulator. Akin to LFVI, DSNs are optimized with the following objective for a given generative model and statistical constraints on its produced activity:
+In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $p(T(x) \mid z)$ is unknown or intractable, requiring an alternative to stochastic gradient variational bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black}.  These types of methods called likelihood-free variational inference (LFVI, \cite{tran2017hierarchical}) skate around the intractable likelihood function in situations where there is a differentiable simulator. Akin to LFVI, DSNs are optimized with the following objective for a given theoretical model, emergent property statistics $T(x)$, and emergent property constraints $\mu$:
 
 \begin{equation}
 \begin{split}
@@ -341,8 +341,6 @@ q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
  &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
  \end{split}
 \end{equation}
-
-TODO expand on this in terms of Fig. 2, in a way that complements 3.1.
 
 \subsubsection{Example: 2D LDS}\label{methods_2DLDS}
 \textbf{Draft in progress}: \\
