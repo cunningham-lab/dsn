@@ -750,11 +750,17 @@ def load_DSNs(model_dirs, load_its):
             tf_vars.append([W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                             batch_norm_layer_means, batch_norm_layer_vars])
 
-        num_batch_norms = len(batch_norm_mus)
+        #num_batch_norms = len(batch_norm_mus)
         param_fname = model_dir + 'params%d.npz' % load_it
-        paramfile = np.load(param_fname)
-        _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
-        _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
+        if (os.path.exists(param_fname)):
+            paramfile = np.load(param_fname)
+            _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
+            _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
+        else:
+            param_fname = model_dir + 'params.npz'
+            paramfile = np.load(param_fname)
+            _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
+            _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
         
         feed_dict = {}
         for j in range(num_batch_norms):
