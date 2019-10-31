@@ -729,11 +729,26 @@ def load_DSNs(model_dirs, load_its):
         sess = tf.Session()
         if i==0:
             load_time1 = time.time()
-        collection = load_dgm(sess, model_dir, load_it)
+        collection, has_Z_inv, has_Z_input = load_dgm(sess, model_dir, load_it)
         if i==0:
             load_time2 = time.time()
             print('Loaded DGM in %.2f seconds' % (load_time2-load_time1))
-        W, Z, Z_input, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+        if (has_Z_inv and has_Z_input):
+            W, Z, log_q_Z, Z_INV, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+            tf_vars.append([W, Z, Z_input, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
+                            batch_norm_layer_means, batch_norm_layer_vars])
+        elif (has_Z_inv and (not has_Z_input)):
+            W, Z, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+            tf_vars.append([W, Z, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
+                            batch_norm_layer_means, batch_norm_layer_vars])
+        elif ((not has_Z_inv) and has_Z_input):
+            W, Z, log_q_Z, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+            tf_vars.append([W, Z, Z_input, log_q_Z, batch_norm_mus, batch_norm_sigmas,
+                            batch_norm_layer_means, batch_norm_layer_vars])
+        else:
+            W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
+            tf_vars.append([W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas,
+                            batch_norm_layer_means, batch_norm_layer_vars])
 
         num_batch_norms = len(batch_norm_mus)
         param_fname = model_dir + 'params%d.npz' % load_it
@@ -747,8 +762,6 @@ def load_DSNs(model_dirs, load_its):
             feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
 
         sessions.append(sess)
-        tf_vars.append([W, Z, Z_input, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
-                        batch_norm_layer_means, batch_norm_layer_vars])
         feed_dicts.append(feed_dict)
 
     return sessions, tf_vars, feed_dicts

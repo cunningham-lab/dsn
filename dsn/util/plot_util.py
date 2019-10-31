@@ -588,6 +588,7 @@ def dsn_pairplots(
     tri=True,
     outlier_stds=2,
     pfnames=None,
+    cbarticks=None,
     figsize=(10,10),
 ):
     n_fnames = len(model_dirs)
@@ -756,19 +757,19 @@ def dsn_pairplots(
         if c is not None:
             fig.subplots_adjust(right=0.90)
             cbar_ax = fig.add_axes([0.92, 0.15, 0.04, 0.7])
-            clb = fig.colorbar(h, cax=cbar_ax)
+            clb = fig.colorbar(h, cax=cbar_ax, ticks=cbarticks)
+            clb.ax.tick_params(labelsize=24)
             a = (0.8 / (D - 1)) / (0.95 / (D - 1))
             b = (D - 1) * 1.15
-            cbar_ax.text(
-                a, b-.1, c_label_str, {"fontsize": fontsize + 2}, transform=ax.transAxes
-            )
+            #cbar_ax.text(
+            #    a, b-.1, c_label_str, {"fontsize": fontsize + 2}, transform=ax.transAxes
+            #)
             # clb.ax.set_ylabel(c_label_str, rotation=270, fontsize=fontsize);
 
         plt.suptitle(legendstrs[k], fontsize=(fontsize + 4))
         if (pfnames is not None and len(pfnames) > (k)):
             plt.savefig(pfnames[k])
         figs.append(fig)
-    plt.show()
     return dists, cs, axs
 
 
@@ -1437,12 +1438,13 @@ def make_training_movie(model_dir, system, step, save_fname='temp', axis_lims=No
 
 def get_log_q_z_mesh(Z_grid, W, Z_input, Z_INV, log_q_Z, sess, feed_dict, K):
     M = Z_grid.shape[1]
+    D = Z_grid.shape[2]
         
-    _W = np.zeros((1,M,system.D))
-    feed_dict.update({Z_input:_Z_grid, W:_W})
+    _W = np.zeros((1,M,D))
+    feed_dict.update({Z_input:Z_grid, W:_W})
     _Z_INV = sess.run(Z_INV, feed_dict)
     
     feed_dict.update({W:_Z_INV})
     _log_q_z = sess.run(log_q_Z, feed_dict)
-    log_q_z_mesh = np.reshape(_log_q_z[0], (K,K,K,K))
+    log_q_z_mesh = np.reshape(_log_q_z[0], D*(K,))
     return log_q_z_mesh
