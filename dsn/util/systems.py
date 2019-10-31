@@ -225,9 +225,9 @@ class Linear2D(system):
         if self.behavior["type"] == "oscillation":
             T_x_labels = [
                 r"real($\lambda_1$)",
-                r"$\frac{imag(\lambda_1)}{2 \pi}$",
+                r"$imag(\lambda_1)$",
                 r"(real$(\lambda_1)-\mu)^2$",
-                r"$(\frac{imag(\lambda_1)}{2 \pi}-\mu)^2$",
+                r"$(imag(\lambda_1)-\mu)^2$",
             ]
         else:
             raise NotImplementedError
@@ -301,8 +301,8 @@ class Linear2D(system):
             T_x_list = [
                 lambda_1_real,
                 lambda_1_imag,
-                tf.square(lambda_1_real - mu_means[0]) / mu_variances[0],
-                tf.square(lambda_1_imag - mu_means[1]) / mu_variances[1],
+                tf.square(lambda_1_real - mu_means[0]),
+                tf.square(lambda_1_imag - mu_means[1]),
             ]
             T_x = tf.stack(T_x_list, 2)
         else:

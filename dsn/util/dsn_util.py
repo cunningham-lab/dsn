@@ -80,9 +80,11 @@ def get_system_from_template(sysname, param_dict):
                omega - frequency
         """
         omega = param_dict['omega']
+        d_std = param_dict['d_std']
+        omega_std = param_dict['omega_std']
         fixed_params = {"tau": 1.0}
         means = np.array([0.0, 2 * np.pi * omega])
-        variances = np.array([1.0, 1.0])
+        variances = np.array([d_std**2, (2 * np.pi * omega_std)**2])
         behavior = {"type": "oscillation", "means": means, "variances": variances}
         system = Linear2D(fixed_params, behavior)
 
@@ -578,6 +580,15 @@ def get_grid_search_bounds(system):
         return None
     Z_a, Z_b = system.density_network_bounds
 
+    if (system.name == 'Linear2D'):
+        d_mean = system.mu[0]
+        omega_mean = system.mu[1]
+        d_var = system.mu[2]
+        d_std = np.sqrt(d_var)
+        omega_var =system.mu[3]
+        omega_std = np.sqrt(omega_var)
+        T_x_a = np.array([d_mean-2*d_std, omega_mean-2*omega_std, np.NINF, np.NINF])
+        T_x_b = np.array([d_mean+2*d_std, omega_mean+2*omega_std, np.PINF, np.PINF])
     if (system.name == 'V1Circuit'):
         if (system.behavior['type'] == 'ISN_coeff'):
             ISN_mean = system.mu[0]
@@ -750,7 +761,7 @@ def load_DSNs(model_dirs, load_its):
             tf_vars.append([W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                             batch_norm_layer_means, batch_norm_layer_vars])
 
-        #num_batch_norms = len(batch_norm_mus)
+        num_batch_norms = len(batch_norm_mus)
         param_fname = model_dir + 'params%d.npz' % load_it
         if (os.path.exists(param_fname)):
             paramfile = np.load(param_fname)

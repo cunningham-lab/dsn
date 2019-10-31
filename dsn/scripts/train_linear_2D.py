@@ -17,7 +17,11 @@ random_seed = int(sys.argv[4])
 
 sysname = "Linear2D"
 omega = 1.0
-param_dict = {'omega':omega}
+d_std = 0.1
+omega_std = 0.1
+param_dict = {'omega':omega,
+              'd_std':d_std,
+              'omega_std':omega_std}
 system = get_system_from_template(sysname, param_dict)
 
 arch_params = {
@@ -30,7 +34,7 @@ param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
 
 n = 1000
-AL_it_max = 4
+AL_it_max =10
 c_init_order = -1
 AL_fac = 4.0
 lr_order = -3
@@ -38,7 +42,7 @@ min_iters = 2000
 max_iters = 2000
 check_rate = 100
 dist_seed = 0
-dir_str = "LDS_test"
+dir_str = "2DLDS"
 
 np.random.seed(dist_seed)
 cost, z = train_dsn(
@@ -54,5 +58,5 @@ cost, z = train_dsn(
     lr_order=lr_order,
     check_rate=check_rate,
     dir_str=dir_str,
-    db=True,
+    db=False,
 )
