@@ -193,14 +193,16 @@ The dynamical state of this model is the firing rate of each neuron-type populat
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
 with effective connectivity weights $W$ and input $h$.  In our analysis, we set the time constant $\tau = 20$ms and dynamics coefficient $n = 2$.  
-Also, as is fairly standard, we obtain an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
-Given these fixed choices of $W$, $n$, and $\tau$, we studied the system's response to input
+Also, we can obatin an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
+If this model with such an estimate of $W$ reflects properties of V1, then we know we're on the right track.
+Otherwise, we need to reflect on our model design, or other parameter settings like $n$ and $\tau$.
+Given these fixed parameter choices of $W$, $n$, and $\tau$, we studied the system's response to input
 \begin{equation}
 h = b + dh
 \end{equation} 
-where the input $h$ is comprised of a baseline input $b = \left[ b_E, b_P , b_S , b_V \right]$ and a differential input $dh = \left[ dh_E , dh_P , dh_S , dh_V\right]$ to each neuron-type population.  Throughout subsequent analyses, the baseline input is $b = \left[ 1 ,1,1,1\right]$.  
+where the input $h$ is comprised of a baseline input $b = \begin{bmatrix} b_E & b_P & b_S & b_V \end{bmatrix}$ and a differential input $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}$ to each neuron-type population.  Thoughout our comparative analyses, both analytic and via EPI, the baesline input was set to $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}$.  
 
-Having established our model, we now turn to defining the emergent property. We begin with the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
+First, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
 While this linearization accurately predicts differential responses $dx_{ss} = \begin{bmatrix} dx_{E,ss} & dx_{P,ss} & dx_{S,ss} & dx_{V,ss} \end{bmatrix}$  for small differential inputs to each population $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 2B, left), it can be misleading in such a nonlinear model for a greater differential input strength $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 3B, right). In fact, the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}$ was actually in the opposite direction of the true response (Fig. 2B, right, green).  This shows that currently available approaches  to deriving the steady state response of this system are limited.
 
 To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$ denoted by the emergent property 
@@ -508,21 +510,21 @@ In this study, we used emerent property inferrence to examine several models rel
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
 Each neuron's membrane potential $x_m(t)$ is the solution of the following differential equation.
-\begin{equation} C_m \frac{\partial x_m}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
+\begin{equation} C_m \frac{\partial x_m}{\partial t} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
 
 The membrane potential of each neuron is affected by the leak, calcium, potassium, hyperpolarization,
 electrical and synaptic currents, respectively.  The capictance of the cell membrane was set to $C_m = 1nF$. Each current is a function of the the neuron's membrane potential $x_m$ and the parameters of the circuit such as  $g_{el}$ and $g_{syn}$, whose affect on the circuit is considered in the motivational example of EPI in Fig. 1.  Specifically, the currents are the difference in the neuron's membrane potential and that current type's reversal potential multiplied by a conductance:
-\begin{equation}  h_{leak} = g_{leak} (x_m - V_{leak}) 
+\begin{equation}  h_{leak}(x; z) = g_{leak} (x_m - V_{leak}) 
 \end{equation} 
-\begin{equation}  h_{elec} = g_{el} (x_m^{post} - x_m^{pre})
+\begin{equation}  h_{elec}(x; z) = g_{el} (x_m^{post} - x_m^{pre})
 \end{equation} 
-\begin{equation}  h_{syn} = g_{syn} S_\infty^{pre} (x_m^{post} - V_{syn}) \end{equation} 
-\begin{equation}  h_{Ca} = g_{Ca} M_\infty (x_m - V_{Ca}) 
+\begin{equation}  h_{syn}(x; z) = g_{syn} S_\infty^{pre} (x_m^{post} - V_{syn}) \end{equation} 
+\begin{equation}  h_{Ca}(x; z) = g_{Ca} M_\infty (x_m - V_{Ca}) 
 \end{equation} 
-\begin{equation}  h_K = g_K N (x_m - V_K) 
+\begin{equation}  h_K(x; z) = g_K N (x_m - V_K) 
 \end{equation} 
-\begin{equation}  h_{hyp} = g_h H(x_m - V_{hyp})
+\begin{equation}  h_{hyp}(x; z) = g_h H(x_m - V_{hyp})
 \end{equation} 
 The reversal potentials were set to $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$.  The other conductance parameters were fixed to $g_{leak} = 1 \times 10^{-4} \mu S$. $g_{Ca}$, $g_{K}$, and $g_{hyp}$ had different values based on fast, intermediate (hub) or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $, and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$, $ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate: $g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
 
@@ -548,7 +550,11 @@ Our original approach to measuring frequency was to take the max of the fast Fou
 
 Another consideration was that the frequency spectra of the hub neuron has several peaks.  This was due to high-frequency sub-threshold activity. The maximum frequency was often not the firing frequency.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal was subsequently mean centered.  After this pre-processing, the maximum frequency in the filter bank accurately reflected the firing frequency.
 
-Finally, to differentiate through the maximum frequency identificiation step, we used a sum-of-powers normalization strategy: Let $\mathcal{X}_i \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_i \in \mathcal{R}^{N}$, where $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is \[u_i = \frac{|\mathcal{X}_i|^\alpha}{\sum_{k=1}^N |\mathcal{X}_i(k)|^\alpha} \].  The frequency is then calculated as $\Omega_i = u_i^\top \Phi$ with $\alpha = 100$.
+Finally, to differentiate through the maximum frequency identificiation step, we used a sum-of-powers normalization strategy: Let $\mathcal{X}_i \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_i \in \mathcal{R}^{N}$, where $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is 
+\begin{equation}
+u_i = \frac{|\mathcal{X}_i|^\alpha}{\sum_{k=1}^N |\mathcal{X}_i(k)|^\alpha}
+\end{equation}
+The frequency is then calculated as $\Omega_i = u_i^\top \Phi$ with $\alpha = 100$.
 
 Network syncing, like all other emergent properties in this work, are defined by the emergent property statistics and values.  The emergent property statistics are the first- and second-moments of the firing frequencies. The first moments are set to 0.55Hz, while the second moments are set to 0.025Hz$^2$.
 \begin{equation}
@@ -557,7 +563,6 @@ E \begin{bmatrix} \Omega_{\text{f1}} \\ \Omega_{\text{f2}} \\ \Omega_{\text{hub}
 For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} 10 \\ 8 \end{bmatrix} \right]$  We have shown the EPI optimization that converged with maximum entropy across 2 random seeds and augmented Lagrangian coefficient initializations of $c_0$=0, 2, and 5.
 
 \subsubsection{Primary visual cortex}\label{methods_V1}
-\textbf{Draft in progress}: \\
 The dynamics of each neural populations average rate
 $x = \begin{bmatrix} x_E \\ x_P \\ x_S \\ x_V \end{bmatrix}$
 are given by:
@@ -573,8 +578,7 @@ W = \begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\
                                 W_{VE} & W_{VP} &  W_{VS} &  0 \end{bmatrix}
 \end{equation}
 
-(TODO: ask Ken about how to introduce these values and what to ref).
-Estimates of the of the probability of connection and strength of connection from the Allen institute result in an estimate of the effective connectivity: 
+Estimates of the of the probability of connection and strength of connection from the Allen institute result in an estimate of the effective connectivity \cite{allen}: 
 \begin{equation}
 W = \begin{bmatrix} 0.0576 &  0.19728 & 0.13144 & 0 \\
                                 0.58855 & 0.30668 & 0.4285 & 0 \\
@@ -612,8 +616,11 @@ E \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} = \begi
 \end{equation}
 For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.
 
+In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
+The differential responses $dx_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \Delta h_\alpha u_\alpha$ where $u_\alpha$ is a unit vector in the dimension of $\alpha$ and $\Delta h_\alpha \in \left[-15,15\right]$.
+
+
 \subsubsection{Superior colliculus}\label{methods_SC}
-\textbf{Draft in progress}: \\
 There are four total units: two in each hemisphere corresponding to the PRO/CONTRA and ANTI/IPSI populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
 \begin{equation}
 x_i(t) =\left(\frac{1}{2}\tanh\left(\frac{u_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
@@ -706,7 +713,6 @@ In total, the emergent property of rapid task switching accuracy at level $p$ wa
 For each accuracy level $p$, we ran EPI for 10 different random seeds and selected the maximum entropy solution using an architecture of 10 planar flows with $c_0 = 2$. 
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
-\textbf{Draft in progress}: \\
 The network dynamics of neuron $i$'s rate $x$ evolve according to:
 \begin{equation}
 \dot{x}_i(t) = -x_i(t) + \sum_{j=1}^N J_{ij} \phi(x_j(t)) + I_i 
