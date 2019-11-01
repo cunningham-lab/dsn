@@ -12,6 +12,7 @@
 \usepackage{tikz}
 \usepackage{graphicx}
 \usepackage{lineno}
+\usepackage{floatrow}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator*{\argmax}{argmax}
 
@@ -204,13 +205,17 @@ where the input $h$ is comprised of a baseline input $b = \begin{bmatrix} b_E & 
 First, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
 While this linearization accurately predicts differential responses $dx_{ss} = \begin{bmatrix} dx_{E,ss} & dx_{P,ss} & dx_{S,ss} & dx_{V,ss} \end{bmatrix}$  for small differential inputs to each population $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 2B, left), it can be misleading in such a nonlinear model for a greater differential input strength $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 3B, right). In fact, the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}$ was actually in the opposite direction of the true response (Fig. 2B, right, green).  This shows that currently available approaches  to deriving the steady state response of this system are limited.
 
-To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$ denoted by the emergent property $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}).  In Fig. 2C, each column visualizes the inferred distribution of $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5. For visualization, we pairploted the two-dimensional marginal densities, which yield an insightful picture.  As expected, the inferred distributions reflected that each neuron-type's rate is sensitive to its direct input.  Additionally, they revealed that the E- and P-population are largely unaffected by $dh_V$  Furthermore, EPI showed that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
+To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$ denoted by the emergent property 
+\begin{equation}
+\mathcal{B}(\alpha, y) \leftrightarrow 
+E \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
+\end{equation}
+Note that we restrict the variance of the emergent property statistic $dx_{\alpha,ss}$ by setting its second moment to a small value. In Fig. 2C, each column visualizes the inferred distribution of $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5. For visualization of this four-dimensional distribution, we show the two-dimensional marginal densities.  The inferred distributions suggest a slate of testable hypotheses. 1. As expected, each neuron-type's rate is sensitive to its direct input.  2. The E- and P-populations are largely unaffected by $dh_V$. 3. Similarly, The S-population is largely unnaffected by $dh_P$. 4. Since EPI showed that negative $dh_E$ results in small $dx_{V,ss}$, but positive $dh_E$ elicited a larger $dx_{V,ss}$ we predict that there is a nonmonotonic response of $dx_{V,ss}$ with $dh_{E}$.
 
 \begin{figure}
-\begin{center}
-\includegraphics[scale=0.35]{figures/fig3/fig3.pdf}
-\end{center}
-\caption{Caption coming..}
+\floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
+{\caption{A test figure with its caption side by side}\label{fig:test}}
+{\includegraphics[scale=0.35]{figures/fig3/fig3.pdf}}
 \end{figure}
 
 All of this insight gained beyond what the analytic linear prediction told us (Fig. 2C, cyan), can be used to geneate testable hypotheses for this model. 
@@ -579,7 +584,7 @@ which is calculable by
 The emergent property we considered was the first and second moments of the change in rate $dr$ between the baseline input $h= b$ and $h = b + dh$.  We use the following notation to indicate that the emergent property statistics were set to the following values:
 \begin{equation}
 \mathcal{B}(\alpha, y) \leftrightarrow 
-E \begin{bmatrix} dr_\alpha \\ (dr_\alpha - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
+E \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
 \end{equation}
 For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.
 
