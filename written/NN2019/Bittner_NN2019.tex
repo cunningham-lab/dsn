@@ -178,7 +178,7 @@ With normalizing flows, we leverage the tractable calculation of log sample prob
 \begin{center}
 \includegraphics[scale=0.55]{figures/fig2/fig2.pdf}
 \end{center}
-\caption{Exploring neuron-type responsivity in V1.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on $dh$ conditioned on neuron-type $\alpha$ rate increases of $y$: $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}). The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in cyan (very small, near origin). }
+\caption{Exploring neuron-type responsivity in V1.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on differential input $dh$ conditioned on differential response $\mathcal{B}(\alpha, y)$ (see text). The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in cyan (very small, near origin). }
 \end{figure}
 
 In EPI, the weights and biases $\theta$ of the deep probability distribution are optimized by the objective in Equation \ref{eq:EPI}. The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is no different than its emergent property value. (see Section \ref{methods_AL_opt}). Armed with this method, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
@@ -214,11 +214,15 @@ Note that we restrict the variance of the emergent property statistic $dx_{\alph
 
 \begin{figure}
 \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
-{\caption{A test figure with its caption side by side}\label{fig:test}}
-{\includegraphics[scale=0.35]{figures/fig3/fig3.pdf}}
+{\caption{Confirming EPI generated hypotheses. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations for the inputs for which hypotheses were formulated.}}
+{\includegraphics[scale=0.45]{figures/fig3/fig3.pdf}}
 \end{figure}
 
-All of this insight gained beyond what the analytic linear prediction told us (Fig. 2C, cyan), can be used to geneate testable hypotheses for this model. 
+We evaluate these hypotheses by taking steps in individual neuron-type input $\Delta h_\alpha$ away from the modes of the inferred distributions 
+\begin{equation}
+dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)
+\end{equation}
+Now, $dx_{\alpha,ss}$ is the steady state response to the system with input $h = b + dh^* + \Delta h_\alpha u_\alpha$ where $u_\alpha$ is a unit vector in the dimension of $\alpha$. Our hypotheses suggested by EPI are confirmed. 1. the neuron-type responses are sensitive to their direct inputs (Fig. 3A black, 3B blue, 3C red, 3D green), 2. the E- and P-populations are not affected by $dh_V$ (Fig. 3A green, 3B green), 3. the S-population is not affected by $dh_P$ (Fig. 3C blue), and 4. the V-population has a nonmonotonic response to $dh_E$ (Fig. 3D black).  All of this validated insight gained beyond what the analytic linear prediction told us (Fig. 2C, cyan).
 
 To this point, we have shown the utility of EPI on relatively low-level emergent properties like network syncing and differential neuron-type population responses.  In the remainder of the study, we focus on using EPI to understand models of more abstract cognitive function.
 
