@@ -53,7 +53,7 @@ However, this enterprise quickly becomes infeasible as biologically realistic co
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
-We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in low-rank recurrent neural networks. 
+We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of bias in recurrent neural networks solving a toy mathematical problem. 
 More generally, this work suggests a departure from realism vs tractability considerations towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 %(150 word limit) we can ignore that for now up to about 50% \\
 
@@ -96,7 +96,7 @@ These models were chosen to demonstrate generality through ranges of biological 
 First, to motivate the contribution of emergent property inference, we investigated network syncing in a classic model of the stomatogastric ganglion \cite{gutierrez2013multiple}.   
 Second, we generated then evaluated a set of verifiable hypotheses of input-responsibity in a four neuron-type dynamical model of primary visual cortex.
 Third, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
-Fourth, we leveraged the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network executing Bayesian inference.  
+Fourth, we leveraged the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network executing a toy computation.  
 The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more generally offer a quantitative grounding for theoretical models  going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
 
 %-------------------
@@ -214,7 +214,7 @@ Note that we restrict the variance of the emergent property statistic $dx_{\alph
 
 \begin{figure}
 \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
-{\caption{Confirming EPI generated hypotheses. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations for the inputs for which hypotheses were formulated.}}
+{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations for the inputs for which hypotheses were formulated.}}
 {\includegraphics[scale=0.45]{figures/fig3/fig3.pdf}}
 \end{figure}
 
@@ -251,7 +251,7 @@ For greater task accuracies, the task mode eigenvalue increases, indicating the 
 So far, each biologically realistic model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity. 
-A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.
+A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.  Here we leverage recent theoretical work to run EPI on interpretable parameterizations of RNN connectivity solving a toy problem.
  
 Importantly, recent work establishes such a link between RNN connectivity weights and the resulting dynamical responses of the network using dynamic mean field theory (DMFT)  for neural networks \cite{sompolinsky1988chaos}.
 Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
@@ -278,7 +278,7 @@ By recognizing that the equation solver is differentiable, we are able to combin
 (Need to make this more eloquent) 
 In our analysis, we consider Bayesian inference in the brain \cite{aitchison2017or}. Since its valuable to represent uncertainties about quantities in the world, its posited that the brain would optimally execute Bayesian inference in a variety of settings.  However, it's been shown that the brain has substantial bias in some of its inference operations.  One field of computational neuroscience endeavors to understand the mechanistic sources of these biases in the neural computations for inference.
 
-In our analysis, the rank-1 RNNs were to produce the posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$ in their mean activity $\mu$ and temporal variance $\Delta_T$ (see Section \ref{methods_LRRNN}).  The Bayesian inference problem was to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood of observations $y \sim \mathcal{N}(\mu_y, 1)$ given a single observation of $y=2$ and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 4A). The true posterior to this problem is $\mu_y \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although different parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ result in approximate inference procedures of varying biases in $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
+For a toy Bayesian inference problem, the rank-1 RNNs were to produce the posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ (see Section \ref{methods_LRRNN}).  Specifically, given an obervation $y$, the rank-1 RNN had to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood on such observations $y \sim \mathcal{N}(\mu_y, 1)$, and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 4A). The true posterior to this problem for the tested observation $y=2$ is $\mu_y \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although various parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$ result in approximate inference procedures of varying biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
 
 We ran EPI on rank-1 RNNs solving this Bayesian inference problem, while allowing a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$.  
 This allowed us to study the mechanistic sources of bias in the sampled rank-1 RNNs executing the Bayesian inference computation inexactly.
