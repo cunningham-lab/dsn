@@ -375,6 +375,16 @@ To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\
 \begin{equation}
  \mu = E \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \Omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \Omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix}
  \end{equation} 
+ 
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
+\end{center}
+\begin{flushleft}
+Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented lagrangian epoch, the emergent property moments move closer to their constraints.
+\end{flushleft}
+\end{figure}
+
 where $\Omega = 1$Hz.  Unlike the models we study in the paper which calculate $E_{x \sim p(x \mid z)} \left[T(x) \right]$ via forward simulation, we have a closed  form for the eigenvalues of the dynamics matrix.  $\lambda$ can be calculated using the quadratic formula: 
 \begin{equation}
 \lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}
@@ -400,7 +410,25 @@ When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have th
 \text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3
 \end{equation}
 
-Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
+Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.  Indeed we sample a distribution of systems oscillating near 1Hz (Fig. S4).
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{figures/figS3/figS3.pdf}
+\end{center}
+\begin{flushleft}
+Fig. S3: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor. B. Probability contours in the $a_2-a_3$ plane can be derived from relationship to the emergent property statistic of oscillation frequency.
+\end{flushleft}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5]{figures/figS4/figS4.pdf}
+\end{center}
+\begin{flushleft}
+Fig. S4: Sampled dynamical system trajectories from the EPI distribution.  Each trajectory is initialized at $x(0) = \begin{bmatrix} \frac{\sqrt{2}}{2} & -\frac{\sqrt{2}}{2} \end{bmatrix}$.
+\end{flushleft}
+\end{figure}
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
 To optimize $q_\theta(z)$ in equation 1, the constrained optimization is performed using the augmented Lagrangian method.  The following objective is minimized:
@@ -410,6 +438,8 @@ L(\theta; \alpha, c) = -H(q_\theta) + \alpha^\top \delta(\theta) + \frac{c}{2}||
 where $\delta(\theta) = E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\alpha \in \mathcal{R}^m$ are the Lagrange multipliers and $c$ is the penalty coefficient.  For a fixed $(\alpha, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch -- a period of optimization with fixed $\alpha$ and $c$ for a given number of stochastic optimziation iterations. Similarly, $\alpha$ is tuned each epoch based on the constraint violations.  For the linear 2-dimensional system (Fig. S2C) optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\alpha_1 = 0$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||\delta(\theta_{k+1})||] > \gamma E[||\delta(\theta_{k})||]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the project, $\beta = 4.0$ and $\gamma = 0.25$ is used.  The other update rule is $\alpha_{k+1} = \alpha_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of EPI optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy usually decreases, and structural pathologies in the distribution may be introduced.
 
 The intention is that $c$ and $\alpha$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
+
+
 
 \subsubsection{Normalizing flows}\label{methods_NF}
 Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the deep probability distribution.
@@ -763,20 +793,6 @@ TODO explain the density network architectures used.
 \includegraphics[scale=0.5]{figures/figS1/figS1.pdf}
 \end{center}
 Fig. S1: A. EPI for rank-1 networks doing discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
-\end{center}
-Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented lagrangian epoch, the emergent property moments move closer to their constraints.
-\end{figure}
-
-\begin{figure}
-\begin{center}
-\includegraphics[scale=0.5]{figures/figS3/figS3.pdf}
-\end{center}
-Fig. S3: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor. B. Probability contours in the $a_2-a_3$ plane can be derived from relationship to the emergent property statistic of oscillation frequency.
 \end{figure}
 
 \end{document}
