@@ -188,23 +188,24 @@ Stating such a problem is easy enough; finding a tractable and suitably flexible
 EPI optimizes the weights and biases $\theta$ of the deep neural network (which induces the probability distribution) by iteratively solving Equation \ref{eq:EPI}. The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is no different than its emergent property value (see Section \ref{methods_AL_opt}). Armed with this method, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
-The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Experimental evidence shows that inhibitory neurons mostly belong to one of three genetically-defined classes \cite{markram2004interneurons, rudy2011three}.  
-
-An important extension of these E/I models is to break the inhibitory population into its subtypes, leading to a four-neuron population:  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons) \cite{litwin2016inhibitory} (Fig. 2A).
-The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
+In studies of primary visual cortex (V1), theoretical models with two populations (excitatory (E) and inhibitory (I) neurons) have reproduced a host of experimentally documented phenomena. 
+  In particular regimes of excitation and inhibition, these E/I models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  
+ Extending this using experimental evidence of three genetically-defined classes of inhibitory neurons \cite{markram2004interneurons, rudy2011three}, recent work \cite{litwin2016inhibitory} has investigated a four-population model --  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons -- as shown in Fig. 2A.
+ The dynamical state of this model is the firing rate of each neuron-type population $x = \left[x_E, x_P , x_S, x_V \right]^\top$, which evolves according to rectified and exponentiated dynamics:
+%
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
+%
 with effective connectivity weights $W$ and input $h$.  In our analysis, we set the time constant $\tau = 20$ms and dynamics coefficient $n = 2$.  
-Also, we can obatin an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
+Also, we can obtain an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
 If this model with such an estimate of $W$ reflects properties of V1, then we know we're on the right track.
 Otherwise, we need to reflect on our model design, or other parameter settings like $n$ and $\tau$.
 Given these fixed parameter choices of $W$, $n$, and $\tau$, we studied the system's response to input
 \begin{equation}
 h = b + dh
 \end{equation} 
-where the input $h$ is comprised of a baseline input $b = \begin{bmatrix} b_E & b_P & b_S & b_V \end{bmatrix}$ and a differential input $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}$ to each neuron-type population.  Thoughout our comparative analyses, both analytic and via EPI, the baesline input was set to $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}$.  
+where the input $h$ is comprised of a baseline input $b = \begin{bmatrix} b_E & b_P & b_S & b_V \end{bmatrix}$ and a differential input $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}$ to each neuron-type population.  Throughout our comparative analyses, both analytic and via EPI, the baesline input was set to $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}$.  
 
 First, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
 While this linearization accurately predicts differential responses $dx_{ss} = \begin{bmatrix} dx_{E,ss} & dx_{P,ss} & dx_{S,ss} & dx_{V,ss} \end{bmatrix}$  for small differential inputs to each population $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 2B, left), it can be misleading in such a nonlinear model for a greater differential input strength $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 3B, right). In fact, the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}$ was actually in the opposite direction of the true response (Fig. 2B, right, green).  This shows that currently available approaches  to deriving the steady state response of this system are limited.
