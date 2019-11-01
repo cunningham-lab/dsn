@@ -26,9 +26,6 @@
 \renewcommand{\part}[1] {\vspace{.10in} {\bf (#1)}}
 \linespread{1.5}
 
-\newcommand{\myname}{Anonymous Authors}
-\newcommand{\myhwnum}{12}
-
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{5pt plus 1pt}
  
@@ -48,18 +45,18 @@ Sean R. Bittner, Agostina Palmigiano, Alex T. Piet, Chunyu A. Duan, Francesca Ma
 \linenumbers
 \section{Abstract}
 The cornerstone of theoretical neuroscience is the circuit model: a system of equations that captures a hypothesized neural mechanism of scientific importance.  
-At its best, such a model will give rise to an experimentally observed phenomenon -- whether behavioral or in terms of neural activity -- and thus can offer insight into neural computation.  
+Such models are valuable when they give rise to an experimentally observed phenomenon -- whether behavioral or in terms of neural activity -- and thus can offer insight into neural computation.  
 The operation of these circuits, like all models, critically depends on the choices of model parameters.  
 Historically, the gold standard has been to analytically derive the relationship between model parameters and computational properties.  
 However, this enterprise quickly becomes infeasible as biologically realistic constraints are included into the model, often resulting in \emph{ad hoc} approaches to understanding the relationship between model and computation.  
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
-Importantly, the techniques we introduce offer a logical and unbiased means to understand the implications of model parameter choices on computational properties of interest.  
-We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  We then use it to generate insights into neuron-type input-responsivity in primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in low-rank recurrent neural networks. 
-More generally, this work moves us away from the tradeoff of biological realism vs analytical tractability, and towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
+Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
+We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
+We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in low-rank recurrent neural networks. 
+More generally, this work suggests a departure from realism vs tractability considerations towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 %(150 word limit) we can ignore that for now up to about 50% \\
 
 \section{Introduction}
-
 The fundamental practice of theoretical neuroscience is to use a mathematical \emph{model} to understand neural computation, whether that computation enables perception, action, or some intermediate processing \cite{abbott2008theoretical}.  
 In this field, a neural computation is systematized with a set of equations -- the model -- and these equations are motivated by biophysics, neurophysiology, and other conceptual considerations.
 The function of this system is governed by the choice of model parameters, which when configured in some special way, give rise to some measurable signature of a computation.   
@@ -86,7 +83,7 @@ Technically, because many such models stipulate a noisy system of differential e
 
 % now we've constructed the tension that theory models need this and statistical models know how to do this... now connect!
 To address these three challenges, we developed an inference methodology -- `emergent property inference' -- which learns a distribution over parameter configurations in a theoretical model.  Critically, this distribution is such that draws from the distribution (parameter configurations) correspond to systems of equations that give rise to a specified emergent property.  
-First, we stipulate a deep neural network that induces a flexible family of probability distributions over model parameterizations.   We will insist on being able to quantify the probability of various model parameter configurations, and thus we choose the deep neural network to be of the (bijective) normalizing flow class \cite{rezende2015variational}.
+First, we stipulate a deep neural network that induces a flexible family of probability distributions over model parameterizations.   We will insist on being able to quantify the probability of various model parameter configurations, and thus we choose the deep neural network to be of the (bijective) normalizing flow class \cite{rezende2015variational, dinh2016density, papamakarios2017masked}.
 Second, we quantify the notion of emergent properties as a set of moment constraints on datasets generated by the model.  
 Thus an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is the central object of interest to the theorist (unlike say the statistical neuroscientist).  
 The requirement to condition on an emergent property requires the adaptation of deep probabilistic inference methods, and we extend recent tools to do so \cite{loaiza2017maximum}.
@@ -132,7 +129,7 @@ First, the theorist designs or chooses an existing model that, it is hypothesize
  To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.  
  A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]^\top$.
 Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  Second, the theorist defines the emergent property, the measurable signal of scientific interest.  
-To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A.
+To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.55Hz.
 Third, qualtitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done to describe different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for modern machine learning.  We can precisely quantify the emergent property as a statistical feature of the model, and we can infer a probability distribution over parameter configurations that produce this emergent property. 
 
@@ -140,7 +137,8 @@ Before presenting technical details (in the following section), let us understan
 This distribution -- represented for clarity as samples from the distribution -- is then a scientifically meaningful and mathematically tractable object.  
 It conveys parameter regions critical to the emergent property, directions in parameter space that will be invariant (or not) to that property, and more.  
 In the STG model, this distribution can be specifically queried to determine the prototypical parameter configuration for network syncing (the mode; Figure 1B star), and then how quickly network syncing will decay based on changes away that mode (Figure 1B, inset).  
-Of course, validation of this distribution is critical: we can also plot a metric of network syncing that is independent of this inference process, to show that this EPI distribution indeed captures that structure (Figure 1B, contour lines).
+While it is impossible to determine whether we have converged to the maximum entropy distribution, the emergent property statistics have converged to the emergent property values.  
+To continue validation, we apply EPI to condition a two-dimensional linear dynamical system model on a band of oscillations around 1Hz, from which we can analytically derive the contours of the inferred distribution (see Section \ref{methods_2DLDS}).
 Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.
 
 \subsection{A deep generative modeling approach to emergent property inference} \label{results_dgm}
@@ -174,18 +172,18 @@ Finally, we recognize that many distributions will satisfy the emergent property
 This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
 Here we chose Shannon entropy as it has been well used for a variety of things \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but the EPI methods (not the results) offered here are largely unaffected by this choice.  
 
-In EPI, the weights and biases $\theta$ of the deep network are optimized by the objective in Equation \ref{eq:EPI}.  The randomness of a deep probability distribution comes from an isotropic gaussian draw $\omega \sim q_0$, which is fed into the structure-inducing deep network. The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  Stochastic constraint convergence is evaluated with a hypothesis testing criteria (see Section \ref{methods_AL_opt}). Armed with this distribution, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
-
-\subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
-The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 2A).
-
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.55]{figures/fig2/fig2.pdf}
 \end{center}
 \caption{Exploring neuron-type responsivity in V1.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on $dh$ conditioned on neuron-type $\alpha$ rate increases of $y$: $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}). The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in cyan (very small, near origin). }
 \end{figure}
+
+In EPI, the weights and biases $\theta$ of the deep network are optimized by the objective in Equation \ref{eq:EPI}.  The randomness of a deep probability distribution comes from an isotropic gaussian draw $\omega \sim q_0$, which is fed into the structure-inducing deep network. The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  Stochastic constraint convergence is evaluated with a hypothesis testing criteria (see Section \ref{methods_AL_opt}). Armed with this distribution, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
+
+\subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
+The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 2A).
 
 The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
 \begin{equation}
@@ -198,9 +196,9 @@ Given these fixed parameter choices of $W$, $n$, and $\tau$ and a baseline input
 Beginning with the classic approach to theoretical neuroscience, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
 While this linear prediction is accurate for small differential inputs (Fig. 2B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B, right). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ was actually in the opposite direction of the true response (Fig. 2B, right, green). 
 
-To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of inputs $dh$ that cause the rate of each neuron-type population $\alpha$ to increase by a value $y$ with some allowed variance.  We denote this emergent property of neuron-type responsivity as $\mathcal{B}(\alpha, y)$.  In Fig. 2C, each column visualizes the approximate posterior $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  To visualize these four-dimensional distributions, we pairploted the two-dimensional marginal densities, which yield an insightful picture.  As expected, the inferred distributions reflected that each neuron-type's rate is sensitive to its direct input.  Additionally, they revealed that the E- and P-population are largely unaffected by $dh_V$, and the S-population by $dh_P$ for the rate increases examined.  Additionally, we observed that the P-population likely stabilizes the E- and V-populations (the two it projects to besides itself).  This deduction is supported by the tight positive correlation between $dh_P$ and $dh_E$ for E-population increases and also between $dh_P$ and $dh_V$ for V-population increases.  Finally, EPI showed that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
+To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of inputs $dh$ that cause the rate of each neuron-type population $\alpha$ to increase by a value $y$ with some allowed variance.  We denote this emergent property of neuron-type responsivity as $\mathcal{B}(\alpha, y)$.  In Fig. 2C, each column visualizes the approximate posterior $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  To visualize these four-dimensional distributions, we pairploted the two-dimensional marginal densities, which yield an insightful picture.  As expected, the inferred distributions reflected that each neuron-type's rate is sensitive to its direct input.  Additionally, they revealed that the E- and P-population are largely unaffected by $dh_V$  Furthermore, EPI showed that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
 
-All of this insight was gained beyond what the analytic linear prediction told us (cyan lines that you can't see).  These analyses can generate experimentally testable hypotheses, that if confirmed, can be used to build a theory of V1 circuit operation.  For example, one could test the P-population's role in stabilization by optogenetically stimulating the E- and V-populations and measuring the P-population response. Additionally, one would predict that at some point, the V-population's response will flip sign as input to the E-population increases.  
+All of this insight gained beyond what the analytic linear prediction told us (Fig. 2C, cyan), can be used to geneate testable hypotheses for this model. 
 
 To this point, we have shown the utility of EPI on relatively low-level emergent properties like network syncing and differential neuron-type population responses.  In the remainder of the study, we focus on using EPI to understand models of more abstract cognitive function.
 
@@ -285,18 +283,18 @@ On the other end of the spectrum, you may require a large number of simulation i
 
 \section{Discussion}
 Machine learning has played an effective, multifaceted role in neuroscientific progress. 
-Primarily, it has revealed structure in large-scale neural data sets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
+Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
 Secondarily, trained algorithms of varying degrees of biological relevace serve as fully-observable computational systems that are compared to the brain \cite{ sussillo2013opening, richards2019deep}.  
 However, theoretical neuroscientists may currently be too focused on this secondary role.  
 The ability to optimize a model to perform neuroscientifically relevant task does not necessarily inform us about computation in the brain at a mechanistic level unless a link can be made between the model's operation and the underlying biology.
-Neuoroscientists should turn focus to the primary benefit machine learning can offer: theorists can use deep learning for probabilistic inference to understand their \textit{models} rather than the experimental data sets it has been traditionally purposed for.
+Neuoroscientists should turn focus to the primary benefit machine learning can offer: theorists can use deep learning for probabilistic inference to understand their \textit{models} rather than the experimental datasets it has been traditionally purposed for.
 
 For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1.  
 This should not be surprising, since analytic approaches to studying nonlinear dynamical systems complexify greatly when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
 We are not suggesting to forego the development or application of challenging analytic procedures in theoretical neuroscience.
 However, we promote the judicious recognition of arduous mathematical challenges, and alternatively using deep learning through EPI to gain the desired insights.
 In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through analysis.
-By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a data set, which generated a set of testable predictions.
+By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated a set of testable predictions.
 
 Exploratory analyses in theoretical neuroscience can certainly be less agnostic to the eventual hypothesis generated.  When interested in the mechanistic changes that occur in the brain throughout learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{results_SC}).
 This analysis identified experimentally testable predictions of changes in connectivity in SC throughout learning of a rapid task switching behavior.
