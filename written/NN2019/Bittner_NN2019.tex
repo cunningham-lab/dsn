@@ -112,7 +112,7 @@ The existence of these complementary methodologies emphasizes the increased impo
 \begin{center}
 \includegraphics[scale=0.38]{figures/fig1/fig1.pdf}
 \end{center}
-\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  The eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.   (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. EPI learns a distribution $q_\theta(z)$ of model parameters that produce an emergent property: the emergent property statistics $T(x)$ are fixed in expectation over parameter distribution samples $z \sim q_\theta(z)$ to particular values $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  D. Deep probability distributions map a latent random variable $\omega \sim q_0$, where $q_0$ is chosen to be simple distribution such as an isotropic gaussian, through a highly expressive function family $f_\theta(\omega) = f_l(...f_1(\omega))$ parameterized by $\theta$ the neural network weights and biases. This mapping induces an implicit probability model $q(g_\theta(\omega))$ }
+\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  The eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.   (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. EPI learns a distribution $q_\theta(z)$ of model parameters that produce an emergent property: the emergent property statistics $T(x)$ are fixed in expectation over parameter distribution samples $z \sim q_\theta(z)$ to particular values $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  D. Deep probability distributions map a latent random variable $\omega \sim q_0$, where $q_0$ is chosen to be simple distribution such as an isotropic gaussian, through a highly expressive function family $f_\theta(\omega) = f_l(...f_1(\omega))$ parameterized by the neural network weights and biases $\theta \in \Theta$. This mapping induces an implicit probability model $q(g_\theta(\omega)) \in \mathcal{Q}$ }
 \end{figure}
 
 
@@ -144,33 +144,34 @@ Taken together, bringing careful inference to theoretical models offers deeper i
 \subsection{A deep generative modeling approach to emergent property inference} \label{results_dgm}
 
 Emergent property inference (EPI) systematizes the three-step procedure of the previous section.
-First, we consider the model as a coupled set of differential (and potentially stochastic) equations.  In the running STG example the dynamical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}^\top$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
-\begin{equation} C_m \frac{\partial x}{\partial t} = - \left[ h_{leak} + h_{Ca} + h_K + h_{hyp} + h_{elec} + h_{syn}\right] 
+First, we consider the model as a coupled set of differential (and potentially stochastic) equations \cite{gutierrez2013multiple}.  In the running STG example the dynamical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
+\begin{equation} C_m \frac{\partial x}{\partial t} = -h(x,z) = - \left[ h_{leak}(x, z) + h_{Ca}(x, z) + h_K(x, z) + h_{hyp}(x, z) + h_{elec}(x, z) + h_{syn}(x, z)\right] 
 \end{equation} 
-where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]^\top$ (see Methods).
+where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
 Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency (Figure 1A bottom).
-Quantifying this phenomenon is straightforward: we define network syncing to be that the firing rates of each neuron are close to an intermediate frequency of 0.55Hz.  Thus, our measurable signature of computation $T(x)$ -- the firing rates -- is a statistic of the membrane potential activity $x$ which we insist be near a particular value $\mu=0.55$.  This notion of an emergent property is then naturally embodied as a set of emergent property value constraints on emergent property statistics
+Quantifying this phenomenon is straightforward: we define network syncing to be that the spiking frequency of each neuron is close to an intermediate frequency of 0.55Hz.  Thus, our measurable signature of computation -- the firing frequencies of each neuron $\Omega_{\text{f1}}(x)$, $\Omega_{\text{f2}}(x)$, etc.-- are statistics of the membrane potential activity $x$ which we insist be near a particular value $0.55Hz$.  This notion of an emergent property is then naturally embodied as a set of values for the emergent property statistics
 \begin{equation}\label{eq:EP}
  E\left[T(x) \right] =\mu
  \end{equation}
-  (comment about second moments here or save for Methods?).
+where the first and second moments of these frequencies are chosen such that each neuron is firing near the network syncing frequency: $E\left[\Omega_i \right] = 0.55$ and $E\left[(\Omega_i - 0.55) \right] = 0.025^2$ for $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.
 Third, having mathematically rationalized the above components, we can introduce deep generative modeling for performing emergent property inference.
 We seek a distribution over parameter configurations $z$, and insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation \ref{eq:EP}.  
 This results in the following optimization program: 
  \begin{equation} \label{eq:EPI}
 \begin{split}
 &\argmax_{q_\theta \in \mathcal{Q}} H(q_\theta(z)) \\
- &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
+ &\text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
 \end{split}
 \end{equation}
-
+It is worth emphasizing that $T(x)$ is a vector of statistics, and $\mu$ is a vector of their constraining values.
 The purpose of each element in this program is detailed in Figure 1D.
-Stating such a problem is easy enough; finding a tractable and suitably flexible family of probability distributions ($\mathcal{Q}$) is hard.  
-We use a particular class of deep neural networks called `normalizing flows' \cite{rezende2015variational}, which admit tractable sample density calculations, to induce the deep probability distribution (Fig. 1E).
-One can interpret the resulting probabilities as increasing with closeness in emergent property statistics to the emergent property values (see Section \ref{methods_2DLDS}).
-Finally, we recognize that many distributions will satisfy the emergent property, so we require a normative principle to select amongst them.  
+Finally, we recognize that many distributions will produce the emergent property, so we require a normative principle to select amongst them.  
 This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
-Here we chose Shannon entropy as it has been well used for a variety of things \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but the EPI methods (not the results) offered here are largely unaffected by this choice.  
+Here we chose Shannon entropy to model parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but the EPI methods (not the results) offered here are largely unaffected by this choice.  
+Stating such a problem is easy enough; finding a tractable and suitably flexible family of probability distributions ($\mathcal{Q}$) is hard.  
+EPI employs `normalizing flows' \cite{rezende2015variational, dinh2016density, papamakarios2017masked}, which are neural networks, which induce a flexible class of deep probability distributions (Fig. 1E).
+With normalizing flows, we leverage the tractable calculation of log sample probability $\log q_\theta(z)$ to optimize entropy \cite{loaiza2017maximum}.
+%One can interpret the resulting probabilities as increasing with closeness in emergent property statistics to the emergent property values (see Section \ref{methods_2DLDS}).
 
 \begin{figure}
 \begin{center}
