@@ -145,7 +145,7 @@ Taken together, bringing careful inference to theoretical models offers deeper i
 
 Emergent property inference (EPI) systematizes the three-step procedure of the previous section.
 First, we consider the model as a coupled set of differential (and potentially stochastic) equations \cite{gutierrez2013multiple}.  In the running STG example the dynamical state $x = \begin{bmatrix} x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \end{bmatrix}$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
-\begin{equation} C_m \frac{\partial x}{\partial t} = -h(x,z) = - \left[ h_{leak}(x, z) + h_{Ca}(x, z) + h_K(x, z) + h_{hyp}(x, z) + h_{elec}(x, z) + h_{syn}(x, z)\right] 
+\begin{equation} C_m \frac{\partial x}{\partial t} = -h(x; z) = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
 where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
 Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency (Figure 1A bottom).
@@ -153,7 +153,7 @@ Quantifying this phenomenon is straightforward: we define network syncing to be 
 \begin{equation}\label{eq:EP}
  E\left[T(x) \right] =\mu
  \end{equation}
-where the first and second moments of these frequencies are chosen such that each neuron is firing near the network syncing frequency: $E\left[\Omega_i \right] = 0.55$ and $E\left[(\Omega_i - 0.55) \right] = 0.025^2$ for $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.
+where the first and second moments of these frequencies are chosen such that each neuron is firing near the network syncing frequency: $E\left[\Omega_i \right] = 0.55$ and $E\left[(\Omega_i - 0.55)^2 \right] = 0.025^2$ for $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.
 Third, having mathematically rationalized the above components, we can introduce deep generative modeling for performing emergent property inference.
 We seek a distribution over parameter configurations $z$, and insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation \ref{eq:EP}.  
 This results in the following optimization program: 
@@ -184,20 +184,27 @@ In EPI, the weights and biases $\theta$ of the deep probability distribution are
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
 The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Since inhibitory neurons mostly fall into one of three classes (parvalbumin (P)-, somatostatin (S)-, and vasointestinal peptide (V)-expressing neurons) \cite{markram2004interneurons, rudy2011three}, theorists look to extend these dynamical models to four populations \cite{litwin2016inhibitory} (Fig. 2A).
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Experimental evidence shows that inhibitory neurons mostly belong to one of three genetically-defined classes \cite{markram2004interneurons, rudy2011three}.  
 
+An important extension of these E/I models is to break the inhibitory population into its subtypes, leading to a four-neuron population:  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons) \cite{litwin2016inhibitory} (Fig. 2A).
 The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
-with effective connectivity weights $W$ and input $h$.  In our analysis, we set the time constant $\tau = 20ms$ and dynamics coefficient $n = 2$.  
-Also, we obtained an informative estimate of the effective connectivities between these neuron-types in mice by multiplying their probability of connection by the synaptic efficacy \cite{allen} (see Section \ref{methods_V1}).
-Given these fixed parameter choices of $W$, $n$, and $\tau$ and a baseline input $b$, we asked what differential inputs $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}^\top$ cause each neuron-type population to increase its firing rate.
+with effective connectivity weights $W$ and input $h$.  In our analysis, we set the time constant $\tau = 20$ms and dynamics coefficient $n = 2$.  
+Also, we can obatin an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
+If this model with such an estimate of $W$ reflects properties of V1, then we know we're on the right track.
+Otherwise, we need to reflect on our model design, or other parameter settings like $n$ and $\tau$.
+Given these fixed parameter choices of $W$, $n$, and $\tau$, we studied the system's response to input
+\begin{equation}
+h = b + dh
+\end{equation} 
+where the input $h$ is comprised of a baseline input $b = \begin{bmatrix} b_E & b_P & b_S & b_V \end{bmatrix}$ and a differential input $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}$ to each neuron-type population.  Thoughout our comparative analyses, both analytic and via EPI, the baesline input was set to $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}$.  
 
-Beginning with the classic approach to theoretical neuroscience, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
-While this linear prediction is accurate for small differential inputs (Fig. 2B, left), it is often misleading in such nonlinear models as differential input strength increases (Fig. 3B, right). In fact, for a baseline input of $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}^\top$ was actually in the opposite direction of the true response (Fig. 2B, right, green). 
+First, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
+While this linearization accurately predicts differential responses $dx_{ss} = \begin{bmatrix} dx_{E,ss} & dx_{P,ss} & dx_{S,ss} & dx_{V,ss} \end{bmatrix}$  for small differential inputs to each population $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 2B, left), it can be misleading in such a nonlinear model for a greater differential input strength $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 3B, right). In fact, the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}$ was actually in the opposite direction of the true response (Fig. 2B, right, green).  This shows that currently available approaches  to deriving the steady state response of this system are limited.
 
-To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of inputs $dh$ that cause the rate of each neuron-type population $\alpha$ to increase by a value $y$ with some allowed variance.  We denote this emergent property of neuron-type responsivity as $\mathcal{B}(\alpha, y)$.  In Fig. 2C, each column visualizes the approximate posterior $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  To visualize these four-dimensional distributions, we pairploted the two-dimensional marginal densities, which yield an insightful picture.  As expected, the inferred distributions reflected that each neuron-type's rate is sensitive to its direct input.  Additionally, they revealed that the E- and P-population are largely unaffected by $dh_V$  Furthermore, EPI showed that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
+To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$ denoted by the emergent property $\mathcal{B}(\alpha, y)$ (see Section \ref{methods_V1}).  In Fig. 2C, each column visualizes the inferred distribution of $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5. For visualization, we pairploted the two-dimensional marginal densities, which yield an insightful picture.  As expected, the inferred distributions reflected that each neuron-type's rate is sensitive to its direct input.  Additionally, they revealed that the E- and P-population are largely unaffected by $dh_V$  Furthermore, EPI showed that negative $dh_E$ results in small inhibitory firing rate increases.  However, for a larger increase from the V-population, a positive $dh_E$ is required.
 
 \begin{figure}
 \begin{center}
