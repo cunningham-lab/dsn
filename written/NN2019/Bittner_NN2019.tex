@@ -185,10 +185,10 @@ In EPI, the weights and biases $\theta$ of the deep probability distribution are
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
 The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
-Dynamical models with two populations (excitatory and inhibitory) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex.  
-In particular regimes of excitation and inhibition, these E/I models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  
-Extending this using experimental evidence three genetically-defined classes of inhibitory neurons \cite{markram2004interneurons, rudy2011three}, recent work \cite{litwin2016inhibitory} has investigated a four-population model --  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons -- as shown in Fig. 2A.
-The dynamical state of this model is the firing rate of each neuron-type population $x = \left[x_E, x_P , x_S, x_V \right]^\top$, which evolves according to rectified and exponentiated dynamics:
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Experimental evidence shows that inhibitory neurons mostly belong to one of three genetically-defined classes \cite{markram2004interneurons, rudy2011three}.  
+
+An important extension of these E/I models is to break the inhibitory population into its subtypes, leading to a four-neuron population:  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons) \cite{litwin2016inhibitory} (Fig. 2A).
+The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
@@ -249,7 +249,7 @@ For greater task accuracies, the task mode eigenvalue increases, indicating the 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing the sources of bias during approximate inference in RNNs} \label{results_RNN}
 So far, each biologically realistic model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
-At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
+At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity. 
 A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.
  
@@ -273,10 +273,12 @@ The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \math
 Mastrogiuseppe et al. are able to design low-rank connectivities via the pairwise correlations of such low-rank vectors that solve tasks from behavioral neuroscience. 
 An important detail is that a nonlinear system of equations solver must be used to obtain the task-relevant variables of interest from the derived consistency equations (see Section \ref{methods_LRRNN}).
 However, simply consider DMFT as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$). 
-By recognizing that the equation solver is differentiable, we are able to combine DFMT with EPI to learn distributions on such connectivity parameters of RNNs that \emph{solve} these tasks via an emergent property defined on the DMFT-produced task-relevant responses.  
-We combined this theory with EPI to characterize the mechanistic sources of bias in a rank-1 RNN executing approximate Bayesian inference.
+By recognizing that the equation solver is differentiable, we are able to combine DFMT with EPI to learn distributions on such connectivity parameters of RNNs that execute these tasks via an emergent property defined on the DMFT-produced task-relevant responses.  
 
-The rank-1 RNNs were to produce the posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$ in their mean activity $\mu$ and temporal variance $\Delta_T$ (see Section \ref{methods_LRRNN}).  The Bayesian inference problem was to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood of observations $y \sim \mathcal{N}(\mu_y, 1)$ given a single observation of $y=2$ and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 4A). The true posterior to this problem is $\mu_y \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although different parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ result in approximate inference procedures of varying biases in $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
+(Need to make this more eloquent) 
+In our analysis, we consider Bayesian inference in the brain \cite{aitchison2017or}. Since its valuable to represent uncertainties about quantities in the world, its posited that the brain would optimally execute Bayesian inference in a variety of settings.  However, it's been shown that the brain has substantial bias in some of its inference operations.  One field of computational neuroscience endeavors to understand the mechanistic sources of these biases in the neural computations for inference.
+
+In our analysis, the rank-1 RNNs were to produce the posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$ in their mean activity $\mu$ and temporal variance $\Delta_T$ (see Section \ref{methods_LRRNN}).  The Bayesian inference problem was to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood of observations $y \sim \mathcal{N}(\mu_y, 1)$ given a single observation of $y=2$ and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 4A). The true posterior to this problem is $\mu_y \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although different parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ result in approximate inference procedures of varying biases in $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
 
 We ran EPI on rank-1 RNNs solving this Bayesian inference problem, while allowing a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$.  
 This allowed us to study the mechanistic sources of bias in the sampled rank-1 RNNs executing the Bayesian inference computation inexactly.
