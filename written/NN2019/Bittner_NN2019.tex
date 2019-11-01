@@ -248,13 +248,20 @@ For greater task accuracies, the task mode eigenvalue increases, indicating the 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing the sources of bias during approximate inference in RNNs} \label{results_RNN}
-So far, each biologically realistic model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron-types.  
+So far, each biologically realistic model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
-Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the latent factors of the trained RNN are compared to recorded neural activity. In general, there is little effort to connect the conclusions of these studies with interpretable neural mechanisms in the brain.
+Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity. 
+A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.
  
-However, recent work extends dynamic mean field theory (DMFT) from random neural networks to low rank RNNs establishing a link between interpretable, geometric parameterizations of the RNN connectivity with their emerging dynamics  \cite{mastrogiuseppe2018linking}. 
-Mastrogiuseppe et al. use this theory to design minimalist, geometric parameterizations of connectivity that solve behavioral neuroscience tasks, allowing them to make predictions about connectivity profiles in the task-necessary brain areas executing the underlying computations.
-We combined this theory with EPI to characterize the mechanistic sources of bias in a rank-1 RNN executing approximate Bayesian inference.
+Importantly, recent work establishes such a link between RNN connectivity weights and the resulting dynamical responses of the network using dynamic mean field theory (DMFT)  for neural networks \cite{sompolinsky1988chaos}.
+Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
+This theory has been extended from random neural networks to low rank RNNs, which have low-dimensional parameterizations of RNN connectivity via the pairwise correlations of the low-rank vectors (i.e. the low-rank ``geometry")  \cite{mastrogiuseppe2018linking}.  
+For example, connectivity of a rank-1 RNN is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
+\begin{equation}
+J = g\chi + \frac{1}{N}mn^\top
+\end{equation}
+where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
+The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$, whose parameters $M_m$ and $M_n$ determine their degree of correlation.  
 
 \begin{figure}
 \begin{center}
@@ -263,12 +270,10 @@ We combined this theory with EPI to characterize the mechanistic sources of bias
 \caption{Mechanistic sources of bias in Bayesian inference in rank-1 RNNs.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posteior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
 \end{figure}
 
-The connectivity of a rank-1 RNN is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
-\begin{equation}
-J = g\chi + \frac{1}{N}mn^\top
-\end{equation}
-where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
-The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$, whose parameters $M_m$ and $M_n$ determine their degree of correlation.  
+Mastrogiuseppe et al. use this theory to design  low-rank connectivities via the pairwise correlations of such low-rank vectors that solve tasks from behavioral neuroscience. If we consider this DMFT as a black-box that takes in a low-rank parameterization and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$), we can combine it with EPI to learn distributions on such connectivity parameters that solve tasks via an emergent property defined on the DMFT-produced task-relevant responses.
+
+We combined this theory with EPI to characterize the mechanistic sources of bias in a rank-1 RNN executing approximate Bayesian inference.
+
 The rank-1 RNNs were to produce the posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$ in their mean activity $\mu$ and temporal variance $\Delta_T$ (see Section \ref{methods_LRRNN}).  The Bayesian inference problem was to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood of observations $y \sim \mathcal{N}(\mu_y, 1)$ given a single observation of $y=2$ and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 4A). The true posterior to this problem is $\mu_y \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although different parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ result in approximate inference procedures of varying biases in $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
 
 We ran EPI on rank-1 RNNs solving this Bayesian inference problem, while allowing a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$.  
@@ -304,7 +309,7 @@ On the other end of the spectrum, many forward simulation iterations may be requ
 \subsection{Novel hypotheses from EPI} 
 Machine learning has played an effective, multifaceted role in neuroscientific progress. 
 Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
-Secondarily, trained algorithms of varying degrees of biological relevance serve as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
+Secondarily, trained algorithms of varying degrees of biological relevance are beginning to be viewed as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
 Theorists can use deep learning for probabilistic inference to understand their models and their behavior.
 
 For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1 \cite{litwin2016inhibitory}.  
