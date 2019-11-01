@@ -198,16 +198,14 @@ In studies of primary visual cortex (V1), theoretical models with two population
 \end{equation}
 %
 with effective connectivity weights $W$ and input $h$.  In our analysis, we set the time constant $\tau = 20$ms and dynamics coefficient $n = 2$.  
-Also, we can obtain an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
-If this model with such an estimate of $W$ reflects properties of V1, then we know we're on the right track.
-Otherwise, we need to reflect on our model design, or other parameter settings like $n$ and $\tau$.
-Given these fixed parameter choices of $W$, $n$, and $\tau$, we studied the system's response to input
+Also, as is fairly standard, we obtain an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (citation on way) (see Section \ref{methods_V1}).
+Given these fixed choices of $W$, $n$, and $\tau$, we studied the system's response to input.
 \begin{equation}
 h = b + dh
 \end{equation} 
-where the input $h$ is comprised of a baseline input $b = \begin{bmatrix} b_E & b_P & b_S & b_V \end{bmatrix}$ and a differential input $dh = \begin{bmatrix} dh_E & dh_P & dh_S & dh_V \end{bmatrix}$ to each neuron-type population.  Throughout our comparative analyses, both analytic and via EPI, the baesline input was set to $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}$.  
+where the input $h$ is comprised of a baseline input $b = \left[ b_E, b_P , b_S , b_V \right]$ and a differential input $dh = \left[ dh_E , dh_P , dh_S , dh_V\right]$ to each neuron-type population.  Throughout subsequent analyses, the baseline input is $b = \left[ 1 ,1,1,1\right]$. 
 
-First, we derived the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$.  
+Having established our model, we now turn to defining the emergent property. We begin with the linearized response of the system $\frac{dx_{ss}}{dh}$ at fixed points $x_{ss}$. 
 While this linearization accurately predicts differential responses $dx_{ss} = \begin{bmatrix} dx_{E,ss} & dx_{P,ss} & dx_{S,ss} & dx_{V,ss} \end{bmatrix}$  for small differential inputs to each population $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 2B, left), it can be misleading in such a nonlinear model for a greater differential input strength $dh = \begin{bmatrix} 0.1 & 0.1 & 0.1 & 0.1 \end{bmatrix}$ (Fig. 3B, right). In fact, the linearly predicted response for the V-population to $dh = \begin{bmatrix} 0.5 & 0.5 & 0.5 & 0.5 \end{bmatrix}$ was actually in the opposite direction of the true response (Fig. 2B, right, green).  This shows that currently available approaches  to deriving the steady state response of this system are limited.
 
 To get a more comprehensive picture of the input-reponsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$ denoted by the emergent property 
