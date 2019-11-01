@@ -53,7 +53,7 @@ However, this enterprise quickly becomes infeasible as biologically realistic co
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
-We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and improved attribution of bias in low-rank recurrent neural networks. 
+We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of bias in recurrent neural networks solving a toy mathematical problem. 
 More generally, this work suggests a departure from realism vs tractability considerations towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 %(150 word limit) we can ignore that for now up to about 50% \\
 
@@ -96,7 +96,7 @@ These models were chosen to demonstrate generality through ranges of biological 
 First, to motivate the contribution of emergent property inference, we investigated network syncing in a classic model of the stomatogastric ganglion \cite{gutierrez2013multiple}.   
 Second, we generated then evaluated a set of verifiable hypotheses of input-responsibity in a four neuron-type dynamical model of primary visual cortex.
 Third, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
-Fourth, we leveraged the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network executing Bayesian inference.  
+Fourth, we leveraged the flexibility of EPI to uncover the sources of bias in a low-rank recurrent neural network executing a toy computation.  
 The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more generally offer a quantitative grounding for theoretical models  going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
 
 %-------------------
@@ -185,10 +185,10 @@ In EPI, the weights and biases $\theta$ of the deep probability distribution are
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
 The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
-Dynamical models with two populations (excitatory and inhibitory) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex.  
-In particular regimes of excitation and inhibition, these E/I models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  
-Extending this using experimental evidence three genetically-defined classes of inhibitory neurons \cite{markram2004interneurons, rudy2011three}, recent work \cite{litwin2016inhibitory} has investigated a four-population model --  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons -- as shown in Fig. 2A.
-The dynamical state of this model is the firing rate of each neuron-type population $x = \left[x_E, x_P , x_S, x_V \right]^\top$, which evolves according to rectified and exponentiated dynamics:
+Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Experimental evidence shows that inhibitory neurons mostly belong to one of three genetically-defined classes \cite{markram2004interneurons, rudy2011three}.  
+
+An important extension of these E/I models is to break the inhibitory population into its subtypes, leading to a four-neuron population:  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons) \cite{litwin2016inhibitory} (Fig. 2A).
+The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
@@ -212,7 +212,7 @@ Note that we restrict the variance of the emergent property statistic $dx_{\alph
 
 \begin{figure}
 \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
-{\caption{Confirming EPI generated hypotheses. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations for the inputs for which hypotheses were formulated.}}
+{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations for the inputs for which hypotheses were formulated.}}
 {\includegraphics[scale=0.45]{figures/fig3/fig3.pdf}}
 \end{figure}
 
@@ -245,42 +245,47 @@ These consistent eigenvectors have intuitive roles in processing for this task, 
 For greater task accuracies, the task mode eigenvalue increases, indicating the criticality of supporting the task representation in the connectivity of $W$, (Fig. 4D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. 3D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode. Significantly, we can conclude from our methodlogy optimized to find all connectivities consistent with a level of accuracy, that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are proved out in the model (Fig. 3E).  Thus, our EPI-enabled analyses produce novel, experimentally testable predictions that effective connectvity between these populations changes throughout learning in a way that increases its task mode and decreses its side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Characterizing the sources of bias during approximate inference in RNNs} \label{results_RNN}
+\subsection{Characterizing the sources of bias in RNN computation} \label{results_RNN}
 So far, each biologically realistic model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
-At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in systems neuroscience research \cite{barak2017recurrent}. 
+At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity. 
-A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.
+A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.  Here we leverage recent theoretical work to run EPI on interpretable parameterizations of RNN connectivity solving a toy problem.
  
 Importantly, recent work establishes such a link between RNN connectivity weights and the resulting dynamical responses of the network using dynamic mean field theory (DMFT)  for neural networks \cite{sompolinsky1988chaos}.
 Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
 This theory has been extended from random neural networks to low rank RNNs, which have low-dimensional parameterizations of RNN connectivity via the pairwise correlations of the low-rank vectors (i.e. the low-rank ``geometry")  \cite{mastrogiuseppe2018linking}.  
-For example, connectivity of a rank-1 RNN is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
+For example, the connectivity of a rank-1 RNN $J$ is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
 \begin{equation}
 J = g\chi + \frac{1}{N}mn^\top
 \end{equation}
-where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
+where the activity $x$ evolves as
+\begin{equation}
+\frac{\partial x}{\partial t} = -x(t) + J \phi(x(t)) + I(t)
+\end{equation}
+$I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
 The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$, whose parameters $M_m$ and $M_n$ determine their degree of correlation.  
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Mechanistic sources of bias in Bayesian inference in rank-1 RNNs.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posteior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
+\caption{Sources of bias in RNN computation.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posteior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
 \end{figure}
 
-Mastrogiuseppe et al. use this theory to design  low-rank connectivities via the pairwise correlations of such low-rank vectors that solve tasks from behavioral neuroscience. If we consider this DMFT as a black-box that takes in a low-rank parameterization and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$), we can combine it with EPI to learn distributions on such connectivity parameters that solve tasks via an emergent property defined on the DMFT-produced task-relevant responses.
+Mastrogiuseppe et al. are able to design low-rank connectivities via the pairwise correlations of such low-rank vectors that solve tasks from behavioral neuroscience. 
+An important detail is that a nonlinear system of equations solver must be used to obtain the task-relevant variables of interest from the derived consistency equations (see Section \ref{methods_LRRNN}).
+However, we can consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$).
+Furthermore, we recognize that the solution produced by the solver is differentiable with respect to the input parameters. Thus, we are able to combine this DMFT with EPI to learn distributions on such connectivity parameters of RNNs that execute neuroscientific tasks via an emergent property defined on the task-relevant responses produced by DMFT.
 
-We combined this theory with EPI to characterize the mechanistic sources of bias in a rank-1 RNN executing approximate Bayesian inference.
+%(Need to make this more eloquent) In our analysis, we consider Bayesian inference in the brain \cite{aitchison2017or}. Since its valuable to represent uncertainties about quantities in the world, its posited that the brain would optimally execute Bayesian inference in a variety of settings.  However, it's been shown that the brain has substantial bias in some of its inference operations.  One field of computational neuroscience endeavors to understand the mechanistic sources of these biases in the neural computations for inference.
 
-The rank-1 RNNs were to produce the posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$ in their mean activity $\mu$ and temporal variance $\Delta_T$ (see Section \ref{methods_LRRNN}).  The Bayesian inference problem was to produce the gaussian posterior of the mean $\mu_y$ of a gaussian likelihood of observations $y \sim \mathcal{N}(\mu_y, 1)$ given a single observation of $y=2$ and a prior of $\mu_y \sim \mathcal{N}(4, 1)$ (Fig. 4A). The true posterior to this problem is $\mu_y \sim \mathcal{N}(\mu_{\text{post}}=3, \sigma^2_{\text{post}}=0.5)$, although different parameterizations of the connectivity $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}^\top$ result in approximate inference procedures of varying biases in $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$.
+For our toy problem, we consider the emergent property of  gaussian posterior conditioning.  Specifically, we ask the RNN to calculate the parameters of a gaussian posterior distribution on the mean of a gaussian likelihood $\mu_y$ given a single observation of $y$ and a gaussian prior $p(\mu_y) = \mathcal{N}(4, 1)$ (Fig. 5A).  Assuming the variance of the gaussian likelihood is 1, the true posterior for an input of $y=2$ is $p(\mu_y \mid y) = \mathcal{N}(3, 0.5)$.  We used EPI to learn distributions of RNNs producing the correct posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B).
 
-We ran EPI on rank-1 RNNs solving this Bayesian inference problem, while allowing a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$.  
-This allowed us to study the mechanistic sources of bias in the sampled rank-1 RNNs executing the Bayesian inference computation inexactly.
-The posterior distribution was roughly symmetric in the $M_m$-$M_n$ plane with structure suggesting there is a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
-The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 4B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 4B, right).
-Neither of these observations were obvious from the consistency equations afforded by DMFT, the solvers of which we took gradients through to run EPI (see Section \ref{methods_LRRNN}).
+When specifying the emergent property of gaussian posterior conditioning, we allowed a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$. This resulted in a distribution of rank-1 RNN parameterizations having a wide variety biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ (under- or over-estimations of the posterior means and variances).  We can examine the nature of the biases in this toy computation by visualizing the produced posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distribution.  The infererred distribution has roughly symmetric in the $M_m$-$M_n$ plane, suggesting there is a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
+Neither of these observations were obvious from the consistency equations afforded by DMFT (see Section \ref{methods_LRRNN}).
  
-Due diligence when working with DMFT requires checking that finite-size realizations of these infinite-size networks match the predictions from DMFT.  A 2,000-neuron network with parameters $z_1$ produced an overestimate of the  posterior mean and variance (Fig. 5C, left), while a 2,000-neuron network with parameter $z_2$ produced underestimates (Fig. 4C, right) as we'd expect from the conclusions of the previous paragraph.  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally used for modeling other tasks like noisy integration and context-dependent decision making (Fig. S1).
+When working with DMFT, it's important to check that finite-size realizations of these infinite-size networks match the theoretical predictions. We check 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high $g$ and high $M_m M_n$, whereas $z_2$ has relatively low $g$ and low $M_m M_n$.  Confirming our intuition, $z_1$ overestimates the posteior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$ underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, $z_1$ results in evidently greater temporal variance than $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \section{Discussion}
 \subsection{EPI is a general tool for theoretical neuroscience.} 
@@ -340,12 +345,11 @@ In our final analysis, we present a novel procedure for doing statistical infere
 \section{Methods}
 
 \subsection{Emergent property inference (EPI)}\label{methods_EPI}
-\textbf{Draft in progress}: \\
-Emergent property inference (EPI) learn distributions of theoretical model parameters that produce emergent properties of interest.  EPI combines ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples ofte parameterize a differentiable model simulator, which may lack a tractable likelihood function.
+Emergent property inference (EPI) learns distributions of theoretical model parameters that produce emergent properties of interest.  EPI combines ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples often parameterize a differentiable model simulator, which may lack a tractable likelihood function.
 
 Consider model parameterization $z$ and data $x$ generated from some theoretical model simulator represented as $p(x \mid z)$, which may be deterministic or stochastic.  Theoretical models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function due to the nonlinearities and dynamics. With EPI, a distribution on parameters $z$ is learned, that yields an emergent property of interest $\mathcal{B}$,
 \begin{equation}
-\mathcal{B}: E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
+\mathcal{B} \leftrightarrow E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
 \end{equation}
 by making an approximation $q_\theta(z)$ to $p(z \mid \mathcal{B})$ (see Section \ref{methods_VI}).  So, over the DSN distribution $q_\theta(z)$ of model $p(x \mid z)$ for behavior $\mathcal{B}$, the emergent properties $T(x)$ are constrained in expectation to $\mu$.
 
@@ -361,27 +365,23 @@ q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
 \end{equation}
 
 \subsubsection{Example: 2D LDS}\label{methods_2DLDS}
-\textbf{Draft in progress}: \\
 To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with 
 \[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\]
- that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\Omega$ and the growth/decay factor $d$ of the oscillating system (the real part of the complex conjugate pairs of eigenvalues).  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance 1, and oscillation frequency $\Omega$with mean 1 Hz with variance 1, the emergent property values would be set to:
+ that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\Omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\Omega$ with mean 1 Hz with variance (0.1Hz)$^2$, then we would select the real part of the complex conjugate eigenvalues $\text{real}(\lambda_1) = d$ (via an arbitrary choice of eigenvalue of the dynamics matrix $\lambda_1$) and the positive imaginary component of one of the eigenvalues $\text{imag}(\lambda_1) = 2 \pi \Omega$ as the emergent property statistics.  Those emergent property statistics are then constrained to
 \begin{equation}
- \mu = E \begin{bmatrix} d \\ \Omega \\ (d-0)^2 \\ (\Omega-1)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 1.0 \\ 1.0 \\ 1.025 \end{bmatrix}
+ \mu = E \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \Omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \Omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix}
  \end{equation} 
- 
-To obtain a differntiable estimate of the oscillation frequency with respect to the dynamics matrices, we could simuilate system activity $x$ from $z=A$ for some finite number of time steps, and estimate $\Omega$ by e.g. taking the peak of the discrete Fourier transform.  Instead, the emergent property statistics for this oscillating behavior are computed through a closed form function $g(z)$ by taking the eigendecomposition of the dynamics matrix
-\begin{equation}
-g(z) = E_{x\sim p(x \mid z)}\left[T(x)\right] =  \begin{bmatrix} \text{real}(\lambda_1) \\ \frac{\text{imag}(\lambda_1)}{2 \pi} \\ \text{real}(\lambda_1)^2 \\ (\frac{\text{imag}(\lambda_1)}{2 \pi})^2 \end{bmatrix}
-\end{equation}
+where $\Omega = 1$Hz.  The eigenvalues $\lambda$ of the dynamics are calculated using the quadratic formula: 
 \begin{equation}
 \lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}
 \end{equation}
 where $\lambda_1$ is the eigenvalue of $\frac{1}{\tau}A$ with greatest real part.
-Even though $E_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via $g(z)$, we cannot derive the distribution $q^*_\theta$, since the backward mapping from the mean parameters $\mu$ to the natural parameters $\eta$ of his exponential family is unknown \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S2B). 
 
-Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  The contours of the probability density can be derived from the emergent property statistics and values (Fig. S3).  In the $a_1-a_4$ plane, is a black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, a dotted black line at
+Even though $E_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via a closed form function and does not require simulation, we cannot derive the distribution $q^*_\theta$, since the backward mapping from the mean parameters $\mu$ to the natural parameters $\eta$ of his exponential family is unknown \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S2B). 
+
+Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  To validate our method (further than the ground truth recovery of a known exponential family solution in \cite{loaiza2017maximum}) we can analytically derive the contours of the probability density from the emergent property statistics and values (Fig. S3).  In the $a_1-a_4$ plane, is a black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, a dotted black line at
 the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 1$, and a grey line at twice the standard deviation
-$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2 $ (Fig. S3A).  Here the lines denote the set of solutions at fixed behaviors, which overlay the posterior obtained through EPI.  The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
+$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2$ (Fig. S3A). Here the lines denote the set of solutions at fixed behaviors, which overlay the posterior obtained through EPI.  The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
 $a_1$ and $a_4$. Intuitively, the parameters equivalent with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
 
 To explain the structure in the bimodality of the DSN posterior, we can look at the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
@@ -398,9 +398,7 @@ When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have th
 \text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3
 \end{equation}
 
-Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B).  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
-
-For futher validation of the underlying technology, see recovery of ground truth distributions with maximum entorpy flow networks \cite{loaiza2017maximum}.
+Since we constrained $E_{q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = E_{q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  More subtle model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
 \textbf{Draft in progress}: \\
@@ -413,7 +411,6 @@ where $\delta(\theta) = E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x
 The intention is that $c$ and $\lambda$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
 
 \subsubsection{Normalizing flows}\label{methods_NF}
-\textbf{Draft in progress}: \\
 Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the deep probability distribution.
 
 \begin{equation}
@@ -432,54 +429,52 @@ q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right
 However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizimg flows \cite{rezende2015variational} -- bijective functions with fast log determinant jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP \cite{dinh2017density}, which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast density evaluation.
 
 \subsubsection{Related work}\label{methods_related_work}
-\textbf{Draft in progress}: \\
+(To come)\\
 
 
 \subsubsection{Emergent property inference as variational inference in an exponential family}\label{methods_VI}
-\textbf{Draft in progress}: \\
-Consider the goal of doing variational inference (VI) in with an exponential family posterior distribution $p(z \mid x)$.  We'll use the following abbreviated notation to collect the base measure and sufficient statistics into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ will remain unchanged.
-\begin{equation}
-\begin{split}
-p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
-\end{split}
-\end{equation}
+(To come) \\
+%Consider the goal of doing variational inference (VI) in with an exponential family posterior distribution $p(z \mid x)$.  We'll use the following abbreviated notation to collect the base measure and sufficient statistics into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ will remain unchanged.
+%\begin{equation}
+%\begin{split}
+%p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
+%\end{split}
+%\end{equation}
+%VI looks with an exponential family posterior distribution uses optimization to minimize the following divergence \cite{blei2017variational}:
+%\begin{equation}
+%q_\theta^* = \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x))
+%\end{equation}
+%$q_\theta(z)$ is the variational approximation to the posterior with variational parameters $\theta$.  We can write this KL divergence in terms of entropy of the variational approximation.
+%\begin{equation}
+%KL(q_\theta \mid \mid p(z \mid x)) = E_{z \sim q_\theta} \left[ \log (q_\theta(z)) \right] - E_{z \sim q_\theta} \left[ \log (p(z \mid x)) \right]
+%\end{equation}
+%\begin{equation}
+% = -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) - A(\eta(x)) \right]
+%\end{equation}
+%As far as the variational optimization is concerned, the log normalizing constant is independent of $q_\theta(z)$, so it can be dropped. 
+%\begin{equation}
+ %\argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)) =  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) \right]
+% \end{equation}
+% Further, we can write the objective in terms of the first moment of the sufficient statistics $\mu = E_{z \sim p(z \mid x)}\left[T(z) \right]$.
+% \begin{equation}
+%=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right] + \tilde{\eta(x)}^\top \mu
+% \end{equation}
+%  \begin{equation}
+%=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right]
+% \end{equation}
 
-VI looks with an exponential family posterior distribution uses optimization to minimize the following divergence \cite{blei2017variational}:
-\begin{equation}
-q_\theta^* = \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x))
-\end{equation}
-$q_\theta(z)$ is the variational approximation to the posterior with variational parameters $\theta$.  We can write this KL divergence in terms of entropy of the variational approximation.
-\begin{equation}
-KL(q_\theta \mid \mid p(z \mid x)) = E_{z \sim q_\theta} \left[ \log (q_\theta(z)) \right] - E_{z \sim q_\theta} \left[ \log (p(z \mid x)) \right]
-\end{equation}
-\begin{equation}
- = -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) - A(\eta(x)) \right]
-\end{equation}
-As far as the variational optimization is concerned, the log normalizing constant is independent of $q_\theta(z)$, so it can be dropped. 
-\begin{equation}
- \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)) =  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) \right]
- \end{equation}
- Further, we can write the objective in terms of the first moment of the sufficient statistics $\mu = E_{z \sim p(z \mid x)}\left[T(z) \right]$.
- \begin{equation}
-=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right] + \tilde{\eta(x)}^\top \mu
- \end{equation}
-  \begin{equation}
-=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right]
- \end{equation}
+%In emergent property inference (EPI), we're solving the following problem.
+%\begin{equation}
+%q_\theta^*(z) y= \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
+%\end{equation}
+%The lagrangian objective is
+%\begin{equation}
+%q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \alpha^\top \left(E_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right)
+%\end{equation}
 
-In emergent property inference (EPI), we're solving the following problem.
-\begin{equation}
-q_\theta^*(z) y= \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
-\end{equation}
-The lagrangian objective is
-\begin{equation}
-q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \alpha^\top \left(E_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right)
-\end{equation}
-
-As the lagrangian optimization proceeds, $\alpha$ should converge to $\tilde{\eta}(x))$ through its adaptations in each epoch.  More formally, $\tilde{\eta}(x) \leftrightarrow \tilde{\eta}(\mu)$ is referred to as the backward mapping, and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic, conceptually, we can replace $p(z \mid x)$ with $p(z \mid \mu)$.  More commonly, we write $p(z \mid \mathcal{B})$ for clarity where $\mathcal{B}$ more explicitly captures the moment constraints of the sufficient statistics.
+%As the lagrangian optimization proceeds, $\alpha$ should converge to $\tilde{\eta}(x))$ through its adaptations in each epoch.  More formally, $\tilde{\eta}(x) \leftrightarrow \tilde{\eta}(\mu)$ is referred to as the backward mapping, and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic, conceptually, we can replace $p(z \mid x)$ with $p(z \mid \mu)$.  More commonly, we write $p(z \mid \mathcal{B})$ for clarity where $\mathcal{B}$ more explicitly captures the moment constraints of the sufficient statistics.
 
 \subsection{Theoretical models}\label{methods_theoretical_models}
-\textbf{Draft in progress}: \\
 In this study, we used emerent property inferrence to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
