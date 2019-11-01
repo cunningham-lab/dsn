@@ -149,29 +149,33 @@ First, we consider the model as a coupled set of differential (and potentially s
 \begin{equation} C_m \frac{\partial x}{\partial t} = -h(x; z) = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
 where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
-Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency (Figure 1A bottom).
-Quantifying this phenomenon is straightforward: we define network syncing to be that the spiking frequency of each neuron is close to an intermediate frequency of 0.55Hz.  Thus, our measurable signature of computation -- the firing frequencies of each neuron $\Omega_{\text{f1}}(x)$, $\Omega_{\text{f2}}(x)$, etc.-- are statistics of the membrane potential activity $x$ which we insist be near a particular value $0.55Hz$.  This notion of an emergent property is then naturally embodied as a set of values for the emergent property statistics
+
+Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency of our choosing (Figure 1A bottom).
+Quantifying this phenomenon is straightforward: we define network syncing to be that the spiking frequency of each neuron is close to an intermediate frequency of 0.55Hz.  
+Thus, our measurable signature of computation -- the firing frequencies of each neuron $\omega_{\text{f1}}(x)$, $\omega_{\text{f2}}(x)$, etc.-- are statistics of the membrane potential activity $x$ which we insist be near a particular value $0.55$Hz.  Mathematically, we achieve this via constraints on the mean and variance of $\omega_i(x)$ for each neuron $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$, and thus:
 \begin{equation}\label{eq:EP}
- E\left[T(x) \right] =\mu
+ E\left[T(x) \right] ~~\triangleq~~ E\begin{bmatrix} \omega_{\text{f1}}(x) \\ \vdots \\ (\omega_{\text{f1}}(x) - 0.55)^2 \\ \vdots \end{bmatrix} ~~=~~  
+ \begin{bmatrix} 0.55 \\ \vdots \\ 0.025^2 \\ \vdots \end{bmatrix} ~~\triangleq~~ \mu,
  \end{equation}
-where the first and second moments of these frequencies are chosen such that each neuron is firing near the network syncing frequency: $E\left[\Omega_i \right] = 0.55$ and $E\left[(\Omega_i - 0.55)^2 \right] = 0.025^2$ for $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.
-Third, having mathematically rationalized the above components, we can introduce deep generative modeling for performing emergent property inference.
-We seek a distribution over parameter configurations $z$, and insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation \ref{eq:EP}.  
-This results in the following optimization program: 
+  which completes the quantification of the emergent property.
+
+Third, we perform emergent property inference: we find a distribution over parameter configurations $z$, and insist that samples from this distribution produce the emergent property; in other words, they obey the constraints introduced in Equation \ref{eq:EP}.  
+This distribution will be chosen from a family of probability distributions $\mathcal{Q} = \left\{ q_\theta(z) : \theta \in \Theta \right\}$, defined by a deep generative model
+of the normalizing flow class \cite{rezende2015variational, dinh2016density, papamakarios2017masked} -- neural networks which transform a simple distribution into a suitably complicated distribution (as is needed here).  
+This deep model is represented in Figure 1E (and see Methods for more detail).  
+Then, mathematically, we must solve the following optimization program: 
  \begin{equation} \label{eq:EPI}
 \begin{split}
 &\argmax_{q_\theta \in \mathcal{Q}} H(q_\theta(z)) \\
- &\text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
+ &\text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu, \\
 \end{split}
 \end{equation}
-It is worth emphasizing that $T(x)$ is a vector of statistics, and $\mu$ is a vector of their constraining values.
-The purpose of each element in this program is detailed in Figure 1D.
-Finally, we recognize that many distributions will produce the emergent property, so we require a normative principle to select amongst them.  
+where $T(x), \mu$ are defined as in Equation \ref{eq:EPI}.   The purpose of each element in this program is detailed in Figure 1D.
+Finally, we recognize that many distributions in $\mathcal{Q}$ will respect the emergent property constraints, so we require a normative principle to select amongst them.  
 This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
-Here we chose Shannon entropy to model parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but the EPI methods (not the results) offered here are largely unaffected by this choice.  
+Here we chose Shannon entropy to model parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but we emphasize that the EPI method is unaffected by this choice (the results of course will depend on this choice).  
 Stating such a problem is easy enough; finding a tractable and suitably flexible family of probability distributions ($\mathcal{Q}$) is hard.  
-EPI employs `normalizing flows' \cite{rezende2015variational, dinh2016density, papamakarios2017masked}, which are neural networks, which induce a flexible class of deep probability distributions (Fig. 1E).
-With normalizing flows, we leverage the tractable calculation of log sample probability $\log q_\theta(z)$ to optimize entropy \cite{loaiza2017maximum}.
+%With normalizing flows, we leverage the tractable calculation of log sample probability $\log q_\theta(z)$ to optimize entropy \cite{loaiza2017maximum}.
 %One can interpret the resulting probabilities as increasing with closeness in emergent property statistics to the emergent property values (see Section \ref{methods_2DLDS}).
 
 \begin{figure}
@@ -181,7 +185,7 @@ With normalizing flows, we leverage the tractable calculation of log sample prob
 \caption{Exploring neuron-type responsivity in V1.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become innacurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on differential input $dh$ conditioned on differential response $\mathcal{B}(\alpha, y)$ (see text). The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in cyan (very small, near origin). }
 \end{figure}
 
-In EPI, the weights and biases $\theta$ of the deep probability distribution are optimized by the objective in Equation \ref{eq:EPI}. The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is no different than its emergent property value. (see Section \ref{methods_AL_opt}). Armed with this method, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
+EPI optimizes the weights and biases $\theta$ of the deep neural network (which induces the probability distribution) by iteratively solving Equation \ref{eq:EPI}. The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is no different than its emergent property value (see Section \ref{methods_AL_opt}). Armed with this method, we now prove out the value of this technology by investigating a range of models and using EPI to produce novel scientific insights.
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
 The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
