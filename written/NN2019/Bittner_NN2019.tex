@@ -185,10 +185,10 @@ In EPI, the weights and biases $\theta$ of the deep probability distribution are
 
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
 The first model we focus on is a nonlinear dynamical model of sensory processing in primary visual cortex (V1).
-Dynamical models with two populations (excitatory (E) and inhibitory (I) neurons) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex (V1).  In particular regimes of excitation and inhbition, these models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  Experimental evidence shows that inhibitory neurons mostly belong to one of three genetically-defined classes \cite{markram2004interneurons, rudy2011three}.  
-
-An important extension of these E/I models is to break the inhibitory population into its subtypes, leading to a four-neuron population:  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons) \cite{litwin2016inhibitory} (Fig. 2A).
-The dynamical state of this model is the firing rate of each neuron-type population $x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$, which evolves according to rectified, exponentiated dynamics:
+Dynamical models with two populations (excitatory and inhibitory) have already been used to reproduce a host of experimentally documented phenomena in primary visual cortex.  
+In particular regimes of excitation and inhibition, these E/I models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  
+Extending this using experimental evidence three genetically-defined classes of inhibitory neurons \cite{markram2004interneurons, rudy2011three}, recent work \cite{litwin2016inhibitory} has investigated a four-population model --  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons -- as shown in Fig. 2A.
+The dynamical state of this model is the firing rate of each neuron-type population $x = \left[x_E, x_P , x_S, x_V \right]^\top$, which evolves according to rectified and exponentiated dynamics:
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
 \end{equation}
