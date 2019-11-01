@@ -280,55 +280,49 @@ Neither of these observations were obvious from the consistency equations afford
  
 Due diligence when working with DMFT requires checking that finite-size realizations of these infinite-size networks match the predictions from DMFT.  A 2,000-neuron network with parameters $z_1$ produced an overestimate of the  posterior mean and variance (Fig. 5C, left), while a 2,000-neuron network with parameter $z_2$ produced underestimates (Fig. 4C, right) as we'd expect from the conclusions of the previous paragraph.  This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on abstract cognitive tasks can be generally used for modeling other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
-\subsection{EPI is a general tool for theoretical neuroscience} \label{results_generality}
-There are many considerations when assessing the feasibility of classical statistical inference in neuroscience such as conjugacy, likelihood tractability, scalability to large data-sets. 
-EPI is no exception, but we emphasize that it is practicable in most settings of theoretical neuroscience.  
-Models of close biological fidelity often have complex nonlinear differential equations, making traditional statistical inference intractable. 
-In contrast, EPI is capable of learning distributions of such model parameters producing low-level signatures of computation as we have shown through our analysis of the STG. 
-Although, this approach is not specific to models of such biological realism, as we have demonstrated its utility on intermediate-level models of interacting genetically- and functionally-defined neuron-types and the most abstract of models, RNNs.  
-We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials as well as high-level cognitive function like approximate Bayesian inference.  
-In sum, EPI is feasible when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case.  
-This gradient does not even need to be derived by hand, since we use automatic differentiation tools available in tensorflow\cite{abadi2016tensorflow} and other open source machine learning software.
+\section{Discussion}
+\subsection{EPI is a general tool for theoretical neuroscience.} 
+Models of biological systems often have complex nonlinear differential equations, making traditional statistical inference intractable. 
+In contrast, EPI is capable of learning distributions of parameters in such models producing measurable signatures of computation.
+We have demonstrated its utility on biological models (STG), intermediate-level models of interacting genetically- and functionally-defined neuron-types (V1, SC), and the most abstract of models (RNNs).  
+We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials, as well as high-level cognitive function like approximate Bayesian inference.  
+Technically, EPI is tractable when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case; this emphasizes the general utility of EPI.
 
 In this study, we have focused on applying EPI to low dimensional parameter spaces of models with low dimensional dynamical state.
 These choices were made to present the reader with a series of  interpretable conclusions, which is more challenging in high dimensional spaces.
-In fact, EPI scales well to high dimensional parameter spaces, as the underlying technology has produced state-of-the-art performance on texture generation \cite{loaiza2017maximum}.
-However, increasing the dimensionality of the dynamical state of the model makes optimization more expensive, and there is a practical limit there as with any machine learning approach.
+In fact, EPI should scale reasonably to high dimensional parameter spaces, as the underlying technology has produced state-of-the-art performance on high-dimensional tasks such as texture generation \cite{loaiza2017maximum}.
+Of course, increasing the dimensionality of the dynamical state of the model makes optimization more expensive, and there is a practical limit there as with any machine learning approach.
 For systems with high dimensional state, we recommend using theoretical approaches (e.g. \cite{mastrogiuseppe2018linking}) to reason about reduced parameterizations of such high-dimensional systems.
 
 There are additional technical considerations when assessing the suitability of EPI for a particular modeling question.  
-First and foremost, as in any optimization problem, the defined emergent property should always be appropriately conditioned.  
-Of course, learning can not occur when under- or overconstrained.  
-When underconstrained, the posterior grows (in entropy) unstabily unless mapped to a finite support.  
-If overconstrained, there is no support producing the emergent property and the EPI optimization can not converge.
-Next, one should consider how computationally expensive the gradient of the emergent propety statistic is with respect to the model parameters. 
+First and foremost, as in any optimization problem, the defined emergent property should always be appropriately conditioned (constraints should not have wildly different units).  
+Furthermore, if the program is underconstrained (not enough constraints), the distribution grows (in entropy) unstably unless mapped to a finite support.  
+If overconstrained, there is no parameter set producing the emergent property, and EPI optimization will fail (appropriately).
+Next, one should consider the computational cost of the gradient calculations. 
 In the best circumstance, there is a simple, closed form expression (e.g. Section \ref{methods_2DLDS}) for the emergent property statistic given the model parameters.  
-On the other end of the spectrum, you may require a large number of simulation iterations before a high quality measurement of the emergent property statistic is available  (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive, and it is worth weighing the pros and cons of alternative methodologies (see Section \ref{methods_related_work}).  
+On the other end of the spectrum, many forward simulation iterations may be required before a high quality measurement of the emergent property statistic is available  (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive.
 
-\section{Discussion}
+\subsection{Novel hypotheses from EPI} 
 Machine learning has played an effective, multifaceted role in neuroscientific progress. 
 Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
-Secondarily, trained algorithms of varying degrees of biological relevace serve as fully-observable computational systems that are compared to the brain \cite{ sussillo2013opening, richards2019deep}.  
-However, theoretical neuroscientists may currently be too focused on this secondary role.  
-The ability to optimize a model to perform neuroscientifically relevant task does not necessarily inform us about computation in the brain at a mechanistic level unless a link can be made between the model's operation and the underlying biology.
-Neuoroscientists should turn focus to the primary benefit machine learning can offer: theorists can use deep learning for probabilistic inference to understand their \textit{models} rather than the experimental datasets it has been traditionally purposed for.
+Secondarily, trained algorithms of varying degrees of biological relevance serve as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
+Theorists can use deep learning for probabilistic inference to understand their models and their behavior.
 
-For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1.  
-This should not be surprising, since analytic approaches to studying nonlinear dynamical systems complexify greatly when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
-We are not suggesting to forego the development or application of challenging analytic procedures in theoretical neuroscience.
-However, we promote the judicious recognition of arduous mathematical challenges, and alternatively using deep learning through EPI to gain the desired insights.
+For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1 \cite{litwin2016inhibitory}.  
+This should not be surprising, since analytic approaches to studying nonlinear dynamical systems become increasingly complicated when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
+We promote the recognition of analytic difficulty, and alternatively the use of EPI to gain the desired model insights.
 In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through analysis.
-By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated a set of testable predictions.
+By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated and proved out a set of testable predictions.
 
-Exploratory analyses in theoretical neuroscience can certainly be less agnostic to the eventual hypothesis generated.  When interested in the mechanistic changes that occur in the brain throughout learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{results_SC}).
-This analysis identified experimentally testable predictions of changes in connectivity in SC throughout learning of a rapid task switching behavior.
+Exploratory analyses can be directed.  For example,  when interested in model changes during learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{results_SC}).
+This analysis identified experimentally testable predictions (proved out \textit{in-silico}) of changes in connectivity in SC throughout learning of a rapid task switching behavior.
 Precisely, we predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue in the effective connectivity matrices of learning rats.
+%While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation.
+%Thusly, RNNs have become an increasingly popular tool in systems neuroscience research.  
+%The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  
+%While fixed point identification and jacobian measurement yield intuitive, consistent portraits of the implemented computational algorithm \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  
+%Since neural activity generally lies on a low dimensional manifold \cite{gao2015simplicity}, we may attain an understanding of the neural mechanisms at play in cortical processing by working in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
-While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation.
-Thusly, RNNs have become an increasingly popular tool in systems neuroscience research.  
-The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  
-While fixed point identification and jacobian measurement yield intuitive, consistent portraits of the implemented computational algorithm \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  
-Since neural activity generally lies on a low dimensional manifold \cite{gao2015simplicity}, we may attain an understanding of the neural mechanisms at play in cortical processing by working in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}. With this methodology, we can finally open the probabilistic model selection toolkit reasoning about the connectivity of RNNs solving tasks.
 
 %\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN archs \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
