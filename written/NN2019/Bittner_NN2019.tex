@@ -614,27 +614,28 @@ The emergent property we considered was the first and second moments of the chan
 \mathcal{B}(\alpha, y) \leftrightarrow 
 E \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
 \end{equation}
-For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.
 
 In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
 The differential responses $dx_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \Delta h_\alpha u_\alpha$ where $u_\alpha$ is a unit vector in the dimension of $\alpha$ and $\Delta h_\alpha \in \left[-15,15\right]$.
 
+For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.  The support of of the learned distribution was restricted to $z_i \in \left[-5, 5\right]$.
+
 
 \subsubsection{Superior colliculus}\label{methods_SC}
-There are four total units: two in each hemisphere corresponding to the PRO/CONTRA and ANTI/IPSI populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
+There are four total units: two in each hemisphere corresponding to the Pro/contralateral and Anti/ipsilateral populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
 \begin{equation}
-x_i(t) =\left(\frac{1}{2}\tanh\left(\frac{u_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
+x_i(t) =\left(\frac{1}{2}\tanh\left(\frac{v_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
 \end{equation}
 $\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, repsectively.
 
-We can order the elements of $x_i$ and $u_i$ into vectors $x$ and $u$ with elements
+We can order the elements of $x_i$ and $v_i$ into vectors $x$ and $v$ with elements
 \begin{equation}
-x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} u = \begin{bmatrix} u_{LP} \\ u_{LA} \\ u_{RP} \\ u_{RA} \end{bmatrix}
+x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} v = \begin{bmatrix} v_{LP} \\ v_{LA} \\ v_{RP} \\ v_{RA} \end{bmatrix}
 \end{equation}
 
  The internal variables follow dynamics:
 \begin{equation}
-\tau \frac{\partial u}{\partial t} = -u + Wx + h + \sigma \partial B
+\tau \frac{\partial v}{\partial t} = -v + Wx + h + \sigma \partial B
 \end{equation}
 with time constant $\tau = 0.09s$ and gaussian noise $\sigma \partial B$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
 \begin{equation}
@@ -674,7 +675,7 @@ The inpput parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A
 
 TODO: this is probably a good place to explain the intuition behind the naming of the Schur eigenmodes.
 
-To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $V_{LP}$ at end of task) over M=500 gaussian noise draws for a given SC model parameterization $z_i$:
+To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $x_{LP}$ at end of task) over M=500 gaussian noise draws for a given SC model parameterization $z_i$:
 
 \begin{equation}
  \hat{p}_i = E_{\sigma \partial B} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M x_{LP,\text{ss}}(s=L, c=P, z_i, \sigma \partial B_j)
@@ -710,7 +711,7 @@ In total, the emergent property of rapid task switching accuracy at level $p$ wa
 \mathcal{B}(p) \leftrightarrow \begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
 \end{equation}
 
-For each accuracy level $p$, we ran EPI for 10 different random seeds and selected the maximum entropy solution using an architecture of 10 planar flows with $c_0 = 2$. 
+For each accuracy level $p$, we ran EPI for 10 different random seeds and selected the maximum entropy solution using an architecture of 10 planar flows with $c_0 = 2$. The support of $z$ was $\mathcal{R}^8$.
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
 The network dynamics of neuron $i$'s rate $x$ evolve according to:
