@@ -128,18 +128,20 @@ Consideration of the typical workflow of theoretical modeling clarifies the need
 First, the theorist designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
  To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.  
  A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
-Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  Second, once the model is selected, the theorist defines the emergent property, the measurable signal of scientific interest.  
+Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  
+
+Second, once the model is selected, the theorist defines the emergent property, the measurable signal of scientific interest.  
 To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.55Hz.
+
 Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done.  Subsequently, a qualitative description is formulated to describe of the different parameter configurations that lead to the emergent property.  
-In this last step lies the opportunity for a precise quantification of the emergent property as a statistical feature of the model.  Equipped with this methodology, we can infer a probability distribution over parameter configurations that produce this quantified emergent property. 
+In this last step lies the opportunity for a precise quantification of the emergent property as a statistical feature of the model.  Once we have such a methodology, we can infer a probability distribution over parameter configurations that produce this emergent property. 
 
 Before presenting technical details (in the following section), let us understand emergent property inference schematically:  the black box in Figure 1A takes, as input, the model and the specified emergent property, and produces as output the parameter distribution shown in Figure 1B.  
 This distribution -- represented for clarity as samples from the distribution -- is then a scientifically meaningful and mathematically tractable object.  
-It conveys parameter regions critical to the emergent property, directions in parameter space that will be invariant (or not) to that property.  
-In the STG model, this distribution can be specifically queried to determine the prototypical parameter configuration for network syncing (the mode; Figure 1B star), and then how quickly network syncing will decay based on changes away that mode (Figure 1B, inset).  
-While it is impossible to determine whether we have converged to the maximum entropy distribution, the emergent property statistics have converged to the emergent property values.  
-For further validation, we apply EPI to condition a two-dimensional linear dynamical system model on a band of oscillations around 1Hz, from which we can analytically derive the contours of the inferred distribution (see Section \ref{methods_2DLDS}).
-Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.
+It conveys parameter regions critical to the emergent property, directions in parameter space that will be invariant (or not) to that property, and more.  
+In the STG model, this distribution can be specifically queried to determine the prototypical parameter configuration for network syncing (the mode; Figure 1B star), and then how quickly network syncing will decay based on changes away that mode.  The inset of Figure 1B validates that indeed network syncing behaves as the distribution predicts, when moving away from the mode (Figure 1B star).  
+Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
+%Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.
 
 \subsection{A deep generative modeling approach to emergent property inference} \label{results_dgm}
 
