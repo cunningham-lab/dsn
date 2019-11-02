@@ -276,24 +276,25 @@ EPI demonstrates that, for greater task accuracies, the task mode eigenvalue inc
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing the sources of bias in RNN computation} \label{results_RNN}
-So far, each biologically realistic model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
-At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation, which have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
+Each model we thus far have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
+At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation and have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity. 
-A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.  Here we leverage recent theoretical work to run EPI on interpretable parameterizations of RNN connectivity solving a toy problem.
+%A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.  
+Here we run EPI on the connectivity matrices of RNNs trained to solve a sample task.
  
-Importantly, recent work establishes such a link between RNN connectivity weights and the resulting dynamical responses of the network using dynamic mean field theory (DMFT)  for neural networks \cite{sompolinsky1988chaos}.
+Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{sompolinsky1988chaos}.
 Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
-This theory has been extended from random neural networks to low rank RNNs, which have low-dimensional parameterizations of RNN connectivity via the pairwise correlations of the low-rank vectors (i.e. the low-rank ``geometry")  \cite{mastrogiuseppe2018linking}.  
-For example, the connectivity of a rank-1 RNN $J$ is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
+This theory has been extended from random neural networks to low-rank RNNs, which have low-dimensional parameterizations of RNN connectivity via the pairwise correlations of the low-rank vectors (i.e. the low-rank ``geometry")  \cite{mastrogiuseppe2018linking}.  
+In such a model, the connectivity of a rank-1 RNN's weight matrix $J$ is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
 \begin{equation}
-J = g\chi + \frac{1}{N}mn^\top
+J = g\chi + \frac{1}{N}mn^\top,
 \end{equation}
 where the activity $x$ evolves as
 \begin{equation}
-\frac{\partial x}{\partial t} = -x(t) + J \phi(x(t)) + I(t)
+\frac{\partial x}{\partial t} = -x(t) + J \phi(x(t)) + I(t),
 \end{equation}
-$I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
-The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$, whose parameters $M_m$ and $M_n$ determine their degree of correlation.  
+and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
+The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
 
 \begin{figure}
 \begin{center}
@@ -302,27 +303,27 @@ The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \math
 \caption{Sources of bias in RNN computation.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
 \end{figure}
 
-Mastrogiuseppe et al. are able to design low-rank connectivities via the pairwise correlations of such low-rank vectors that solve tasks from behavioral neuroscience. 
-An important detail is that a nonlinear system of equations solver must be used to obtain the task-relevant variables of interest from the derived consistency equations (see Section \ref{methods_LRRNN}).
-However, we can consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$).
-Furthermore, we recognize that the solution produced by the solver is differentiable with respect to the input parameters. Thus, we are able to combine this DMFT with EPI to learn distributions on such connectivity parameters of RNNs that execute neuroscientific tasks via an emergent property defined on the task-relevant responses produced by DMFT.
+Mastrogiuseppe et al. designed low-rank connectivities via the pairwise correlations of the vectors $m,n$ in models that solve tasks from behavioral neuroscience. 
+%An important detail is that a nonlinear system solver must be used to obtain the task-relevant variables of interest from the derived consistency equations (see Section \ref{methods_LRRNN}).
+We can consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \left[ g, M_m, M_n\right]$)  and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$).
+Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to combine DMFT with EPI to learn distributions on such connectivity parameters of RNNs that execute tasks via an emergent property defined on the task-relevant responses produced by DMFT.
 
 %(Need to make this more eloquent) In our analysis, we consider Bayesian inference in the brain \cite{aitchison2017or}. Since its valuable to represent uncertainties about quantities in the world, its posited that the brain would optimally execute Bayesian inference in a variety of settings.  However, it's been shown that the brain has substantial bias in some of its inference operations.  One field of computational neuroscience endeavors to understand the mechanistic sources of these biases in the neural computations for inference.
 
-For our toy problem, we consider the emergent property of  gaussian posterior conditioning.  Specifically, we ask the RNN to calculate the parameters of a gaussian posterior distribution on the mean of a gaussian likelihood $\mu_y$ given a single observation of $y$ and a gaussian prior $p(\mu_y) = \mathcal{N}(4, 1)$ (Fig. 5A).  Assuming the variance of the gaussian likelihood is 1, the true posterior for an input of $y=2$ is $p(\mu_y \mid y) = \mathcal{N}(3, 0.5)$.  We used EPI to learn distributions of RNNs producing the correct posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B).
+We train the network to solve gaussian posterior conditioning: calculate the parameters of a gaussian posterior distribution on the mean of a gaussian likelihood $\mu_y$, given a single observation of $y \sim \mathcal{N}(\mu_y,1)$ and a prior $p(\mu_y) = \mathcal{N}(4, 1)$ (Fig. 5A).  The true posterior for an input of $y=2$ is $p(\mu_y \mid y) = \mathcal{N}(3, 0.5)$.  We used EPI to learn distributions of RNNs producing the correct posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ (respectively), given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B).
 
-When specifying the emergent property of gaussian posterior conditioning, we allowed a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$. This resulted in a distribution of rank-1 RNN parameterizations having a wide variety biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ (under- or over-estimations of the posterior means and variances).  We can examine the nature of the biases in this toy computation by visualizing the produced posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distribution.  The inferred distribution has roughly symmetric in the $M_m$-$M_n$ plane, suggesting there is a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+When specifying the emergent property of gaussian posterior conditioning, we allowed a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$. This resulted in a distribution of rank-1 RNN parameterizations having a wide variety of biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ (under- or over-estimates of the posterior means and variances).  We can examine the nature of the biases in this computation by visualizing the produced posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the EPI distribution.  The inferred distribution has rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
 The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
 Neither of these observations were obvious from the consistency equations afforded by DMFT (see Section \ref{methods_LRRNN}).
  
 When working with DMFT, it's important to check that finite-size realizations of these infinite-size networks match the theoretical predictions. We check 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high $g$ and high $M_m M_n$, whereas $z_2$ has relatively low $g$ and low $M_m M_n$.  Confirming our intuition, $z_1$ overestimates the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$ underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, $z_1$ results in evidently greater temporal variance than $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \section{Discussion}
-\subsection{EPI is a general tool for theoretical neuroscience.} 
-Models of biological systems often have complex nonlinear differential equations, making traditional statistical inference intractable. 
+\subsection{EPI is a general tool for theoretical neuroscience} 
+Models of biological systems are often comprised of complex nonlinear differential equations, making traditional theoretical analysis and statistical inference intractable. 
 In contrast, EPI is capable of learning distributions of parameters in such models producing measurable signatures of computation.
 We have demonstrated its utility on biological models (STG), intermediate-level models of interacting genetically- and functionally-defined neuron-types (V1, SC), and the most abstract of models (RNNs).  
-We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials, as well as high-level cognitive function like approximate Bayesian inference.  
+We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials, as well as high-level cognitive function like gaussian posterior conditioning.
 Technically, EPI is tractable when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case; this emphasizes the general utility of EPI.
 
 In this study, we have focused on applying EPI to low dimensional parameter spaces of models with low dimensional dynamical state.
@@ -343,24 +344,23 @@ On the other end of the spectrum, many forward simulation iterations may be requ
 Machine learning has played an effective, multifaceted role in neuroscientific progress. 
 Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
 Secondarily, trained algorithms of varying degrees of biological relevance are beginning to be viewed as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
-Theorists can use deep learning for probabilistic inference to understand their models and their behavior.
 
-For example, consider the fact that we do not yet understand just a four-dimensional, deterministic model of V1 \cite{litwin2016inhibitory}.  
-This should not be surprising, since analytic approaches to studying nonlinear dynamical systems become increasingly complicated when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}. 
-We promote the recognition of analytic difficulty, and alternatively the use of EPI to gain the desired model insights.
+For example, consider the fact that we do not fully understand the four-dimensional models of V1 \cite{litwin2016inhibitory}.  
+Because analytical approaches to studying nonlinear dynamical systems become increasingly complicated when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}, it is unsurprising that this model has been a challenge. 
 In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through analysis.
-By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated and proved out a set of testable predictions.
+By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated and proved out a set of testable predictions. 
+%Thus, we promote the use of EPI to gain desired model insights.
 
-Exploratory analyses can be directed.  For example,  when interested in model changes during learning, one can use EPI to condition on various levels of an emergent property statistic indicative of performance like task accuracy in a behavioral paradigm (see Section \ref{results_SC}).
-This analysis identified experimentally testable predictions (proved out \textit{in-silico}) of changes in connectivity in SC throughout learning of a rapid task switching behavior.
-Precisely, we predict an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue in the effective connectivity matrices of learning rats.
+Of course, exploratory analyses can also be directed.  For example,  when interested in model changes during learning, one can use EPI to condition as we did in Section \ref{results_SC}.
+This analysis identified experimentally testable predictions (proved out \textit{in-silico}) of changes in connectivity in SC throughout learning.
+Precisely, we predict that an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue will take place, during learning, in the effective connectivity matrices of learning rats.
 %While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation.
 %Thusly, RNNs have become an increasingly popular tool in systems neuroscience research.  
 %The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  
 %While fixed point identification and jacobian measurement yield intuitive, consistent portraits of the implemented computational algorithm \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  
 %Since neural activity generally lies on a low dimensional manifold \cite{gao2015simplicity}, we may attain an understanding of the neural mechanisms at play in cortical processing by working in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
-In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing tasks from behavioral neuroscience.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}. With this methodology, we can finally open the probabilistic model selection toolkit reasoning about the connectivity of RNNs solving tasks.
+In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing simple tasks.  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}. With this methodology, we can finally open the probabilistic model selection toolkit reasoning about the connectivity of RNNs solving tasks.
 
 %\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN architectures \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
 %Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
