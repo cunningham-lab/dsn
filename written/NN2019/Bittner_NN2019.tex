@@ -213,7 +213,7 @@ h = b + dh,
 where the input $h$ is comprised of a baseline input $b = \left[ b_E, b_P , b_S , b_V \right]^\top$ and a differential input $dh = \left[ dh_E , dh_P , dh_S , dh_V\right]^\top$ to each neuron-type population.  Throughout subsequent analyses, the baseline input is $b = \left[ 1 ,1,1,1\right]^\top$. 
 
 Having established our model, we now define the emergent property. We begin with the linearized response of the system $\frac{dx_{ss}}{dh}$ at a fixed point $x_{ss}$. 
-While this linearization accurately predicts differential responses $dx_{ss} = \left[ dx_{E,ss} , dx_{P,ss} , dx_{S,ss} ,dx_{V,ss} \right]$  for small differential inputs to each population $dh = \left[ 0.1 , 0.1 , 0.1 , 0.1 \right]$ (Fig. 2B, left), linearization is a poor predictor in this linear model more generally (Fig. 3B, right). 
+While this linearization accurately predicts differential responses $dx_{ss} = \left[ dx_{E,ss} , dx_{P,ss} , dx_{S,ss} ,dx_{V,ss} \right]$  for small differential inputs to each population $dh = \left[ 0.1 , 0.1 , 0.1 , 0.1 \right]$ (Fig. 2B, left), linearization is a poor predictor in this nonlinear model more generally (Fig. 3B, right). 
 Currently available approaches to deriving the steady state response of this system are limited.
 
 To get a more comprehensive picture of the input-responsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$.  These statements amount to the emergent property 
