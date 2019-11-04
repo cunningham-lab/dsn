@@ -754,7 +754,8 @@ class STGCircuit(system):
 
             f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id)) # (1 x M5)
             f_h = tf.reshape(f_h, (1,M,5))
-            T_x = tf.concat((f_h, tf.square(f_h)), 2)
+            freq_mu = np.expand_dims(np.expand_dims(self.mu[:5], 0), 0)
+            T_x = tf.concat((f_h, tf.square(f_h-freq_mu)), 2)
         else:
             raise NotImplementedError
 
@@ -770,10 +771,8 @@ class STGCircuit(system):
 
         mean = self.behavior["mean"]
         variance = self.behavior["variance"]
-        first_moment = mean
-        second_moment = mean ** 2 + variance
         if self.behavior["type"] == "freq":
-            mu = np.concatenate((first_moment, second_moment), axis=0)
+            mu = np.concatenate((mean, variance), axis=0)
         else:
             raise NotImplementedError
         return mu

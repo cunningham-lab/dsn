@@ -92,8 +92,8 @@ def get_system_from_template(sysname, param_dict):
         freq = param_dict['freq']
         if (freq == "med"):
             T = 500
-            mean = 0.55*np.ones((5,))
-            variance = (.025)**2*np.ones((5,))
+            mean = 0.53*np.ones((5,))
+            variance = (.01)**2*np.ones((5,))
         elif (freq == "high"):
             T = 500
             high_freq = 0.75
@@ -422,7 +422,7 @@ def get_arch_from_template(system, param_dict):
                         }
 
         # Use informed initialization:
-        mu_init, sigma_init = get_gauss_init(system)
+        mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
 
         arch_dict = {
                      "D": D,
@@ -612,11 +612,10 @@ def get_grid_search_bounds(system):
     elif (system.name == 'STGCircuit'):
         if (system.behavior['type'] == 'freq'):
             f_mean = system.mu[:5]
-            f_sec_mom = system.mu[5:]
-            f_var = f_sec_mom - np.square(f_mean)
+            f_var = system.mu[5:]
             f_std = np.sqrt(f_var)
-            T_x_a = np.concatenate((f_mean - 2*f_std, np.NINF*np.ones((5,))), axis=0)
-            T_x_b = np.concatenate((f_mean + 2*f_std, np.PINF*np.ones((5,))), axis=0)
+            T_x_a = np.concatenate((f_mean - f_std, np.NINF*np.ones((5,))), axis=0)
+            T_x_b = np.concatenate((f_mean + f_std, np.PINF*np.ones((5,))), axis=0)
 
     elif (system.name == "LowRankRNN"):
         if (system.model_opts['rank'] == 1 and system.behavior['type'] == "BI"):
@@ -632,9 +631,10 @@ def get_grid_search_bounds(system):
 
     return Z_a, Z_b, T_x_a, T_x_b
 
-def grid_search(system, n=10000):
-    Z = tf.placeholder(tf.float64, (1,None,system.D))
-    T_x = system.compute_suff_stats(Z)
+def grid_search(system, n=10000, Z=None, T_x=None):
+    if (Z is None and T_x is None):
+        Z = tf.placeholder(tf.float64, (1,None,system.D))
+        T_x = system.compute_suff_stats(Z)
 
     # get bounds
     Z_a, Z_b, T_x_a, T_x_b = get_grid_search_bounds(system)
@@ -654,11 +654,12 @@ def grid_search(system, n=10000):
     Sigma = np.cov(Z_thresh.T)
     return Z_thresh, mu, Sigma
 
-def abc_sample(system, n=10000, sigma=1.0, inds=None):
+def abc_sample(system, n=10000, sigma=1.0, inds=None, Z=None, T_x=None):
     if inds is None:
         inds = np.array(system.num_suff_stats*[True])
-    Z = tf.placeholder(tf.float64, (1,None,system.D))
-    T_x = system.compute_suff_stats(Z)
+    if (Z is None and T_x is None):
+        Z = tf.placeholder(tf.float64, (1,None,system.D))
+        T_x = system.compute_suff_stats(Z)
 
     # get bounds
     Z_a, Z_b = system.density_network_bounds
