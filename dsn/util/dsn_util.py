@@ -555,12 +555,11 @@ def get_arch_from_template(system, param_dict):
 
     return arch_dict
 
-def get_gauss_init(system):
+def get_gauss_init(system, n_gs=10000):
     init_param_dir = 'data/%s/' % system.name
     init_param_fname = init_param_dir + '%s_init_param.npz' % system.behavior_str
     if (not os.path.isfile(init_param_fname)):
         print('Running grid search to determine DSN initialization.')
-        n_gs = 1000000
         Z_thresh, mu_init, sigma_init = grid_search(system, n=n_gs)
         print('%d / %d' % (Z_thresh.shape[0], n_gs))
         if (not os.path.exists(init_param_dir)):
