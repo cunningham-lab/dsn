@@ -93,7 +93,7 @@ def get_system_from_template(sysname, param_dict):
         if (freq == "med"):
             T = 500
             mean = 0.53*np.ones((5,))
-            variance = (.01)**2*np.ones((5,))
+            variance = (.025)**2*np.ones((5,))
         elif (freq == "high"):
             T = 500
             high_freq = 0.75
