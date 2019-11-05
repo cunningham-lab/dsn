@@ -92,7 +92,7 @@ def get_system_from_template(sysname, param_dict):
         freq = param_dict['freq']
         if (freq == "med"):
             T = 500
-            mean = 0.53*np.ones((5,))
+            mean = 0.542*np.ones((5,))
             variance = (.025)**2*np.ones((5,))
         elif (freq == "high"):
             T = 500
@@ -613,8 +613,8 @@ def get_grid_search_bounds(system):
             f_mean = system.mu[:5]
             f_var = system.mu[5:]
             f_std = np.sqrt(f_var)
-            T_x_a = np.concatenate((f_mean - f_std, np.NINF*np.ones((5,))), axis=0)
-            T_x_b = np.concatenate((f_mean + f_std, np.PINF*np.ones((5,))), axis=0)
+            T_x_a = np.concatenate((f_mean - 0.25*f_std, np.NINF*np.ones((5,))), axis=0)
+            T_x_b = np.concatenate((f_mean + 0.25*f_std, np.PINF*np.ones((5,))), axis=0)
 
     elif (system.name == "LowRankRNN"):
         if (system.model_opts['rank'] == 1 and system.behavior['type'] == "BI"):
