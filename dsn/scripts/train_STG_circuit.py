@@ -20,7 +20,7 @@ sysname = "STGCircuit"
 param_dict = {"freq":freq}
 system = get_system_from_template(sysname, param_dict)
 
-repeats = 2
+repeats = 1
 # Get DSN architecture
 arch_params = {
                'D':system.D,
