@@ -137,9 +137,6 @@ def train_dsn(
     tf.set_random_seed(random_seed)
 
     # Load nf initialization
-
-
-    # Construct density network parameters.
     if (system.has_support_map):
         support_mapping = system.support_mapping
     else:
@@ -213,6 +210,26 @@ def train_dsn(
         else:
             I_x = None
 
+
+    # Compute inverse of dgm if known
+    print('Getting inverse')
+    Z_input = tf.placeholder(tf.float64, (1,None,system.D))
+    if (FIM and not mixture):
+        if (arch_dict['flow_type'] == 'RealNVP'):
+            print('computing inverse of realNVP')
+            Z_INV = Z_input
+            layer_ind = len(flow_layers) - 1
+            while (layer_ind > -1):
+                layer = flow_layers[layer_ind]
+                Z_INV = layer.inverse(Z_INV)
+                layer_ind -= 1
+
+        else:
+            Z_INV = tf.placeholder(tf.float64, (1,))
+
+    print('Z_input', Z_input)
+    print('Z_inv', Z_INV)
+
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     with tf.name_scope("AugLagCoeffs"):
         Lambda = tf.placeholder(dtype=tf.float64, shape=(system.num_suff_stats,))
@@ -231,21 +248,6 @@ def train_dsn(
     grads_and_vars = []
     for i in range(len(all_params)):
         grads_and_vars.append((cost_grads[i], all_params[i]))
-
-    # Compute inverse of dgm if known
-    Z_input = tf.placeholder(tf.float64, (1,None,system.D))
-    if (FIM and not mixture):
-        if (arch_dict['flow_type'] == 'RealNVP'):
-            print('computing inverse of realNVP')
-            Z_INV = Z_input
-            layer_ind = len(flow_layers) - 1
-            while (layer_ind > -1):
-                layer = flow_layers[layer_ind]
-                Z_INV = layer.inverse(Z_INV)
-                layer_ind -= 1
-
-        else:
-            Z_INV = tf.placeholder(tf.float64, (1,))
 
 
     # Add inputs and outputs of NF to saved tf model.
@@ -649,6 +651,8 @@ def train_dsn(
             if (MODEL_SAVE and not db):
                 for ii in range(nparams):
                     final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
+                print('saving model ', k+1)
+                print('Z_inv', Z_INV)
                 saver.save(sess, savedir + "model", global_step=(k+1))
                 np.savez(
                         param_fname  + '%d.npz' % (k+1),
