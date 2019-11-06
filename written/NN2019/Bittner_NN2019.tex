@@ -127,14 +127,15 @@ The existence of these complementary methodologies emphasizes the increased impo
 
 Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference.  
 First, the theorist designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
- To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.  
- A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
+ To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.
+Despite full knowledge of STG connectivity and a precise characterization of its rhythmic pattern generation, biophysical models of the STG have compilcated relationships between circuit parameters and neural activity \cite{prinz2004similar}.
+A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
 Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  
 
 Second, once the model is selected, the theorist defines the emergent property, the measurable signal of scientific interest.  
 To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.55Hz.
 
-Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done.  Subsequently, a qualitative description is formulated to describe of the different parameter configurations that lead to the emergent property.  
+Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done \cite{gutierrez2013multiple}.  Subsequently, a qualitative description is formulated to describe of the different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for a precise quantification of the emergent property as a statistical feature of the model.  Once we have such a methodology, we can infer a probability distribution over parameter configurations that produce this emergent property. 
 
 Before presenting technical details (in the following section), let us understand emergent property inference schematically:  the black box in Figure 1A takes, as input, the model and the specified emergent property, and produces as output the parameter distribution shown in Figure 1B.  
@@ -148,11 +149,11 @@ Further validation of EPI is available in the supplementary materials, where we 
 
 Emergent property inference (EPI) systematizes the three-step procedure of the previous section.
 First, we consider the model as a coupled set of differential (and potentially stochastic) equations \cite{gutierrez2013multiple}.  In the running STG example, the dynamical state $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
-\begin{equation} C_m \frac{\partial x}{\partial t} = -h(x; z) = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
+\begin{equation} C_m \frac{dx}{dt} = -h(x; z) = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
 where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
 
-Second, we define the emergent property, which as above is network syncing: the phase locking of the population and its oscillation at an intermediate frequency of our choosing (Figure 1A bottom).
+Second, we define the emergent property, which as above is network syncing: oscillation of the entire population at an intermediate frequency of our choosing (Figure 1A bottom).
 Quantifying this phenomenon is straightforward: we define network syncing to be that each neuron's spiking frequency -- denoted $\omega_{\text{f1}}(x)$, $\omega_{\text{f2}}(x)$, etc. -- is close to an intermediate frequency of 0.55Hz.  
 Mathematically, we achieve this via constraints on the mean and variance of $\omega_i(x)$ for each neuron $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$, and thus:
 \begin{equation}\label{eq:EP}
@@ -172,7 +173,7 @@ Then, mathematically, we must solve the following optimization program:
  &\text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu, \\
 \end{split}
 \end{equation}
-where $T(x), \mu$ are defined as in Equation \ref{eq:EPI}, and $p(x|z)$ is the intractable distribution of data from the model ($x$), given that model's parameters $z$ (we access samples from this distribution by running the model forward).   The purpose of each element in this program is detailed in Figure 1D.
+where $T(x), \mu$ are defined as in Equation \ref{eq:EP}, and $p(x|z)$ is the intractable distribution of data from the model ($x$), given that model's parameters $z$ (we access samples from this distribution by running the model forward).   The purpose of each element in this program is detailed in Figure 1D.
 Finally, we recognize that many distributions in $\mathcal{Q}$ will respect the emergent property constraints, so we require a normative principle to select amongst them.  
 This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
 Here we chose Shannon entropy as a means to find parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but we emphasize that the EPI method is unaffected by this choice (but the results of course will depend on the primal objective chosen).  
@@ -193,13 +194,13 @@ Equipped with this method, we now prove out the value of EPI by using it to inve
 \begin{center}
 \includegraphics[scale=0.55]{figures/fig2/fig2.pdf}
 \end{center}
-\caption{Exploring neuron-type responsivity in V1.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become inaccurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on differential input $dh$ conditioned on differential response $\mathcal{B}(\alpha, y)$ (see text). The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in cyan (very small, near origin). }
+\caption{Hypothesis generation through EPI in a V1 model.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and vip (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become inaccurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$ with $b = \left[1, 1, 1, 1\right]\top$ and (left) $dh = \left[0.1, 0.1, 0.1, 0.1\right]\top$ (right) $dh = \left[0.5, 0.5, 0.5, 0.5\right]\top$.  Stars indicate the linear response prediction.  C. EPI distributions on differential input $dh$ conditioned on differential response $\mathcal{B}(\alpha, y)$. Supporting evidence for the four generated hypotheses are indicated by gray boxes with labels H1, H2, H3, and H4. The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in magenta (very small, near origin). }
 \end{figure}
 
 In studies of primary visual cortex (V1), theoretical models with excitatory (E) and inhibitory (I) populations have reproduced a host of experimentally documented phenomena. 
   In particular regimes of excitation and inhibition, these E/I models exhibit the paradoxical effect \cite{tsodyks1997paradoxical}, selective amplification \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory}, and  sensory integrative properties \cite{rubin2015stabilized}.  
  Extending this model using experimental evidence of three genetically-defined classes of inhibitory neurons \cite{markram2004interneurons, rudy2011three}, recent work \cite{litwin2016inhibitory} has investigated a four-population model --  excitatory (E), parvalbumin (P), somatostatin (S), and vasointestinal peptide (V) neurons -- as shown in Fig. 2A.
- The dynamical state of this model is the firing rate of each neuron-type population $x = \left[x_E, x_P , x_S, x_V \right]^\top$, which evolves according to rectified and exponentiated dynamics:
+ The dynamical state of this model is the firing rate of each neuron-type population $x = \left[x_E, x_P , x_S, x_V \right]^\top$, which evolves according to rectified ($\left[ \right]_+$) and exponentiated dynamics:
 %
 \begin{equation}
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n
@@ -213,30 +214,34 @@ h = b + dh,
 \end{equation} 
 where the input $h$ is comprised of a baseline input $b = \left[ b_E, b_P , b_S , b_V \right]^\top$ and a differential input $dh = \left[ dh_E , dh_P , dh_S , dh_V\right]^\top$ to each neuron-type population.  Throughout subsequent analyses, the baseline input is $b = \left[ 1 ,1,1,1\right]^\top$. 
 
-Having established our model, we now define the emergent property. We begin with the linearized response of the system $\frac{dx_{ss}}{dh}$ at a fixed point $x_{ss}$. 
+Having established our model, we now define the emergent property. We begin with the linearized response of the system to input $\frac{dx_{ss}}{dh}$ at the steady state $x_{ss}$, i.e. a fixed point. 
 While this linearization accurately predicts differential responses $dx_{ss} = \left[ dx_{E,ss} , dx_{P,ss} , dx_{S,ss} ,dx_{V,ss} \right]$  for small differential inputs to each population $dh = \left[ 0.1 , 0.1 , 0.1 , 0.1 \right]$ (Fig. 2B, left), linearization is a poor predictor in this nonlinear model more generally (Fig. 3B, right). 
 Currently available approaches to deriving the steady state response of this system are limited.
 
-To get a more comprehensive picture of the input-responsivity of each neuron-type, we used EPI to learn a distribution of differential inputs $dh$ that cause the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$ to increase by a value $y \in {0.1, 0.5}$.  These statements amount to the emergent property 
+To get a more comprehensive picture of the input-responsivity of each neuron-type, we used EPI to learn a distribution of the differential inputs to each population $dh$ that produce an increase of $y \in \{0.1, 0.5\}$ in the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$.  
+We want to know the differential inputs $dh$ that result in a differential steady state $dx_{\alpha,ss}$ (the change in $x_{\alpha,ss}$ when receiving input $h=b + dh$ with respect to the baseine $h = b$) of value $y$ with some small, arbitrarily chosen amount of variance  $0.01^2$.   
+These statements amount to the emergent property 
 \begin{equation}
 \mathcal{B}(\alpha, y) ~~\triangleq~~ 
 E \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} ~~=~~ \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
 \end{equation}
-Note that we restrict the variance of the emergent property statistic $dx_{\alpha,ss}$ by constraining its variance to a small value. In Fig. 2C, each column visualizes the inferred distribution of $dh$ corresponding to a specific neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5. For visualization of this four-dimensional distribution, we show the two-dimensional marginal densities.  The inferred distributions immediately suggest four hypotheses:
-\begin{enumerate}
-\item as is intuitive, each neuron-type's firing rate should be sensitive to that neuron-type's direct input;
-\item the E- and P-populations should be largely unaffected by $dh_V$; 
-\item the S-population should be largely unaffected by $dh_P$;
-\item EPI indicated that negative $dh_E$ should result in small $dx_{V,ss}$, but positive $dh_E$ should elicit a larger $dx_{V,ss}$; that is, there should be a nonmonotonic response of $dx_{V,ss}$ with $dh_{E}$.
-\end{enumerate}
+We continue to use $\mathcal{B}(\cdot)$ throughout the rest of the study as short hand for emergent property, which represents a different signature of computation in each application. In Each column of Figure 2C visualizes the inferred distribution of $dh$ corresponding to a excitatory (red), parvalbumin (blue), somatostatin (red) and vip (green) neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  These distributions conditioned on such emergent properties are now available through EPI. For each pair of parameters we show the two-dimensional marginal distribution of samples colored by $\log q_\theta(dh \mid \mathcal{B}(\alpha, y))$.  The inferred distributions immediately suggest four hypotheses: \\
+
+{\addtolength{\leftskip}{10 mm}
+H1: as is intuitive, each neuron-type's firing rate should be sensitive to that neuron-type's direct input (e.g. Fig. 2C H1 indicates low variance in $dh_E$ when $\alpha=E$. Same observation in all inferred distributions); \\
+H2: the E- and P-populations should be largely unaffected by $dh_V$ (Fig. 2C H2 indicates high variance in $dh_V$ when $\alpha \in \{E, P \}$); \\
+H3: the S-population should be largely unaffected by $dh_P$  (Fig. 2C H3 indicate high variance in $dh_P$ when $\alpha =S$); \\
+H4: there should be a nonmonotonic response of $dx_{V,ss}$ with $dh_{E}$ (Fig. 2C H4 indicates that negative $dh_E$ should result in small $dx_{V,ss}$, but positive $dh_E$ should elicit a larger $dx_{V,ss}$);
+
+}
 
 \begin{figure}
 \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
-{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations for the inputs for which hypotheses were formulated.}}
-{\includegraphics[scale=0.45]{figures/fig3/fig3.pdf}}
+{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations.  Labels H1, H2, H3, and H4 indicate which curves confirm which hypotheses.}}
+{\includegraphics[scale=0.6]{figures/fig3/fig3.pdf}}
 \end{figure}
 
-We evaluate these hypotheses by taking steps in individual neuron-type input $\Delta h_\alpha$ away from the modes of the inferred distributions 
+We evaluate these hypotheses by taking steps in individual neuron-type input $\Delta h_\alpha$ away from the modes of the inferred distributions at $y=0.1$.
 \begin{equation}
 dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1))
 \end{equation}
@@ -245,10 +250,10 @@ Now, $dx_{\alpha,ss}$ is the steady state response to the system with input $h =
 \item the neuron-type responses are sensitive to their direct inputs (Fig. 3A black, 3B blue, 3C red, 3D green);
 \item  the E- and P-populations are not affected by $dh_V$ (Fig. 3A green, 3B green);
 \item the S-population is not affected by $dh_P$ (Fig. 3C blue);
-\item the V-population has a nonmonotonic response to $dh_E$ (Fig. 3D black).  
+\item the V-population exhibits a nonmonotonic response to $dh_E$ (Fig. 3D black), and is in fact the on population to do so (Fig. 3A-C black).
 \end{itemize}
 
-These hypotheses were in stark contrast to what was available to us via traditional analytical linear prediction (Fig. 2C, cyan).
+These hypotheses were in stark contrast to what was available to us via traditional analytical linear prediction (Fig. 2C, magenta).
 To this point, we have shown the utility of EPI on relatively low-level emergent properties like network syncing and differential neuron-type population responses.  
 In the remainder of the study, we focus on using EPI to understand models of more abstract cognitive function.
 
@@ -292,7 +297,7 @@ J = g\chi + \frac{1}{N}mn^\top,
 \end{equation}
 where the activity $x$ evolves as
 \begin{equation}
-\frac{\partial x}{\partial t} = -x(t) + J \phi(x(t)) + I(t),
+\frac{dx}{dt} = -x(t) + J \phi(x(t)) + I(t),
 \end{equation}
 and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
 The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
@@ -539,7 +544,7 @@ In this study, we used emergent property inference to examine several models rel
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
 Each neuron's membrane potential $x_m(t)$ is the solution of the following differential equation.
-\begin{equation} C_m \frac{\partial x_m}{\partial t} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
+\begin{equation} C_m \frac{dx_m}{dt} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
 
 The membrane potential of each neuron is affected by the leak, calcium, potassium, hyperpolarization,
@@ -559,10 +564,10 @@ The reversal potentials were set to $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K =
 
 Furthermore, the Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating variables $M_\infty$, $N_\infty$ and $H_\infty$, respectively.
 \begin{equation}  M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_1}{v_2} \right) \right) \end{equation}
-\begin{equation}  \frac{\partial N}{\partial t} = \lambda_N (N_\infty - N)  \end{equation}
+\begin{equation}  \frac{dN}{dt} = \lambda_N (N_\infty - N)  \end{equation}
 \begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_3}{v_4} \right) \right) \end{equation}
 \begin{equation}  \lambda_N = \phi_N \cosh \left( \frac{x_m - v_3}{2 v_4} \right) \end{equation}
-\begin{equation}  \frac{\partial H}{\partial t} = \frac{\left( H_\infty - H \right)}{\tau_h} \end{equation}
+\begin{equation}  \frac{dH}{dt} = \frac{\left( H_\infty - H \right)}{\tau_h} \end{equation}
 \begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_m + v_5}{v_6} \right)} \end{equation}
 \begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_m + v_7}{v_8} \right)} \right) \end{equation}
 where we set $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
@@ -631,11 +636,11 @@ u_i = \sum_j W_{ij} x_j + h_i
 \end{equation}
 Let $F_{ij} = \gamma_i \delta(i,j)$, where $\gamma_i = f'(u_i)$.  Then, the linear response is
 \begin{equation}
-\frac{\partial x_{ss}}{\partial h} = F(W\frac{\partial x_{ss}}{\partial h} + I)
+\frac{dx_{ss}}{dh} = F(W\frac{dx_{ss}}{dh} + I)
 \end{equation}
 which is calculable by
 \begin{equation}
-\frac{\partial x_{ss}}{\partial h} = (F^{-1} - W)^{-1}
+\frac{dx_{ss}}{dh} = (F^{-1} - W)^{-1}
 \end{equation}
 
 The emergent property we considered was the first and second moments of the change in rate $dx$ between the baseline input $h= b$ and $h = b + dh$.  We use the following notation to indicate that the emergent property statistics were set to the following values:
@@ -664,9 +669,9 @@ x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2
 
  The internal variables follow dynamics:
 \begin{equation}
-\tau \frac{\partial v}{\partial t} = -v + Wx + h + \sigma \partial B
+\tau \frac{dv}{dt} = -v + Wx + h + \sigma dB
 \end{equation}
-with time constant $\tau = 0.09s$ and gaussian noise $\sigma \partial B$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
+with time constant $\tau = 0.09s$ and gaussian noise $\sigma dB$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
 \begin{equation}
 W = \begin{bmatrix} sW_P & vW_{PA} & hW_P & dW_{PA}  \\ vW_{AP}  & sW_A & dW_{AP}  & hW_A \\ hW_P & dW_{PA}  & sW_P & vW_{PA}  \\ dW_{AP}  & hW_A & vW_{AP}  & sW_A \end{bmatrix}
 \end{equation}
@@ -705,12 +710,12 @@ The input parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A,
 To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $x_{LP}$ at end of task) over M=500 gaussian noise draws for a given SC model parameterization $z_i$:
 
 \begin{equation}
- \hat{p}_i = E_{\sigma \partial B} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M x_{LP,\text{ss}}(s=L, c=P, z_i, \sigma \partial B_j)
+ \hat{p}_i = E_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M x_{LP,\text{ss}}(s=L, c=P, z_i, \sigma dB_j)
  \end{equation}
 
 For the first constraint, the average over posterior samples (from $q_\theta(z)$) to be $p_{LP}$:
 \begin{equation}
-E_{z_i \sim q_\phi} \left[ E_{\sigma \partial B} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] \right] = E_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
+E_{z_i \sim q_\phi} \left[ E_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] \right] = E_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
 \end{equation}
 
 We can then ask that the variance of the steady state responses across gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$.
@@ -718,7 +723,7 @@ We can then ask that the variance of the steady state responses across gaussian 
 E_{z \sim q\phi} \left[ \sigma^2_{err} \right] = 0
 \end{equation}
 \begin{equation}
-\sigma^2_{err} = Var_{\sigma \partial B} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] - \hat{p}_i(1 - \hat{p}_i)
+\sigma^2_{err} = Var_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] - \hat{p}_i(1 - \hat{p}_i)
 \end{equation}
 
 We have an additional constraint that the Pro neuron on the opposite hemisphere should have the opposite value.  We can enforce this with a final constraint:
@@ -726,7 +731,7 @@ We have an additional constraint that the Pro neuron on the opposite hemisphere 
 E_{z \sim q\phi} \left[ d_P \right] = 1
 \end{equation}
 \begin{equation}
-E_{\sigma \partial W} \left[ (x_{LP,\text{ss}} - x_{RP,\text{ss}})^2  \mid s=L, c=P, z_i \right]
+E_{\sigma dB} \left[ (x_{LP,\text{ss}} - x_{RP,\text{ss}})^2  \mid s=L, c=P, z_i \right]
 \end{equation}
 
 We refer to networks obeying these constraints as Bernoulli, winner-take-all networks.  Since the maximum variance of a random variable bounded from 0 to 1 is the Bernoulli variance ($\hat{p}(1-\hat{p})$), and the maximum squared difference between to variables bounded from 0 to 1 is 1, we do not need to control the second moment of these test statistics.  In reality, these variables are dynamical system states and can only exponentially decay (or saturate) to 0 (or 1), so the Bernoulli variance error and squared difference constraints can only be undershot.  This is important to be mindful of when evaluating the convergence criteria.  Instead of using our usual hypothesis testing criteria for convergence to the emergent property, we set a slack variable threshold for these technically infeasible constraints to 0.05.
