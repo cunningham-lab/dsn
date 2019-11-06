@@ -422,7 +422,9 @@ def get_arch_from_template(system, param_dict):
                         }
 
         # Use informed initialization:
-        mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
+        #mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
+        mu_init = np.array([6.0, 2.0])
+        sigma_init = 2.0*np.ones((1,1))
 
         arch_dict = {
                      "D": D,
@@ -745,18 +747,22 @@ def load_DSNs(model_dirs, load_its):
             load_time2 = time.time()
             print('Loaded DGM in %.2f seconds' % (load_time2-load_time1))
         if (has_Z_inv and has_Z_input):
+            print('here 1')
             W, Z, log_q_Z, Z_INV, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
             tf_vars.append([W, Z, Z_input, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                             batch_norm_layer_means, batch_norm_layer_vars])
         elif (has_Z_inv and (not has_Z_input)):
+            print('here 2')
             W, Z, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
             tf_vars.append([W, Z, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                             batch_norm_layer_means, batch_norm_layer_vars])
         elif ((not has_Z_inv) and has_Z_input):
+            print('here 4')
             W, Z, log_q_Z, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
             tf_vars.append([W, Z, Z_input, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                             batch_norm_layer_means, batch_norm_layer_vars])
         else:
+            print('here 5')
             W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
             tf_vars.append([W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas,
                             batch_norm_layer_means, batch_norm_layer_vars])
@@ -1121,17 +1127,20 @@ def get_perturb_bounds(system, v, z0):
         
     return -alpha, alpha
 
-def get_perturbs(system, V, z0, n):
+def get_perturbs(system, V, z0, n, Z=None, T_x=None):
     num_vs = V.shape[1]
-    Z = tf.placeholder(tf.float64, (1, None, system.D))
-    print('creating graph')
-    T_x = system.compute_suff_stats(Z)
-    print('graph ready')
+    if (Z is None and T_x is None):
+        Z = tf.placeholder(tf.float64, (1, None, system.D))
+        print('creating graph')
+        T_x = system.compute_suff_stats(Z)
+        print('graph ready')
+    
     Z_perturbs = np.zeros((num_vs,n,system.D))
     delta_perturbs = np.zeros((num_vs, n))
     T_x_perturbs = np.zeros((num_vs,n,system.num_suff_stats))
     with tf.Session() as sess:
         for j in range(num_vs):
+            print(i,j)
             v = V[:,j]
 
             #lim1, lim2 = get_perturb_bounds(system, v, z0)
