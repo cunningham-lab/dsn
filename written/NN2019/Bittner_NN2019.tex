@@ -41,7 +41,8 @@
 
 \thispagestyle{plain}
 {\Large Interrogating theoretical models of neural computation with deep inference} \\
-Sean R. Bittner, Agostina Palmigiano, Alex T. Piet, Chunyu A. Duan, Francesca Mastrogiuseppe, Srdjan Ostojic, Carlos D. Brody, Kenneth D. Miller, and John P. Cunningham.
+Sean R. Bittner, Agostina Palmigiano, Alex T. Piet, Chunyu A. Duan, Carlos D. Brody, \\
+Kenneth D. Miller, and John P. Cunningham.
 
 \linenumbers
 \section{Abstract}
@@ -49,12 +50,12 @@ The cornerstone of theoretical neuroscience is the circuit model: a system of eq
 Such models are valuable when they give rise to an experimentally observed phenomenon -- whether behavioral or in terms of neural activity -- and thus can offer insight into neural computation.  
 The operation of these circuits, like all models, critically depends on the choices of model parameters.  
 Historically, the gold standard has been to analytically derive the relationship between model parameters and computational properties.  
-However, this enterprise quickly becomes infeasible as biologically realistic constraints are included into the model, often resulting in \emph{ad hoc} approaches to understanding the relationship between model and computation.  
+However, this enterprise quickly becomes infeasible as biologically realistic constraints are included into the model increasing its complexity, often resulting in \emph{ad hoc} approaches to understanding the relationship between model and computation.  
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
 We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of bias in recurrent neural networks solving a toy mathematical problem. 
-More generally, this work suggests a departure from realism vs tractability considerations, towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
+More generally, this work offers a quantitative grounding for theoretical models going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
 %(150 word limit) we can ignore that for now up to about 50% \\
 
 \section{Introduction}
@@ -64,7 +65,7 @@ The function of this system is governed by the choice of model parameters, which
 The work of analyzing a model then becomes the inverse problem: given a computation of interest, how can we reason about these suitable parameter configurations -- their likely values, their uniquenesses and degeneracies, their attractor states and phase transitions, and more?  
 
 Consider the idealized practice: a theorist considers a model carefully and analytically derives how model parameters govern the computation.  
-Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1984neurons}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}.  
+Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}.  
 Unfortunately, as circuit models include more biological realism, theory via analytic derivation becomes intractable.  
 This fact creates an unfavorable tradeoff for the theorist.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), producing accurate inferences about parameters of a too-simple model.  On the other hand, one may choose a more biologically relevant model at the cost of \emph{ad hoc} approaches to analysis (simply examining simulated activity), producing questionable or partial inferences about parameters of an appropriately complex, scientifically relevant model.  % intentionally belaboring the "inference about model parameters" to set the mindset of what *the* important question is.
 
@@ -77,7 +78,7 @@ These works have used deep neural networks to expand the expressivity and accura
 
 However, these inference tools have not significantly influenced the study of theoretical neuroscience models, for at least three reasons.  
 First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools typically produce a narrow set of insights into these models.  
-Indeed, only in the last few years has the deep learning toolkit expanded to a point of relevance to this class of problem.
+Indeed, only in the last few years has deep learning research advanced to a point of relevance to this class of problem.
 Second, the object of interest from a theoretical model is not typically data itself, but rather a qualitative phenomenon -- inspection of model behavior, or better, a measurable signature of some computation -- an \emph{emergent property} of the model.  
 Third, because theoreticians work carefully to construct a model that has biological relevance, such a model as a result often does not fit cleanly into the framing of a statistical model.  
 Technically, because many such models stipulate a noisy system of differential equations that can only be sampled or realized through forward simulation, they lack the explicit likelihood and priors central to the probabilistic modeling toolkit.  
@@ -86,7 +87,7 @@ Technically, because many such models stipulate a noisy system of differential e
 To address these three challenges, we developed an inference methodology -- `emergent property inference' -- which learns a distribution over parameter configurations in a theoretical model.  Critically, this distribution is such that draws from the distribution (parameter configurations) correspond to systems of equations that give rise to a specified emergent property.  
 First, we stipulate a bijective deep neural network that induces a flexible family of probability distributions over model parameterizations with a probability density we can calculate \cite{rezende2015variational, dinh2016density, papamakarios2017masked}.
 Second, we quantify the notion of emergent properties as a set of moment constraints on datasets generated by the model.  
-Thus, an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is the central object of interest to the theorist (unlike say the statistical neuroscientist).  
+Thus, an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is ultimately the object of interest to the theorist (compared to the statistical neuroscientist).  
 Conditioning on an emergent property requires a variant of deep probabilistic inference methods, which we have previously introduced \cite{loaiza2017maximum}.
 Third,  because we cannot assume the theoretical model has explicit likelihood on data or the emergent property of interest, we use stochastic gradient techniques in the spirit of likelihood free variational inference \cite{tran2017hierarchical}.    
 Taken together, emergent property inference (EPI) provides a methodology for inferring and then reasoning about parameter configurations that give rise to particular emergent phenomena in theoretical models. To clarify the technical details of EPI, we use it to analyze network syncing in a classic model of the stomatogastric ganglion \cite{gutierrez2013multiple}.   
@@ -96,7 +97,7 @@ These models were chosen to demonstrate generality through ranges of biological 
 First, we use EPI to produce a set of verifiable hypotheses of input-responsivity in a four neuron-type dynamical model of primary visual cortex; we then validate these hypotheses in the model.
 Second, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
 Third, we use EPI to uncover the sources of bias in a low-rank recurrent neural network executing a toy mathematical computation.  
-The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more generally offer a quantitative grounding for theoretical models  going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
+The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more  generally, suggests a departure from realism vs tractability considerations towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 
 %-------------------
 
@@ -205,7 +206,7 @@ In studies of primary visual cortex (V1), theoretical models with excitatory (E)
 \end{equation}
 %
 with effective connectivity weights $W$ and input $h$.  In our analysis, we set the time constant $\tau = 20$ms and dynamics coefficient $n = 2$.  
-Also, as is fairly standard, we obtain an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen} (see Section \ref{methods_V1}).
+Also, as is fairly standard, we obtain an informative estimate of the effective connectivities between these neuron-types $W$ in mice by multiplying their probability of connection with their average synaptic strength \cite{allen2018layer, billeh2019systematic} (see Section \ref{methods_V1}).
 Given these fixed choices of $W$, $n$, and $\tau$, we studied the system's response to input
 \begin{equation}
 h = b + dh,
