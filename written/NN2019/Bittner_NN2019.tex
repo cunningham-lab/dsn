@@ -260,7 +260,7 @@ In the remainder of the study, we focus on using EPI to understand models of mor
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Identifying neural mechanisms of behavioral learning.} \label{results_SC}
 Identifying measurable biological changes that result in improved behavior is important for neuroscience, since they may indicate how the learning brain adapts.
-In a rapid task switching experiment \cite{duan2015requirement}, where rats were to respond right (R) or left (L) to the side of a light stimulus in the pro (P) task, and oppositely in the anti (A) task predicated by an auditory cue (Fig. 3A), neural recordings exhibited two population of neurons in each hemisphere of superior colliculus (SC) that simultaneously represented both task condition and motor response: the Pro/contralateral and Anti/ipsilateral neurons \cite{duan2018collicular}.  
+In a rapid task switching experiment \cite{duan2015requirement}, rats were explictly cued on each trial to either orient towards a visual stimulus in the Pro (P) task or orient away from a visual stimulus in the Anti (A) task (Fig. 3a). Neural recordings in the midbrain supeior colliculus (SC) exhibited two population of neurons that simultaneously represented both task context (Pro or Anti) and motor response (contralateral or ipsilateral to the recoreded side): the Pro/Contra and Anti/Ipsi neurons \cite{duan2018collicular}.
 Duan et al. proposed a model of SC that, like the V1 model analyzed in the previous section, is a four-population dynamical system.  
 Here, the neuron-type populations are functionally-defined as the Pro- and Anti-populations in each hemisphere (left (L) and right (R)).  
 The Pro- or Anti-populations receive an input determined by the cue, and then the left and right populations receive an input based on the side of the light stimulus. 
@@ -281,10 +281,11 @@ Here, we used EPI to learn distributions of the SC weight matrix parameters $z =
 EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. 4D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. 3D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode (hence not shown in Fig. 3). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. 3E).  Thus, EPI produces novel, experimentally testable predictions: effective connectivity between these populations changes throughout learning, in a way that increases its task mode and decreases its side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Characterizing the sources of bias in RNN computation} \label{results_RNN}
-Each model we thus far have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
+\subsection{Characterizing biases in RNNs solving a posterior conditioning task} \label{results_RNN}
+So far, each model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation and have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
-Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity. 
+Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
+
 %A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.  
 Here we run EPI on the connectivity matrices of RNNs trained to solve a sample task.
  
@@ -612,13 +613,30 @@ W = \begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\
                                 W_{VE} & W_{VP} &  W_{VS} &  0 \end{bmatrix}
 \end{equation}
 
-Estimates of the of the probability of connection and strength of connection from the Allen institute result in an estimate of the effective connectivity \cite{allen}: 
+By consolidating information from many experimental datasets, Billeh et al. \cite{billeh2019systematic} produce estimates of the synaptic strength (in mV)
 \begin{equation}
-W = \begin{bmatrix} 0.0576 &  0.19728 & 0.13144 & 0 \\
-                                0.58855 & 0.30668 & 0.4285 & 0 \\
-                                0.15652 & 0 & 0 & 0.2 \\
-                                0.13755 & 0.0902 &  0.4004 &  0 \end{bmatrix}
+M = \begin{bmatrix} 0.36 & 0.48 & 0.31 & 0.28 \\
+1.49 & 0.68 & 0.50 & 0.18 \\
+0.86 & 0.42 & 0.15 & 0.32 \\
+1.31 & 0.41 & 0.52 & 0.37 \end{bmatrix}
 \end{equation}
+and connection probability
+\begin{equation}
+C = \begin{bmatrix} 0.16 & 0.411 & 0.424 &  0.087 \\
+0.395 & .451 & 0.857 & 0.02 \\
+0.182 & 0.03 & 0.082 & 0.625 \\
+0.105 & 0.22 & 0.77 & 0.028 \end{bmatrix}
+\end{equation}
+
+Multiplying these connection probabilities and synaptic efficacies gives us an effective connectivity matrix:
+\begin{equation}
+W_{\text{full}} = C \odot M = \begin{bmatrix} 0.16 & 0.411 & 0.424 &  0.087 \\
+0.395 & .451 & 0.857 & 0.02 \\
+0.182 & 0.03 & 0.082 & 0.625 \\
+0.105 & 0.22 & 0.77 & 0.028 \end{bmatrix}
+\end{equation}
+
+From use the entries of this full effective connectivity matrix that are not considered to be ineffectual.
 
 We look at how this four-dimensional nonlinear dynamical model of V1 responds to different inputs, and compare the predictions of the linear response to the approximate posteriors obtained through EPI.  The input to the system is the sum of a baseline input $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ and a differential input $dh$:
 \begin{equation}
@@ -656,7 +674,7 @@ For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{
 
 
 \subsubsection{Superior colliculus}\label{methods_SC}
-There are four total units: two in each hemisphere corresponding to the Pro/contralateral and Anti/ipsilateral populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
+There are four total units: two in each hemisphere corresponding to the Pro/Contra and Anti/Ipsi populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
 \begin{equation}
 x_i(t) =\left(\frac{1}{2}\tanh\left(\frac{v_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
 \end{equation}
