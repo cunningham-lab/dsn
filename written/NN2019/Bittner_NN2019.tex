@@ -283,26 +283,26 @@ EPI demonstrates that, for greater task accuracies, the task mode eigenvalue inc
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing biases in RNNs solving a posterior conditioning task} \label{results_RNN}
 So far, each model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
-At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
-In theoretical neuroscience, RNNs dynamics usually follow the equation
+At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation that are becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
+In theoretical neuroscience, RNN dynamics usually follow the equation
 \begin{equation}
 \frac{dx}{dt} = -x(t) + W \phi(x(t)) + I(t),
 \end{equation}
 where $x(t)$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $I(t)$ is the input to the system.
 Such RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
-Such highly parameterized models are challenging to characterize, let alone probabilistically infer. 
-Predominantly, our understanding of RNN function comes from the identification of fixed points and their local linearized dynamics \cite{sussillo2013opening}, yet these analyses do not afford a direct link between macroscopic connectivity parameters and dynamics.
-Alternatively, we use EPI to characterize the parameteric sources of solution bias in an RNN solving a toy mathematical problem.
+Such highly parameterized models are challenging to characterize, including notably making statistical inferences about their parameterization. 
+Predominantly, our understanding of RNN function comes from the identification of fixed points and their local linearized dynamics \cite{sussillo2013opening}, yet these analyses do not afford a direct link between parameters (the connectivity $W$) and their task solving capabilities. 
+To address this need, we use EPI to characterize the parameterizations of RNNs trained to solve an example task. 
+%Here instead, we use EPI to characterize the parameterizations of RNNs solving an example mathematical task.
 
-Here, the task we consider is Gaussian posterior conditioning: calculate the parameters of a Gaussian posterior distribution on the mean of a Gaussian likelihood $\mu_y$, given a single observation of $y \sim \mathcal{N}(\mu_y,\sigma^2_y = 1)$ and a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ (Fig. 5A).  Conjugacy in the Gaussian likelihood and prior result in ground truth calculation for the Gaussian posterior mean 
+The task we consider is Gaussian posterior conditioning: calculate the parameters of a posterior distribution induced by a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ and a likelihood $p(y | \mu_y) = \mathcal{N}(\mu_y,\sigma^2_y = 1)$, given a single observation $y$.  Conjugacy offers the result analytically; $p(\mu_y | y ) = \mathcal{N}\left(\mu_{post},\sigma_{post}^2\right)$, where:   
 \begin{equation}
 \mu_{\text{post}} = \frac{\frac{\mu_0}{\sigma_0^2} + \frac{y}{\sigma_y^2}}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}
-\end{equation}
- and posterior variance 
-\begin{equation}
- \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}
-\end{equation}
-First, we predicate that the RNN should produce activity along a readout vector $w$ corresponding to its estimation of the posterior mean $\mu_{\text{post}}$. Second, we ask that the RNN produce a degree of chaotic variability matching the posterior variance $\sigma^2_{\text{post}}$.  This problem setup is inspired by dynamical systems modeling of approximate inference in the brain \cite{echeveste2019cortical}.  Although, we avoid using the term ``approximate inference" to describe this task, since we are demonstrating the utility of EPI, which is a different form of approximate inference (see Section \ref{methods_VI}).
+~~~~~~~~~~
+ \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}.
+\end{equation} 
+The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (a setup inspired by \cite{echeveste2019cortical}). 
+
 
 Drawing conclusions about the role tens of thousands of weight matrix parameters in producing a readout projection and chaotic variance is a daunting challenge.  However, we can leverage recent theoretical work establishing a link between macroscopic parameterizations of RNN connectivity and the emerging dynamics \cite{mastrogiuseppe2018linking}.  Specifically, we consider an $N$-neuron, rank-1 RNN with connectivity
 \begin{equation}
@@ -320,11 +320,11 @@ E \begin{bmatrix} \kappa_w \\ \Delta_T \\ (\kappa_w-\mu_{\text{post}})^2 \\ (\De
 \end{equation}
 We specifiy a substantial amount of variability in the variance constraints  so that the inferred distribution results in RNNs with a variety biases in their solutions to the gaussian posterior conditioning problem. 
 
-We used EPI to learn distributions of RNNs executing Gaussian posterior conditioning given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We can examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+We used EPI to learn distributions of RNNs executing Gaussian posterior conditioning given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
 The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
-Neither of these observations were obvious from the consistency equations afforded by DMFT (see Section \ref{methods_LRRNN}).
+Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).
 
-While the theory used for emergent property statistic calculation is exact in the limit of infinite neurons \cite{mastrogiuseppe2018linking}. is exact2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution support these conclusions.  $z_1$ has relatively high $M_m M_n$, and thusly produces an RNN overestimating the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on the emergent property of task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
+[The next few lines are rather unreadable] While the theory used for emergent property statistic calculation is exact in the limit of infinite neurons \cite{mastrogiuseppe2018linking}. is exact2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution support these conclusions.  $z_1$ has relatively high $M_m M_n$, and thusly produces an RNN overestimating the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on the emergent property of task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \begin{figure}
 \begin{center}
