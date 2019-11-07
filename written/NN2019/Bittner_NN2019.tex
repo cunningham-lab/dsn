@@ -330,7 +330,7 @@ While the theory used for emergent property statistic calculation is exact in th
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Sources of bias in RNN computation.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed Gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
+\caption{Sources of solution bias in an RNN computation.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computatoin on $\mu_y$. (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_w$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks sampled from the distribution perform the calculation and have the computational biases expected from their parameter values.  Activity along readout $\kappa_w$ (cyan).}
 \end{figure}
 
 \section{Discussion}
