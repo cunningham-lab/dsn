@@ -402,12 +402,12 @@ by making an approximation $q_\theta(z)$ to $p(z \mid \mathcal{B})$ (see Section
 
 In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $p(T(x) \mid z)$ is unknown or intractable, requiring an alternative to stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black}.  These types of methods called likelihood-free variational inference (LFVI, \cite{tran2017hierarchical}) skate around the intractable likelihood function in situations where there is a differentiable simulator. Akin to LFVI, DSNs are optimized with the following objective for a given theoretical model, emergent property statistics $T(x)$, and emergent property constraints $\mu$:
 
-\begin{equation}
+\begin{equation} \label{eq:EP}
 \begin{split}
 q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
  &  \text{s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
  \end{split}
-\end{equation}
+\end{equation} 
 
 Optimizing this objective is a technological accomplishment in its own right, the details of which we elaborate in Section \ref{methods_AL_opt}.  Before going through those details, we ground this optimization in a toy example.
 
@@ -474,7 +474,7 @@ Fig. S4: Sampled dynamical system trajectories from the EPI distribution.  Each 
 \end{figure}
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
-To optimize $q_\theta(z)$ in equation 1, the constrained optimization is performed using the augmented Lagrangian method.  The following objective is minimized:
+To optimize $q_\theta(z)$ in Equation \ref{eq:opt}, the constrained optimization is performed using the augmented Lagrangian method.  The following objective is minimized:
 \begin{equation}
 L(\theta; \alpha, c) = -H(q_\theta) + \alpha^\top \delta(\theta) + \frac{c}{2}||\delta(\theta)||^2
 \end{equation}
