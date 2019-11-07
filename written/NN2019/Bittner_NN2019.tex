@@ -113,7 +113,7 @@ The existence of these complementary methodologies emphasizes the increased impo
 \begin{center}
 \includegraphics[scale=0.38]{figures/fig1/fig1.pdf}
 \end{center}
-\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  The eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.   (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $\omega \sim q_0$, where $q_0$ is chosen to be simple distribution such as an isotropic gaussian, through a highly expressive function family $f_\theta(\omega) = f_l(...f_1(\omega))$ parameterized by the neural network weights and biases $\theta \in \Theta$. This mapping induces an implicit probability model $q(g_\theta(\omega)) \in \mathcal{Q}$ D. EPI learns a distribution $q_\theta(z)$ of model parameters that produce an emergent property: the emergent property statistics $T(x)$ are fixed in expectation over parameter distribution samples $z \sim q_\theta(z)$ to particular values $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  }
+\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI) learns a posterior distribution of the model parameters  $z = \left[g_{\text{el}}, g_{\text{synA}} \right]^\top$ conditioned on network syncing. B. An EPI distribution of STG model parameters producing network syncing.  The eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.   (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $\omega \sim q_0$, where $q_0$ is chosen to be simple distribution such as an isotropic Gaussian, through a highly expressive function family $f_\theta(\omega) = f_l(...f_1(\omega))$ parameterized by the neural network weights and biases $\theta \in \Theta$. This mapping induces an implicit probability model $q(g_\theta(\omega)) \in \mathcal{Q}$ D. EPI learns a distribution $q_\theta(z)$ of model parameters that produce an emergent property: the emergent property statistics $T(x)$ are fixed in expectation over parameter distribution samples $z \sim q_\theta(z)$ to particular values $\mu$.  EPI distributions maximize randomness via entropy, although other measures are sensible.  }
 \end{figure}
 
 
@@ -266,7 +266,7 @@ Here, the neuron-type populations are functionally-defined as the Pro- and Anti-
 The Pro- or Anti-populations receive an input determined by the cue, and then the left and right populations receive an input based on the side of the light stimulus. 
 Activities were bounded between $0$ and $1$, so that a high output of the Pro population in a given hemisphere corresponds to the contralateral response.   
 An additional stipulation is that when one Pro population responds with a high-output, the opposite Pro population must respond with a low output.
-Finally, this circuit operates in the presence of gaussian noise resulting in trial-to-trial variability (see Section \ref{methods_SC}).
+Finally, this circuit operates in the presence of Gaussian noise resulting in trial-to-trial variability (see Section \ref{methods_SC}).
 The connectivity matrix is parameterized by the geometry of the population arrangement (Fig. 3B).  
 
 Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = QAQ^{-1}$ in such a way (the Schur decomposition) that the basis vectors $q_i$ are the same for all $W$ (Fig. 3C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $a_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
@@ -283,62 +283,69 @@ EPI demonstrates that, for greater task accuracies, the task mode eigenvalue inc
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing biases in RNNs solving a posterior conditioning task} \label{results_RNN}
 So far, each model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
-At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation and have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
-Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
-Such highly parameterized nonlinear dynamical systems are challenging to characterize, let alone probabilistically infer. 
+At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
+In theoretical neuroscience, RNNs dynamics usually follow the equation
+\begin{equation}
+\frac{dx}{dt} = -x(t) + W \phi(x(t)) + I(t),
+\end{equation}
+where $x(t)$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $I(t)$ is the input to the system.
+Such RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
+Such highly parameterized models are challenging to characterize, let alone probabilistically infer. 
 Predominantly, our understanding of RNN function comes from the identification of fixed points and their local linearized dynamics \cite{sussillo2013opening}, yet these analyses do not afford a direct link between macroscopic connectivity parameters and dynamics.
 Alternatively, we use EPI to characterize the parameteric sources of solution bias in an RNN solving a toy mathematical problem.
 
-Here, the task we consider is gaussian posterior conditioning: calculate the parameters of a gaussian posterior distribution on the mean of a gaussian likelihood $\mu_y$, given a single observation of $y \sim \mathcal{N}(\mu_y,1)$ and a prior $p(\mu_y) = \mathcal{N}(4, 1)$ (Fig. 5A).  The true posterior for an input of $y=2$ is $p(\mu_y \mid y) = \mathcal{N}(3, 0.5)$.  
-
-
-
-
-
-We used EPI to learn distributions of RNNs producing the correct posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ (respectively), given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B).
-
-
- 
-Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{sompolinsky1988chaos}.
-Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
-This theory has been extended from random neural networks to low-rank RNNs, which have low-dimensional parameterizations of RNN connectivity via the pairwise correlations of the low-rank vectors (i.e. the low-rank ``geometry")  \cite{mastrogiuseppe2018linking}.  
-In such a model, the connectivity of a rank-1 RNN's weight matrix $J$ is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
+Here, the task we consider is Gaussian posterior conditioning: calculate the parameters of a Gaussian posterior distribution on the mean of a Gaussian likelihood $\mu_y$, given a single observation of $y \sim \mathcal{N}(\mu_y,\sigma^2_y = 1)$ and a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ (Fig. 5A).  Conjugacy in the Gaussian likelihood and prior result in ground truth calculation for the Gaussian posterior mean 
 \begin{equation}
-J = g\chi + \frac{1}{N}mn^\top,
+\mu_{\text{post}} = \frac{\frac{\mu_0}{\sigma_0^2} + \frac{y}{\sigma_y^2}}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}
 \end{equation}
-where the activity $x$ evolves as
+ and posterior variance 
 \begin{equation}
-\frac{dx}{dt} = -x(t) + J \phi(x(t)) + I(t),
+ \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}
 \end{equation}
-and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
-The entries of $m$ and $n$ are drawn from gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
+First, we predicate that the RNN should produce activity along a readout vector $w$ corresponding to its estimation of the posterior mean $\mu_{\text{post}}$. Second, we ask that the RNN produce a degree of chaotic variability matching the posterior variance $\sigma^2_{\text{post}}$.  This problem setup is inspired by dynamical systems modeling of approximate inference in the brain \cite{echeveste2019cortical}.  Although, we avoid using the term ``approximate inference" to describe this task, since we are demonstrating the utility of EPI, which is a different form of approximate inference (see Section \ref{methods_VI}).
+
+Drawing conclusions about the role tens of thousands of weight matrix parameters in producing a readout projection and chaotic variance is a daunting challenge.  However, we can leverage recent theoretical work establishing a link between macroscopic parameterizations of RNN connectivity and the emerging dynamics \cite{mastrogiuseppe2018linking}.  Specifically, we consider an $N$-neuron, rank-1 RNN with connectivity
+\begin{equation}
+W = g\chi + \frac{1}{N}mn^\top,
+\end{equation}
+where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, $g$ is the random strength, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
+This theory allows us to calculate the RNN response along a readout vector 
+\begin{equation}
+\kappa_w =  \frac{1}{N} \sum_{j=1}^N w_j \phi(x_j)
+\end{equation}
+to a constant input $I(t) = y w + (n-M_n)$.  Additionally, the amount of chaotic variance $\Delta_T$ can be expressed through consistency equations of dynamic mean field parameters, the solver of which we take gradients through (see Section \ref{methods_LRRNN}).
+This theory allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_w$ and $\Delta_T$ and the emergent property values are the ground truth $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$:
+\begin{equation}
+E \begin{bmatrix} \kappa_w \\ \Delta_T \\ (\kappa_w-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}}) \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
+\end{equation}
+We specifiy a substantial amount of variability in the variance constraints  so that the inferred distribution results in RNNs with a variety biases in their solutions to the gaussian posterior conditioning problem.
+
+We used EPI to learn distributions of RNNs executing Gaussian posterior conditioning given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We can examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
+Neither of these observations were obvious from the consistency equations afforded by DMFT (see Section \ref{methods_LRRNN}).
+
+2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution support these conclusions.  $z_1$ has relatively high $M_m M_n$, and thusly produces an RNN overestimating the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on the emergent property of task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Sources of bias in RNN computation.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
+\caption{Sources of bias in RNN computation.  A. (left) A rank-1 RNN running approximate Bayesian inference on $\mu_y$ assuming a gaussian likelihood variance of 1 and a prior of $\mathcal{N}(4,1)$.  (center) The rank-1 RNN represents the computed Gaussian posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$  in its mean activity $\mu$ and its temporal variance $\Delta_T$.  (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. Distribution of rank-1 RNNs executing approximate Bayesian inference.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\mu$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C. Finite size realizations agree with the DMFT theory.}
 \end{figure}
 
-Mastrogiuseppe et al. designed low-rank connectivities via the pairwise correlations of the vectors $m,n$ in models that solve tasks from behavioral neuroscience. 
-%An important detail is that a nonlinear system solver must be used to obtain the task-relevant variables of interest from the derived consistency equations (see Section \ref{methods_LRRNN}).
-We can consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \left[ g, M_m, M_n\right]$)  and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$).
-Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to combine DMFT with EPI to learn distributions on such connectivity parameters of RNNs that execute tasks via an emergent property defined on the task-relevant responses produced by DMFT.
 
-%(Need to make this more eloquent) In our analysis, we consider Bayesian inference in the brain \cite{aitchison2017or}. Since its valuable to represent uncertainties about quantities in the world, its posited that the brain would optimally execute Bayesian inference in a variety of settings.  However, it's been shown that the brain has substantial bias in some of its inference operations.  One field of computational neuroscience endeavors to understand the mechanistic sources of these biases in the neural computations for inference.
-
-When specifying the emergent property of gaussian posterior conditioning, we allowed a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$. This resulted in a distribution of rank-1 RNN parameterizations having a wide variety of biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ (under- or over-estimates of the posterior means and variances).  We can examine the nature of the biases in this computation by visualizing the produced posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the EPI distribution.  The inferred distribution has rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
-The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
-Neither of these observations were obvious from the consistency equations afforded by DMFT (see Section \ref{methods_LRRNN}).
+%When specifying the emergent property of gaussian posterior conditioning, we allowed a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$. This resulted in a distribution of rank-1 RNN parameterizations having a wide variety of biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ (under- or over-estimates of the posterior means and variances).  We can examine the nature of the biases in this computation by visualizing the produced posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the EPI distribution.  The inferred distribution has rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+%The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
+%Neither of these observations were obvious from the consistency equations afforded by DMFT (see Section \ref{methods_LRRNN}).
  
-When working with DMFT, it's important to check that finite-size realizations of these infinite-size networks match the theoretical predictions. We check 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high $g$ and high $M_m M_n$, whereas $z_2$ has relatively low $g$ and low $M_m M_n$.  Confirming our intuition, $z_1$ overestimates the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$ underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, $z_1$ results in evidently greater temporal variance than $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
+%When working with DMFT, it's important to check that finite-size realizations of these infinite-size networks match the theoretical predictions. We check 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high $g$ and high $M_m M_n$, whereas $z_2$ has relatively low $g$ and low $M_m M_n$.  Confirming our intuition, $z_1$ overestimates the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$ underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, $z_1$ results in evidently greater temporal variance than $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \section{Discussion}
 \subsection{EPI is a general tool for theoretical neuroscience} 
 Models of biological systems are often comprised of complex nonlinear differential equations, making traditional theoretical analysis and statistical inference intractable. 
 In contrast, EPI is capable of learning distributions of parameters in such models producing measurable signatures of computation.
 We have demonstrated its utility on biological models (STG), intermediate-level models of interacting genetically- and functionally-defined neuron-types (V1, SC), and the most abstract of models (RNNs).  
-We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials, as well as high-level cognitive function like gaussian posterior conditioning.
+We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials, as well as high-level cognitive function like Gaussian posterior conditioning.
 Technically, EPI is tractable when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case; this emphasizes the general utility of EPI.
 
 In this study, we have focused on applying EPI to low dimensional parameter spaces of models with low dimensional dynamical state.
@@ -480,7 +487,7 @@ L(\theta; \alpha, c) = -H(q_\theta) + \alpha^\top \delta(\theta) + \frac{c}{2}||
 \end{equation}
 where $\delta(\theta) = E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\alpha \in \mathcal{R}^m$ are the Lagrange multipliers and $c$ is the penalty coefficient.  For a fixed $(\alpha, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch -- a period of optimization with fixed $\alpha$ and $c$ for a given number of stochastic optimization iterations. Similarly, $\alpha$ is tuned each epoch based on the constraint violations.  For the linear 2-dimensional system (Fig. S2C) optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\alpha_1 = 0$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||\delta(\theta_{k+1})||] > \gamma E[||\delta(\theta_{k})||]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the project, $\beta = 4.0$ and $\gamma = 0.25$ is used.  The other update rule is $\alpha_{k+1} = \alpha_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of EPI optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy usually decreases, and structural pathologies in the distribution may be introduced.
 
-The intention is that $c$ and $\alpha$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
+The intention is that $c$ and $\alpha$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic Gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
 
 
 
@@ -697,7 +704,7 @@ x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2
 \begin{equation}
 \tau \frac{dv}{dt} = -v + Wx + h + \sigma dB
 \end{equation}
-with time constant $\tau = 0.09s$ and gaussian noise $\sigma dB$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
+with time constant $\tau = 0.09s$ and Gaussian noise $\sigma dB$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
 \begin{equation}
 W = \begin{bmatrix} sW_P & vW_{PA} & hW_P & dW_{PA}  \\ vW_{AP}  & sW_A & dW_{AP}  & hW_A \\ hW_P & dW_{PA}  & sW_P & vW_{PA}  \\ dW_{AP}  & hW_A & vW_{AP}  & sW_A \end{bmatrix}
 \end{equation}
@@ -733,7 +740,7 @@ and an input to the right or left-side depending on where the light stimulus is 
 \end{equation}
 The input parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A,rule}} = 10$,  $I_{\text{choice}} = 2$,  and $I_{\text{light}} = 1$
 
-To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $x_{LP}$ at end of task) over M=500 gaussian noise draws for a given SC model parameterization $z_i$:
+To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $x_{LP}$ at end of task) over M=500 Gaussian noise draws for a given SC model parameterization $z_i$:
 
 \begin{equation}
  \hat{p}_i = E_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M x_{LP,\text{ss}}(s=L, c=P, z_i, \sigma dB_j)
@@ -744,7 +751,7 @@ For the first constraint, the average over posterior samples (from $q_\theta(z)$
 E_{z_i \sim q_\phi} \left[ E_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] \right] = E_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
 \end{equation}
 
-We can then ask that the variance of the steady state responses across gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$.
+We can then ask that the variance of the steady state responses across Gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$.
 \begin{equation}
 E_{z \sim q\phi} \left[ \sigma^2_{err} \right] = 0
 \end{equation}
@@ -772,6 +779,25 @@ In total, the emergent property of rapid task switching accuracy at level $p$ wa
 For each accuracy level $p$, we ran EPI for 10 different random seeds and selected the maximum entropy solution using an architecture of 10 planar flows with $c_0 = 2$. The support of $z$ was $\mathcal{R}^8$.
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
+
+Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{sompolinsky1988chaos}.
+Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
+This theory has been extended from random neural networks to low-rank RNNs, which have low-dimensional parameterizations of RNN connectivity via the pairwise correlations of the low-rank vectors (i.e. the low-rank ``geometry")  \cite{mastrogiuseppe2018linking}.  
+In such a model, the connectivity of a rank-1 RNN's weight matrix $J$ is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
+\begin{equation}
+J = g\chi + \frac{1}{N}mn^\top,
+\end{equation}
+where the activity $x$ evolves as
+and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
+The entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
+
+Mastrogiuseppe et al. designed low-rank connectivities via the pairwise correlations of the vectors $m,n$ in models that solve tasks from behavioral neuroscience. 
+%An important detail is that a nonlinear system solver must be used to obtain the task-relevant variables of interest from the derived consistency equations (see Section \ref{methods_LRRNN}).
+We can consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \left[ g, M_m, M_n\right]$)  and outputs task-relevant response variables (e.g. average network activity $\mu$, the temporal variability in the network $\Delta_T$, or network activity along a given dimension $\kappa$).
+Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to combine DMFT with EPI to learn distributions on such connectivity parameters of RNNs that execute tasks via an emergent property defined on the task-relevant responses produced by DMFT.
+
+
+
 The network dynamics of neuron $i$'s rate $x$ evolve according to:
 \begin{equation}
 \dot{x}_i(t) = -x_i(t) + \sum_{j=1}^N J_{ij} \phi(x_j(t)) + I_i 
@@ -807,7 +833,7 @@ We can write out the potential function by integrating the negated RHS.
 We assume that as time goes to infinity, the potential relaxes to a steady state.
 \[\frac{\partial V(\Delta_\infty, \Delta_0)}{\partial \Delta} = - \Delta + \lbrace g^2 \langle \left[ \phi_i(t) \phi_i(t + \infty) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \rbrace = 0\]
 \[\Delta_\infty = g^2 \langle \left[ \phi_i(t) \phi_i(t + \infty) \right] \rangle + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \]
-This can be written more explicitly in terms of the gaussian integrals which are relatively (with respect to nongaussian distributions) cheap to evaluate.
+This can be written more explicitly in terms of the Gaussian integrals which are relatively (with respect to nongaussian distributions) cheap to evaluate.
 \[\Delta_\infty = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2 \]
 
 Also, we assume that the energy of the system is preserved throughout the entirety of its evolution. 
@@ -815,7 +841,7 @@ Also, we assume that the energy of the system is preserved throughout the entire
 \[-\frac{\Delta_0^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta_0 + C = -\frac{\Delta_\infty^2}{2} + g^2 \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)\Delta_\infty + C   \]
 We can arrange the terms into a difference of squares in $\Delta_0$ and $\Delta_\infty$.
 \[\frac{\Delta_0^2-\Delta_\infty^2}{2} = g^2 \left( \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle - \langle \left[ \Phi_i(t) \Phi_i(t) \right] \rangle \right) + (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty)\]
-Similarly, we write out the resulting equation explicitly in terms of the gaussian integrals present.
+Similarly, we write out the resulting equation explicitly in terms of the Gaussian integrals present.
 \[\frac{\Delta_0^2-\Delta_\infty^2}{2} = g^2 \left( \int \mathcal{D}z \Phi^2(\mu + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\mu + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \] 
 \[+ (\Sigma_m^2 \kappa^2 + 2\Sigma_{mI} \kappa + \Sigma_I^2)(\Delta_0-\Delta_\infty)\]
 
@@ -841,7 +867,7 @@ x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\mu(t), \kappa(t), \Delta_0(t), \Delta_\infty(t))
 \end{split}
 \end{equation}
-Then, the temporal variance, which is necessary for the gaussian posterio conditioning example, is simply calculated via
+Then, the temporal variance, which is necessary for the Gaussian posterio conditioning example, is simply calculated via
 \begin{equation}
 \Delta_T = \Delta_0 - \Delta_\infty
 \end{equation}
