@@ -283,11 +283,21 @@ EPI demonstrates that, for greater task accuracies, the task mode eigenvalue inc
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Characterizing biases in RNNs solving a posterior conditioning task} \label{results_RNN}
 So far, each model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
-At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional models of computation and have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
+At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation and have become increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 Typically, RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
+Such highly parameterized nonlinear dynamical systems are challenging to characterize, let alone probabilistically infer. 
+Predominantly, our understanding of RNN function comes from the identification of fixed points and their local linearized dynamics \cite{sussillo2013opening}, yet these analyses do not afford a direct link between macroscopic connectivity parameters and dynamics.
+Alternatively, we use EPI to characterize the parameteric sources of solution bias in an RNN solving a toy mathematical problem.
 
-%A monumental challenge for this line of work is to link findings at this level of abstraction with interpretable biophysical mechanisms in the brain.  
-Here we run EPI on the connectivity matrices of RNNs trained to solve a sample task.
+Here, the task we consider is gaussian posterior conditioning: calculate the parameters of a gaussian posterior distribution on the mean of a gaussian likelihood $\mu_y$, given a single observation of $y \sim \mathcal{N}(\mu_y,1)$ and a prior $p(\mu_y) = \mathcal{N}(4, 1)$ (Fig. 5A).  The true posterior for an input of $y=2$ is $p(\mu_y \mid y) = \mathcal{N}(3, 0.5)$.  
+
+
+
+
+
+We used EPI to learn distributions of RNNs producing the correct posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ (respectively), given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B).
+
+
  
 Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{sompolinsky1988chaos}.
 Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
@@ -316,8 +326,6 @@ We can consider the DMFT equation solver as a black box that takes in a low-rank
 Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to combine DMFT with EPI to learn distributions on such connectivity parameters of RNNs that execute tasks via an emergent property defined on the task-relevant responses produced by DMFT.
 
 %(Need to make this more eloquent) In our analysis, we consider Bayesian inference in the brain \cite{aitchison2017or}. Since its valuable to represent uncertainties about quantities in the world, its posited that the brain would optimally execute Bayesian inference in a variety of settings.  However, it's been shown that the brain has substantial bias in some of its inference operations.  One field of computational neuroscience endeavors to understand the mechanistic sources of these biases in the neural computations for inference.
-
-We train the network to solve gaussian posterior conditioning: calculate the parameters of a gaussian posterior distribution on the mean of a gaussian likelihood $\mu_y$, given a single observation of $y \sim \mathcal{N}(\mu_y,1)$ and a prior $p(\mu_y) = \mathcal{N}(4, 1)$ (Fig. 5A).  The true posterior for an input of $y=2$ is $p(\mu_y \mid y) = \mathcal{N}(3, 0.5)$.  We used EPI to learn distributions of RNNs producing the correct posterior mean and variance  in their mean activity $\mu=\mu_{\text{post}}$ and temporal variance $\Delta_T=\sigma^2_{\text{post}}$ (respectively), given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B).
 
 When specifying the emergent property of gaussian posterior conditioning, we allowed a substantial amount of variability in the second moment constraints of the network mean $\mu$ and temporal variance $\Delta_T$. This resulted in a distribution of rank-1 RNN parameterizations having a wide variety of biases in the resulting $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ (under- or over-estimates of the posterior means and variances).  We can examine the nature of the biases in this computation by visualizing the produced posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the EPI distribution.  The inferred distribution has rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
 The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
