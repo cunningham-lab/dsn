@@ -232,7 +232,6 @@ H1: as is intuitive, each neuron-type's firing rate should be sensitive to that 
 H2: the E- and P-populations should be largely unaffected by $dh_V$ (Fig. 2C H2 indicates high variance in $dh_V$ when $\alpha \in \{E, P \}$); \\
 H3: the S-population should be largely unaffected by $dh_P$  (Fig. 2C H3 indicate high variance in $dh_P$ when $\alpha =S$); \\
 H4: there should be a nonmonotonic response of $dx_{V,ss}$ with $dh_{E}$ (Fig. 2C H4 indicates that negative $dh_E$ should result in small $dx_{V,ss}$, but positive $dh_E$ should elicit a larger $dx_{V,ss}$);
-
 }
 
 \begin{figure}
@@ -281,7 +280,7 @@ Here, we used EPI to learn distributions of the SC weight matrix parameters $z =
 EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. 4D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. 3D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode (hence not shown in Fig. 3). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. 3E).  Thus, EPI produces novel, experimentally testable predictions: effective connectivity between these populations changes throughout learning, in a way that increases its task mode and decreases its side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Characterizing biases in RNNs solving a posterior conditioning task} \label{results_RNN}
+\subsection{Linking RNN connectivity to computational error} \label{results_RNN}
 So far, each model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation that are becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 In theoretical neuroscience, RNN dynamics usually follow the equation
@@ -290,10 +289,14 @@ In theoretical neuroscience, RNN dynamics usually follow the equation
 \end{equation}
 where $x(t)$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $I(t)$ is the input to the system.
 Such RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
-Such highly parameterized models are challenging to characterize, including notably making statistical inferences about their parameterization. 
-Predominantly, our understanding of RNN function comes from the identification of fixed points and their local linearized dynamics \cite{sussillo2013opening}, yet these analyses do not afford a direct link between parameters (the connectivity $W$) and their task solving capabilities. 
-To address this need, we use EPI to characterize the parameterizations of RNNs trained to solve an example task. 
-%Here instead, we use EPI to characterize the parameterizations of RNNs solving an example mathematical task.
+Fully-connected RNNs with tens of thousands of parameters are challenging to characterize \cite{sussillo2013opening}, especially making statistical inferences about their parameterization.
+Alternatively, we consider a rank-1, $N$-neuron RNN with connectivity
+\begin{equation}
+W = g\chi + \frac{1}{N}mn^\top,
+\end{equation}
+where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, $g$ is the random strength, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
+We use EPI to infer the parameterizations of rank-1 RNNs solving an example task, enabling discovery of properties of connectivity that result in different types of computational errors.
+
 
 The task we consider is Gaussian posterior conditioning: calculate the parameters of a posterior distribution induced by a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ and a likelihood $p(y | \mu_y) = \mathcal{N}(\mu_y,\sigma^2_y = 1)$, given a single observation $y$.  Conjugacy offers the result analytically; $p(\mu_y | y ) = \mathcal{N}\left(\mu_{post},\sigma_{post}^2\right)$, where:   
 \begin{equation}
@@ -302,29 +305,34 @@ The task we consider is Gaussian posterior conditioning: calculate the parameter
  \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}.
 \end{equation} 
 The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (a setup inspired by \cite{echeveste2019cortical}). 
-
-
-Drawing conclusions about the role tens of thousands of weight matrix parameters in producing a readout projection and chaotic variance is a daunting challenge.  However, we can leverage recent theoretical work establishing a link between macroscopic parameterizations of RNN connectivity and the emerging dynamics \cite{mastrogiuseppe2018linking}.  Specifically, we consider an $N$-neuron, rank-1 RNN with connectivity
-\begin{equation}
-W = g\chi + \frac{1}{N}mn^\top,
-\end{equation}
-where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, $g$ is the random strength, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
-This theory allows us to calculate the RNN response along a readout vector 
+To solve this Gaussian posterior conditioning task, the RNN response to a constant input $I(t) = y w + (n-M_n)$ must equal the posterior mean along readout vector $w$ , where
 \begin{equation}
 \kappa_w =  \frac{1}{N} \sum_{j=1}^N w_j \phi(x_j)
 \end{equation}
-to a constant input $I(t) = y w + (n-M_n)$.  Additionally, the amount of chaotic variance $\Delta_T$ can be expressed through consistency equations of dynamic mean field parameters, the solver of which we take gradients through (see Section \ref{methods_LRRNN}).
-This theory allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_w$ and $\Delta_T$ and the emergent property values are the ground truth $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$:
+Additionally, the amount of chaotic variance $\Delta_T$ must equal the posterior variance.
+$\kappa_w$ and $\Delta_T$ can be expressed in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
+This theory allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_w$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
 \begin{equation}
-E \begin{bmatrix} \kappa_w \\ \Delta_T \\ (\kappa_w-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}}) \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
+E \begin{bmatrix} \kappa_w \\ \Delta_T \\ (\kappa_w-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
 \end{equation}
 We specifiy a substantial amount of variability in the variance constraints  so that the inferred distribution results in RNNs with a variety biases in their solutions to the gaussian posterior conditioning problem. 
 
-We used EPI to learn distributions of RNNs executing Gaussian posterior conditioning given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+We used EPI to learn distributions of RNN connectivity properties $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$ executing Gaussian posterior conditioning given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
 The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
-Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).
+Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).  They lead to the following hypotheses:
 
-[The next few lines are rather unreadable] While the theory used for emergent property statistic calculation is exact in the limit of infinite neurons \cite{mastrogiuseppe2018linking}. is exact2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution support these conclusions.  $z_1$ has relatively high $M_m M_n$, and thusly produces an RNN overestimating the posterior mean, since mean activity $\mu(t) > 3$  (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on the emergent property of task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
+{\addtolength{\leftskip}{10 mm}
+H1: The posterior mean of the RNN increases with the product of $M_m$ and $M_n$; \\
+H2: The posterior variance increases with $g$; \\
+
+}
+
+Testing these now in finite-size networks.  Will write end of this later.
+
+
+%The observations are supported by 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high product of low rank vector means $M_m M_n$, and produces an RNN overestimating the posterior mean (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$ compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. 
+
+This novel procedure of doing inference in interpretable parameterizations of RNNs conditioned on the emergent property of task execution is straightforwardly generalizable to other tasks like noisy integration and context-dependent decision making (Fig. S1).
 
 \begin{figure}
 \begin{center}
@@ -783,7 +791,7 @@ where the activity $x$ evolves as
 and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
 The entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$. From such a parameterization, this theory produces consistency equations for the dynamic mean field variables in terms of parameters like $g$, $M_m$, and $M_n$, which we study in Section \ref{results_RNN}.  That is the dynamic mean field variables (e.g. the activity along along a vector $\kappa_v$, the total variance $\Delta_0$, structured variance $\Delta_\infty$, and the chaotic variance $\Delta_T$) are written as functions of one another in terms of connectivity parameters.  The values of these variables can be used obtained using a nonlinear system of equations solver.  These dynamic mean field variables are then cast as task-relevant variables with respect to the context of the provided inputs. Mastrogiuseppe et al. designed low-rank RNN connectivities via minimalist connectivity parameters to solve canonical tasks from behavioral neuroscience. 
 
-We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \left[ g, M_m, M_n\right]$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_w$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
+We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_w$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
 Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to use DMFT to calculate the emergent property statistics in EPI to learn distributions on such connectivity parameters of RNNs that execute tasks.
 
 Specifically, we solve for the mean field variables $\kappa_w$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $w= \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of an constant input $I(t) = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
