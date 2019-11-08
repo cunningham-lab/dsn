@@ -109,7 +109,7 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 
 We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  
 We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.
-While we have advanced our research on deep generative modeling \cite{loaiza2017maximum} to a point of significant relevance to statistical inference in theoretical neuroscience, they have also furthered their research on approximate Bayesian inference inference in such models \cite{LueckmannGoncalves_17}.
+While we have advanced our research on deep generative modeling \cite{loaiza2017maximum} to a point of significant relevance to statistical inference in theoretical neuroscience, they have also furthered their research on approximate Bayesian inference in such models \cite{LueckmannGoncalves_17}.
 The existence of these complementary methodologies emphasizes the increased importance and timeliness of both works. 
 
 \begin{figure}
@@ -131,14 +131,14 @@ The existence of these complementary methodologies emphasizes the increased impo
 Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference.  
 First, one designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
  To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.
-Despite full knowledge of STG connectivity and a precise characterization of its rhythmic pattern generation, biophysical models of the STG have compilcated relationships between circuit parameters and neural activity \cite{goldman2001global, prinz2004similar}.
+Despite full knowledge of STG connectivity and a precise characterization of its rhythmic pattern generation, biophysical models of the STG have complicated relationships between circuit parameters and neural activity \cite{goldman2001global, prinz2004similar}.
 A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
-Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  
+Specifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  
 
 Second, once the model is selected, one defines the emergent property, the measurable signal of scientific interest.  
 To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.54Hz.
 
-Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done \cite{gutierrez2013multiple}.  Subsequently, a qualitative description is formulated to describe of the different parameter configurations that lead to the emergent property.  
+Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done \cite{gutierrez2013multiple}.  Subsequently, a qualitative description is formulated to describe the different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for a precise quantification of the emergent property as a statistical feature of the model.  Once we have such a methodology, we can infer a probability distribution over parameter configurations that produce this emergent property. 
 
 Before presenting technical details (in the following section), let us understand emergent property inference schematically:  EPI (Fig. 1A gray box) takes, as input, the model and the specified emergent property, and as its output, produces the parameter distribution shown in Figure 1B.  
@@ -146,9 +146,9 @@ This distribution -- represented for clarity as samples from the distribution --
 In the STG model, this distribution can be specifically queried to reveal the prototypical parameter configuration for network syncing (the mode; Figure 1B yellow star), and how network syncing decays based on changes away from the mode. 
 Intuitively, the probability density of the samples is in agreement with the emergent property value error (Fig. 1B contours).
 Furthermore, the eigenvectors of the distribution Hessian at the mode can be queried to quantitatively formalize the robustness of network syncing (Fig. 1B $v_1$, $v_2$).
-Indeed, samples equidistant from the mode along these EPI-identified dimensions of sensitivity ($v_1$) and degeneracy ($v_2$) have diminished or preservered network syncing, respectively (Figure 1B inset and activity traces). 
+Indeed, samples equidistant from the mode along these EPI-identified dimensions of sensitivity ($v_1$) and degeneracy ($v_2$) have diminished or preserved network syncing, respectively (Figure 1B inset and activity traces). 
 Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
-%Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.
+%Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.}
 
 \subsection{A deep generative modeling approach to emergent property inference} \label{results_dgm}
 
