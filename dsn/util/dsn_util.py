@@ -422,9 +422,9 @@ def get_arch_from_template(system, param_dict):
                         }
 
         # Use informed initialization:
-        mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
-        mu_init = np.array([6.0, 2.0])
-        sigma_init = 2.0*np.eye(2)
+        #mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
+        mu_init = np.array([6.0, 1.5])
+        sigma_init = 1.0*np.eye(2)
 
         arch_dict = {
                      "D": D,
