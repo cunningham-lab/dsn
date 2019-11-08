@@ -46,9 +46,9 @@ Kenneth D. Miller, and John P. Cunningham.
 
 \linenumbers
 \section{Abstract}
-The cornerstone of theoretical neuroscience is the circuit model: a system of equations that captures a hypothesized neural mechanism of scientific importance.  
-Such models are valuable when they give rise to an experimentally observed phenomenon -- whether behavioral or in terms of neural activity -- and thus can offer insight into neural computation.  
-The operation of these circuits, like all models, critically depends on the choices of model parameters.  
+The cornerstone of theoretical neuroscience is the circuit model: a system of equations that captures a hypothesized neural mechanism.  
+Such models are valuable when they give rise to an experimentally observed phenomenon -- whether behavioral or in terms of neural activity -- and thus can offer insights into neural computation.
+The operation of these circuits, like all models, critically depends on the choices of model parameters.
 Historically, the gold standard has been to analytically derive the relationship between model parameters and computational properties.  
 However, this enterprise quickly becomes infeasible as biologically realistic constraints are included into the model increasing its complexity, often resulting in \emph{ad hoc} approaches to understanding the relationship between model and computation.  
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
@@ -62,17 +62,19 @@ More generally, this work offers a quantitative grounding for theoretical models
 The fundamental practice of theoretical neuroscience is to use a mathematical model to understand neural computation, whether that computation enables perception, action, or some intermediate processing \cite{abbott2008theoretical}.  
 In this field, a neural computation is systematized with a set of equations -- the model -- and these equations are motivated by biophysics, neurophysiology, and other conceptual considerations.
 The function of this system is governed by the choice of model parameters, which when configured appropriately, give rise to a measurable signature of a computation.   
-The work of analyzing a model then becomes the inverse problem: given a computation of interest, how can we reason about these suitable parameter configurations -- their likely values, their uniquenesses and degeneracies, their attractor states and phase transitions, and more?  
+The work of analyzing a model then requires solving the inverse problem: given a computation of interest, how can we reason about these suitable parameter configurations?  
+The inverse problem is crucial for reasoning about the model's likely parameter values, uniquenesses and degeneracies, attractor states and phase transitions, and most importantly, the predictions made.  
 
-Consider the idealized practice: a theorist considers a model carefully and analytically derives how model parameters govern the computation.  
-Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}.  
+Consider the idealized practice: one carefully designs a model and analytically derives how model parameters govern the computation.  
+Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural} and chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos} (which use models and analyses originating in physics), as well as  the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}, we need \cite{wong2006?}, more examples \cite{machensbrody2005?}.
 Unfortunately, as circuit models include more biological realism, theory via analytic derivation becomes intractable.  
-This fact creates an unfavorable tradeoff for the theorist.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), producing accurate inferences about parameters of a too-simple model.  On the other hand, one may choose a more biologically relevant model at the cost of \emph{ad hoc} approaches to analysis (simply examining simulated activity), producing questionable or partial inferences about parameters of an appropriately complex, scientifically relevant model.  % intentionally belaboring the "inference about model parameters" to set the mindset of what *the* important question is.
+This creates an unfavorable tradeoff.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), producing accurate inferences about parameters of a too-simple model.  
+On the other hand, one may choose a more biologically accurate, scientifically relevant model at the cost of \emph{ad hoc} approaches to analysis (simply examining simulated activity), potentially resulting in bad inferences and thus erroneous scientific predictions and conclusions.
 
 % now transition to ML...
 Of course, this same tradeoff has been confronted in many scientific fields and engineering problems characterized by the need to do inference in complex models.  
 In response, the machine learning community has made remarkable progress in recent years, via the use of deep neural networks as a powerful inference engine: a flexible function family that can map observed phenomena (in this case the measurable signal of some computation) back to probability distributions quantifying the likely parameter configurations.  
-One celebrated example of this approach from the machine learning community, from which we draw key inspiration for this work, is the variational autoencoder \cite{kingma2013auto, rezende2014stochastic}, which uses a deep neural network to induce an (approximate) posterior distribution on hidden variables in a latent variable model, given data. 
+One celebrated example of this approach from machine learning, of which we draw key inspiration for this work, is the variational autoencoder \cite{kingma2013auto, rezende2014stochastic}, which uses a deep neural network to induce an (approximate) posterior distribution on hidden variables in a latent variable model, given data. 
 Indeed, these tools have been used to great success in neuroscience as well, in particular for interrogating parameters (sometimes treated as hidden states) in models of both cortical population activity \cite{gao2016linear, zhao2017recursive, barello2018sparse, pandarinath2018inferring} and animal behavior \cite{wiltschko2015mapping, johnson2016composing, batty2019behavenet}. 
 These works have used deep neural networks to expand the expressivity and accuracy of statistical models of neural data \cite{paninski2018neural}. 
 
@@ -80,20 +82,22 @@ However, these inference tools have not significantly influenced the study of th
 First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools typically produce a narrow set of insights into these models.  
 Indeed, only in the last few years has deep learning research advanced to a point of relevance to this class of problem.
 Second, the object of interest from a theoretical model is not typically data itself, but rather a qualitative phenomenon -- inspection of model behavior, or better, a measurable signature of some computation -- an \emph{emergent property} of the model.  
-Third, because theoreticians work carefully to construct a model that has biological relevance, such a model as a result often does not fit cleanly into the framing of a statistical model.  
+Third, because carefully constructed biological models do not fit cleanly into the framing of a statistical model.  
 Technically, because many such models stipulate a noisy system of differential equations that can only be sampled or realized through forward simulation, they lack the explicit likelihood and priors central to the probabilistic modeling toolkit.  
 
 % now we've constructed the tension that theory models need this and statistical models know how to do this... now connect!
 To address these three challenges, we developed an inference methodology -- `emergent property inference' -- which learns a distribution over parameter configurations in a theoretical model.  Critically, this distribution is such that draws from the distribution (parameter configurations) correspond to systems of equations that give rise to a specified emergent property.  
 First, we stipulate a bijective deep neural network that induces a flexible family of probability distributions over model parameterizations with a probability density we can calculate \cite{rezende2015variational, dinh2016density, papamakarios2017masked}.
 Second, we quantify the notion of emergent properties as a set of moment constraints on datasets generated by the model.  
-Thus, an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is ultimately the object of interest to the theorist (compared to the statistical neuroscientist).  
+Thus, an emergent property is not a single data realization, but a phenomenon or a feature of the model, which is ultimately the object of interest in theoretical neuroscience (unlike neural data analysis).
 Conditioning on an emergent property requires a variant of deep probabilistic inference methods, which we have previously introduced \cite{loaiza2017maximum}.
 Third,  because we cannot assume the theoretical model has explicit likelihood on data or the emergent property of interest, we use stochastic gradient techniques in the spirit of likelihood free variational inference \cite{tran2017hierarchical}.    
-Taken together, emergent property inference (EPI) provides a methodology for inferring and then reasoning about parameter configurations that give rise to particular emergent phenomena in theoretical models. To clarify the technical details of EPI, we use it to analyze network syncing in a classic model of the stomatogastric ganglion \cite{gutierrez2013multiple}.   
+Taken together, emergent property inference (EPI) provides a methodology for inferring parameter configurations consistent with a particular emergent phenomena in theoretical models.
+Not only are these parameter distributions optimized to identify all likely parameters, they give us a probabilistic tool for reasoning about parametric sensitivity and robustness, which should prove invaluable in biological models with pervasive degeneracies \cite{transtrum2015perspective}.
+We use a classic example of parametric degeneracy in a biological system, the stomatogastric ganglion \cite{goldman2001global}, to motivate and clarify the technical details of EPI.
 
 Equipped with this methodology, we then investigated three models of current importance in theoretical neuroscience.
-These models were chosen to demonstrate generality through ranges of biological realism (conductance-based biophysics to recurrent neural networks), neural system function (pattern generation to abstract cognitive function), and network scale (four to infinite neurons).
+These models were chosen to demonstrate generality through ranges of biological realism (from conductance-based biophysics to recurrent neural networks), neural system function (from pattern generation to abstract cognitive function), and network scale (from four to infinite neurons).
 First, we use EPI to produce a set of verifiable hypotheses of input-responsivity in a four neuron-type dynamical model of primary visual cortex; we then validate these hypotheses in the model.
 Second, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
 Third, we use EPI to uncover the sources of bias in a low-rank recurrent neural network executing a toy mathematical computation.  
@@ -126,13 +130,13 @@ The existence of these complementary methodologies emphasizes the increased impo
 \subsection{Motivating emergent property inference of theoretical models} \label{results_motivating}
 
 Consideration of the typical workflow of theoretical modeling clarifies the need for emergent property inference.  
-First, the theorist designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
+First, one designs or chooses an existing model that, it is hypothesized, captures the computation of interest. 
  To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.
 Despite full knowledge of STG connectivity and a precise characterization of its rhythmic pattern generation, biophysical models of the STG have compilcated relationships between circuit parameters and neural activity \cite{prinz2004similar}.
 A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure 1A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
 Spcecifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  
 
-Second, once the model is selected, the theorist defines the emergent property, the measurable signal of scientific interest.  
+Second, once the model is selected, one defines the emergent property, the measurable signal of scientific interest.  
 To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.55Hz.
 
 Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done \cite{gutierrez2013multiple}.  Subsequently, a qualitative description is formulated to describe of the different parameter configurations that lead to the emergent property.  
