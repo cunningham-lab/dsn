@@ -295,9 +295,9 @@ So far, each model we have studied was designed from fundamental biophysical pri
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation that are becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 In theoretical neuroscience, RNN dynamics usually follow the equation
 \begin{equation}
-\frac{dx}{dt} = -x(t) + W \phi(x(t)) + I(t),
+\frac{dx(t)}{dt} = -x(t) + W \phi(x(t)) + h(t),
 \end{equation}
-where $x(t)$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $I(t)$ is the input to the system.
+where $x(t)$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $h(t)$ is the input to the system.
 Such RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
 Fully-connected RNNs with tens of thousands of parameters are challenging to characterize \cite{sussillo2013opening}, especially making statistical inferences about their parameterization.
 Alternatively, we consider a rank-1, $N$-neuron RNN with connectivity
@@ -315,15 +315,15 @@ The task we consider is Gaussian posterior conditioning: calculate the parameter
  \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}.
 \end{equation} 
 The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (a setup inspired by \cite{echeveste2019cortical}). 
-To solve this Gaussian posterior conditioning task, the RNN response to a constant input $I(t) = y w + (n-M_n)$ must equal the posterior mean along readout vector $w$ , where
+To solve this Gaussian posterior conditioning task, the RNN response to a constant input $h(t) = y w + (n-M_n)$ must equal the posterior mean along readout vector $r$ , where
 \begin{equation}
-\kappa_w =  \frac{1}{N} \sum_{j=1}^N w_j \phi(x_j)
+\kappa_r =  \frac{1}{N} \sum_{j=1}^N r_j \phi(x_j)
 \end{equation}
 Additionally, the amount of chaotic variance $\Delta_T$ must equal the posterior variance.
-$\kappa_w$ and $\Delta_T$ can be expressed in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
-This theory allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_w$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
+$\kappa_r$ and $\Delta_T$ can be expressed in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
+This theory allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_r$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
 \begin{equation}
-E \begin{bmatrix} \kappa_w \\ \Delta_T \\ (\kappa_w-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
+E \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
 \end{equation}
 We specifiy a substantial amount of variability in the variance constraints  so that the inferred distribution results in RNNs with a variety biases in their solutions to the gaussian posterior conditioning problem. 
 
@@ -348,7 +348,7 @@ This novel procedure of doing inference in interpretable parameterizations of RN
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Sources of solution bias in an RNN computation.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computatoin on $\mu_y$. (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_w$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks sampled from the distribution perform the calculation and have the computational biases expected from their parameter values.  Activity along readout $\kappa_w$ (cyan).}
+\caption{Sources of solution bias in an RNN computation.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computatoin on $\mu_y$. (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks sampled from the distribution perform the calculation and have the computational biases expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
 \end{figure}
 
 \section{Discussion}
@@ -801,31 +801,31 @@ where the activity $x$ evolves as
 and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
 The entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$. From such a parameterization, this theory produces consistency equations for the dynamic mean field variables in terms of parameters like $g$, $M_m$, and $M_n$, which we study in Section \ref{results_RNN}.  That is the dynamic mean field variables (e.g. the activity along along a vector $\kappa_v$, the total variance $\Delta_0$, structured variance $\Delta_\infty$, and the chaotic variance $\Delta_T$) are written as functions of one another in terms of connectivity parameters.  The values of these variables can be used obtained using a nonlinear system of equations solver.  These dynamic mean field variables are then cast as task-relevant variables with respect to the context of the provided inputs. Mastrogiuseppe et al. designed low-rank RNN connectivities via minimalist connectivity parameters to solve canonical tasks from behavioral neuroscience. 
 
-We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_w$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
+We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_r$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
 Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to use DMFT to calculate the emergent property statistics in EPI to learn distributions on such connectivity parameters of RNNs that execute tasks.
 
-Specifically, we solve for the mean field variables $\kappa_w$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $w= \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of an constant input $I(t) = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
+Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $r = \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of an constant input $h(t) = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
 \begin{equation}
 \begin{split}
-\kappa_w = F(\kappa_w, \kappa_n, \Delta_0, \Delta_\infty) = M_m \kappa_n + y \\
-\kappa_n = G(\kappa_w, \kappa_n, \Delta_0, \Delta_\infty) = M_n \langle \left[ \phi_i \right] \rangle + \langle \left[ \phi_i' \right] \rangle \\
-\frac{\Delta_0^2-\Delta_\infty^2}{2} = H(\kappa_w, \kappa_n, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\kappa_w + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\kappa_w + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
+\kappa_r = F_1(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_m \kappa_n + y \\
+\kappa_n = F_2(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_n \langle \left[ \phi_i \right] \rangle + \langle \left[ \phi_i' \right] \rangle \\
+\frac{\Delta_0^2-\Delta_\infty^2}{2} = F_3(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\kappa_r + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
 + (\kappa_n^2  + 1)(\Delta_0-\Delta_\infty) \\
-\Delta_\infty = L(\kappa_w, \kappa_n, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\kappa_w + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \kappa_n^2 + 1
+\Delta_\infty = F_4(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \kappa_n^2 + 1
 \end{split} 
 \end{equation}
-where $z$ here is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system.
+where $z$ here is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system to a steady state.
 \begin{equation}
 \begin{split}
-x(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
+l(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \Delta_0(t) = \sqrt{2x(t) + \Delta_\infty(t)^2} \\
-\dot{\kappa_w}(t) = -\kappa_w(t) + F(\kappa_w(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
-\dot{\kappa_n}(t) = -\kappa_n + G(\kappa_w(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
-\dot{x}(t) = -x(t) + H(\kappa_w(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
-\dot{\Delta_\infty}(t) = -\Delta_\infty(t) + L(\kappa_w(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t))
+\frac{d \kappa_r(t)}{dt}  = -\kappa_r(t) + F(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
+\frac{d \kappa_n(t)}{dt} = -\kappa_n + G(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
+\frac{d I(t)}{dt}  = -l(t) + H(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
+\frac{d \Delta_\infty(t)}{dt}  = -\Delta_\infty(t) + L(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t))
 \end{split}
 \end{equation}
-Then, the temporal variance, which is necessary for the Gaussian posterior conditioning example, is simply calculated via
+Then, the chaotic variance, which is necessary for the Gaussian posterior conditioning example, is simply calculated via
 \begin{equation}
 \Delta_T = \Delta_0 - \Delta_\infty
 \end{equation}
