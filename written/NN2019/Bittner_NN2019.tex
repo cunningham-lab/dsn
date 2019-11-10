@@ -510,11 +510,10 @@ To optimize $q_\theta(z)$ in Equation \ref{eq:opt}, the constrained optimization
 \begin{equation}
 L(\theta; \eta, c) = -H(q_\theta) + \eta^\top R(\theta) + \frac{c}{2}||R(\theta)||^2
 \end{equation}
-where $R(\theta) = \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\eta \in \mathbb{R}^m$ are the Lagrange multipliers and $c$ is the penalty coefficient.  For a fixed $(\eta, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch -- a period of optimization with fixed $\eta$ and $c$ for a given number of stochastic optimization iterations. Similarly, $\eta$ is tuned each epoch based on the constraint violations.  For the linear 2-dimensional system (Fig. S2C) optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\eta_1 = \textbf{0}$.  The penalty coefficient is updated based on a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||R(\theta_{k+1})||] > \gamma \mathbb{E} \left[||R(\theta_{k})|| \right]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the project, $\beta = 4.0$ and $\gamma = 0.25$ is used.  The other update rule is $\eta_{k+1} = \eta_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of EPI optimization for the 2-dimensional linear system.  If the optimization is left to continue running, entropy usually decreases, and structural pathologies in the distribution may be introduced.
+where $R(\theta) = \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\eta \in \mathbb{R}^m$ are the Lagrange multipliers (which are closely related to the natural parameters of exponential families (see Section \ref{methods_VI})) and $c$ is the penalty coefficient.  For a fixed $(\eta, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch, which is a period of optimization with fixed $\eta$ and $c$ for a given number of stochastic optimization iterations. Similarly, $\eta$ is tuned each epoch based on the constraint violations.  For the linear two-dimensional system (Fig. S2C), optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\eta_1 = \textbf{0}$.  The penalty coefficient is updated based on the result of a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||R(\theta_{k+1})||] > \gamma \mathbb{E} \left[||R(\theta_{k})|| \right]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the study, $\beta = 4.0$ and $\gamma = 0.25$ were used.  The other update rule is $\eta_{k+1} = \eta_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of EPI for the 2-dimensional linear system.
 
-The intention is that $c$ and $\eta$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.  Rather than using a naive initialization, before EPI, we optimize the deep probability distribution parameters to generate samples of an isotropic Gaussian of a selected variance, such as 1.0 for the 2D LDS example.  This provides a convenient starting point, whose level of entropy is controlled by the user.
-
-
+The intention is that $c$ and $\eta$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.   
+If the optimization is left to continue running, and structural pathologies in the distribution may be introduced.
 
 \subsubsection{Normalizing flows}\label{methods_NF}
 Deep probability models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network.  For $z' = f(z)$,
@@ -523,53 +522,50 @@ Deep probability models typically consist of several layers of fully connected n
 q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right| = q(z) \left| \det \frac{\partial f(z)}{\partial z} \right|^{-1}
 \end{equation}
 
-However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizing flows \cite{rezende2015variational} -- bijective functions with fast log determinant Jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP \cite{dinh2017density}, which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast density evaluation.
-
-\subsubsection{Related work}\label{methods_related_work}
-(To come)\\
+However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizing flows \cite{rezende2015variational} -- bijective functions with fast log determinant Jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP \cite{dinh2017density}, which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast probability density evaluation.
 
 
 \subsubsection{Emergent property inference as variational inference in an exponential family}\label{methods_VI}
-(To come) \\
-%Consider the goal of doing variational inference (VI) in with an exponential family posterior distribution $p(z \mid x)$.  We'll use the following abbreviated notation to collect the base measure and sufficient statistics into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ will remain unchanged.
-%\begin{equation}
-%\begin{split}
-%p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
-%\end{split}
-%\end{equation}
-%VI looks with an exponential family posterior distribution uses optimization to minimize the following divergence \cite{blei2017variational}:
-%\begin{equation}
-%q_\theta^* = \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x))
-%\end{equation}
-%$q_\theta(z)$ is the variational approximation to the posterior with variational parameters $\theta$.  We can write this KL divergence in terms of entropy of the variational approximation.
-%\begin{equation}
-%KL(q_\theta \mid \mid p(z \mid x)) = E_{z \sim q_\theta} \left[ \log (q_\theta(z)) \right] - E_{z \sim q_\theta} \left[ \log (p(z \mid x)) \right]
-%\end{equation}
-%\begin{equation}
-% = -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) - A(\eta(x)) \right]
-%\end{equation}
-%As far as the variational optimization is concerned, the log normalizing constant is independent of $q_\theta(z)$, so it can be dropped. 
-%\begin{equation}
- %\argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)) =  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) \right]
-% \end{equation}
-% Further, we can write the objective in terms of the first moment of the sufficient statistics $\mu = E_{z \sim p(z \mid x)}\left[T(z) \right]$.
-% \begin{equation}
-%=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right] + \tilde{\eta(x)}^\top \mu
-% \end{equation}
-%  \begin{equation}
-%=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right]
-% \end{equation}
+Consider the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We'll use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ will remain unchanged.
+\begin{equation}
+\begin{split}
+p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
+\end{split}
+\end{equation}
+Variational inference with an exponential family posterior distribution uses optimization to minimize the following divergence \cite{blei2017variational}:
+\begin{equation}
+q_\theta^* = \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x))
+\end{equation}
+$q_\theta(z)$ is the variational approximation to the posterior with variational parameters $\theta$.  We can write this KL divergence in terms of entropy of the variational approximation.
+\begin{equation}
+KL(q_\theta \mid \mid p(z \mid x)) = E_{z \sim q_\theta} \left[ \log (q_\theta(z)) \right] - E_{z \sim q_\theta} \left[ \log (p(z \mid x)) \right]
+\end{equation}
+\begin{equation}
+ = -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) - A(\eta(x)) \right]
+\end{equation}
+As far as the variational optimization is concerned, the log normalizing constant is independent of $q_\theta(z)$, so it can be dropped. 
+\begin{equation}
+\argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)) =  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) \right]
+\end{equation}
+ Further, we can write the objective in terms of the first moment of the sufficient statistics $\mu = E_{z \sim p(z \mid x)}\left[T(z) \right]$.
+ \begin{equation}
+=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right] + \tilde{\eta(x)}^\top \mu
+ \end{equation}
+  \begin{equation}
+=  \argmin_{q_\theta \in Q} -H(q_\theta) - E_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right]
+ \end{equation}
 
-%In emergent property inference (EPI), we're solving the following problem.
-%\begin{equation}
-%q_\theta^*(z) y= \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
-%\end{equation}
-%The lagrangian objective is
-%\begin{equation}
-%q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \alpha^\top \left(E_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right)
-%\end{equation}
+In comparison, in emergent property inference (EPI), we're solving the following problem.
+\begin{equation}
+q_\theta^*(z) = \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
+\end{equation}
+The lagrangian objective (without the augmentation) is
+\begin{equation}
+q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \eta_{\text{opt}}^\top \left(E_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right)
+\end{equation}
+As the optimization proceeds, $\eta_{\text{opt}}^\top$ should converge to the natural parameter $\tilde{\eta}(x)$ through its adaptations in each epoch (see Section \ref{methods_AL_opt}). 
 
-%As the lagrangian optimization proceeds, $\alpha$ should converge to $\tilde{\eta}(x))$ through its adaptations in each epoch.  More formally, $\tilde{\eta}(x) \leftrightarrow \tilde{\eta}(\mu)$ is referred to as the backward mapping, and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic, conceptually, we can replace $p(z \mid x)$ with $p(z \mid \mu)$.  More commonly, we write $p(z \mid \mathcal{B})$ for clarity where $\mathcal{B}$ more explicitly captures the moment constraints of the sufficient statistics.
+The derivation of the natural parameter $\tilde{\eta}(x)$ of an exponential family distribution from its mean parameter $\mu$ is referred to as the backward mapping and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic, notationally, we can replace $p(z \mid x)$ with $p(z \mid \mathcal{B})$ conceptualizing an infered distribution that obeys emergent property $\mathcal{B}$ (see Section \ref{methods_EPI}). 
 
 \subsection{Theoretical models}\label{methods_theoretical_models}
 In this study, we used emergent property inference to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
