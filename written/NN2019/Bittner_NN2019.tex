@@ -115,7 +115,7 @@ These distinct methodologies and scientific investigations emphasize the increas
 \begin{center}
 \includegraphics[scale=0.35]{figures/fig1/fig1.pdf}
 \end{center}
-\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability of their generating parameters in the EPI-inferred distribution.  B. An EPI distribution of STG model parameters producing network syncing.  Samples are colored by log density.  Distribution contours of emergent property value error are shown at levels of $2 \times 10^{-6}$, $2 \times 10^{-5}$, and $2 \times 10^{-4}$.  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$. The maximum entropy distribution producing the emergent property. }
+\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability of their generating parameters in the EPI-inferred distribution.  B. An EPI distribution of STG model parameters producing network syncing.  Samples are colored by log probability density.  Distribution contours of emergent property value error are shown at levels of $2 \times 10^{-6}$, $2 \times 10^{-5}$, and $2 \times 10^{-4}$.  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$. The maximum entropy distribution producing the emergent property. }
  \label{fig:STG}
 \end{figure}
 
@@ -404,56 +404,76 @@ The ability to apply the probabilistic model selection toolkit to such black box
 \section{Methods}
 
 \subsection{Emergent property inference (EPI)}\label{methods_EPI}
-Emergent property inference (EPI) learns distributions of theoretical model parameters that produce emergent properties of interest.  EPI combines ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples often parameterize a differentiable model simulator, which may lack a tractable likelihood function.
-
-Consider model parameterization $z$ and data $x$ generated from some theoretical model simulator represented as $p(x \mid z)$, which may be deterministic or stochastic.  Theoretical models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function due to the nonlinearities and dynamics. With EPI, a distribution on parameters $z$ is learned, that yields an emergent property of interest $\mathcal{B}$,
+%Emergent property inference (EPI) learns distributions of theoretical model parameters that produce emergent properties of interest.  EPI combines ideas from likelihood-free variational inference \cite{tran2017hierarchical} and maximum entropy flow networks \cite{loaiza2017maximum}.  A maximum entropy flow network is used as a deep probability distribution for the parameters, while these samples often parameterize a differentiable model simulator, which may lack a tractable likelihood function.
+%Consider model parameterization $z$ and data $x$ generated from some theoretical model simulator represented as $p(x \mid z)$, which may be deterministic or stochastic.  Theoretical models usually have known sampling procedures for simulating activity given a circuit parameterization, yet often lack an explicit likelihood function due to the nonlinearities and dynamics. With EPI, a distribution on parameters $z$ is learned, that yields an emergent property of interest $\mathcal{B}$,
+Emergent property inference (EPI) learns distributions of theoretical model parameters that produce emergent properties of interest by combining ideas from maximum entropy flow networks (MEFNs) \cite{loaiza2017maximum} and likelihood-free variational inference (LFVI) \cite{tran2017hierarchical}.  
+Consider model parameterization $z$ and data $x$ which has an intractable likelihood $p(x \mid z)$ defined by a model simulator of which samples are available $x \sim p(x \mid z)$.  
+EPI optimizes a distribution $q_\theta(z)$ (itself parameterized by $\theta$) of model parameters $z$ to produce an emergent property of interest $\mathcal{B}$,
 \begin{equation}
 \mathcal{B} ~~\triangleq~~  \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
 \end{equation}
-by making an approximation $q_\theta(z)$ to $p(z \mid \mathcal{B})$ (see Section \ref{methods_VI}).  So, over the DSN distribution $q_\theta(z)$ of model $p(x \mid z)$ for behavior $\mathcal{B}$, the emergent properties $T(x)$ are constrained in expectation to $\mu$.
+Precisely, over the EPI distribution of parameters $q_\theta(z)$ and distribution of simulated activity $p(x \mid z)$, the emergent property statistics $T(x)$ must equal the emergent property values $\mu$ on average.  This is a viable way to represent emergent properties in theoretical models, as we have demonstrated in the main text, and enables the EPI optimization.
 
- In deep probability distributions, a simple random variable $w \sim q_0$ is mapped deterministically via a function $f_\theta$ parameterized by a neural network to the support of the distribution of interest where $z = f_{\theta}(\omega) = f_l(..f_1(\omega))$.  Given a theoretical model $p(x \mid z)$ and some behavior of interest $\mathcal{B}$, the deep probability distributions are trained by optimizing the neural network parameters $\theta$ to find a good approximation $q_{\theta}^*$ within the deep variational family $\mathcal{Q}$ to $p(z \mid \mathcal{B})$.
-
-In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $p(T(x) \mid z)$ is unknown or intractable, requiring an alternative to stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black}.  These types of methods called likelihood-free variational inference (LFVI, \cite{tran2017hierarchical}) skate around the intractable likelihood function in situations where there is a differentiable simulator. Akin to LFVI, DSNs are optimized with the following objective for a given theoretical model, emergent property statistics $T(x)$, and emergent property constraints $\mu$:
-
+With EPI, we use deep probability distributions to learn flexible approximations to model parameter distributions $q_\theta(z)$.
+ In deep probability distributions, a simple random variable $w \sim q_0(w)$ is mapped deterministically via a squence of deep neural network layers ($f_1$, .. $f_l$) parameterized by weights and biases $\theta$ to the support of the distribution of interest:
+\begin{equation}
+z = f_{\theta}(\omega) = f_l(..f_1(w))
+\end{equation}
+Given a simulator defined by a theoretical model $x \sim p(x \mid z)$ and some emergent property of interest $\mathcal{B}$, $q_\theta(z)$ is optimized via the neural network parameters $\theta$ to find an optimaly entropic distribution $q_{\theta}^*$ within the deep variational family $\mathcal{Q}$ producing the emergent property:
 \begin{equation} \label{eq:opt}
 \begin{split}
 q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
  &  \text{s.t.  } \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
  \end{split}
 \end{equation} 
+Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy $H(q_\theta(z)$, we will need to take gradients with respect to the log probability density of samples from the deep probability distribution.
+\begin{equation}
+H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = \mathbb{E}_{z \sim q_\theta}\left[-\log(q_\theta(z)) \right] = \mathbb{E}_{w \sim q_0}\left[-\log(q_\theta(f_\theta(w))) \right]
+\end{equation}
+\begin{equation}
+\nabla_\theta H(q_\theta(z)) = \mathbb{E}_{w \sim q_0}\left[- \nabla_\theta \log(q_\theta(f_\theta(w))) \right]
+\end{equation}
+This optimization is done using the approach of MEFN \cite{loaiza2017maximum}, using architectures for deep probability distributions, called normalizing flows (see Section \ref{methods_NF}), conferring a tractable calculation of sample probability.  In EPI, this methodology for learning maximum entropy distributions is repurposed toward variational learning of model parameter distributions.  
+Similar to LFVI \cite{tran2017hierarchical}, we are motivated to do variational learning in models with intractable likelihood functions, in which standard methods like stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black} are not tractable.  Furthermore, EPI focuses on setting mathematically defined emergent property statistics to emergent property values of interest, whereas LFVI is focused on learning directly from datasets.  Optimizing this objective is a technological challenge, the details of which we elaborate in Section \ref{methods_AL_opt}.  Before going through those details, we ground this optimization in a toy example.
 
-Optimizing this objective is a technological accomplishment in its own right, the details of which we elaborate in Section \ref{methods_AL_opt}.  Before going through those details, we ground this optimization in a toy example.
+%In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $p(T(x) \mid z)$ is unknown or intractable, requiring an alternative to stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black}.  These types of methods called likelihood-free variational inference (LFVI, \cite{tran2017hierarchical}) skate around the intractable likelihood function in situations where there is a differentiable simulator. Akin to LFVI, DSNs are optimized with the following objective for a given theoretical model, emergent property statistics $T(x)$, and emergent property constraints $\mu$:
 
 \subsubsection{Example: 2D LDS}\label{methods_2DLDS}
-To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with 
-\[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\]
- that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, then we would select the real part of the complex conjugate eigenvalues $\text{real}(\lambda_1) = d$ (via an arbitrary choice of eigenvalue of the dynamics matrix $\lambda_1$) and the positive imaginary component of one of the eigenvalues $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  Those emergent property statistics are then constrained to
+To gain intuition for EPI, consider a two-dimensional linear dynamical system model 
+\begin{equation} 
+\tau \frac{dx}{dt} = Ax
+\end{equation}
+with
+\begin{equation}
+A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}
+\end{equation}
+To do EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, we selected the real part of the  eigenvalue $\text{real}(\lambda_1) = d$ and imaginary component of  $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  $\lambda_1$ is the eigenvalue of greatest real part when there is zero imaginary component, and alternatively of positive imaginary component, when the eigenvalues are complex conjugate pairs.  Those emergent property statistics were then constrained to
 \begin{equation}
  \mu = \mathbb{E} \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix}
  \end{equation} 
- 
+%To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with  \[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\] that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, then we would select the real part of the complex conjugate eigenvalues $\text{real}(\lambda_1) = d$ (via an arbitrary choice of eigenvalue of the dynamics matrix $\lambda_1$) and the positive imaginary component of one of the eigenvalues $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  Those emergent property statistics
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
 \end{center}
 \begin{flushleft}
-Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a 2D LDS with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (5,000 iterations), the entropy dips due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments move closer to their constraints.
+Fig. S2: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a two-dimensional linear dynamical system  with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (5,000 iterations), the entropy dipped due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments move closer to their constraints.
 \end{flushleft}
 \end{figure}
-
-where $\omega = 1$Hz.  Unlike the models we study in the paper which calculate $\mathbb{E}_{x \sim p(x \mid z)} \left[T(x) \right]$ via forward simulation, we have a closed  form for the eigenvalues of the dynamics matrix.  $\lambda$ can be calculated using the quadratic formula: 
+where $\omega = 1$Hz.  Unlike the models we presented in the main text, which calculate $\mathbb{E}_{x \sim p(x \mid z)} \left[T(x) \right]$ via forward simulation, we have a closed  form for $\lambda_1$ of the dynamics matrix.  The eigenvalues can be calculated using the quadratic formula: 
 \begin{equation}
 \lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}
 \end{equation}
-where $\lambda_1$ is the eigenvalue of $\frac{1}{\tau}A$ with greatest real part.  Even though $\mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via a closed form function and does not require simulation, we cannot derive the distribution $q^*_\theta$ directly.  This is due to the formally hard problem of the backward mapping: finding the natural parameters $\eta$ from the mean parameters $\mu$ of an exponential family distribution \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S2B). 
+where $\lambda_1$ is the eigenvalue of $\frac{1}{\tau}A$ with greatest real part. 
 
-Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  To validate our method (further than that of the underlying technology on a ground truth solution \cite{loaiza2017maximum}) we can analytically derive the contours of the probability density from the emergent property statistics and values (Fig. S3).  In the $a_1-a_4$ plane, is a black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, a dotted black line at
-the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 1$, and a grey line at twice the standard deviation
-$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 2$ (Fig. S3A). Here the lines denote the set of solutions at fixed behaviors, which overlay the posterior obtained through EPI.  The learned DSN distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
+Importantly, even though $\mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via a closed form function and does not require simulation, we cannot derive the distribution $q^*_\theta$ directly.  This is due to the formally hard problem of the backward mapping: finding the natural parameters $\eta$ from the mean parameters $\mu$ of an exponential family distribution \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S2B). 
+
+Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  To validate our method (further than that of the underlying technology on a ground truth solution \cite{loaiza2017maximum}) we analytically derived the contours of the probability density from the emergent property statistics and values (Fig. S3).  In the $a_1-a_4$ plane, the black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, and the dotted black line at
+the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 0.25$, and the grey line at twice the standard deviation
+$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 0.5$ follow the contour of probability density of the samples. (Fig. S3A). The distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
 $a_1$ and $a_4$. Intuitively, the parameters equivalent with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
 
-To explain the structure in the bimodality of the DSN posterior, we can look at the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
+To explain the structure in the bimodality of the EPI distribution, we examined the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
 \begin{equation}
 \text{imag}(\lambda_1) = \begin{cases}
                              \sqrt{\frac{a_1 a_4 - a_2 a_3}{\tau}},  & \text{if } a_1 a_4 < a_2 a_3 \\
@@ -462,12 +482,10 @@ To explain the structure in the bimodality of the DSN posterior, we can look at 
 \end{equation}
 
 When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have the following equation for the other two dimensions:
-
 \begin{equation}
 \text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3
 \end{equation}
-
-Since we constrained $\mathbb{E}_{z \sim q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = \mathbb{E}_{z \sim q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the posterior.  Subtler model-behavior combinations will have even more complexity, further motivating the use of EPI for understanding these systems.  Indeed, we sample a distribution of systems oscillating near 1Hz (Fig. S4).
+Since we constrained $\mathbb{E}_{z \sim q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S3A). If $\sigma_{1,4} = \mathbb{E}_{z \sim q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S3B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the learned distribution.  Subtler model-emergent property combinations will have even more complexity, further motivating the use of EPI for understanding these systems.  As we expect, the distribution results in samples of two-dimensional linear systems oscillating near 1Hz (Fig. S4).
 
 \begin{figure}
 \begin{center}
@@ -499,15 +517,6 @@ The intention is that $c$ and $\eta$ start at values encouraging entropic growth
 
 
 \subsubsection{Normalizing flows}\label{methods_NF}
-Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy, we will need to take gradients with respect to the log-density of samples from the deep probability distribution.
-
-\begin{equation}
-H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = \mathbb{E}_{z \sim q_\theta}\left[-\log(q_\theta(z)) \right] = \mathbb{E}_{w \sim q_0}\left[-\log(q_\theta(f_\theta(w))) \right]
-\end{equation}
-\begin{equation}
-\nabla_\theta H(q_\theta(z)) = \mathbb{E}_{w \sim q_0}\left[- \nabla_\theta \log(q_\theta(f_\theta(w))) \right]
-\end{equation}
-
 Deep probability models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network.  For $z' = f(z)$,
 
 \begin{equation}
