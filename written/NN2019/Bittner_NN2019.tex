@@ -100,7 +100,7 @@ Equipped with this methodology, we then investigated three models of current imp
 These models were chosen to demonstrate generality through ranges of biological realism (from conductance-based biophysics to recurrent neural networks), neural system function (from pattern generation to abstract cognitive function), and network scale (from four to infinite neurons).
 First, we use EPI to produce a set of verifiable hypotheses of input-responsivity in a four neuron-type dynamical model of primary visual cortex; we then validate these hypotheses in the model.
 Second, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
-Third, we use EPI to uncover the sources of error in a low-rank recurrent neural network executing a toy mathematical computation.  
+Third, we use EPI to uncover the sources of error in a low-rank recurrent neural network executing a simple mathematical task.  
 The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more  generally, suggests a departure from realism vs tractability considerations towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 
 %-------------------
@@ -108,9 +108,8 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
 We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits \cite{lueckmann2019amortised}.  
-We are excited by this broad problem being recognized by the community, and we emphasize that these works offer complementary neuroscientific contributions and use different technical methodologies.
-While we have advanced our research on deep generative modeling \cite{loaiza2017maximum} to a point of significant relevance to statistical inference in theoretical neuroscience, they have also furthered their research on approximate Bayesian inference in such models \cite{LueckmannGoncalves_17}.
-The existence of these complementary methodologies emphasizes the increased importance and timeliness of both works. 
+We are encouraged by this general problem being recognized by others in the community, and we emphasize that these works offer complementary neuroscientific contributions (different theoretical models of focus) and use different technical methodologies (ours is built on our prior work \cite{loaiza2017maximum}, theirs similarly \cite{LueckmannGoncalves_17}).
+These distinct methodologies and scientific investigations emphasize the increased importance and timeliness of both works. 
 
 \begin{figure}
 \begin{center}
@@ -339,7 +338,7 @@ This novel procedure of doing inference in interpretable parameterizations of RN
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Sources of computational error in an RNN solving a toy problem.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computation on $\mu_y$. (right) Error in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks with parameters $z_1$ and $z_2$ sampled from the distribution attempt the computation and have the errors expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
+\caption{Sources of computational error in an RNN solving a simple task.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computation on $\mu_y$. (right) Error in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks with parameters $z_1$ and $z_2$ sampled from the distribution attempt the computation and have the errors expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
 \end{figure}
 
 \section{Discussion}
