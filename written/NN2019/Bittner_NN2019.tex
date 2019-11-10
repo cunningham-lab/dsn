@@ -54,7 +54,7 @@ However, this enterprise quickly becomes infeasible as biologically realistic co
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
-We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of bias in recurrent neural networks solving a toy mathematical problem. 
+We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of computational error in recurrent neural networks solving a toy mathematical problem. 
 More generally, this work offers a quantitative grounding for theoretical models going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
 %(150 word limit) we can ignore that for now up to about 50% \\
 
@@ -101,7 +101,7 @@ Equipped with this methodology, we then investigated three models of current imp
 These models were chosen to demonstrate generality through ranges of biological realism (from conductance-based biophysics to recurrent neural networks), neural system function (from pattern generation to abstract cognitive function), and network scale (from four to infinite neurons).
 First, we use EPI to produce a set of verifiable hypotheses of input-responsivity in a four neuron-type dynamical model of primary visual cortex; we then validate these hypotheses in the model.
 Second, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
-Third, we use EPI to uncover the sources of bias in a low-rank recurrent neural network executing a toy mathematical computation.  
+Third, we use EPI to uncover the sources of error in a low-rank recurrent neural network executing a toy mathematical computation.  
 The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking} and more  generally, suggests a departure from realism vs tractability considerations towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 
 %-------------------
@@ -266,7 +266,6 @@ In the remainder of the study, we focus on using EPI to understand models of mor
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Identifying neural mechanisms of behavioral learning.} \label{results_SC}
-Identifying measurable biological changes that result in improved behavior is important for neuroscience, since they may indicate how the learning brain adapts.
 In a rapid task switching experiment \cite{duan2015requirement}, rats were explictly cued on each trial to either orient towards a visual stimulus in the Pro (P) task or orient away from a visual stimulus in the Anti (A) task (Fig. \ref{fig:SC}a). Neural recordings in the midbrain supeior colliculus (SC) exhibited two population of neurons that simultaneously represented both task context (Pro or Anti) and motor response (contralateral or ipsilateral to the recorded side): the Pro/Contra and Anti/Ipsi neurons \cite{duan2018collicular}.
 Duan et al. proposed a model of SC that, like the V1 model analyzed in the previous section, is a four-population dynamical system.  
 Here, the neuron-type populations are functionally-defined as the Pro- and Anti-populations in each hemisphere (left (L) and right (R)).  
@@ -286,7 +285,7 @@ Here, we used EPI to learn distributions of the SC weight matrix parameters $z =
 \label{fig:SC}
 \end{figure}
 
-EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E).  Thus, EPI produces novel, experimentally testable predictions: effective connectivity between these populations changes throughout learning, in a way that increases its task mode and decreases its side mode eigenvalues.
+EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E).  Thus, EPI produces novel, experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Linking RNN connectivity to computational error} \label{results_RNN}
@@ -379,13 +378,11 @@ Secondarily, trained algorithms of varying degrees of biological relevance are b
 
 For example, consider the fact that we do not fully understand the four-dimensional models of V1 \cite{litwin2016inhibitory}.  
 Because analytical approaches to studying nonlinear dynamical systems become increasingly complicated when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}, it is unsurprising that this model has been a challenge. 
-In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through analysis.
+In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through the available linear analytic methods.
 By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated and proved out a set of testable predictions. 
-%Thus, we promote the use of EPI to gain desired model insights.
+Of course, exploratory analyses can also be directed towards formulation of a specific type of hypothesis.  For example,  when interested in model parameter changes with behavioral performance, one can use EPI to condition on various levels of task accuracy as we did in Section \ref{results_SC}.
+This analysis identified experimentally testable predictions (proved out \textit{in-silico}) of patterns of effective connectivity in SC that should be correlated with increased performance.
 
-Of course, exploratory analyses can also be directed.  For example,  when interested in model changes during learning, one can use EPI to condition as we did in Section \ref{results_SC}.
-This analysis identified experimentally testable predictions (proved out \textit{in-silico}) of changes in connectivity in SC throughout learning.
-Precisely, we predict that an initial reduction in side mode eigenvalue, and a steady increase in task mode eigenvalue will take place, during learning, in the effective connectivity matrices of learning rats.
 %While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation.
 %Thusly, RNNs have become an increasingly popular tool in systems neuroscience research.  
 %The scientific philosophy is as follows: optimize an RNN to execute a task from behavioral neuroscience, compare the activity of this optimized system to brain activity from a model organism doing the same task, and leverage the full observability of the trained RNN to generate hypotheses of the neural mechanisms of computation.  
