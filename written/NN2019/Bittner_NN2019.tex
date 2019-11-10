@@ -243,21 +243,20 @@ H4: there should be a nonmonotonic response of the V-population with input to th
 
 \begin{figure}
 \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
-{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\Delta h_\alpha u_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations.  Labels H1, H2, H3, and H4 indicate which curves confirm which hypotheses.}\label{fig:V1_HT}}
+{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\delta h_\alpha \hat{u}_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations.  Labels H1, H2, H3, and H4 indicate which curves confirm which hypotheses.}\label{fig:V1_HT}}
 {\includegraphics[scale=0.6]{figures/fig3/fig3.pdf}}
 \end{figure}
-
-We evaluate these hypotheses by taking steps in individual neuron-type input $\Delta h_\alpha$ away from the modes of the inferred distributions at $y=0.1$.
+We evaluate these hypotheses by taking steps in individual neuron-type input $\delta h_\alpha$ away from the modes of the inferred distributions at $y=0.1$.
 \begin{equation}
 dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1))
 \end{equation}
-$\Delta x_{\alpha}$ is the change in steady state response to the system with input $h = b + dh^* + \Delta h_\alpha u_\alpha$ compared to $h = b + dh^*$, where $u_\alpha$ is a unit vector in the dimension of $\alpha$. The EPI-generated  hypotheses are confirmed. 
+$\delta x_{\alpha}$ is the change in steady state response to the system with input $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ compared to $h = b + dh^*$, where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$. The EPI-generated  hypotheses are confirmed. 
 
 {\addtolength{\leftskip}{10 mm}
 H1: the neuron-type responses are sensitive to their direct inputs (Fig. \ref{fig:V1_HT}A black, \ref{fig:V1_HT}B blue, \ref{fig:V1_HT}C red, \ref{fig:V1_HT}D green); \\
-H2: the E- and P-populations are not affected by $dh_V$ (Fig. \ref{fig:V1_HT}A green, \ref{fig:V1_HT}B green); \\
-H3: the S-population is not affected by $dh_P$ (Fig. \ref{fig:V1_HT}C blue); \\
-H4: the V-population exhibits a nonmonotonic response to $dh_E$ (Fig. \ref{fig:V1_HT}D black), and is in fact the on population to do so (Fig. \ref{fig:V1_HT}A-C black).
+H2: the E- and P-populations are not affected by $\delta h_V$ (Fig. \ref{fig:V1_HT}A green, \ref{fig:V1_HT}B green); \\
+H3: the S-population is not affected by $\delta h_P$ (Fig. \ref{fig:V1_HT}C blue); \\
+H4: the V-population exhibits a nonmonotonic response to $\delta h_E$ (Fig. \ref{fig:V1_HT}D black), and is in fact the on population to do so (Fig. \ref{fig:V1_HT}A-C black).
 
 }
 
@@ -694,26 +693,25 @@ The emergent property we considered was the first and second moments of the chan
 \end{equation}
 
 In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
-The differential responses $dx_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \Delta h_\alpha u_\alpha$ where $u_\alpha$ is a unit vector in the dimension of $\alpha$ and $\Delta h_\alpha \in \left[-15,15\right]$.
+The differential responses $\delta x_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$ and $\delta h_\alpha \in \left[-15,15\right]$.
 
 For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.  The support of the learned distribution was restricted to $z_i \in \left[-5, 5\right]$.
 
-
 \subsubsection{Superior colliculus}\label{methods_SC}
-There are four total units: two in each hemisphere corresponding to the Pro/Contra and Anti/Ipsi populations.  Each unit has an activity ($x_i$) and internal variable ($u_i$) related by
+In the model of Duan et al \cite{duan2018collicular}, there are four total units: two in each hemisphere corresponding to the Pro/Contra and Anti/Ipsi populations.  They are denoted as left Pro (LP), left Anti (LA), right Pro (RP) and right Anti (RA).  Each unit has an activity ($x_\alpha$) and internal variable ($u_\alpha$) related by
 \begin{equation}
-x_i(t) =\left(\frac{1}{2}\tanh\left(\frac{v_i(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
+x_\alpha(t) =\left(\frac{1}{2}\tanh\left(\frac{u_\alpha(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
 \end{equation}
-$\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, repsectively.
+where $\alpha \in \{LP, LA, RA, RP\}$ $\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, repsectively.
 
-We can order the elements of $x_i$ and $v_i$ into vectors $x$ and $v$ with elements
+We order the elements of $x$ and $u$ in the following manner
 \begin{equation}
-x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} v = \begin{bmatrix} v_{LP} \\ v_{LA} \\ v_{RP} \\ v_{RA} \end{bmatrix}
+x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} u = \begin{bmatrix} u_{LP} \\ u_{LA} \\ u_{RP} \\ u_{RA} \end{bmatrix}
 \end{equation}
 
  The internal variables follow dynamics:
 \begin{equation}
-\tau \frac{dv}{dt} = -v + Wx + h + \sigma dB
+\tau \frac{dv}{dt} = -u + Wx + h + \sigma dB
 \end{equation}
 with time constant $\tau = 0.09s$ and Gaussian noise $\sigma dB$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
 \begin{equation}
@@ -752,11 +750,10 @@ and an input to the right or left-side depending on where the light stimulus is 
 The input parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A,rule}} = 10$,  $I_{\text{choice}} = 2$,  and $I_{\text{light}} = 1$
 
 To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition (we can generalize this to either cue, or stimulus condition), let $\hat{p}_i$ be the empirical average steady state (ss) response (final $x_{LP}$ at end of task) over M=500 Gaussian noise draws for a given SC model parameterization $z_i$:
-
 \begin{equation}
- \hat{p}_i = \mathbb{E}_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M x_{LP,\text{ss}}(s=L, c=P, z_i, \sigma dB_j)
+ \hat{p}_i = \mathbb{E}_{\sigma dB} \left[ x_{LP} \mid s=L, c=P, z_i \right] = \frac{1}{M}\sum_{j=1}^M x_{LP}(s=L, c=P, z_i, \sigma dB_j)
  \end{equation}
-
+where here $x_\alpha$ denotes the steady state activity at the end of the trial.
 For the first constraint, the average over posterior samples (from $q_\theta(z)$) to be $p_{LP}$:
 \begin{equation}
 \mathbb{E}_{z_i \sim q_\phi} \left[ \mathbb{E}_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] \right] = \mathbb{E}_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
@@ -767,7 +764,7 @@ We can then ask that the variance of the steady state responses across Gaussian 
 \mathbb{E}_{z \sim q\phi} \left[ \sigma^2_{err} \right] = 0
 \end{equation}
 \begin{equation}
-\sigma^2_{err} = Var_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z_i \right] - \hat{p}_i(1 - \hat{p}_i)
+\sigma^2_{err} = Var_{\sigma dB} \left[ x_{LP} \mid s=L, c=P, z_i \right] - \hat{p}_i(1 - \hat{p}_i)
 \end{equation}
 
 We have an additional constraint that the Pro neuron on the opposite hemisphere should have the opposite value.  We can enforce this with a final constraint:
@@ -775,7 +772,7 @@ We have an additional constraint that the Pro neuron on the opposite hemisphere 
 \mathbb{E}_{z \sim q\phi} \left[ d_P \right] = 1
 \end{equation}
 \begin{equation}
-\mathbb{E}_{\sigma dB} \left[ (x_{LP,\text{ss}} - x_{RP,\text{ss}})^2  \mid s=L, c=P, z_i \right]
+\mathbb{E}_{\sigma dB} \left[ (x_{LP} - x_{RP})^2  \mid s=L, c=P, z_i \right]
 \end{equation}
 
 We refer to networks obeying these constraints as Bernoulli, winner-take-all networks.  Since the maximum variance of a random variable bounded from 0 to 1 is the Bernoulli variance ($\hat{p}(1-\hat{p})$), and the maximum squared difference between to variables bounded from 0 to 1 is 1, we do not need to control the second moment of these test statistics.  In reality, these variables are dynamical system states and can only exponentially decay (or saturate) to 0 (or 1), so the Bernoulli variance error and squared difference constraints can only be undershot.  This is important to be mindful of when evaluating the convergence criteria.  Instead of using our usual hypothesis testing criteria for convergence to the emergent property, we set a slack variable threshold for these technically infeasible constraints to 0.05.
@@ -807,11 +804,11 @@ Importantly, the solution produced by the solver is differentiable with respect 
 Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $r = \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of an constant input $h(t) = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
 \begin{equation}
 \begin{split}
-\kappa_r = F_1(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_m \kappa_n + y \\
-\kappa_n = F_2(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_n \langle \left[ \phi_i \right] \rangle + \langle \left[ \phi_i' \right] \rangle \\
-\frac{\Delta_0^2-\Delta_\infty^2}{2} = F_3(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\kappa_r + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
+\kappa_r = G_1(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_m \kappa_n + y \\
+\kappa_n = G_2(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_n \langle \left[ \phi_i \right] \rangle + \langle \left[ \phi_i' \right] \rangle \\
+\frac{\Delta_0^2-\Delta_\infty^2}{2} = G_3(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = g^2 \left( \int \mathcal{D}z \Phi^2(\kappa_r + \sqrt{\Delta_0}z) - \int \mathcal{D}z \int \mathcal{D}x \Phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z)  \right) \\
 + (\kappa_n^2  + 1)(\Delta_0-\Delta_\infty) \\
-\Delta_\infty = F_4(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \kappa_n^2 + 1
+\Delta_\infty = G_4(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \kappa_n^2 + 1
 \end{split} 
 \end{equation}
 where $z$ here is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system to a steady state.
