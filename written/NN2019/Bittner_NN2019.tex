@@ -415,11 +415,11 @@ EPI optimizes a distribution $q_\theta(z)$ (itself parameterized by $\theta$) of
 Precisely, over the EPI distribution of parameters $q_\theta(z)$ and distribution of simulated activity $p(x \mid z)$, the emergent property statistics $T(x)$ must equal the emergent property values $\mu$ on average.  This is a viable way to represent emergent properties in theoretical models, as we have demonstrated in the main text, and enables the EPI optimization.
 
 With EPI, we use deep probability distributions to learn flexible approximations to model parameter distributions $q_\theta(z)$.
- In deep probability distributions, a simple random variable $w \sim q_0(w)$ is mapped deterministically via a squence of deep neural network layers ($f_1$, .. $f_l$) parameterized by weights and biases $\theta$ to the support of the distribution of interest:
+ In deep probability distributions, a simple random variable $w \sim q_0(w)$ is mapped deterministically via a sequence of deep neural network layers ($f_1$, .. $f_l$) parameterized by weights and biases $\theta$ to the support of the distribution of interest:
 \begin{equation}
 z = f_{\theta}(\omega) = f_l(..f_1(w))
 \end{equation}
-Given a simulator defined by a theoretical model $x \sim p(x \mid z)$ and some emergent property of interest $\mathcal{B}$, $q_\theta(z)$ is optimized via the neural network parameters $\theta$ to find an optimaly entropic distribution $q_{\theta}^*$ within the deep variational family $\mathcal{Q}$ producing the emergent property:
+Given a simulator defined by a theoretical model $x \sim p(x \mid z)$ and some emergent property of interest $\mathcal{B}$, $q_\theta(z)$ is optimized via the neural network parameters $\theta$ to find an optimally entropic distribution $q_{\theta}^*$ within the deep variational family $\mathcal{Q}$ producing the emergent property:
 \begin{equation} \label{eq:opt}
 \begin{split}
 q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
@@ -526,7 +526,7 @@ However, this computation has cubic complexity in dimensionality for fully conne
 
 
 \subsubsection{Emergent property inference as variational inference in an exponential family}\label{methods_VI}
-Consider the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We'll use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ will remain unchanged.
+Consider the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics $T(z)$ into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ remains unchanged.
 \begin{equation}
 \begin{split}
 p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
@@ -559,13 +559,13 @@ In comparison, in emergent property inference (EPI), we're solving the following
 \begin{equation}
 q_\theta^*(z) = \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } E_{z \sim q_\theta}\left[ E_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
 \end{equation}
-The lagrangian objective (without the augmentation) is
+The Lagrangian objective (without the augmentation) is
 \begin{equation}
 q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \eta_{\text{opt}}^\top \left(E_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right)
 \end{equation}
 As the optimization proceeds, $\eta_{\text{opt}}^\top$ should converge to the natural parameter $\tilde{\eta}(x)$ through its adaptations in each epoch (see Section \ref{methods_AL_opt}). 
 
-The derivation of the natural parameter $\tilde{\eta}(x)$ of an exponential family distribution from its mean parameter $\mu$ is referred to as the backward mapping and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic, notationally, we can replace $p(z \mid x)$ with $p(z \mid \mathcal{B})$ conceptualizing an infered distribution that obeys emergent property $\mathcal{B}$ (see Section \ref{methods_EPI}). 
+The derivation of the natural parameter $\tilde{\eta}(x)$ of an exponential family distribution from its mean parameter $\mu$ is referred to as the backward mapping and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic,  we can replace the notation of $p(z \mid x)$ with $p(z \mid \mathcal{B})$ conceptualizing an inferred distribution that obeys emergent property $\mathcal{B}$ (see Section \ref{methods_EPI}). 
 
 \subsection{Theoretical models}\label{methods_theoretical_models}
 In this study, we used emergent property inference to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
