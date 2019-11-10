@@ -275,8 +275,6 @@ An additional stipulation is that when one Pro population responds with a high-o
 Finally, this circuit operates in the presence of Gaussian noise resulting in trial-to-trial variability (see Section \ref{methods_SC}).
 The connectivity matrix is parameterized by the geometry of the population arrangement (Fig. \ref{fig:SC}B).  
 
-Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
-
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figures/fig4/fig4.pdf}
@@ -284,6 +282,8 @@ Here, we used EPI to learn distributions of the SC weight matrix parameters $z =
 \caption{EPI reveals changes in SC \cite{duan2018collicular} connectivity that control task accuracy.  A. Rapid task switching behavioral paradigm (see text). B. Model of superior colliculus (SC). Neurons: LP - left pro, RP - right pro, LA - left anti, RA - right anti.  Parameters: sW - self, hW - horizontal, vW -vertical, dW - diagonal weights. C. The Schur decomposition of the weight matrix $W = V\Lambda V^{-1}$ is a unique decomposition with orthogonal $V$ and upper triangular $\Lambda$. Schur modes: $v_{\text{all}}$, $v_{\text{task}}$, $v_{\text{side}}$, and $v_{\text{diag}}$.  D. The marginal EPI distributions of the Schur eigenvalues at each level of task accuracy. E. The correlation of Schur eigenvalue with task performance in each learned EPI distribution.}
 \label{fig:SC}
 \end{figure}
+
+Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
 
 EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E).  Thus, EPI produces novel, experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
 
@@ -318,22 +318,16 @@ To solve this Gaussian posterior conditioning task, the RNN response to a consta
 \kappa_r =  \frac{1}{N} \sum_{j=1}^N r_j \phi(x_j)
 \end{equation}
 Additionally, the amount of chaotic variance $\Delta_T$ must equal the posterior variance.
-$\kappa_r$ and $\Delta_T$ can be expressed in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
-This theory allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_r$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
+Theory for low-rank RNNs allows us to express $\kappa_r$ and $\Delta_T$ in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
+This allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $k_r$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
 \begin{equation}
 E \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
 \end{equation}
-We specifiy a substantial amount of variability in the variance constraints  so that the inferred distribution results in RNNs with a variety biases in their solutions to the gaussian posterior conditioning problem. 
+We specifiy a substantial amount of variance in these emergent property statistics, so that the inferred distribution results in RNNs with a variety computational errors in their solutions to the gaussian posterior conditioning problem. 
 
-We used EPI to learn distributions of RNN connectivity properties $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$ executing Gaussian posterior conditioning given an input of $y=2$. (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
-The product of $M_m$ and $M_n$ almost completely determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the temporal variance (Fig. 5B, right).
-Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).  They lead to the following hypotheses:
-
-{\addtolength{\leftskip}{10 mm}
-H1: The posterior mean of the RNN increases with the product of $M_m$ and $M_n$; \\
-H2: The posterior variance increases with $g$; \\
-
-}
+We used EPI to learn distributions of RNN connectivity properties $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$ executing Gaussian posterior conditioning given an input of $y=2$ (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
+The product of $M_m$ and $M_n$ strongly determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the chaotic variance (Fig. 5B, right).
+Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).  While the relationship of the random strength to chaotic variance (and resultingly poserior variance) is well-known \cite{sompolinsky1988chaos}, the distribution admits a novel hypothesis: the estimation of the posterior mean by the RNN increases with the product of $M_m$ and $M_n$.
 
 Testing these now in finite-size networks.  Will write end of this later.
 
@@ -346,22 +340,22 @@ This novel procedure of doing inference in interpretable parameterizations of RN
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Sources of solution bias in an RNN computation.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computatoin on $\mu_y$. (right) Bias in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks sampled from the distribution perform the calculation and have the computational biases expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
+\caption{Sources of computational error in an RNN solving a toy problem.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computation on $\mu_y$. (right) Error in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks with parameters $z_1$ and $z_2$ sampled from the distribution attempt the computation and have the errors expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
 \end{figure}
 
 \section{Discussion}
 \subsection{EPI is a general tool for theoretical neuroscience} 
-Models of biological systems are often comprised of complex nonlinear differential equations, making traditional theoretical analysis and statistical inference intractable. 
+Biologically realistic models of neural circuits are comprised of complex nonlinear differential equations, making traditional theoretical analysis and statistical inference intractable. 
 In contrast, EPI is capable of learning distributions of parameters in such models producing measurable signatures of computation.
 We have demonstrated its utility on biological models (STG), intermediate-level models of interacting genetically- and functionally-defined neuron-types (V1, SC), and the most abstract of models (RNNs).  
-We are able to condition both deterministic and stochastic models on low-level emergent properties like firing rates of membrane potentials, as well as high-level cognitive function like Gaussian posterior conditioning.
-Technically, EPI is tractable when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case; this emphasizes the general utility of EPI.
+We are able to condition both deterministic and stochastic models on low-level emergent properties like spiking frequency of membrane potentials, as well as high-level cognitive function like posterior conditioning.
+Technically, EPI is tractable when the emergent property statistics are continuously differentiable with respect to the model parameters, which is very often the case; this emphasizes the general applicability of EPI.
 
-In this study, we have focused on applying EPI to low dimensional parameter spaces of models with low dimensional dynamical state.
+In this study, we have focused on applying EPI to low dimensional parameter spaces of models with low dimensional dynamical states.
 These choices were made to present the reader with a series of  interpretable conclusions, which is more challenging in high dimensional spaces.
 In fact, EPI should scale reasonably to high dimensional parameter spaces, as the underlying technology has produced state-of-the-art performance on high-dimensional tasks such as texture generation \cite{loaiza2017maximum}.
 Of course, increasing the dimensionality of the dynamical state of the model makes optimization more expensive, and there is a practical limit there as with any machine learning approach.
-For systems with high dimensional state, we recommend using theoretical approaches (e.g. \cite{mastrogiuseppe2018linking}) to reason about reduced parameterizations of such high-dimensional systems.
+Although, theoretical approaches (e.g. \cite{mastrogiuseppe2018linking}) can be used to reason about the wholistic activity of such high dimensional systems by introducing some degree of additional structure into the model.
 
 There are additional technical considerations when assessing the suitability of EPI for a particular modeling question.  
 First and foremost, as in any optimization problem, the defined emergent property should always be appropriately conditioned (constraints should not have wildly different units).  
@@ -372,15 +366,17 @@ In the best circumstance, there is a simple, closed form expression (e.g. Sectio
 On the other end of the spectrum, many forward simulation iterations may be required before a high quality measurement of the emergent property statistic is available  (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive.
 
 \subsection{Novel hypotheses from EPI} 
-Machine learning has played an effective, multifaceted role in neuroscientific progress. 
-Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
-Secondarily, trained algorithms of varying degrees of biological relevance are beginning to be viewed as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
+%Machine learning has played an effective, multifaceted role in neuroscientific progress. 
+%Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
+%Secondarily, trained algorithms of varying degrees of biological relevance are beginning to be viewed as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
+In neuroscience, machine learning has primarily been used to revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Such careful inference procedures are developed for these statistical models allowing precise, quantitative reasoning about the way data informs knowledge of the model parameters.  However, these inferable statistical models lack resemblance to the underlying biology, making it unclear how to go from the structure revealed by these methods, to the neural mechanisms giving rise to it.  In contrast, theoretical neuroscience has focused on careful mechanistic modeling, yet used opaque inference methods for characterizing the parameters giving rise to computation.  In this work, we replaced the opaque procedure of parameter identification in theoretical neuroscience with emergent property inference, opening the door to careful inference in careful models of neural computation.
 
-For example, consider the fact that we do not fully understand the four-dimensional models of V1 \cite{litwin2016inhibitory}.  
-Because analytical approaches to studying nonlinear dynamical systems become increasingly complicated when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}, it is unsurprising that this model has been a challenge. 
-In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input responsivity than the predictions afforded through the available linear analytic methods.
-By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated and proved out a set of testable predictions. 
-Of course, exploratory analyses can also be directed towards formulation of a specific type of hypothesis.  For example,  when interested in model parameter changes with behavioral performance, one can use EPI to condition on various levels of task accuracy as we did in Section \ref{results_SC}.
+Biologically realistic models of neural circuits often prove formidable to analyze.
+For example, consider the fact that we do not fully understand the (only) four-dimensional models of V1 \cite{litwin2016inhibitory} and SC \cite{duan2018collicular}.
+Because analytical approaches to studying nonlinear dynamical systems become increasingly complicated when stepping from two-dimensional to three- or four-dimensional systems in the absence of restrictive simplifying assumptions \cite{strogatz1994nonlinear}, it is unsurprising that these models pose a challenge. 
+In Section \ref{results_V1}, we showed that EPI was far more informative about neuron-type input-responsivity than the predictions afforded through the available linear analytic methods.
+By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, which generated a set of testable hypotheses, which were proved out. 
+Of course, exploratory analyses can be directed towards formulating hypotheses of a specific form.  For example,  when interested in model parameter changes with behavioral performance, one can use EPI to condition on various levels of task accuracy as we did in Section \ref{results_SC}.
 This analysis identified experimentally testable predictions (proved out \textit{in-silico}) of patterns of effective connectivity in SC that should be correlated with increased performance.
 
 %While experimentally testable predictions are highly valuable, sometimes it is prohibitively challenging to design a biologically realistic model of a neural computation.
@@ -389,7 +385,11 @@ This analysis identified experimentally testable predictions (proved out \textit
 %While fixed point identification and jacobian measurement yield intuitive, consistent portraits of the implemented computational algorithm \cite{universality2019Maheswaranathan}, there is dizzying degeneracy in the RNN connectivity matrix with respect to these characterizations.  
 %Since neural activity generally lies on a low dimensional manifold \cite{gao2015simplicity}, we may attain an understanding of the neural mechanisms at play in cortical processing by working in a reduced, interpretable parameter setting of these powerfully general models \cite{doya1993universality}.
 
-In our final analysis, we present a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing simple tasks .  This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}. With this methodology, we can finally open the probabilistic model selection toolkit reasoning about the connectivity of RNNs solving tasks.
+In our final analysis, we presented a novel procedure for doing statistical inference on interpretable parameterizations of RNNs executing simple tasks. 
+Specifically we analyzed rRNNs solving a posterior conditioning problem in the spirit of \cite{echeveste2019cortical}. 
+This methodology relies on recently extended theory of responses in random neural networks with minimal structure \cite{mastrogiuseppe2018linking}. 
+While we focused on rank-1 RNNs, which were sufficient for solving this task, we can more generally use this approach to analyze rank-2 and greater RNNs.
+The ability to apply the probabilistic model selection toolkit to such black box models should prove invaluable as their use in neuroscience increases.
 
 %\item Link conditioning on task execution with work done today with RNNs.  Although there seems to be consistency across RNN architectures \cite{universality2019Maheswaranathan}, basically we're training overparameterized models with regression, and get a distribution (we have no prob treatment of). Emphasize utility of low-dim interpretable parameterizations. RNNs are particularly useful, when an interpretable model can not easily be designed to execute a task/behavior of interest. Other relevant work \cite{zhao2016interpretable, duncker2019learning}.
 %Elaborate on idea of conditioning on flexibly defined statistics i.e. emergent properties. Emphasize how this is practical.  Link to sufficient statistics, esp. commonly used in phenom models like spike counts etc.
