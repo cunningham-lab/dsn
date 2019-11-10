@@ -46,7 +46,7 @@ Kenneth D. Miller, and John P. Cunningham.
 
 \linenumbers
 \section{Abstract}
-The cornerstone of theoretical neuroscience is the circuit model: a system of equations that captures a hypothesized neural mechanism.  
+A cornerstone of theoretical neuroscience is the circuit model: a system of equations that captures a hypothesized neural mechanism.  
 Such models are valuable when they give rise to an experimentally observed phenomenon -- whether behavioral or in terms of neural activity -- and thus can offer insights into neural computation.
 The operation of these circuits, like all models, critically depends on the choices of model parameters.
 Historically, the gold standard has been to analytically derive the relationship between model parameters and computational properties.  
@@ -54,26 +54,25 @@ However, this enterprise quickly becomes infeasible as biologically realistic co
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
-We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of computational error in recurrent neural networks solving a toy mathematical problem. 
-More generally, this work offers a quantitative grounding for theoretical models going forward, pointing a way to how rigorous statistical inference can enhance theoretical neuroscience at large.
-%(150 word limit) we can ignore that for now up to about 50% \\
+We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of error in recurrent neural networks solving a simple mathematical task. 
+More generally, this work suggests a departure from realism vs tractability considerations, towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 
 \section{Introduction}
 The fundamental practice of theoretical neuroscience is to use a mathematical model to understand neural computation, whether that computation enables perception, action, or some intermediate processing \cite{abbott2008theoretical}.  
-In this field, a neural computation is systematized with a set of equations -- the model -- and these equations are motivated by biophysics, neurophysiology, and other conceptual considerations.
-The function of this system is governed by the choice of model parameters, which when configured appropriately, give rise to a measurable signature of a computation.   
-The work of analyzing a model then requires solving the inverse problem: given a computation of interest, how can we reason about these suitable parameter configurations?  
+A neural computation is systematized with a set of equations -- the model -- and these equations are motivated by biophysics, neurophysiology, and other conceptual considerations.
+The function of this system is governed by the choice of model parameters, which when configured in a particular way, give rise to a measurable signature of a computation.   
+The work of analyzing a model then requires solving the inverse problem: given a computation of interest, how can we reason about these particular parameter configurations?  
 The inverse problem is crucial for reasoning about likely parameter values, uniquenesses and degeneracies, attractor states and phase transitions, and predictions made by the model.  
 
 Consider the idealized practice: one carefully designs a model and analytically derives how model parameters govern the computation.  
-Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural} and chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos} (adopting approaches from physics), and the paradoxical effect \cite{tsodyks1997paradoxical} and decision making  \cite{wong2006recurrent} in rate models.
+Seminal examples of this gold standard (which often adopt approaches from statistical physics) include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, the paradoxical effect \cite{tsodyks1997paradoxical}, and decision making  in rate models \cite{wong2006recurrent}.
 %Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}.
 Unfortunately, as circuit models include more biological realism, theory via analytic derivation becomes intractable.  
 This creates an unfavorable tradeoff.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), producing accurate inferences about parameters of a too-simple model.  
-On the other hand, one may choose a more biologically accurate, scientifically relevant model at the cost of \emph{ad hoc} approaches to analysis (simply examining simulated activity), potentially resulting in bad inferences and thus erroneous scientific predictions and conclusions.
+On the other hand, one may choose a more biologically accurate, scientifically relevant model at the cost of \emph{ad hoc} approaches to analysis (such as simply examining simulated activity), potentially resulting in bad inferences and thus erroneous scientific predictions or conclusions.
 
 % now transition to ML...
-Of course, this same tradeoff has been confronted in many scientific fields and engineering problems characterized by the need to do inference in complex models.  
+Of course, this same tradeoff has been confronted in many scientific fields characterized by the need to do inference in complex models.  
 In response, the machine learning community has made remarkable progress in recent years, via the use of deep neural networks as a powerful inference engine: a flexible function family that can map observed phenomena (in this case the measurable signal of some computation) back to probability distributions quantifying the likely parameter configurations.  
 One celebrated example of this approach from machine learning, of which we draw key inspiration for this work, is the variational autoencoder \cite{kingma2013auto, rezende2014stochastic}, which uses a deep neural network to induce an (approximate) posterior distribution on hidden variables in a latent variable model, given data. 
 Indeed, these tools have been used to great success in neuroscience as well, in particular for interrogating parameters (sometimes treated as hidden states) in models of both cortical population activity \cite{gao2016linear, zhao2017recursive, barello2018sparse, pandarinath2018inferring} and animal behavior \cite{wiltschko2015mapping, johnson2016composing, batty2019behavenet}. 
@@ -83,8 +82,8 @@ However, these inference tools have not significantly influenced the study of th
 First, at a practical level, the nonlinearities and dynamics of many theoretical models are such that conventional inference tools typically produce a narrow set of insights into these models.  
 Indeed, only in the last few years has deep learning research advanced to a point of relevance to this class of problem.
 Second, the object of interest from a theoretical model is not typically data itself, but rather a qualitative phenomenon -- inspection of model behavior, or better, a measurable signature of some computation -- an \emph{emergent property} of the model.  
-Third, because carefully constructed biological models do not fit cleanly into the framing of a statistical model.  
-Technically, because many such models stipulate a noisy system of differential equations that can only be sampled or realized through forward simulation, they lack the explicit likelihood and priors central to the probabilistic modeling toolkit.  
+Third, because theoreticians work carefully to construct a model that has biological relevance, such a model as a result often does not fit cleanly into the framing of a statistical model. 
+Technically, because many such models stipulate a noisy system of differential equations that can only be sampled or realized through forward simulation, they lack the explicit likelihood and priors central to the probabilistic modeling toolkit.
 
 % now we've constructed the tension that theory models need this and statistical models know how to do this... now connect!
 To address these three challenges, we developed an inference methodology -- `emergent property inference' -- which learns a distribution over parameter configurations in a theoretical model.  
