@@ -286,7 +286,7 @@ Here, we used EPI to learn distributions of the SC weight matrix parameters $z =
 EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with learning in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E).  Thus, EPI produces novel, experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Linking RNN connectivity to computational error} \label{results_RNN}
+\subsection{Linking RNN connectivity to error} \label{results_RNN}
 So far, each model we have studied was designed from fundamental biophysical principles, genetically- or functionally-defined neuron types.  
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation that are becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 In theoretical neuroscience, RNN dynamics usually follow the equation
@@ -301,7 +301,7 @@ Alternatively, we consider a rank-1, $N$-neuron RNN with connectivity
 W = g\chi + \frac{1}{N}mn^\top,
 \end{equation}
 where $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, $g$ is the random strength, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
-We use EPI to infer the parameterizations of rank-1 RNNs solving an example task, enabling discovery of properties of connectivity that result in different types of computational errors.
+We use EPI to infer the parameterizations of rank-1 RNNs solving an example task, enabling discovery of properties of connectivity that result in different types of error in the computation.
 
 
 The task we consider is Gaussian posterior conditioning: calculate the parameters of a posterior distribution induced by a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ and a likelihood $p(y | \mu_y) = \mathcal{N}(\mu_y,\sigma^2_y = 1)$, given a single observation $y$.  Conjugacy offers the result analytically; $p(\mu_y | y ) = \mathcal{N}\left(\mu_{post},\sigma_{post}^2\right)$, where:   
@@ -321,7 +321,7 @@ This allows us to mathematically formalize the execution of this task into an em
 \begin{equation}
 E \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
 \end{equation}
-We specifiy a substantial amount of variance in these emergent property statistics, so that the inferred distribution results in RNNs with a variety computational errors in their solutions to the gaussian posterior conditioning problem. 
+We specifiy a substantial amount of variance in these emergent property statistics, so that the inferred distribution results in RNNs with a variety errors in their solutions to the gaussian posterior conditioning problem. 
 
 We used EPI to learn distributions of RNN connectivity properties $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$ executing Gaussian posterior conditioning given an input of $y=2$ (see Section \ref{methods_LRRNN}) (Fig. 5B). The true Gaussian conditioning posterior for an input of $y=2$ is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$.   We examined the nature of the over- and under-estimation of the posterior means (Fig. 5B, left) and variances (Fig. 5B, right) in the inferred distributions.  There is rough symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. 5B).  
 The product of $M_m$ and $M_n$ strongly determines the posterior mean (Fig. 5B, left), and the random strength $g$ is the most influential variable on the chaotic variance (Fig. 5B, right).
@@ -338,7 +338,7 @@ This novel procedure of doing inference in interpretable parameterizations of RN
 \begin{center}
 \includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
 \end{center}
-\caption{Sources of computational error in an RNN solving a simple task.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computation on $\mu_y$. (right) Error in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks with parameters $z_1$ and $z_2$ sampled from the distribution attempt the computation and have the errors expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
+\caption{Sources of error in an RNN solving a simple task.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computation on $\mu_y$. (right) Error in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size networks with parameters $z_1$ and $z_2$ sampled from the distribution attempt the computation and have the errors expected from their parameter values.  Activity along readout $\kappa_r$ (cyan).}
 \end{figure}
 
 \section{Discussion}
