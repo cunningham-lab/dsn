@@ -411,6 +411,7 @@ def get_arch_from_template(system, param_dict):
         repeats = param_dict['repeats']
         num_masks = param_dict['num_masks']
         nlayers = param_dict['nlayers']
+        sigma_init = param_dict['sigma_init']
 
         flow_type = "RealNVP"
         post_affine = True
@@ -424,7 +425,7 @@ def get_arch_from_template(system, param_dict):
         # Use informed initialization:
         #mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
         mu_init = np.array([6.0, 1.5])
-        sigma_init = 0.25*np.eye(2)
+        sigma_init = (sigma_init**2)*np.eye(2)
 
         arch_dict = {
                      "D": D,
@@ -433,8 +434,8 @@ def get_arch_from_template(system, param_dict):
                      "post_affine": post_affine,
                      "K": K,
                      "real_nvp_arch":real_nvp_arch,
-                     "mo":1.0,
-                     "init_mo":1.0,
+                     "mo":0.99,
+                     "init_mo":0.99,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
                     }

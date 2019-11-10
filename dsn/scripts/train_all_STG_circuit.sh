@@ -1,8 +1,11 @@
 #!/bin/bash
-for num_masks in 2 4
+for c_init_ord in 5
 do
-  for rs in {1..4}
+  for sigma_init in 0.05 0.1
   do
-    sbatch train_STG_circuit.sh $num_masks 2 2 $rs
+    for rs in {1..5}
+    do
+      sbatch train_STG_circuit.sh 4 2 $c_init_ord $sigma_init $rs
+    done
   done
 done

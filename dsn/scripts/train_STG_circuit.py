@@ -13,7 +13,8 @@ freq = str(sys.argv[1])
 num_masks = int(sys.argv[2])
 nlayers = int(sys.argv[3])
 c_init_order = int(sys.argv[4])
-random_seed = int(sys.argv[5])
+sigma_init = float(sys.argv[5])
+random_seed = int(sys.argv[6])
 
 # Get STG system
 sysname = "STGCircuit"
@@ -27,6 +28,7 @@ arch_params = {
                'repeats':repeats,
                'num_masks':num_masks,
                'nlayers':nlayers,
+               'sigma_init':sigma_init,
               }
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
@@ -51,6 +53,6 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=check_rate,
-    dir_str="STGCircuit",
+    dir_str="STGCircuit_%.2f" % sigma_init,
     db=False,
 )
