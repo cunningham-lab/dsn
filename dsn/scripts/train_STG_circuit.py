@@ -53,6 +53,6 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=check_rate,
-    dir_str="STGCircuit",
+    dir_str="STGCircuit_%.2f" % sigma_init,
     db=False,
 )
