@@ -579,59 +579,70 @@ The derivation of the natural parameter $\tilde{\eta}(x)$ of an exponential fami
 In this study, we used emergent property inference to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
-Each neuron's membrane potential $x_m(t)$ is the solution of the following differential equation.
-\begin{equation} C_m \frac{dx_m}{dt} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
+We analyze how the parameters $z = \begin{bmatrix} g_{el} & g_{synA} \end{bmatrix}$ govern the emergent phenomena of network syncing in a model of the stomatogastric ganglion (STG) shown in Figure \ref{fig:STG}A with activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$.
+Each neuron's membrane potential $x_\alpha(t)$ for $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$ is the solution of the following differential equation:
+\begin{equation} C_m \frac{dx_\alpha}{dt} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
-
 The membrane potential of each neuron is affected by the leak, calcium, potassium, hyperpolarization,
-electrical and synaptic currents, respectively.  The capacitance of the cell membrane was set to $C_m = 1nF$. Each current is a function of the neuron's membrane potential $x_m$ and the parameters of the circuit such as  $g_{el}$ and $g_{syn}$, whose effect on the circuit is considered in the motivational example of EPI in Fig. \ref{fig:STG}.  Specifically, the currents are the difference in the neuron's membrane potential and that current type's reversal potential multiplied by a conductance:
-\begin{equation}  h_{leak}(x; z) = g_{leak} (x_m - V_{leak}) 
+electrical and synaptic currents, respectively, which are functions of  all membrane potentials and the conductance parameters $z$.  
+The capacitance of the cell membrane was set to $C_m = 1nF$. Specifically, the currents are the difference in the neuron's membrane potential and that current type's reversal potential multiplied by a conductance:
+\begin{equation}  h_{leak}(x; z) = g_{leak} (x_\alpha - V_{leak}) 
 \end{equation} 
-\begin{equation}  h_{elec}(x; z) = g_{el} (x_m^{post} - x_m^{pre})
+\begin{equation}  h_{elec}(x; z) = g_{el} (x_\alpha^{post} - x_\alpha^{pre})
 \end{equation} 
-\begin{equation}  h_{syn}(x; z) = g_{syn} S_\infty^{pre} (x_m^{post} - V_{syn}) \end{equation} 
-\begin{equation}  h_{Ca}(x; z) = g_{Ca} M_\infty (x_m - V_{Ca}) 
+\begin{equation}  h_{syn}(x; z) = g_{syn} S_\infty^{pre} (x_\alpha^{post} - V_{syn}) \end{equation} 
+\begin{equation}  h_{Ca}(x; z) = g_{Ca} M_\infty (x_\alpha - V_{Ca}) 
 \end{equation} 
-\begin{equation}  h_K(x; z) = g_K N (x_m - V_K) 
+\begin{equation}  h_K(x; z) = g_K N (x_\alpha - V_K) 
 \end{equation} 
-\begin{equation}  h_{hyp}(x; z) = g_h H(x_m - V_{hyp})
+\begin{equation}  h_{hyp}(x; z) = g_h H(x_\alpha - V_{hyp})
 \end{equation} 
 The reversal potentials were set to $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$.  The other conductance parameters were fixed to $g_{leak} = 1 \times 10^{-4} \mu S$. $g_{Ca}$, $g_{K}$, and $g_{hyp}$ had different values based on fast, intermediate (hub) or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $, and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$, $ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate: $g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
 
 Furthermore, the Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating variables $M_\infty$, $N_\infty$ and $H_\infty$, respectively.
-\begin{equation}  M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_1}{v_2} \right) \right) \end{equation}
+\begin{equation}  M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{x_\alpha - v_1}{v_2} \right) \right) \end{equation}
 \begin{equation}  \frac{dN}{dt} = \lambda_N (N_\infty - N)  \end{equation}
-\begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_m - v_3}{v_4} \right) \right) \end{equation}
-\begin{equation}  \lambda_N = \phi_N \cosh \left( \frac{x_m - v_3}{2 v_4} \right) \end{equation}
+\begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_\alpha - v_3}{v_4} \right) \right) \end{equation}
+\begin{equation}  \lambda_N = \phi_N \cosh \left( \frac{x_\alpha - v_3}{2 v_4} \right) \end{equation}
 \begin{equation}  \frac{dH}{dt} = \frac{\left( H_\infty - H \right)}{\tau_h} \end{equation}
-\begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_m + v_5}{v_6} \right)} \end{equation}
-\begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_m + v_7}{v_8} \right)} \right) \end{equation}
+\begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_\alpha + v_5}{v_6} \right)} \end{equation}
+\begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_\alpha + v_7}{v_8} \right)} \right) \end{equation}
 where we set $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
 $v_6 = 10.5mV$, $v_7 = -42.2mV$, $v_8 = 87.3mV$, $v_9 = 5mV$, and $v_{th} = -25mV$.  These are the same parameter values used in \cite{gutierrez2013multiple}.
 
 Finally, there is a synaptic gating variable as well:
-\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_m}{v_9} \right)} 
+\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_\alpha}{v_9} \right)} 
 \end{equation}
 When the dynamic gating variables are considered, this is actually a 15-dimensional nonlinear dynamical system.
 
-In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken through the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.
+In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken through the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.  Poor resolution afforded by the discrete Fourier transform motivated the use of an alternative basis of complex exponentials to measure spiking frequency.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
 %Our original approach to measuring frequency was to take the max of the fast Fourier transform (FFT) of the simulated time series.  There are a few key considerations here.  One is resolution in frequency space.  Each FFT entry will correspond to a signal frequency of $\frac{F_s k}{N}$, where N is the number of samples used for the FFT, $F_s = \frac{1}{dt}$, and $k \in \left[0, 1, ..., N-1\right]$.  Our resolution is improved by increasing $N$ and decreasing $dt$.  Increasing N = T-b, where $b$ is some fixed number of buffer burn-in initialization samples, necessitates an increase in simulation time steps $T$, which directly increases computational cost.  Increasing $F_s$ (decreasing $dt$) increases system approximation accuracy, but requires more time steps before a full cycle is observed.  At the level of $dt = 0.025$, thousands of temporal samples were required for resolution of .01Hz.  These challenges in frequency resolution with the discrete Fourier transform motivated the use of an alternative basis of complex exponentials.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
-Poor resolution afforded by the discrete Fourier transform motivated the use of an alternative basis of complex exponentials to measure spiking frequency.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
-Another consideration was that the frequency spectra of the neurons had several peaks.  This was due to high-frequency sub-threshold activity. The maximum frequency was often not the firing frequency.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal was subsequently mean centered.  After this pre-processing, the maximum frequency in the filter bank accurately reflected the firing frequency.
 
-Finally, to differentiate through the maximum frequency identification, we used a sum-of-powers normalization.  Let $\mathcal{X}_i \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_i \in \mathbb{R}^{N}$, where $i \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is 
+Another consideration was that the frequency spectra of the neuron membrane potentials had several peaks.  High-frequency sub-threshold activity obscured the maximum frequency measurement in the complex exponential basis.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal was subsequently mean centered.  After this pre-processing, the maximum frequency in the filter bank accurately reflected the firing frequency.
+
+Finally, to differentiate through the maximum frequency identification, we used a sum-of-powers normalization.  Let $\mathcal{X}_\alpha \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_\alpha \in \mathbb{R}^{N}$, where $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is 
 \begin{equation}
-v_i = \frac{|\mathcal{X}_i|^\beta}{\sum_{k=1}^N |\mathcal{X}_i(k)|^\beta}
+v_\alpha = \frac{|\mathcal{X}_\alpha|^\beta}{\sum_{k=1}^N |\mathcal{X}_\alpha(k)|^\beta}
 \end{equation}
-The frequency is then calculated as $\omega_ = v_i^\top \Phi$ with $\alpha = 100$.
+The frequency is then calculated as $\omega_\alpha = v_\alpha^\top \Phi$ with $\beta = 100$.
 
 Network syncing, like all other emergent properties in this work, are defined by the emergent property statistics and values.  The emergent property statistics are the first- and second-moments of the firing frequencies. The first moments are set to 0.542Hz, while the second moments are set to 0.025Hz$^2$.
 \begin{equation}
 E \begin{bmatrix} \omega_{\text{f1}} \\ \omega_{\text{f2}} \\ \omega_{\text{hub}} \\ \omega_{\text{s1}} \\ \omega_{\text{s2}} \\ (\omega_{\text{f1}} - 0.542)^2 \\ (\omega_{\text{f2}} - 0.542)^2 \\ (\omega_{\text{hub}} - 0.542)^2 \\ (\omega_{\text{s1}} - 0.542)^2 \\ (\omega_{\text{s2}} - 0.542)^2  \end{bmatrix} = \begin{bmatrix} 0.542 \\ 0.542 \\ 0.542 \\ 0.542 \\ 0.542 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}
 \end{equation}
-For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} 10 \\ 8 \end{bmatrix} \right]$ (the same considered in \cite{gutierrez2013multiple}). We have shown the EPI optimization that converged with maximum entropy across 5 random seeds and augmented Lagrangian coefficient initializations of $c_0 \in \{5, 10\}$.
+For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} 10 \\ 8 \end{bmatrix} \right]$ (the same considered in \cite{gutierrez2013multiple}). We have shown the EPI optimization that converged with maximum entropy across 5 random seeds and augmented Lagrangian coefficient initializations of $c_0 \in \{10\}$.
+
+We calculated the Hessian at the mode of the inferred EPI distribution.  
+The Hessian of a probability model is the second order gradient of the log probability density $\log q_\theta(z)$ with respect to the parameters $z$:  $\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$.  
+With EPI, we can examine the Hessian, which is analytically available throughout the deep probability distribution, at a given parameter choice to determine what dimensions of parameter space are sensitive (high magnitude eigenvalue), and which are degenerate (low magnitude eigenvalue) with respect to the emergent property produced. 
+In Figure \ref{fig:STG}B, the eigenvectors of the Hessian $v_1$ and $v_2$ are shown evaluated at the mode of the distribution.  
+The length of the arrows is inversely proportional to the square root of absolute value of their eigenvalues $\lambda_1 = -147.2$ and $\lambda_2 = -19.70$.
+We quantitatively measured the sensitivity of the model with respect to network syncing along the eigenvectors of the Hessian (Fig. \ref{fig:STG}B, inset).
+Sensitivity was measured as the slope coefficient of linear regression fit to network syncing error (the sum of squared differences of each neuron's frequency from 0.542Hz) as a function of perturbation magnitude (from 0 to 0.4) away from the mode along both orientations indicated by the eigenvector.
+These sensitivities were compared to all other dimensions of parameter space, revealing that the Hessian eigenvectors indeed identified the directions of greatest sensitivity and degeneracy.
+
 
 \subsubsection{Primary visual cortex}\label{methods_V1}
 The dynamics of each neural populations average rate
