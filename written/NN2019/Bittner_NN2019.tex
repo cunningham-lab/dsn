@@ -297,9 +297,9 @@ So far, each model we have studied was designed from fundamental biophysical pri
 At a more abstract level of modeling, recurrent neural networks (RNNs) are high-dimensional dynamical models of computation that are becoming increasingly popular in neuroscience research \cite{barak2017recurrent}. 
 In theoretical neuroscience, RNN dynamics usually follow the equation
 \begin{equation}
-\frac{dx(t)}{dt} = -x(t) + W \phi(x(t)) + h(t),
+\frac{dx}{dt} = -x + W \phi(x) + h,
 \end{equation}
-where $x(t)$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $h(t)$ is the input to the system.
+where $x$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $h$ is the input to the system.
 Such RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
 Fully-connected RNNs with tens of thousands of parameters are challenging to characterize \cite{sussillo2013opening}, especially making statistical inferences about their parameterization.
 Alternatively, we considered a rank-1, $N$-neuron RNN with connectivity
@@ -336,7 +336,7 @@ Neither of these observations were obvious from what mathematical analysis is av
 We tested this prediction by taking parameters $z_1$ and $z_2$ as representative samples from the positive and negative $M_m$-$M_n$ quadrants, respectively.
 Instead of using the theoretical predictions shown in Figure \ref{fig:RNN}B, we simulated finite-size realizations of these networks with 2,000 neurons (e.g. Fig. \ref{fig:RNN}C).  
 We perturbed these parameter choices by the product $M_m M_n$ clarifying that the posterior mean can be directly controlled in this way (Fig. \ref{fig:RNN}D).
-Thus, EPI confers a clear picture of error in this computation: the product of the low rank vector means $M_m$ and $M_n$ modulates the estimated posterior mean while the random strength $g$ modulates the chaotic variance.
+Thus, EPI confers a clear picture of error in this computation: the product of the low rank vector means $M_m$ and $M_n$ modulates the estimated posterior mean while the random strength $g$ modulates the estimated posterior variance.
 This novel procedure of inference on reduced parameterizations of RNNs conditioned on the emergent property of task execution is generalizable to other settings modeled in \cite{mastrogiuseppe2018linking} like noisy integration and context-dependent decision making (Fig. S4).
 
 %The observations are supported by 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high product of low rank vector means $M_m M_n$, and produces an RNN overestimating the posterior mean (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$ compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. 
@@ -725,7 +725,7 @@ In the model of Duan et al \cite{duan2018collicular}, there are four total units
 \begin{equation}
 x_\alpha(t) =\left(\frac{1}{2}\tanh\left(\frac{u_\alpha(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
 \end{equation}
-where $\alpha \in \{LP, LA, RA, RP\}$ $\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, repsectively.
+where $\alpha \in \{LP, LA, RA, RP\}$ $\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, respectively.
 
 We order the elements of $x$ and $u$ in the following manner
 \begin{equation}
@@ -782,7 +782,7 @@ For the first emergent property statistic, the average over EPI samples (from $q
 \mathbb{E}_{z_i \sim q_\phi} \left[ \mathbb{E}_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z=z_i \right] \right] = \mathbb{E}_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
 \end{equation}
 
-For the next emergent propert statistic, we ask that the variance of the steady state responses across Gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$.
+For the next emergent property statistic, we ask that the variance of the steady state responses across Gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$.
 \begin{equation}
 \mathbb{E}_{z \sim q\phi} \left[ \sigma^2_{err} \right] = 0
 \end{equation}
@@ -810,18 +810,17 @@ For each accuracy level $p$, we ran EPI for 10 different random seeds and select
 
 Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{mastrogiuseppe2018linking}.
 Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
-In such a model, the connectivity of a rank-1 RNN (which was sufficient for our task), has weight matrix $W$, whis is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
+In such a model, the connectivity of a rank-1 RNN (which was sufficient for the Gaussian posterior conditioning task), has weight matrix $W$, which is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
 \begin{equation}
 W = g\chi + \frac{1}{N}mn^\top,
 \end{equation}
-where the activity $x$ evolves as
-and $I(t)$ is some input, $\phi$ is the $\tanh$ nonlinearity, and  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$.  
-The entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$. From such a parameterization, this theory produces consistency equations for the dynamic mean field variables in terms of parameters like $g$, $M_m$, and $M_n$, which we study in Section \ref{results_RNN}.  That is the dynamic mean field variables (e.g. the activity along along a vector $\kappa_v$, the total variance $\Delta_0$, structured variance $\Delta_\infty$, and the chaotic variance $\Delta_T$) are written as functions of one another in terms of connectivity parameters.  The values of these variables can be used obtained using a nonlinear system of equations solver.  These dynamic mean field variables are then cast as task-relevant variables with respect to the context of the provided inputs. Mastrogiuseppe et al. designed low-rank RNN connectivities via minimalist connectivity parameters to solve canonical tasks from behavioral neuroscience. 
+where  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$. From such a parameterization, this theory produces consistency equations for the dynamic mean field variables in terms of parameters like $g$, $M_m$, and $M_n$, which we study in Section \ref{results_RNN}.  That is the dynamic mean field variables (e.g. the activity along a vector $\kappa_v$, the total variance $\Delta_0$, structured variance $\Delta_\infty$, and the chaotic variance $\Delta_T$) are written as functions of one another in terms of connectivity parameters.  The values of these variables can be used obtained using a nonlinear system of equations solver.  These dynamic mean field variables are then cast as task-relevant variables with respect to the context of the provided inputs. Mastrogiuseppe et al. designed low-rank RNN connectivities via minimalist connectivity parameters to solve canonical tasks from behavioral neuroscience. 
 
 We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_r$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
 Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to use DMFT to calculate the emergent property statistics in EPI to learn distributions on such connectivity parameters of RNNs that execute tasks.
 
-Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $r = \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of an constant input $h(t) = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
+Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $r = \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of a constant input $h = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
+{\small
 \begin{equation}
 \begin{split}
 \kappa_r = G_1(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty) = M_m \kappa_n + y \\
@@ -831,14 +830,16 @@ Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\De
 \Delta_\infty = G_4(\kappa_r, \kappa_n, \Delta_0, \Delta_\infty)  = g^2 \int \mathcal{D}z \left[ \int \mathcal{D}x \phi(\kappa_r + \sqrt{\Delta_0 - \Delta_\infty}x + \sqrt{\Delta_\infty}z \right]^2 + \kappa_n^2 + 1
 \end{split} 
 \end{equation}
-where $z$ here is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system to a steady state.
+}
+where here $z$ is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system to a steady state.
+
 \begin{equation}
 \begin{split}
 l(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \Delta_0(t) = \sqrt{2x(t) + \Delta_\infty(t)^2} \\
 \frac{d \kappa_r(t)}{dt}  = -\kappa_r(t) + F(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
 \frac{d \kappa_n(t)}{dt} = -\kappa_n + G(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
-\frac{d I(t)}{dt}  = -l(t) + H(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
+\frac{d l(t)}{dt}  = -l(t) + H(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
 \frac{d \Delta_\infty(t)}{dt}  = -\Delta_\infty(t) + L(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t))
 \end{split}
 \end{equation}
@@ -846,6 +847,8 @@ Then, the chaotic variance, which is necessary for the Gaussian posterior condit
 \begin{equation}
 \Delta_T = \Delta_0 - \Delta_\infty
 \end{equation}
+
+In addition to the Gaussian posterior conditioning example in Section \ref{results_RNN}, we modeled two tasks from Mastrogiuseppe et al.: noisy detection and context-dependent discrimination.  We used the same theoretical equations and task setups described in their study.
 
 %TODO Need to explain the warm starting for the aficionados.
 
@@ -857,7 +860,7 @@ Then, the chaotic variance, which is necessary for the Gaussian posterior condit
 \begin{center}
 \includegraphics[scale=0.5]{figures/figS1/figS1.pdf}
 \end{center}
-Fig. S4: A. EPI for rank-1 networks doing discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.  See \cite{mastrogiuseppe2018linking}.
+Fig. S4: A. EPI for rank-1 networks doing noisy discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.  See \cite{mastrogiuseppe2018linking} for theoretical equations and task description.
 \end{figure}
 
 \end{document}
