@@ -59,7 +59,8 @@ However, this enterprise quickly becomes infeasible as biologically realistic co
 We bring recent machine learning techniques -- the use of deep generative models for probabilistic inference -- to bear on this problem, learning distributions of parameters that produce the specified properties of computation.   
 Importantly, the techniques we introduce offer a principled means to understand the implications of model parameter choices on computational properties of interest.  
 We motivate this methodology with a worked example analyzing sensitivity in the stomatogastric ganglion.  
-We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of error in recurrent neural networks solving a simple mathematical task. 
+%We then use it to generate insights into neuron-type input-responsivity in a model of primary visual cortex, a new understanding of rapid task switching in superior colliculus models, and attribution of error in recurrent neural networks solving a simple mathematical task. 
+We then use it to go beyond linear theory of neuron-type input-responsivity in a model of primary visual cortex, gain a mechanistic understanding of rapid task switching in superior colliculus models, and attribute error to connectivity properties in recurrent neural networks solving a simple mathematical task. 
 More generally, this work suggests a departure from realism vs tractability considerations, towards the use of modern machine learning for sophisticated interrogation of biologically relevant models.
 
 \section{Introduction}
@@ -73,8 +74,10 @@ Consider the idealized practice: one carefully designs a model and analytically 
 Seminal examples of this gold standard (which often adopt approaches from statistical physics) include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, the paradoxical effect \cite{tsodyks1997paradoxical}, and decision making \cite{wong2006recurrent}.
 %Seminal examples of this gold standard include our field's understanding of memory capacity in associative neural networks \cite{hopfield1982neural}, chaos and autocorrelation timescales in random neural networks \cite{sompolinsky1988chaos}, and the paradoxical effect in excitatory/inhibitory networks \cite{tsodyks1997paradoxical}.
 Unfortunately, as circuit models include more biological realism, theory via analytical derivation becomes intractable.  
-This creates an unfavorable tradeoff.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), producing accurate inferences about parameters of a too-simple model.  
-On the other hand, one may choose a more biologically accurate, scientifically relevant model at the cost of \emph{ad hoc} approaches to analysis (such as simply examining simulated activity), potentially resulting in bad inferences and thus erroneous scientific predictions or conclusions.
+%This creates an unfavorable tradeoff.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), producing accurate inferences about parameters of a too-simple model.  
+%On the other hand, one may choose a more biologically accurate, scientifically relevant model at the cost of \emph{ad hoc} approaches to analysis (such as simply examining simulated activity), potentially resulting in bad inferences and thus erroneous scientific predictions or conclusions.
+This creates an unfavorable tradeoff.  On the one hand, one may tractably analyze systems of equations with unrealistic assumptions (for example symmetry or gaussianity), mathematically formalizing how parameters affect computation in a too-simple model.  
+On the other hand, one may choose a more biologically accurate, scientifically relevant model at the cost of \emph{ad hoc} approaches to analysis (such as simply examining simulated activity), potentially resulting in bad inference of parameters and thus erroneous scientific predictions or conclusions.
  
 % now transition to ML...
 Of course, this same tradeoff has been confronted in many scientific fields characterized by the need to do inference in complex models.  
@@ -106,7 +109,7 @@ These models were chosen to demonstrate generality through ranges of biological 
 First, we use EPI to produce a set of verifiable hypotheses of input-responsivity in a four neuron-type dynamical model of primary visual cortex; we then validate these hypotheses in the model.
 Second, we demonstrated how the systematic application of EPI to levels of task performance can generate experimentally testable hypotheses regarding connectivity in superior colliculus.  
 Third, we use EPI to uncover the sources of error in a low-rank recurrent neural network executing a simple mathematical task.  
-The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking}, and more generally, these results point to the value of deep inference models for the interrogation of biologically relevant models.
+The novel scientific insights offered by EPI contextualize and clarify the previous studies exploring these models \cite{gutierrez2013multiple, litwin2016inhibitory, duan2018collicular, mastrogiuseppe2018linking}, and more generally, these results point to the value of deep inference for the interrogation of biologically relevant models.
 
 %-------------------
 
@@ -120,7 +123,7 @@ These distinct methodologies and scientific investigations emphasize the increas
 \begin{center}
 \includegraphics[scale=0.35]{figures/fig1/fig1b.pdf}
 \end{center}
-\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability of their generating parameters (stars) in the EPI-inferred distribution.  B. The EPI distribution of STG model parameters producing network syncing.  Samples are colored by log probability density.  Distribution contours of emergent property value error are shown at levels of $5 \times 10^{-7}$ and $1 \times 10^{-6}$ (dark and light gray).  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ and $v_2$.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$.}
+\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability density of their generating parameters (stars) in the EPI-inferred distribution.  B. The EPI distribution of STG model parameters producing network syncing.  Samples are colored by log probability density.  Distribution contours of emergent property value error are shown at levels of $5 \times 10^{-7}$ and $1 \times 10^{-6}$ (dark and light gray).  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ (solid) and $v_2$ (dashed) with lengths scaled by the square root of the absolute value of their eigenvalues.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$.}
  \label{fig:STG}
 \end{figure}
 
@@ -135,7 +138,7 @@ First, one designs or chooses an existing model that, it is hypothesized, captur
  To ground this process in a well-known example, consider the stomatogastric ganglion (STG) of crustaceans, a small neural circuit which generates multiple rhythmic muscle activation patterns for digestion \cite{marder2002cellular}.
 Despite full knowledge of STG connectivity and a precise characterization of its rhythmic pattern generation, biophysical models of the STG have complicated relationships between circuit parameters and neural activity \cite{goldman2001global, prinz2004similar}.
 A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure \ref{fig:STG}A, and note that the behavior of this model will be critically dependent on its parameterization -- the choices of conductance parameters $z = [g_{\text{el}}, g_{\text{synA}}]$.
-Specifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$), and the hub neuron (hub) couples with the fast or slow population or both.  
+Specifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$).  The hub neuron (hub) couples with either the fast or slow population or both.  
 
 Second, once the model is selected, one defines the emergent property, the measurable signal of scientific interest.  
 To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.54Hz.
@@ -154,14 +157,14 @@ Further validation of EPI is available in the supplementary materials, where we 
 \subsection{A deep generative modeling approach to emergent property inference} \label{results_dgm}
 
 Emergent property inference (EPI) systematizes the three-step procedure of the previous section.
-First, we consider the model as a coupled set of differential (and potentially stochastic) equations \cite{gutierrez2013multiple}.  In the running STG example, its activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
+First, we consider the model as a coupled set of differential (and potentially stochastic) equations \cite{gutierrez2013multiple}.  In the running STG example, the model activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$ is the membrane potential for each neuron, which evolves according to the biophysical conductance-based equation:
 \begin{equation} C_m \frac{dx}{dt} = -h(x; z) = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
 \end{equation} 
-where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
+where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, and $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
 
 Second, we define the emergent property, which as above is network syncing: oscillation of the entire population at an intermediate frequency of our choosing (Figure \ref{fig:STG}A bottom).
 Quantifying this phenomenon is straightforward: we define network syncing to be that each neuron's spiking frequency -- denoted $\omega_{\text{f1}}(x)$, $\omega_{\text{f2}}(x)$, etc. -- is close to an intermediate frequency of 0.542Hz.  
-Mathematically, we achieve this via constraints on the mean and variance of $\omega_\alpha(x)$ for each neuron $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$, and thus:
+Mathematically, we achieve this via constraints on the mean and variance of $\omega_\alpha(x)$ for each neuron $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$:
 \begin{equation}\label{eq:EP}
  \mathbb{E}\left[T(x) \right] ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \omega_{\text{f1}}(x) \\ \vdots \\ (\omega_{\text{f1}}(x) - 0.542)^2 \\ \vdots \end{bmatrix} ~~=~~  
  \begin{bmatrix} 0.542 \\ \vdots \\ 0.025^2 \\ \vdots \end{bmatrix} ~~\triangleq~~ \mu,
@@ -205,7 +208,7 @@ Equipped with this method, we now prove out the value of EPI by using it to inve
  \label{fig:V1_EPI}
 \end{figure}
 
-Dynamical models of excitatory (E) and inhibitory (I) populations with superlinear input-output function have succeeded in explaining a host of experimentally documented phenomena.
+Dynamical models of excitatory (E) and inhibitory (I) populations with supralinear input-output function have succeeded in explaining a host of experimentally documented phenomena.
 In a regime characterized by inhibitory stabilization of strong recurrent excitation, these models gives rise to paradoxical responses \cite{tsodyks1997paradoxical}, selective amplification  \cite{murphy2009balanced}, surround suppression \cite{ozeki2009inhibitory} and normalization \cite{rubin2015stabilized}. 
 Despite their strong predictive power, E-I circuit models rely on the assumption that inhibition can be studied as an indivisible unit. 
 However, experimental evidence shows that inhibition is composed of distinct elements -- parvalbumin (P), somatostatin (S), VIP (V) --
@@ -228,14 +231,17 @@ Initially, we studied the linearized response of the system to input $\frac{dx_{
 All analyses of this model consider the steady state response, so we drop the notation $ss$ from here on.
 While this linearization accurately predicts differential responses $dx = \left[ dx_{E} , dx_{P} , dx_{S} ,dx_{V} \right]$  for small differential inputs to each population $dh = \left[ 0.1 , 0.1 , 0.1 , 0.1 \right]$ (Fig \ref{fig:V1_EPI}B left), the linearization is a poor predictor in this nonlinear model more generally (Fig. \ref{fig:V1_EPI}B right).  Currently available approaches to deriving the steady state response of the system are limited.
 
-To get a more comprehensive picture of the input-responsivity of each neuron-type beyond linear theory, we used EPI to learn a distribution of the differential inputs to each population $dh$ that produce an increase of $y \in \{0.1, 0.5\}$ in the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$.  
+To get a more comprehensive picture of the input-responsivity of each neuron-type beyond linear theory, we used EPI to learn a distribution of the differential inputs to each population $dh$ that produce an increase of $y$ in the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$.  
 We want to know the differential inputs $dh$ that result in a differential steady state $dx_{\alpha}$ (the change in $x_{\alpha}$ when receiving input $h=b + dh$ with respect to the baseline $h = b$) of value $y$ with some small, arbitrarily chosen amount of variance  $0.01^2$.   
 These statements amount to the emergent property 
 \begin{equation}
 \mathcal{B}(\alpha, y) ~~\triangleq~~ 
 \mathbb{E} \begin{bmatrix} dx_{\alpha} \\ (dx_{\alpha} - y)^2 \end{bmatrix} ~~=~~ \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
 \end{equation}
-We maintain the notation $\mathcal{B}(\cdot)$ throughout the rest of the study as short hand for emergent property, which represents a different signature of computation in each application. In each column of Figure \ref{fig:V1_EPI}C visualizes the inferred distribution, available through EPI, of $dh$ corresponding to an excitatory (red), parvalbumin (blue), somatostatin (red) and VIP (green) neuron-type increase, while each row corresponds to amounts of increase 0.1 and 0.5.  For each pair of parameters, we show the two-dimensional marginal distribution of samples colored by $\log q_\theta(dh \mid \mathcal{B}(\alpha, y))$.  The inferred distributions immediately suggest four hypotheses: \\
+We maintain the notation $\mathcal{B}(\cdot)$ throughout the rest of the study as short hand for emergent property, which represents a different signature of computation in each application. 
+
+Using EPI, we inferred the distribution of $dh$ shown in Figure \ref{fig:V1_EPI}C producing $\mathcal{B}(\alpha, y)$.  
+Columns correspond to inferred distributions of excitatory ($\alpha=E$, red), parvalbumin ($\alpha=P$, blue), somatostatin ($\alpha=S$, red) and VIP ($\alpha=V$, green) neuron-type response increases, while each row corresponds to increase amounts of $y \in \{0.1, 0.5\}$.  For each pair of parameters, we show the two-dimensional marginal distribution of samples colored by $\log q_\theta(dh \mid \mathcal{B}(\alpha, y))$.  The inferred distributions immediately suggest four hypotheses: \\
 
 {\addtolength{\leftskip}{10 mm}
 H1: as is intuitive, each neuron-type's firing rate should be sensitive to that neuron-type's direct input (e.g. Fig. \ref{fig:V1_EPI}C H1 gray boxes indicate low variance in $dh_E$ when $\alpha=E$. Same observation in all inferred distributions); \\
@@ -247,7 +253,7 @@ H4: there should be a nonmonotonic response of the V-population with input to th
 
 \begin{figure}
 \floatbox[{\capbeside\thisfloatsetup{capbesideposition={right,top},capbesidewidth=4cm}}]{figure}[\FBwidth]
-{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses by the E-population to changes in individual input $\delta h_\alpha \hat{u}_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations.  Labels H1, H2, H3, and H4 indicate which curves confirm which hypotheses.}\label{fig:V1_HT}}
+{\caption{Confirming EPI generated hypotheses in V1. A. Differential responses $\delta x_E$ by the E-population to changes in individual input $\delta h_\alpha \hat{u}_\alpha$ away from the mode of the EPI distribution $dh^*$. B-D Same plots for the P-, S-, and V-populations.  Labels H1, H2, H3, and H4 indicate which curves confirm which hypotheses.}\label{fig:V1_HT}}
 {\includegraphics[scale=0.6]{figures/fig3/fig3.pdf}}
 \end{figure}
 We evaluate these hypotheses by taking steps in individual neuron-type input $\delta h_\alpha$ away from the modes of the inferred distributions at $y=0.1$
@@ -264,7 +270,7 @@ H4: the V-population exhibits a nonmonotonic response to $\delta h_E$ (Fig. \ref
 
 }
 
-These hypotheses were in stark contrast to what was available to us via traditional analytical linear prediction (Fig. 2C, magenta).
+These hypotheses were in stark contrast to what was available to us via traditional analytical linear prediction (Fig. 2C, magenta, see Section \ref{methods_V1}).
 To this point, we have shown the utility of EPI on relatively low-level emergent properties like network syncing and differential neuron-type population responses.  
 In the remainder of the study, we focus on using EPI to understand models of more abstract cognitive function.
 
@@ -272,24 +278,50 @@ In the remainder of the study, we focus on using EPI to understand models of mor
 \subsection{Identifying neural mechanisms of flexible task switching} \label{results_SC}
 In a rapid task switching experiment \cite{duan2015requirement}, rats were explicitly cued on each trial to either orient towards a visual stimulus in the Pro (P) task or orient away from a visual stimulus in the Anti (A) task (Fig. \ref{fig:SC}a). Neural recordings in the midbrain superior colliculus (SC) exhibited two populations of neurons that simultaneously represented both task context (Pro or Anti) and motor response (contralateral or ipsilateral to the recorded side): the Pro/Contra and Anti/Ipsi neurons \cite{duan2018collicular}.
 Duan et al. proposed a model of SC that, like the V1 model analyzed in the previous section, is a four-population dynamical system.  
-We analyzed this model, where the neuron-type populations are functionally-defined as the Pro- and Anti-populations in each hemisphere (left (L) and right (R)).  
-The Pro- or Anti-populations receive an input determined by the cue, and then the left and right populations receive an input based on the side of the light stimulus. 
-Activities were bounded between $0$ and $1$, so that a high output of the Pro population in a given hemisphere corresponds to the contralateral response.   
-An additional stipulation is that when one Pro population responds with a high-output, the opposite Pro population must respond with a low output.
-Finally, this circuit operates in the presence of Gaussian noise resulting in trial-to-trial variability (see Section \ref{methods_SC}).
-The connectivity matrix is parameterized by the geometry of the population arrangement (Fig. \ref{fig:SC}B).  
+We analyzed this model, where the neuron-type populations are functionally-defined as the Pro- and Anti-populations in each hemisphere (left (L) and right (R)), their connectivity is parameterized geometrically  (Fig. \ref{fig:SC}B).
+The input-output function of this model is chosen such that the population responses $x = \begin{bmatrix} x_{LP} & x_{LA} & x_{RP} & x_{RA} \end{bmatrix}^\top$ are bounded from 0 to 1 giving rise to high (1) or low (0) responses at the end of the trial:
+\begin{equation}
+x_\alpha =\left(\frac{1}{2}\tanh\left(\frac{u_\alpha - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
+\end{equation}
+where $\epsilon = 0.05$ and $\zeta = 0.5$.  The dynamics evolve with timescale $\tau=0.09$ via an internal variable $u$ governed by connectivity weights $W$
+\begin{equation}
+\tau \frac{du}{dt} = -u + Wx + h + \sigma dB
+\end{equation}
+with gaussian noise of variance $\sigma^2$ = 1.
+The input $h$ is comprised of a cue-dependent input to the Pro or Anti populations, a stimulus orientation input to either the Left or Right populations, and a choice-period input to the entire network (see Section \ref{methods_SC}).
+Here, we use EPI to determine the changes in network connectivity $z = \begin{bmatrix} sW_P & sW_A & vW_{PA} & vW_{AP} & dW_{PA} & dW_{AP} & hW_P & hW_A \end{bmatrix}$ resulting in greater levels of rapid task switching accuracy.
+%Activities were bounded between $0$ and $1$, so that a high output of the Pro population in a given hemisphere corresponds to the contralateral response.   
+%An additional stipulation is that when one Pro population responds with a high-output, the opposite Pro population must respond with a low output.
+%Finally, this circuit operates in the presence of Gaussian noise resulting in trial-to-trial variability (see Section \ref{methods_SC}).
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figures/fig4/fig4.pdf}
 \end{center}
-\caption{EPI reveals changes in SC \cite{duan2018collicular} connectivity that control task accuracy.  A. Rapid task switching behavioral paradigm (see text). B. Model of superior colliculus (SC). Neurons: LP - left pro, RP - right pro, LA - left anti, RA - right anti.  Parameters: sW - self, hW - horizontal, vW -vertical, dW - diagonal weights. C. The Schur decomposition of the weight matrix $W = V\Lambda V^{-1}$ is a unique decomposition with orthogonal $V$ and upper triangular $\Lambda$. Schur modes: $v_{\text{all}}$, $v_{\text{task}}$, $v_{\text{side}}$, and $v_{\text{diag}}$.  D. The marginal EPI distributions of the Schur eigenvalues at each level of task accuracy. E. The correlation of Schur eigenvalue with task performance in each learned EPI distribution.}
+\caption{EPI reveals changes in SC \cite{duan2018collicular} connectivity that control task accuracy.  A. Rapid task switching behavioral paradigm (see text). B. Model of superior colliculus (SC). Neurons: LP - left pro, RP - right pro, LA - left anti, RA - right anti.  Parameters: $sW$ - self, $hW$ - horizontal, $vW$ -vertical, $dW$ - diagonal weights.  Subscripts $P$ and $A$ of connectivity weights indicate Pro or Anti populations, and e.g. $vW_{PA}$ is a vertical weight from an Anti to a Pro population.  C. The Schur decomposition of the weight matrix $W = V\Lambda V^{-1}$ is a unique decomposition with orthogonal $V$ and upper triangular $\Lambda$. Schur modes: $v_{\text{all}}$, $v_{\text{task}}$, $v_{\text{side}}$, and $v_{\text{diag}}$.  D. The marginal EPI distributions of the Schur eigenvalues at each level of task accuracy. E. The correlation of Schur eigenvalue with task performance in each learned EPI distribution.}
 \label{fig:SC}
 \end{figure}
 
-Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
+To quantify the emergent property of rapid task switching at various levels of accuracy, we considered the requirements of this model in this behavioral paradigm.
+At the end of successful trials, the response of the Pro population in the hemisphere of the correct choice must have a value near 1, while the Pro population in the opposite hemisphere must have a value near 0.
+Constraining a population response $x_\alpha \in \left[0,1\right]$ to be either 0 or 1 can be achieved by requiring that it has Bernoulli variance (see Section \ref{methods_SC}).
+Thus, we can formulate rapid task switching at a level of accuracy $p \in \left[0, 1\right]$ in both tasks in terms of the average steady response of the Pro population $\hat{p}$ of the correct choice,  the error in Bernoulli variance of that Pro neuron $\sigma^2_{\text{err}}$, and the average difference in Pro neuron responses $d$ in both Pro and Anti trials:
+\begin{equation}
+\mathcal{B}(p) ~~\triangleq~~ \begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
+\end{equation}
+Thus, $\mathcal{B}(p)$ denotes Bernoulli, winner-take-all responses between Pro neurons in a model executing rapid task switching near accuracy level $p$.
 
-EPI demonstrates that, for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   There were no interesting trends with task accuracy in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E).  Thus, EPI produces novel, experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
+We used EPI to learn distributions of the SC weight matrix parameters $z$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$.
+To make sense of these inferred distributions, we followed the approach of Duan et al. by decomposing the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. 
+The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$. 
+
+%Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
+
+We found that for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  
+Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  
+Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   
+There were no interesting trends with task accuracy in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). 
+Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E) suggesting experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Linking RNN connectivity to error} \label{results_RNN}
@@ -723,7 +755,7 @@ For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{
 \subsubsection{Superior colliculus}\label{methods_SC}
 In the model of Duan et al \cite{duan2018collicular}, there are four total units: two in each hemisphere corresponding to the Pro/Contra and Anti/Ipsi populations.  They are denoted as left Pro (LP), left Anti (LA), right Pro (RP) and right Anti (RA).  Each unit has an activity ($x_\alpha$) and internal variable ($u_\alpha$) related by
 \begin{equation}
-x_\alpha(t) =\left(\frac{1}{2}\tanh\left(\frac{u_\alpha(t) - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
+x_\alpha =\left(\frac{1}{2}\tanh\left(\frac{u_\alpha - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
 \end{equation}
 where $\alpha \in \{LP, LA, RA, RP\}$ $\epsilon = 0.05$ and $\zeta = 0.5$ control the position and shape of the nonlinearity, respectively.
 
