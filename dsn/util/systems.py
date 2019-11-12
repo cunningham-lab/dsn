@@ -418,9 +418,9 @@ class STGCircuit(system):
         self.T = model_opts["T"]
         self.fft_start = model_opts["fft_start"]
         self.w = model_opts["w"]
-        self.density_network_init_mu = np.array([4.0, 5.0])
-        a = np.zeros((self.D,))
-        b = np.array([8.0, 10.0])
+        self.density_network_init_mu = np.array([6.0, 2.0])
+        z = np.array([4.0, 0.0])
+        b = np.array([8.0, 4.0])
         self.density_network_bounds = [a, b]
         self.has_support_map = True
 
