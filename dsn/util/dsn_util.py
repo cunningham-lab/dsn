@@ -91,7 +91,7 @@ def get_system_from_template(sysname, param_dict):
     elif (sysname == "STGCircuit"):
         freq = param_dict['freq']
         if (freq == "med"):
-            T = 500
+            T = 200
             mean = 0.542*np.ones((5,))
             variance = (.025)**2*np.ones((5,))
         elif (freq == "high"):
