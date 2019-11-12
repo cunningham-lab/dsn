@@ -35,7 +35,7 @@ arch_dict = get_arch_from_template(system, param_dict)
 
 AL_it_max = 10
 AL_fac = 4.0
-iters = 2000
+iters = 2500
 batch_size = 300 
 lr_order = -3
 check_rate = 100
@@ -53,6 +53,6 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=check_rate,
-    dir_str="STGCircuit_%.2f" % sigma_init,
+    dir_str="STGCircuit_test",
     db=False,
 )

@@ -92,7 +92,7 @@ def get_system_from_template(sysname, param_dict):
         freq = param_dict['freq']
         if (freq == "med"):
             T = 200
-            mean = 0.542*np.ones((5,))
+            mean = 0.53*np.ones((5,))
             variance = (.025)**2*np.ones((5,))
         elif (freq == "high"):
             T = 500
@@ -382,6 +382,7 @@ def get_arch_from_template(system, param_dict):
         repeats = param_dict['repeats']
         nlayers = param_dict['nlayers']
         sigma_init = param_dict['sigma_init']
+        Sigma_init = np.square(sigma_init)*np.eye(system.D)
 
         flow_type = "RealNVP"
         post_affine = True
@@ -404,6 +405,7 @@ def get_arch_from_template(system, param_dict):
                      "init_mo":0.99,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
+                     "Sigma_init": Sigma_init,
                     }
 
     elif (sysname == "STGCircuit"):
@@ -424,8 +426,8 @@ def get_arch_from_template(system, param_dict):
 
         # Use informed initialization:
         #mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
-        mu_init = np.array([6.0, 1.5])
-        sigma_init = (sigma_init**2)*np.eye(2)
+        mu_init = system.density_network_init_mu
+        Sigma_init = (sigma_init**2)*np.eye(2)
 
         arch_dict = {
                      "D": D,
@@ -437,7 +439,8 @@ def get_arch_from_template(system, param_dict):
                      "mo":0.99,
                      "init_mo":0.99,
                      "mu_init": mu_init,
-                     "sigma_init": sigma_init,
+                     "sigma_init":sigma_init,
+                     "Sigma_init": Sigma_init,
                     }
 
     elif (sysname == "V1Circuit"):
@@ -468,7 +471,7 @@ def get_arch_from_template(system, param_dict):
             mu_init = npzfile['mean']
             sigma_init = npzfile['std']
             """
-            mu_init, sigma_init = get_gauss_init(system)
+            mu_init, Sigma_init = get_gauss_init(system)
         post_affine = True
         K = 1
         real_nvp_arch = {
@@ -488,7 +491,7 @@ def get_arch_from_template(system, param_dict):
                      "mo":0.99,
                      "init_mo":1.0,
                      "mu_init": mu_init,
-                     "sigma_init": sigma_init,
+                     "Sigma_init": Sigma_init,
                     }
 
     elif (sysname == "SCCircuit"):
@@ -498,6 +501,7 @@ def get_arch_from_template(system, param_dict):
         nlayers = param_dict['nlayers']
         upl = param_dict['upl']
         sigma_init = param_dict['sigma_init']
+        Sigma_init = np.square(sigma_init)*np.eye(system.D)
         if (behavior_type == 'WTA'):
             flow_type = "RealNVP"
             post_affine = True
@@ -519,6 +523,7 @@ def get_arch_from_template(system, param_dict):
                          "init_mo":0.99,
                          "mu_init": mu_init,
                          "sigma_init": sigma_init,
+                         "Sigma_init": Sigma_init,
                         } 
         else:
             raise NotImplementedError()
@@ -527,11 +532,12 @@ def get_arch_from_template(system, param_dict):
         repeats = param_dict['repeats']
         nlayers = param_dict['nlayers']
         upl = param_dict['upl']
+        sigma_init = param_dict['sigma_init']
+        Sigma_init = np.square(sigma_init)*np.eye(system.D)
 
         num_masks = 2
         #mu_init, sigma_init = get_gauss_init(system)
         mu_init = np.array([2.5, 0.0, 0.0])
-        sigma_init = param_dict['sigma_init']*np.ones(D,)
 
         flow_type = "RealNVP"
         post_affine = True
@@ -541,7 +547,6 @@ def get_arch_from_template(system, param_dict):
                          'nlayers':nlayers,
                          'upl':upl,
                         }
-
 
         arch_dict = {
                      "D": D,
@@ -554,6 +559,7 @@ def get_arch_from_template(system, param_dict):
                      "init_mo":1.0,
                      "mu_init": mu_init,
                      "sigma_init": sigma_init,
+                     "Sigma_init": Sigma_init,
                     }
 
     return arch_dict
@@ -1035,16 +1041,13 @@ def rvs(dim):
 
 
 def initialize_nf(system, arch_dict, random_seed):
-    sigma_init = arch_dict['sigma_init']
+    Sigma_init = arch_dict['Sigma_init']
 
     if (system.density_network_bounds is not None):
         a, b = system.density_network_bounds
     else:
         a = None
         b = None
-    if (type(sigma_init) == float):
-        sigma_init = sigma_init*np.ones((system.D))
-        arch_dict.update({'sigma_init':sigma_init})
 
     initdir = get_initdir(arch_dict,
                           random_seed,
@@ -1063,7 +1066,7 @@ def initialize_nf(system, arch_dict, random_seed):
 
 def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
     mu_init = arch_dict['mu_init']
-    sigma_init = arch_dict['sigma_init']
+    Sigma_init = arch_dict['Sigma_init']
     if (bounds is not None):
         # make this more flexible for single bounds
         fam_class = family_from_str("truncated_normal")
@@ -1075,13 +1078,9 @@ def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
     if (mu_init is None):
         mu_init = np.zeros((D,))
 
-    # Sigma init is either a covariance matrix or the element wise standard devs
-    if (len(sigma_init.shape) == 1):
-        sigma_init = np.diag(np.square(sigma_init))
-        
     params = {
         "mu": mu_init,
-        "Sigma": sigma_init,
+        "Sigma": Sigma_init,
         "dist_seed": 0,
     }
     n = 1000
