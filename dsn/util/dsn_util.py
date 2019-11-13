@@ -5,7 +5,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
-from tf_util.tf_util import get_archstring, get_initdir, check_init, load_dgm
+from tf_util.tf_util import get_archstring, get_initdir, check_init, load_dgm, density_network
 import scipy.linalg
 from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit, LowRankRNN
 from dsn.util.plot_util import assess_constraints_mix
@@ -795,8 +795,57 @@ def load_DSNs(model_dirs, load_its):
         feed_dicts.append(feed_dict)
 
     return sessions, tf_vars, feed_dicts
-    
-    
+
+
+def load_DSN_fast(system, arch_dict, model_dir, ME_it):
+    paramfname = model_dir + 'params%d.npz' % ME_it
+
+    W = tf.placeholder(tf.float64, (1,None,system.D))
+    Z, sum_log_det_jacobian, flow_layers = density_network(W, arch_dict, system.support_mapping,
+                                                            paramfname=paramfname)
+
+    log_base_density = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
+    log_q_z = log_base_density - sum_log_det_jacobian
+
+    paramfile = np.load(paramfname)
+    _batch_norm_mus = paramfile['batch_norm_mus']
+    _batch_norm_sigmas = paramfile['batch_norm_sigmas']
+
+
+    batch_norm_mus = []
+    batch_norm_sigmas = []
+    batch_norm_layer_means = []
+    batch_norm_layer_vars = []
+    batch_norm = False
+    for i in range(len(flow_layers)):
+        flow_layer = flow_layers[i]
+        if (flow_layer.name == 'RealNVP' and flow_layer.batch_norm):
+            batch_norm = True
+            num_masks = arch_dict['real_nvp_arch']['num_masks']
+            for j in range(num_masks):
+                batch_norm_mus.append(flow_layer.mus[j])
+                batch_norm_sigmas.append(flow_layer.sigmas[j])
+                batch_norm_layer_means.append(flow_layer.layer_means[j])
+                batch_norm_layer_vars.append(flow_layer.layer_vars[j])
+
+    feed_dict = {}
+    if (batch_norm):
+        num_batch_norms = len(batch_norm_mus)
+        for j in range(num_batch_norms):
+            feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[ME_it][j]})
+            feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[ME_it][j]})
+
+    Z_input = tf.placeholder(tf.float64, (1,None,system.D))
+    Z_INV = Z_input
+    layer_ind = len(flow_layers) - 1
+    while (layer_ind > -1):
+        layer = flow_layers[layer_ind]
+        Z_INV = layer.inverse(Z_INV)
+        layer_ind -= 1
+
+    tf_vars = W, Z, Z_input, Z_INV, log_q_z, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars
+    return tf_vars, feed_dict
+
                 
 
 def initialize_adam_parameters(sess, optimizer, all_params):
