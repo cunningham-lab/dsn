@@ -143,7 +143,7 @@ A model of the STG \cite{gutierrez2013multiple} is shown schematically in Figure
 Specifically, the two fast neurons ($f1$ and $f2$) mutually inhibit one another, and oscillate at a faster frequency than the mutually inhibiting slow neurons ($s1$ and $s2$).  The hub neuron (hub) couples with either the fast or slow population or both.  
 
 Second, once the model is selected, one defines the emergent property, the measurable signal of scientific interest.  
-To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.54Hz.
+To continue our running STG example, one such emergent property is the phenomenon of \emph{network syncing} -- in certain parameter regimes, the frequency of the hub neuron matches that of the fast and slow populations at an intermediate frequency.  This emergent property is shown in Figure 1A at a frequency of 0.53Hz.
 
 Third, qualitative parameter analysis ensues: since precise mathematical analysis is intractable in this model, a brute force sweep of parameters is done \cite{gutierrez2013multiple}.  Subsequently, a qualitative description is formulated to describe the different parameter configurations that lead to the emergent property.  
 In this last step lies the opportunity for a precise quantification of the emergent property as a statistical feature of the model.  Once we have such a methodology, we can infer a probability distribution over parameter configurations that produce this emergent property. 
@@ -151,9 +151,9 @@ In this last step lies the opportunity for a precise quantification of the emerg
 Before presenting technical details (in the following section), let us understand emergent property inference schematically:  EPI (Fig. \ref{fig:STG}A gray box) takes, as input, the model and the specified emergent property, and as its output, produces the parameter distribution shown in Figure \ref{fig:STG}B.  
 This distribution -- represented for clarity as samples from the distribution -- is then a scientifically meaningful and mathematically tractable object.  
 In the STG model, this distribution can be specifically queried to reveal the prototypical parameter configuration for network syncing (the mode; Figure \ref{fig:STG}B yellow star), and how network syncing decays based on changes away from the mode.
-The eigenvectors (of the Hessian of the distribution at the mode) can be queried to quantitatively formalize the robustness of network syncing (Fig. \ref{fig:STG}B $v_1$ and $v_2$).
+The eigenvectors (of the Hessian of the distribution at the mode) quantitatively formalize the robustness of network syncing (Fig. \ref{fig:STG}B $v_1$ and $v_2$).
 Indeed, samples equidistant from the mode along these EPI-identified dimensions of sensitivity ($v_1$) and degeneracy ($v_2$) agree with error contours (Fig. 1B, contours) and have diminished or preserved network syncing, respectively (Figure 1B inset and activity traces). 
-Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
+%Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
 %Taken together, bringing careful inference to theoretical models offers deeper insight into the behavior of these models, and the opportunity to make rigorous this last step in the practice of theoretical neuroscience.}
 
 \subsection{A deep generative modeling approach to emergent property inference} \label{results_dgm}
@@ -165,11 +165,11 @@ First, we consider the model as a coupled set of differential (and potentially s
 where $C_m$=1nF, and $h_{\text{leak}}$, $h_{Ca}$, $h_K$, $h_{\text{hyp}}$, $h_{\text{elec}}$, and $h_{\text{syn}}$ are the leak, calcium, potassium, hyperpolarization, electrical, and synaptic currents, all of which have their own complicated dependence on $x$ and $z = [g_{\text{el}}, g_{\text{synA}}]$ (see Section \ref{methods_STG}).
 
 Second, we define the emergent property, which as above is network syncing: oscillation of the entire population at an intermediate frequency of our choosing (Figure \ref{fig:STG}A bottom).
-Quantifying this phenomenon is straightforward: we define network syncing to be that each neuron's spiking frequency -- denoted $\omega_{\text{f1}}(x)$, $\omega_{\text{f2}}(x)$, etc. -- is close to an intermediate frequency of 0.542Hz.  
+Quantifying this phenomenon is straightforward: we define network syncing to be that each neuron's spiking frequency -- denoted $\omega_{\text{f1}}(x)$, $\omega_{\text{f2}}(x)$, etc. -- is close to an intermediate frequency of 0.53Hz.  
 Mathematically, we achieve this via constraints on the mean and variance of $\omega_\alpha(x)$ for each neuron $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$:
 \begin{equation}\label{eq:EP}
- \mathbb{E}\left[T(x) \right] ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \omega_{\text{f1}}(x) \\ \vdots \\ (\omega_{\text{f1}}(x) - 0.542)^2 \\ \vdots \end{bmatrix} ~~=~~  
- \begin{bmatrix} 0.542 \\ \vdots \\ 0.025^2 \\ \vdots \end{bmatrix} ~~\triangleq~~ \mu,
+ \mathbb{E}\left[T(x) \right] ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \omega_{\text{f1}}(x) \\ \vdots \\ (\omega_{\text{f1}}(x) - 0.53)^2 \\ \vdots \end{bmatrix} ~~=~~  
+ \begin{bmatrix} 0.53 \\ \vdots \\ 0.025^2 \\ \vdots \end{bmatrix} ~~\triangleq~~ \mu,
  \end{equation}
   which completes the quantification of the emergent property.
 
@@ -193,8 +193,9 @@ Here we chose Shannon entropy as a means to find parameter distributions with mi
 %One can interpret the resulting probabilities as increasing with closeness in emergent property statistics to the emergent property values (see Section \ref{methods_2DLDS}).
 
 EPI optimizes the weights and biases $\theta$ of the deep neural network (which induces the probability distribution) by iteratively solving Equation \ref{eq:EPI}. 
-The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property.  
+The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property (Fig. S4).
 Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is not different than its emergent property value (see Section \ref{methods_AL_opt}). 
+Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
 In relation to broader methodology, inspection of the EPI objective reveals a natural relationship to posterior inference.
 Specifically, EPI executes variational inference in an exponential family model, the sufficient statistics and mean parameter of which are defined by the emergent property statistics and values, respectively (see Section \ref{methods_VI}).
 Equipped with this method, we now prove out the value of EPI by using it to investigate and produce novel insights about three prominent models in neuroscience.
@@ -371,7 +372,7 @@ We tested this prediction by taking parameters $z_1$ and $z_2$ as representative
 Instead of using the theoretical predictions shown in Figure \ref{fig:RNN}B, we simulated finite-size realizations of these networks with 2,000 neurons (e.g. Fig. \ref{fig:RNN}C).  
 We perturbed these parameter choices by the product $M_m M_n$ clarifying that the posterior mean can be directly controlled in this way (Fig. \ref{fig:RNN}D).
 Thus, EPI confers a clear picture of error in this computation: the product of the low rank vector means $M_m$ and $M_n$ modulates the estimated posterior mean while the random strength $g$ modulates the estimated posterior variance.
-This novel procedure of inference on reduced parameterizations of RNNs conditioned on the emergent property of task execution is generalizable to other settings modeled in \cite{mastrogiuseppe2018linking} like noisy integration and context-dependent decision making (Fig. S4).
+This novel procedure of inference on reduced parameterizations of RNNs conditioned on the emergent property of task execution is generalizable to other settings modeled in \cite{mastrogiuseppe2018linking} like noisy integration and context-dependent decision making (Fig. S5).
 
 %The observations are supported by 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high product of low rank vector means $M_m M_n$, and produces an RNN overestimating the posterior mean (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$ compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. 
 \begin{figure}
@@ -552,7 +553,7 @@ To optimize $q_\theta(z)$ in Equation \ref{eq:opt}, the constrained optimization
 \begin{equation}
 L(\theta; \eta, c) = -H(q_\theta) + \eta^\top R(\theta) + \frac{c}{2}||R(\theta)||^2
 \end{equation}
-where $R(\theta) = \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\eta \in \mathbb{R}^m$ are the Lagrange multipliers (which are closely related to the natural parameters of exponential families (see Section \ref{methods_VI})) and $c$ is the penalty coefficient.  For a fixed $(\eta, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch, which is a period of optimization with fixed $\eta$ and $c$ for a given number of stochastic optimization iterations. Similarly, $\eta$ is tuned each epoch based on the constraint violations.  For the linear two-dimensional system (Fig. S1C), optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\eta_1 = \textbf{0}$.  The penalty coefficient is updated based on the result of a hypothesis test regarding the reduction in constraint violation.  The p-value of $E[||R(\theta_{k+1})||] > \gamma \mathbb{E} \left[||R(\theta_{k})|| \right]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the study, $\beta = 4.0$ and $\gamma = 0.25$ were used.  The other update rule is $\eta_{k+1} = \eta_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05.  This is the dotted line on the plots below depicting the optimization cutoff of EPI for the 2-dimensional linear system.
+where $R(\theta) = \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\eta \in \mathbb{R}^m$ are the Lagrange multipliers (which are closely related to the natural parameters of exponential families (see Section \ref{methods_VI})) and $c$ is the penalty coefficient.  For a fixed $(\eta, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch, which is a period of optimization with fixed $\eta$ and $c$ for a given number of stochastic optimization iterations. Similarly, $\eta$ is tuned each epoch based on the constraint violations.  For the linear two-dimensional system (Fig. S1C), optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\eta_1 = \textbf{0}$.  The penalty coefficient is updated based on the result of a hypothesis test regarding the reduction in constraint violation.  The p-value of $\mathbb{E}[||R(\theta_{k+1})||] > \gamma \mathbb{E} \left[||R(\theta_{k})|| \right]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the study, $\beta = 4.0$ and $\gamma = 0.25$ were used.  The other update rule is $\eta_{k+1} = \eta_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05 (Fig. S1D black dotted line).
 
 The intention is that $c$ and $\eta$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.   
 If the optimization is left to continue running, and structural pathologies in the distribution may be introduced.
@@ -649,7 +650,7 @@ Finally, there is a synaptic gating variable as well:
 \end{equation}
 When the dynamic gating variables are considered, this is actually a 15-dimensional nonlinear dynamical system.
 
-In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 500$ time steps of $dt = 25ms$.  In EPI, since gradients are taken through the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.  Poor resolution afforded by the discrete Fourier transform motivated the use of an alternative basis of complex exponentials to measure spiking frequency.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
+In order to measure the frequency of the hub neuron during EPI, the STG model was simulated for $T = 200$ time steps of $dt = 25ms$.  In EPI, since gradients are taken through the simulation process, the number of time steps are kept modest if possible. The chosen $dt$ and $T$ were the most computationally convenient choices yielding accurate frequency measurement.  Poor resolution afforded by the discrete Fourier transform motivated the use of an alternative basis of complex exponentials to measure spiking frequency.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
 %Our original approach to measuring frequency was to take the max of the fast Fourier transform (FFT) of the simulated time series.  There are a few key considerations here.  One is resolution in frequency space.  Each FFT entry will correspond to a signal frequency of $\frac{F_s k}{N}$, where N is the number of samples used for the FFT, $F_s = \frac{1}{dt}$, and $k \in \left[0, 1, ..., N-1\right]$.  Our resolution is improved by increasing $N$ and decreasing $dt$.  Increasing N = T-b, where $b$ is some fixed number of buffer burn-in initialization samples, necessitates an increase in simulation time steps $T$, which directly increases computational cost.  Increasing $F_s$ (decreasing $dt$) increases system approximation accuracy, but requires more time steps before a full cycle is observed.  At the level of $dt = 0.025$, thousands of temporal samples were required for resolution of .01Hz.  These challenges in frequency resolution with the discrete Fourier transform motivated the use of an alternative basis of complex exponentials.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
@@ -662,19 +663,30 @@ v_\alpha = \frac{|\mathcal{X}_\alpha|^\beta}{\sum_{k=1}^N |\mathcal{X}_\alpha(k)
 \end{equation}
 The frequency is then calculated as $\omega_\alpha = v_\alpha^\top \Phi$ with $\beta = 100$.
 
-Network syncing, like all other emergent properties in this work, are defined by the emergent property statistics and values.  The emergent property statistics are the first- and second-moments of the firing frequencies. The first moments are set to 0.542Hz, while the second moments are set to 0.025Hz$^2$.
+Network syncing, like all other emergent properties in this work, are defined by the emergent property statistics and values.  The emergent property statistics are the first- and second-moments of the firing frequencies. The first moments are set to 0.53Hz, while the second moments are set to 0.025Hz$^2$:
 \begin{equation}
-E \begin{bmatrix} \omega_{\text{f1}} \\ \omega_{\text{f2}} \\ \omega_{\text{hub}} \\ \omega_{\text{s1}} \\ \omega_{\text{s2}} \\ (\omega_{\text{f1}} - 0.542)^2 \\ (\omega_{\text{f2}} - 0.542)^2 \\ (\omega_{\text{hub}} - 0.542)^2 \\ (\omega_{\text{s1}} - 0.542)^2 \\ (\omega_{\text{s2}} - 0.542)^2  \end{bmatrix} = \begin{bmatrix} 0.542 \\ 0.542 \\ 0.542 \\ 0.542 \\ 0.542 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}
+E \begin{bmatrix} \omega_{\text{f1}} \\ \omega_{\text{f2}} \\ \omega_{\text{hub}} \\ \omega_{\text{s1}} \\ \omega_{\text{s2}} \\ (\omega_{\text{f1}} - 0.53)^2 \\ (\omega_{\text{f2}} - 0.53)^2 \\ (\omega_{\text{hub}} - 0.53)^2 \\ (\omega_{\text{s1}} - 0.53)^2 \\ (\omega_{\text{s2}} - 0.53)^2  \end{bmatrix} = \begin{bmatrix} 0.53 \\ 0.53 \\ 0.53 \\ 0.53 \\ 0.53 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}
 \end{equation}
-For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} 10 \\ 8 \end{bmatrix} \right]$ (the same considered in \cite{gutierrez2013multiple}). We have shown the EPI optimization that converged with maximum entropy across 5 random seeds and augmented Lagrangian coefficient initializations of $c_0 \in \{10\}$.
+Throughout optimization, the augmented Lagrangian parameters $\eta$ and $c$, were updated after each epoch of 2,500 iterations (see Section \ref{methods_AL_opt}).  The optimization converged after four epochs (Fig. S4).
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.4]{figures/figS5/figS5.pdf}
+\end{center}
+\begin{flushleft}
+Fig. S4: Emergent property inference of the STG model producing network syncing. A. Entropy throughout optimization. B. The first moment emergent property statistics converge to the emergent property values at 10,000 iterations, following the fourth augmented Lagrangian epoch of 2,500 iterations.  (There is no convergence at the end of the third epoch, because $q_\theta(z)$ failed to produce enough samples yielding $\omega_{\text{f1}}(x)$ less than $0.53$Hz.)    C. The second moment emergent property statistics converge to the emergent property values.
+\end{flushleft}
+\end{figure}
+
+For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 4 \\ 0 \end{bmatrix}, \begin{bmatrix} 8 \\ 4 \end{bmatrix} \right]$. We used an augmented Lagrangian coefficient of $c_0 = 2$.
 
 We calculated the Hessian at the mode of the inferred EPI distribution.  
 The Hessian of a probability model is the second order gradient of the log probability density $\log q_\theta(z)$ with respect to the parameters $z$:  $\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$.  
 With EPI, we can examine the Hessian, which is analytically available throughout the deep probability distribution, at a given parameter choice to determine what dimensions of parameter space are sensitive (high magnitude eigenvalue), and which are degenerate (low magnitude eigenvalue) with respect to the emergent property produced. 
 In Figure \ref{fig:STG}B, the eigenvectors of the Hessian $v_1$ and $v_2$ are shown evaluated at the mode of the distribution.  
-The length of the arrows is inversely proportional to the square root of absolute value of their eigenvalues $\lambda_1 = -147.2$ and $\lambda_2 = -19.70$.
+The length of the arrows is inversely proportional to the square root of absolute value of their eigenvalues $\lambda_1 = -10.9$ and $\lambda_2 = -2.34$.
 We quantitatively measured the sensitivity of the model with respect to network syncing along the eigenvectors of the Hessian (Fig. \ref{fig:STG}B, inset).
-Sensitivity was measured as the slope coefficient of linear regression fit to network syncing error (the sum of squared differences of each neuron's frequency from 0.542Hz) as a function of perturbation magnitude (from 0 to 0.4) away from the mode along both orientations indicated by the eigenvector.
+Sensitivity was measured as the slope coefficient of linear regression fit to network syncing error (the sum of squared differences of each neuron's frequency from 0.53Hz) as a function of perturbation magnitude (from 0 to 0.25) away from the mode along both orientations indicated by the eigenvector.
 These sensitivities were compared to all other dimensions of parameter space, revealing that the Hessian eigenvectors indeed identified the directions of greatest sensitivity and degeneracy.
 
 
@@ -894,7 +906,7 @@ In addition to the Gaussian posterior conditioning example in Section \ref{resul
 \begin{center}
 \includegraphics[scale=0.5]{figures/figS1/figS1.pdf}
 \end{center}
-Fig. S4: A. EPI for rank-1 networks doing noisy discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.  See \cite{mastrogiuseppe2018linking} for theoretical equations and task description.
+Fig. S5: A. EPI for rank-1 networks doing noisy discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.  See \cite{mastrogiuseppe2018linking} for theoretical equations and task description.
 \end{figure}
 
 \end{document}
