@@ -44,10 +44,12 @@
 Sean R. Bittner$^{1}$, Agostina Palmigiano$^{1}$, Alex T. Piet$^{2}$, Chunyu A. Duan$^{3}$, Carlos D. Brody$^{2}$, \\
 Kenneth D. Miller$^{1}$, and John P. Cunningham$^{4}$.
 
+{\small
 $^{1}$Department of Neuroscience, Columbia University, \\
 $^{2}$Princeton Neuroscience Institute, \\
 $^{3}$Institute of Neuroscience, Chinese Academy of Sciences, \\
-$^{4}$Department of Statistics, Columbia University \\
+$^{4}$Department of Statistics, Columbia University
+}
 
 \linenumbers
 \section{Abstract}
@@ -121,7 +123,7 @@ These distinct methodologies and scientific investigations emphasize the increas
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.35]{figures/fig1/fig1b.pdf}
+\includegraphics[scale=0.35]{figures/fig1/fig1.pdf}
 \end{center}
 \caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability density of their generating parameters (stars) in the EPI-inferred distribution.  B. The EPI distribution of STG model parameters producing network syncing.  Samples are colored by log probability density.  Distribution contours of emergent property value error are shown at levels of $5 \times 10^{-7}$ and $1 \times 10^{-6}$ (dark and light gray).  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ (solid) and $v_2$ (dashed) with lengths scaled by the square root of the absolute value of their eigenvalues.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode. (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$.}
  \label{fig:STG}
@@ -349,7 +351,7 @@ The task we consider is Gaussian posterior conditioning: calculate the parameter
  \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}.
 \end{equation} 
 The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (Fig. \ref{fig:RNN}A, a setup inspired by \cite{echeveste2019cortical}). 
-To solve this Gaussian posterior conditioning task, the RNN response to a constant input $h(t) = y w + (n-M_n)$ must equal the posterior mean along readout vector $r$ , where
+To solve this Gaussian posterior conditioning task, the RNN response to a constant input $h = y w + (n-M_n)$ must equal the posterior mean along readout vector $r$ , where
 \begin{equation}
 \kappa_r =  \frac{1}{N} \sum_{j=1}^N r_j \phi(x_j)
 \end{equation}
