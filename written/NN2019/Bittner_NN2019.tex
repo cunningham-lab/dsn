@@ -263,7 +263,7 @@ We evaluate these hypotheses by taking steps in individual neuron-type input $\d
 \begin{equation}
 dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)).
 \end{equation}
-Here $\delta x_{\alpha}$ is the change in steady state response to the system with input $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ compared to $h = b + dh^*$, where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$. The EPI-generated  hypotheses are confirmed: 
+Here $\delta x_{\alpha}$ is the change in steady state response to the system with input $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ compared to $h = b + dh^*$, where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$. The EPI-generated  hypotheses are confirmed (for details, see Section \ref{methods_V1}): 
 
 {\addtolength{\leftskip}{10 mm}
 H1: the neuron-type responses are sensitive to their direct inputs (Fig. \ref{fig:V1_HT}A black, \ref{fig:V1_HT}B blue, \ref{fig:V1_HT}C red, \ref{fig:V1_HT}D green); \\
@@ -789,7 +789,18 @@ The emergent property we considered was the first and second moments of the chan
 \end{equation}
 
 In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
-The differential responses $\delta x_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$ and $\delta h_\alpha \in \left[-15,15\right]$.
+The differential responses $\delta x_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$ and $\delta x$ is evaluated at 101 equally spaced samples of $\delta h_\alpha$ from -15 to 15.
+
+We measured the linear regression slope between neuron-types of $\delta x$ and $\delta h$ to confirm the hypotheses H1-H3 (H4 is simply observing the nonmonotonicity) and report the p values for tests of non-zero slope.
+
+{\addtolength{\leftskip}{10 mm}
+H1: the neuron-type responses are sensitive to their direct inputs. 
+E-population: $\beta=1.62$, $p=2.97 \times 10^{-31}$ (Fig. \ref{fig:V1_HT}A black),
+P-population: $\beta=1.06$, $p=1.64 \times 10^{-34}$ (Fig. \ref{fig:V1_HT}B blue), S-population: $\beta=6.80$, $p=2.65 \times 10^{-26}$  (Fig. \ref{fig:V1_HT}C red), V-population: $\beta=6.41$, $p=1.36 \times 10^{-25}$  (Fig. \ref{fig:V1_HT}D green). \\
+H2: the E-population ($\beta=0$, $p=1$) and P-populations ($\beta=0$, $p=1$) are not affected by $\delta h_V$ (Fig. \ref{fig:V1_HT}A green, \ref{fig:V1_HT}B green); \\
+H3: the S-population is not affected by $\delta h_P$ ($\beta=0$, $p=1$) (Fig. \ref{fig:V1_HT}C blue); \\
+
+}
 
 For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI using a real NVP architecture of four masks layers with two hidden layers of 10 units,  mapped to a support of $z_i \in \left[-5, 5\right]$ with no batch normalization.  We used an augmented Lagrangian coefficient of $c_0 = 10^5$, a batch size $n=1000$, set $\nu = 0.5$.
 The EPI distributions shown in Fig. \ref{fig:V1_EPI} are the converged distributions with maximum entropy across random seeds.
