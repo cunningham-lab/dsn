@@ -310,7 +310,7 @@ At the end of successful trials, the response of the Pro population in the hemis
 Constraining a population response $x_\alpha \in \left[0,1\right]$ to be either 0 or 1 can be achieved by requiring that it has Bernoulli variance (see Section \ref{methods_SC}).
 Thus, we can formulate rapid task switching at a level of accuracy $p \in \left[0, 1\right]$ in both tasks in terms of the average steady response of the Pro population $\hat{p}$ of the correct choice,  the error in Bernoulli variance of that Pro neuron $\sigma^2_{\text{err}}$, and the average difference in Pro neuron responses $d$ in both Pro and Anti trials:
 \begin{equation}
-\mathcal{B}(p) ~~\triangleq~~ \begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
+\mathcal{B}(p) ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
 \end{equation}
 Thus, $\mathcal{B}(p)$ denotes Bernoulli, winner-take-all responses between Pro neurons in a model executing rapid task switching near accuracy level $p$.
 
@@ -360,7 +360,7 @@ Additionally, the amount of chaotic variance $\Delta_T$ must equal the posterior
 Theory for low-rank RNNs allows us to express $\kappa_r$ and $\Delta_T$ in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
 This allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $\kappa_r$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
 \begin{equation}
-E \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
+\mathbb{E} \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
 \end{equation}
 We specify a substantial amount of variance in these emergent property statistics, so that the inferred distribution results in RNNs with a variety errors in their solutions to the gaussian posterior conditioning problem. 
 
@@ -476,13 +476,13 @@ H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = \mathbb{E}_{z \sim q_
 \begin{equation}
 \nabla_\theta H(q_\theta(z)) = \mathbb{E}_{w \sim q_0}\left[- \nabla_\theta \log(q_\theta(f_\theta(w))) \right]
 \end{equation}
-This optimization is done using the approach of MEFN \cite{loaiza2017maximum}, using architectures for deep probability distributions, called normalizing flows (see Section \ref{methods_NF}), conferring a tractable calculation of sample probability.  In EPI, this methodology for learning maximum entropy distributions is repurposed toward variational learning of model parameter distributions.  
+This optimization is done using the approach of MEFN \cite{loaiza2017maximum}, using architectures for deep probability distributions, called normalizing flows (see Section \ref{methods_NF}), conferring a tractable calculation of sample log probability.  In EPI, this methodology for learning maximum entropy distributions is repurposed toward variational learning of model parameter distributions.  
 Similar to LFVI \cite{tran2017hierarchical}, we are motivated to do variational learning in models with intractable likelihood functions, in which standard methods like stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black} are not tractable.  Furthermore, EPI focuses on setting mathematically defined emergent property statistics to emergent property values of interest, whereas LFVI is focused on learning directly from datasets.  Optimizing this objective is a technological challenge, the details of which we elaborate in Section \ref{methods_AL_opt}.  Before going through those details, we ground this optimization in a toy example.
 
 %In most settings (especially those relevant to theoretical neuroscience) the likelihood of the behavior with respect to the model parameters $p(T(x) \mid z)$ is unknown or intractable, requiring an alternative to stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference\cite{ranganath2014black}.  These types of methods called likelihood-free variational inference (LFVI, \cite{tran2017hierarchical}) skate around the intractable likelihood function in situations where there is a differentiable simulator. Akin to LFVI, DSNs are optimized with the following objective for a given theoretical model, emergent property statistics $T(x)$, and emergent property constraints $\mu$:
 
 \subsubsection{Example: 2D LDS}\label{methods_2DLDS}
-To gain intuition for EPI, consider a two-dimensional linear dynamical system model 
+To gain intuition for EPI, consider a two-dimensional linear dynamical system model:
 \begin{equation} 
 \tau \frac{dx}{dt} = Ax
 \end{equation}
@@ -490,9 +490,12 @@ with
 \begin{equation}
 A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}
 \end{equation}
-To do EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, we selected the real part of the  eigenvalue $\text{real}(\lambda_1) = d$ and imaginary component of  $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  $\lambda_1$ is the eigenvalue of greatest real part when there is zero imaginary component, and alternatively of positive imaginary component, when the eigenvalues are complex conjugate pairs.  Those emergent property statistics were then constrained to
+%To run EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, we selected the real part of the  eigenvalue $\text{real}(\lambda_1) = d$ and imaginary component of  $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  $\lambda_1$ is the eigenvalue of greatest real part when there is zero imaginary component, and alternatively of positive imaginary component, when the eigenvalues are complex conjugate pairs.  Those emergent property statistics were then constrained to
+To run EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first- and second-moments of the oscillatory frequency $2 \pi \text{imag}(\lambda_1)$ and the growth/decay factor $\text{real}(\lambda_1)$ of the oscillating system. 
+ $\lambda_1$ is the eigenvalue of greatest real part when the imaginary component is zero, and alternatively of positive imaginary component when the eigenvalues are complex conjugate pairs.  
+To learn the distribution of real entries of $A$ that produce a band of oscillating systems around 1Hz, we formalized this emergent property as $\text{real}(\lambda_1)$ having mean zero with variance $0.25^2$, and the oscillation frequency $2 \pi \text{imag}(\lambda_1)$ having mean $\omega = 1$ Hz with variance (0.1Hz)$^2$:
 \begin{equation}
- \mu = \mathbb{E} \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix}
+ \mathbb{E}\left[T(x) \right] ~~ \triangleq ~~ \mathbb{E} \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix} ~~ \triangleq ~~ \mu
  \end{equation} 
 %To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with  \[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\] that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, then we would select the real part of the complex conjugate eigenvalues $\text{real}(\lambda_1) = d$ (via an arbitrary choice of eigenvalue of the dynamics matrix $\lambda_1$) and the positive imaginary component of one of the eigenvalues $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  Those emergent property statistics
 \begin{figure}
@@ -500,23 +503,23 @@ To do EPI with the dynamics matrix elements as the free parameters $z = \begin{b
 \includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
 \end{center}
 \begin{flushleft}
-Fig. S1: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a two-dimensional linear dynamical system  with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (5,000 iterations), the entropy dipped due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments move closer to their constraints.
+Fig. S1: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a two-dimensional linear dynamical system  with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (2,000 iterations), the entropy dipped due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments adjust closer to their constraints.
 \end{flushleft}
 \end{figure}
-where $\omega = 1$Hz.  Unlike the models we presented in the main text, which calculate $\mathbb{E}_{x \sim p(x \mid z)} \left[T(x) \right]$ via forward simulation, we have a closed  form for $\lambda_1$ of the dynamics matrix.  The eigenvalues can be calculated using the quadratic formula: 
+
+Unlike the models we presented in the main text, this model admits an anlytical form for the the mean emergent property statistics given parameter $z$, since the eigenvalues can be calculated using the quadratic formula: 
 \begin{equation}
 \lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}
 \end{equation}
-where $\lambda_1$ is the eigenvalue of $\frac{1}{\tau}A$ with greatest real part. 
 
-Importantly, even though $\mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via a closed form function and does not require simulation, we cannot derive the distribution $q^*_\theta$ directly.  This is due to the formally hard problem of the backward mapping: finding the natural parameters $\eta$ from the mean parameters $\mu$ of an exponential family distribution \cite{wainwright2008graphical}.  Instead, we can use EPI to learn the linear system parameters producing such a band of oscillations (Fig. S1B). 
+Importantly, even though $\mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via a closed form function and does not require simulation, we cannot derive the distribution $q^*_\theta$ directly.  This is due to the formally hard problem of the backward mapping: finding the natural parameters $\eta$ from the mean parameters $\mu$ of an exponential family distribution \cite{wainwright2008graphical}.  Instead, we used EPI to approximate this distribution (Fig. S1B). We used a real-NVP normalizing flow architecture with four masks, two neural network layers of 15 units per mask, with batch normalization momentum 0.99, mapped onto a support of $z_i \in \left[-20, 20 \right]$. (see Section \ref{methods_NF}).
 
 Even this relatively simple system has nontrivial (though intuitively sensible) structure in the parameter distribution.  To validate our method (further than that of the underlying technology on a ground truth solution \cite{loaiza2017maximum}) we analytically derived the contours of the probability density from the emergent property statistics and values (Fig. S2).  In the $a_1-a_4$ plane, the black line at $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, and the dotted black line at
-the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 0.25$, and the grey line at twice the standard deviation
-$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 0.5$ follow the contour of probability density of the samples. (Fig. 2A). The distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of
-$a_1$ and $a_4$. Intuitively, the parameters equivalent with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
+the standard deviation $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 0.25$, and the gray line at twice the standard deviation
+$\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} \pm 0.5$ follow the contour of probability density of the samples. (Fig. 2A). The distribution precisely reflects the desired statistical constraints and model degeneracy in the sum of $a_1$ and $a_4$.
+ Intuitively, the parameters equivalent with respect to emergent property statistic $\text{real}(\lambda_1)$ have similar log densities.
 
-To explain the structure in the bimodality of the EPI distribution, we examined the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
+To explain the bimodality of the EPI distribution, we examined the imaginary component of $\lambda_1$.  When $\text{real}(\lambda_1) = \frac{a_1 + a_4}{2} = 0$, we have
 \begin{equation}
 \text{imag}(\lambda_1) = \begin{cases}
                              \sqrt{\frac{a_1 a_4 - a_2 a_3}{\tau}},  & \text{if } a_1 a_4 < a_2 a_3 \\
@@ -528,14 +531,14 @@ When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have th
 \begin{equation}
 \text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3
 \end{equation}
-Since we constrained $\mathbb{E}_{z \sim q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S2A). If $\sigma_{1,4} = \mathbb{E}_{z \sim q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S2B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the learned distribution.  Subtler model-emergent property combinations will have even more complexity, further motivating the use of EPI for understanding these systems.  As we expect, the distribution results in samples of two-dimensional linear systems oscillating near 1Hz (Fig. S3).
+Since we constrained $\mathbb{E}_{z \sim q_\theta}\left[\text{imag}(\lambda)\right] = 2 \pi$ (with $\omega=1$), we can plot contours of the equation $\text{imag}(\lambda_1)^2 = a_1 a_4 - a_2 a_3 = (2 \pi)^2$ for various $a_1 a_4$ (Fig. S2A). If $\sigma_{1,4} = \mathbb{E}_{z \sim q_\theta}(|a_1 a_4 - E_{q_\theta}[a_1 a_4]|)$, then we plot the contours as $a_1 a_4 = 0$ (black), $a_1 a_4 = -\sigma_{1,4}$ (black dotted), and $a_1 a_4 = -2\sigma_{1,4}$ (grey dotted) (Fig. S2B). This validates the curved structure of the inferred distribution learned through EPI.  We take steps in negative standard deviation of $a_1 a_4$ (dotted and gray lines), since there are few positive values $a_1 a_4$ in the learned distribution.  Subtler combinations of model and emergent property will have more complexity, further motivating the use of EPI for understanding these systems.  As we expect, the distribution results in samples of two-dimensional linear systems oscillating near 1Hz (Fig. S3).
 
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.5]{figures/figS3/figS3.pdf}
 \end{center}
 \begin{flushleft}
-Fig. S2: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor. B. Probability contours in the $a_2-a_3$ plane can be derived from relationship to the emergent property statistic of oscillation frequency.
+Fig. S2: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor $\text{real}(\lambda_1)$. B. Probability contours in the $a_2-a_3$ plane can be derived from the emergent property statistic of oscillation frequency $2\pi \text{imag}(\lambda_1)$ (see text).
 \end{flushleft}
 \end{figure}
 
@@ -549,14 +552,36 @@ Fig. S3: Sampled dynamical system trajectories from the EPI distribution.  Each 
 \end{figure}
 
 \subsubsection{Augmented Lagrangian optimization}\label{methods_AL_opt}
-To optimize $q_\theta(z)$ in Equation \ref{eq:opt}, the constrained optimization is performed using the augmented Lagrangian method.  The following objective is minimized:
-\begin{equation}
+To optimize $q_\theta(z)$ in Equation \ref{eq:opt}, the constrained optimization is executed using the augmented Lagrangian method.  The following objective is minimized:
+\begin{equation} \label{eq:AL}
 L(\theta; \eta, c) = -H(q_\theta) + \eta^\top R(\theta) + \frac{c}{2}||R(\theta)||^2
 \end{equation}
-where $R(\theta) = \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\eta \in \mathbb{R}^m$ are the Lagrange multipliers (which are closely related to the natural parameters of exponential families (see Section \ref{methods_VI})) and $c$ is the penalty coefficient.  For a fixed $(\eta, c)$, $\theta$ is optimized with stochastic gradient descent.  A low value of $c$ is used initially, and increased during each augmented Lagrangian epoch, which is a period of optimization with fixed $\eta$ and $c$ for a given number of stochastic optimization iterations. Similarly, $\eta$ is tuned each epoch based on the constraint violations.  For the linear two-dimensional system (Fig. S1C), optimization hyperparameters are initialized to $c_1 = 10^{-4}$ and $\eta_1 = \textbf{0}$.  The penalty coefficient is updated based on the result of a hypothesis test regarding the reduction in constraint violation.  The p-value of $\mathbb{E}[||R(\theta_{k+1})||] > \gamma \mathbb{E} \left[||R(\theta_{k})|| \right]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  Throughout the study, $\beta = 4.0$ and $\gamma = 0.25$ were used.  The other update rule is $\eta_{k+1} = \eta_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$.  In this example, each augmented Lagrangian epoch ran for 2,000 iterations.  We consider the optimization to have converged when a null hypothesis test of constraint violations being zero is accepted for all constraints at a significance threshold 0.05 (Fig. S1D black dotted line).
+where $R(\theta) = \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x) - \mu \right] \right]$, $\eta \in \mathbb{R}^m$ are the Lagrange multipliers where $m = |\mu| = |T(x)|$,  and $c$ is the penalty coefficient. 
+These Lagrange multipliers are closely related to the natural parameters of exponential families (see Section \ref{methods_VI}).
+Deep neural network weights and biases $\theta$ of the deep probability distribution are optimized according to Equation \ref{eq:AL} using the Adam optimizer with its standard parameterization \cite{kingma2014adam}.
+$\eta$ is initialized to the zero vector and adapted following each augmented Lagrangian epoch, which is a period of optimization with fixed ($\eta$, $c$) for a given number of stochastic optimization iterations. 
+A low value of $c$ is used initially, and conditionally increased after each epoch based on constraint error reduction.
+For example, the initial value of $c$ was $c_0 = 10^{-3}$ during EPI with the linear two-dimensional system (Fig. S1C).
+The penalty coefficient is updated based on the result of a hypothesis test regarding the reduction in constraint violation.  
+The p-value of $\mathbb{E}[||R(\theta_{k+1})||] > \gamma \mathbb{E} \left[||R(\theta_{k})|| \right]$ is computed, and $c_{k+1}$ is updated  to $\beta c_k$ with probability $1-p$.  
+The other update rule is $\eta_{k+1} = \eta_k + c_k \frac{1}{n} \sum_{i=1}^n (T(x^{(i)}) - \mu)$ given a batch size $n$.
+Throughout the study, $\beta = 4.0$, $\gamma = 0.25$, and the batch size was a hyperparameter, which varied according to the application of EPI.
 
-The intention is that $c$ and $\eta$ start at values encouraging entropic growth early in optimization.  Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.   
-If the optimization is left to continue running, and structural pathologies in the distribution may be introduced.
+The intention is that $c$ and $\eta$ start at values encouraging entropic growth early in optimization.  
+Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.
+This encourages the discovery of suitable regions of parameter space, and the subsequent refinement of the distribution to produce the emergent property.
+In the two-dimensional example, each augmented Lagrangian epoch ran for 2,000 iterations (Fig. S1C-D).
+Notice the initial entropic growth, and subsequent reduction upon each update of $\eta$ and $c$.
+The momentum parameters of the Adam optimizer were reset at the end of each augmented Lagrangian epoch.
+
+Rather than starting optimization from some drawn $\theta$ from a glorot uniform or other distribution, we found that initializing $q_\theta(z)$ to approximate an isotropic Gaussian distribution conferred more stable, consistent optimization.  The parameters of the initialization Gaussain were chosen on an application-specific basis.  Throughout the study, we chose isotropic Gaussians with mean at the center of the distribution support, except when we demonstrate how to use grid search to inform the initialization in Section \ref{methods_V1}.
+
+To assess whether EPI distribution $q_\theta(z)$ produces the emergent property, we defined a hypothesis testing convergence criteria.  
+The algorithm has converged when a null hypothesis test of constraint violations $R(\theta)_i$ being zero is accepted for all constraints $i \in \{1, ..., m\}$ at a significance threshold $\alpha=0.05$.  
+This significance threshold is adjusted through Bonferroni correction according to the number of constraints $m$.  
+The p-values for each constraint are calculated according to a two-tailed nonparameteric test, where 200 estimations of the sample mean $R(\theta)^i$ are made from $k$ resamplings of $z$ of a finite sample of size $n$ taken at the end of the augmented Lagrangian epoch.
+$k$ is determined by a fraction of the batch size $\nu$, which varies according to the application.
+In the linear two-dimensional system example, we used a batch size of $n = 1000$ and set $\nu = 0.1$ resulting in convergence after the ninth epoch of optimization. (Fig. S1C-D black dotted line).
 
 \subsubsection{Normalizing flows}\label{methods_NF}
 Deep probability models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network.  For $z' = f(z)$,
