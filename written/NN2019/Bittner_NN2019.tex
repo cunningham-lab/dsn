@@ -320,11 +320,13 @@ The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change accord
 
 %Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
 
-We found that for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  
-Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange).  
-Such side mode suppression remains in the models achieving greater accuracy, revealing its importance towards task performance.   
+We found that for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Specifically, \\
+$\mathbb{E}_{q_\theta(z \mid \mathcal{B}(70\%)} \left[\lambda_{\text{task}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(80\%)} \left[\lambda_{\text{task}}(z) \right]$ (p-value$=3.53 \times 10^{-18}$ Mann-Whitney test with 50 estimates using 100 samples $z \sim q_\theta(z \mid \mathcal{B})$),
+$\mathbb{E}_{q_\theta(z \mid \mathcal{B}(70\%)} \left[\lambda_{\text{task}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(80\%)} \left[\lambda_{\text{task}}(z) \right]$ (p-value$=3.53 \times 10^{-18}$), and $\mathbb{E}_{q_\theta(z \mid \mathcal{B}(80\%)} \left[\lambda_{\text{task}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(90\%)} \left[\lambda_{\text{task}}(z) \right]$ (p-value$=5.23 \times 10^{-14}$).
+Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues $\mathbb{E}_{q_\theta(z \mid \mathcal{B}(60\%)} \left[\lambda_{\text{side}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(50\%)} \left[\lambda_{\text{side}}(z) \right]$ (p-value$=3.53 \times 10^{-18}$) (Fig. \ref{fig:SC}D, orange).  
+Such side mode suppression relative to $50\%$ remains in the models achieving greater accuracy, revealing its importance towards task performance (p-value$=3.53 \times 10^{-18}$ for all accuracies).   
 There were no interesting trends with task accuracy in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). 
-Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E) suggesting experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
+Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E, see Section \ref{methods_SC}) suggesting experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Linking RNN connectivity to error} \label{results_RNN}
@@ -894,6 +896,36 @@ In total, the emergent property of rapid task switching at accuracy level $p$ wa
 For each accuracy level $p$, we ran EPI for 10 different random seeds  using an architecture of 10 planar flows with a  support of $z \in \mathbb{R}^8$.   
 We used an augmented Lagrangian coefficient of $c_0 = 10^2$, a batch size $n=300$, and set $\nu = 0.5$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian of zero mean with standard deviation $\sigma_{\text{init}} = 1$.
 The EPI distributions shown in Fig. \ref{fig:SC} are the converged distributions with maximum entropy across random seeds.
+
+We report significant correlations $r$ and their pvalues from Figure \ref{fig:SC}E.  Correlations were measured from 5,000 samples of $q_\theta(z \mid \mathcal{B}(p))$ and p-values are reported for one-tailed tests, since we predict positive correlation between task performance and $\lambda_{\text{task}}$, and negative correlation between task performance in and $\lambda_{\text{side}}$.
+
+\begin{table}[h]
+\begin{tabular}{l|l|l|l|l}
+$\lambda$  & $\hat{p}$ & $q_\theta(z)$ & $r$ & p-value \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(60\%))$ & $1.24 \times 10^{-01}$ & $3.04 \times 10^{-18}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(70\%))$ & $7.56 \times 10^{-01}$ & 0.00 \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(80\%))$ & $4.59 \times 10^{-01}$ & $2.76 \times 10^{-259}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(90\%))$ & $3.76 \times 10^{-01}$ & $1.83 \times 10^{-167}$  \\ \hline
+
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(60\%))$ & $4.80 \times 10^{-02}$ & $1.38 \times 10^{-03}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(70\%))$ & $2.08 \times 10^{-01}$ & $7.17 \times 10^{-50}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(80\%))$ & $4.84 \times 10^{-01}$ & $3.45 \times 10^{-291}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(90\%))$ & $4.25 \times 10^{-01}$ & $1.04 \times 10^{-217}$  \\ \hline
+
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(50\%))$ & $-7.57 \times 10^{-02}$ & $1.69 \times 10^{-07}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(60\%))$ & $-6.73 \times 10^{-02}$ & $3.87 \times 10^{-06}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(70\%))$ & $-4.86 \times 10^{-01}$ & $4.43 \times 10^{-295}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(80\%))$ & $-1.43 \times 10^{-01}$ & $5.97 \times 10^{-24}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(90\%))$ & $-1.93 \times 10^{-01}$ & $8.08 \times 10^{-43}$  \\ \hline
+
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(50\%))$ & $-1.33 \times 10^{-02}$ & $6.94 \times 10^{-01}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(60\%))$ & $-7.60 \times 10^{-02}$ & $1.47 \times 10^{-07}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(70\%))$ & $-2.73 \times 10^{-01}$ & $5.23 \times 10^{-86}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(80\%))$ & $-2.74 \times 10^{-01}$ & $1.30 \times 10^{-86}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(90\%))$ & $-1.82 \times 10^{-02}$ & $3.95 \times 10^{-01}$  \\ \hline
+\end{tabular}
+\caption{Table of significant correlation values from Fig. \ref{fig:SC}E.}
+\end{table}
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
 Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{mastrogiuseppe2018linking}.
