@@ -703,7 +703,7 @@ Fig. S4: Emergent property inference of the STG model producing network syncing.
 \end{flushleft}
 \end{figure}
 
-For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z \in \left[ \begin{bmatrix} 4 \\ 0 \end{bmatrix}, \begin{bmatrix} 8 \\ 4 \end{bmatrix} \right]$. We used an augmented Lagrangian coefficient of $c_0 = 2$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce a Gaussian with mean $\mu_{\text{init}} = \begin{bmatrix} 6 & 2 \end{bmatrix}$ with standard deviation $\sigma_{\text{init}} = 0.5$.
+For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z \in \left[ \begin{bmatrix} 4 & 0 \end{bmatrix}, \begin{bmatrix} 8 & 4 \end{bmatrix} \right]$. We used an augmented Lagrangian coefficient of $c_0 = 10^{2}$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = \begin{bmatrix} 6 & 2 \end{bmatrix}$ with standard deviation $\sigma_{\text{init}} = 0.5$.
 
 We calculated the Hessian at the mode of the inferred EPI distribution.  
 The Hessian of a probability model is the second order gradient of the log probability density $\log q_\theta(z)$ with respect to the parameters $z$:  $\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$.  
@@ -789,7 +789,8 @@ The emergent property we considered was the first and second moments of the chan
 In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
 The differential responses $\delta x_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$ and $\delta h_\alpha \in \left[-15,15\right]$.
 
-For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI using a real NVP architecture of four masks layers with two hidden layers of 10 units,  mapped to a support of $z_i \in \left[-5, 5\right]$ with no batch normalization.  We used an augmented Lagrangian coefficient of $c_0 = 5$, a batch size $n=1000$, set $\nu = 0.5$, and show the converged distributions of maximum entropy across random seeds.
+For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI using a real NVP architecture of four masks layers with two hidden layers of 10 units,  mapped to a support of $z_i \in \left[-5, 5\right]$ with no batch normalization.  We used an augmented Lagrangian coefficient of $c_0 = 10^5$, a batch size $n=1000$, set $\nu = 0.5$.
+The EPI distributions shown in Fig. \ref{fig:V1_EPI} are the converged distributions with maximum entropy across random seeds.
 
 Here, we demonstrate that the algorithm does not necessarily need to start at such an agnostic initialization.  We set the parameters of the Gaussian initialization $\mu_\text{init}$ and $\sigma_\text{init}$ to the mean and covariance of random samples $z^{(i)} \sim \mathcal{U}(-5, 5)$ that produced emergent property statistic $dx_{\alpha,ss}$ within a bound $\epsilon$ of the emergent property value $y$. $\epsilon=0.01$ was set to be one standard deviation of the emergent property value according to the emergent property value $0.01^2$ of the variance emergent property statistic.  This is the only application in the study where such an informed initialization was used.
 
@@ -874,13 +875,14 @@ Training DSNs to learn distributions of dynamical system parameterizations that 
 
 In total, the emergent property of rapid task switching at accuracy level $p$ was defined as
 \begin{equation}
-\mathcal{B}(p) ~~\triangleq~~ \begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
+\mathcal{B}(p) ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
 \end{equation}
 
-For each accuracy level $p$, we ran EPI for 10 different random seeds and selected the maximum entropy solution using an architecture of 10 planar flows with $c_0 = 2$. The support of $z$ was $\mathbb{R}^8$.
+For each accuracy level $p$, we ran EPI for 10 different random seeds  using an architecture of 10 planar flows with a  support of $z \in \mathbb{R}^8$.   
+We used an augmented Lagrangian coefficient of $c_0 = 10^2$, a batch size $n=300$, and set $\nu = 0.5$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian of zero mean with standard deviation $\sigma_{\text{init}} = 1$.
+The EPI distributions shown in Fig. \ref{fig:SC} are the converged distributions with maximum entropy across random seeds.
 
 \subsubsection{Rank-1 RNN}\label{methods_LRRNN}
-
 Recent work establishes a link between RNN connectivity weights and the resulting dynamical responses of the network, using dynamic mean field theory (DMFT) \cite{mastrogiuseppe2018linking}.
 Specifically, DMFT describes the properties of activity in infinite-size neural networks given a distribution on the connectivity weights.
 In such a model, the connectivity of a rank-1 RNN (which was sufficient for the Gaussian posterior conditioning task), has weight matrix $W$, which is the sum of a random component with strength determined by $g$ and a structured component determined by the outer product of vectors $m$ and $n$:
@@ -920,6 +922,10 @@ Then, the chaotic variance, which is necessary for the Gaussian posterior condit
 \begin{equation}
 \Delta_T = \Delta_0 - \Delta_\infty
 \end{equation}
+
+We ran EPI using a real NVP architecture of two masks and two layers per mask with 10 units mapped to a support of $z \in \left[ \begin{bmatrix} 0 & -5 & -5 \end{bmatrix}, \begin{bmatrix} 5 & 5 & 5  \end{bmatrix} \right]$ with no batch normalization. 
+We used an augmented Lagrangian coefficient of $c_0 = 1$, a batch size $n=300$, set $\nu = 0.2$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = \begin{bmatrix} 2.5 & 0 & 0 \end{bmatrix}$ with standard deviation $\sigma_{\text{init}} = 2.0$.
+ The EPI distributions shown in Fig. \ref{fig:SC} are the converged distributions with maximum entropy across five random seeds.
 
 In addition to the Gaussian posterior conditioning example in Section \ref{results_RNN}, we modeled two tasks from Mastrogiuseppe et al.: noisy detection and context-dependent discrimination.  We used the same theoretical equations and task setups described in their study.
 
