@@ -574,7 +574,7 @@ In the two-dimensional example, each augmented Lagrangian epoch ran for 2,000 it
 Notice the initial entropic growth, and subsequent reduction upon each update of $\eta$ and $c$.
 The momentum parameters of the Adam optimizer were reset at the end of each augmented Lagrangian epoch.
 
-Rather than starting optimization from some drawn $\theta$ from a glorot uniform or other distribution, we found that initializing $q_\theta(z)$ to approximate an isotropic Gaussian distribution conferred more stable, consistent optimization.  The parameters of the initialization Gaussain were chosen on an application-specific basis.  Throughout the study, we chose isotropic Gaussians with mean at the center of the distribution support, except when we demonstrate how to use grid search to inform the initialization in Section \ref{methods_V1}.
+Rather than starting optimization from some drawn $\theta$ from a glorot uniform or other distribution, we found that initializing $q_\theta(z)$ to approximate an isotropic Gaussian distribution conferred more stable, consistent optimization.  The parameters of the initialization Gaussain were chosen on an application-specific basis.  Throughout the study, we chose isotropic Gaussians with  mean $\mu_{\text{init}}$ at the center of the distribution support and some standard deviation $\sigma_{\text{init}}$, except when we demonstrate how to use grid search to inform the initialization in Section \ref{methods_V1}.
 
 To assess whether EPI distribution $q_\theta(z)$ produces the emergent property, we defined a hypothesis testing convergence criteria.  
 The algorithm has converged when a null hypothesis test of constraint violations $R(\theta)_i$ being zero is accepted for all constraints $i \in \{1, ..., m\}$ at a significance threshold $\alpha=0.05$.  
@@ -590,7 +590,7 @@ Deep probability models typically consist of several layers of fully connected n
 q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right| = q(z) \left| \det \frac{\partial f(z)}{\partial z} \right|^{-1}
 \end{equation}
 
-However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizing flows \cite{rezende2015variational} -- bijective functions with fast log determinant Jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use real NVP \cite{dinh2017density}, which have proven effective in our architecture searches, and have the advantageous features of fast sampling and fast probability density evaluation.
+However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizing flows \cite{rezende2015variational} -- bijective functions with fast log determinant Jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use either a planar flow \cite{rezende2015variational} or real NVP \cite{dinh2017density}, which have proven effective in our architecture searches.  Planar flow architectures are specified by the number of planar bijection layers used, while real NVP architectures are specified by the number of masks, neural network layers per mask, units per layer, and batch normalization momentum parameter.
 
 
 \subsubsection{Emergent property inference as variational inference in an exponential family}\label{methods_VI}
@@ -703,13 +703,13 @@ Fig. S4: Emergent property inference of the STG model producing network syncing.
 \end{flushleft}
 \end{figure}
 
-For EPI in Fig 2C, we used a real NVP architecture with two coupling layers.  Each coupling layer had two hidden layers of 10 units each, and we mapped onto a support of $z \in \left[ \begin{bmatrix} 4 \\ 0 \end{bmatrix}, \begin{bmatrix} 8 \\ 4 \end{bmatrix} \right]$. We used an augmented Lagrangian coefficient of $c_0 = 2$.
+For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z \in \left[ \begin{bmatrix} 4 \\ 0 \end{bmatrix}, \begin{bmatrix} 8 \\ 4 \end{bmatrix} \right]$. We used an augmented Lagrangian coefficient of $c_0 = 2$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce a Gaussian with mean $\mu_{\text{init}} = \begin{bmatrix} 6 & 2 \end{bmatrix}$ with standard deviation $\sigma_{\text{init}} = 0.5$.
 
 We calculated the Hessian at the mode of the inferred EPI distribution.  
 The Hessian of a probability model is the second order gradient of the log probability density $\log q_\theta(z)$ with respect to the parameters $z$:  $\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$.  
 With EPI, we can examine the Hessian, which is analytically available throughout the deep probability distribution, at a given parameter choice to determine what dimensions of parameter space are sensitive (high magnitude eigenvalue), and which are degenerate (low magnitude eigenvalue) with respect to the emergent property produced. 
 In Figure \ref{fig:STG}B, the eigenvectors of the Hessian $v_1$ and $v_2$ are shown evaluated at the mode of the distribution.  
-The length of the arrows is inversely proportional to the square root of absolute value of their eigenvalues $\lambda_1 = -10.9$ and $\lambda_2 = -2.34$.
+The length of the arrows is inversely proportional to the square root of absolute value of their eigenvalues $\lambda_1 = -10.8$ and $\lambda_2 = -2.27$.
 We quantitatively measured the sensitivity of the model with respect to network syncing along the eigenvectors of the Hessian (Fig. \ref{fig:STG}B, inset).
 Sensitivity was measured as the slope coefficient of linear regression fit to network syncing error (the sum of squared differences of each neuron's frequency from 0.53Hz) as a function of perturbation magnitude (from 0 to 0.25) away from the mode along both orientations indicated by the eigenvector.
 These sensitivities were compared to all other dimensions of parameter space, revealing that the Hessian eigenvectors indeed identified the directions of greatest sensitivity and degeneracy.
@@ -789,7 +789,9 @@ The emergent property we considered was the first and second moments of the chan
 In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
 The differential responses $\delta x_{\alpha,ss}$ are examined at perturbed inputs  $h = b + dh^* + \delta h_\alpha \hat{u}_\alpha$ where $\hat{u}_\alpha$ is a unit vector in the dimension of $\alpha$ and $\delta h_\alpha \in \left[-15,15\right]$.
 
-For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI with five different random initial seeds using an architecture of four coupling layers, each with two hidden layers of 10 units.  We set $c_0 = 10^5$.  The support of the learned distribution was restricted to $z_i \in \left[-5, 5\right]$.
+For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI using a real NVP architecture of four masks layers with two hidden layers of 10 units,  mapped to a support of $z_i \in \left[-5, 5\right]$ with no batch normalization.  We used an augmented Lagrangian coefficient of $c_0 = 5$, a batch size $n=1000$, set $\nu = 0.5$, and show the converged distributions of maximum entropy across random seeds.
+
+Here, we demonstrate that the algorithm does not necessarily need to start at such an agnostic initialization.  We set the parameters of the Gaussian initialization $\mu_\text{init}$ and $\sigma_\text{init}$ to the mean and covariance of random samples $z^{(i)} \sim \mathcal{U}(-5, 5)$ that produced emergent property statistic $dx_{\alpha,ss}$ within a bound $\epsilon$ of the emergent property value $y$. $\epsilon=0.01$ was set to be one standard deviation of the emergent property value according to the emergent property value $0.01^2$ of the variance emergent property statistic.  This is the only application in the study where such an informed initialization was used.
 
 \subsubsection{Superior colliculus}\label{methods_SC}
 In the model of Duan et al \cite{duan2018collicular}, there are four total units: two in each hemisphere corresponding to the Pro/Contra and Anti/Ipsi populations.  They are denoted as left Pro (LP), left Anti (LA), right Pro (RP) and right Anti (RA).  Each unit has an activity ($x_\alpha$) and internal variable ($u_\alpha$) related by
@@ -924,8 +926,6 @@ In addition to the Gaussian posterior conditioning example in Section \ref{resul
 %TODO Need to explain the warm starting for the aficionados.
 
 %TODO explain the density network architectures used.
-
-\subsection{Supplementary Figures}
 
 \begin{figure}
 \begin{center}
