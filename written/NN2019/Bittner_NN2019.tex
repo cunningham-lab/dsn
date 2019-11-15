@@ -612,7 +612,29 @@ However, this computation has cubic complexity in dimensionality for fully conne
 
 
 \subsubsection{Emergent property inference as variational inference in an exponential family}\label{methods_VI}
-Consider the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics $T(z)$ into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ remains unchanged:
+An important consideration is the broader contextualization of EPI as a statistical method and its  relation to Bayesian inference. 
+In Bayesian inference a prior belief about model parameters $z$ is formalized into a prior distribution $p(z)$, and the statistical model capturing the effect of $z$ on observed data points $x$ is formalized in the likelihood distribution $p(x \mid z)$.
+In Bayesian inference, we obtain a posterior distribution $p(z \mid x)$, which captures how the data inform our knowledge of model parameters using Bayes' rule:
+\begin{equation}
+p(z \mid x) = \frac{p(x \mid z) p(z)}{p(x)}.
+\end{equation}
+The posterior disribution can be analytically calculated when the prior distribution is conjugate with the likehood distribution.
+Usually, this is not the case, and alternative methods of approximate Bayesian inference, such as variational inference \cite{blei2017variational}, are utilized.
+
+As we compare EPI to variational inference, it is important to consider that EPI is a maximum entropy method, and that maximum entropy method have a fundamental relationship with exponential family distributions. A maximum entropy distribution of form:
+\begin{equation}
+\begin{split}
+p^*(z) &= \argmax_{p \in \mathcal{P}} H(p(z)) \\
+ &  \text{s.t.  } \mathbb{E}_{z \sim p}\left[T(z)\right] = \mu. \\
+ \end{split}
+\end{equation} 
+will have density parameterized by an exponential family:
+\begin{equation}
+p^*(z) \propto \exp(\eta^\top T(z)).
+\end{equation}
+The mappings between the mean parameterization $\mu$ and the natural parameterization $\eta$ are formally hard to identify \cite{wainwright2008graphical}.
+
+Now,  the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics $T(z)$ into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ remains unchanged:
 \begin{equation}
 \begin{split}
 p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
@@ -651,7 +673,11 @@ q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \eta_{\text{opt}}^\top \le
 \end{equation}
 As the optimization proceeds, $\eta_{\text{opt}}^\top$ should converge to the natural parameter $\tilde{\eta}(x)$ through its adaptations in each epoch (see Section \ref{methods_AL_opt}). 
 
-The derivation of the natural parameter $\tilde{\eta}(x)$ of an exponential family distribution from its mean parameter $\mu$ is referred to as the backward mapping and is formally hard to identify \cite{wainwright2008graphical}.  Since this backward mapping is deterministic,  we can replace the notation of $p(z \mid x)$ with $p(z \mid \mathcal{B})$ conceptualizing an inferred distribution that obeys emergent property $\mathcal{B}$ (see Section \ref{methods_EPI}). 
+We have shown that there is indeed a clear relationship between Bayesian inference and EPI.
+Specifically, EPI is executing variational inference in an exponential family posterior,  whose sufficient statistics are the emergent property statistics and mean parameterization are the emergent property values.
+However, in EPI we  have not specified a prior distribution, or collected data, which can inform us about model parameters.
+Instead we have a normative principle of maximum entropy, and a mathematical specification of an emergent property, which the model must produce.
+Thus, we replace the notation of $p(z \mid x)$ with $p(z \mid \mathcal{B})$ conceptualizing an inferred distribution that obeys emergent property $\mathcal{B}$ (see Section \ref{methods_EPI}). 
 
 \subsection{Theoretical models}\label{methods_theoretical_models}
 In this study, we used emergent property inference to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
