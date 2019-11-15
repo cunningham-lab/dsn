@@ -5,7 +5,13 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_kernels
 from scipy.stats import ttest_1samp, multivariate_normal
 import matplotlib.pyplot as plt
-from tf_util.tf_util import get_archstring, get_initdir, check_init, load_dgm, density_network
+from tf_util.tf_util import (
+    get_archstring,
+    get_initdir,
+    check_init,
+    load_dgm,
+    density_network,
+)
 import scipy.linalg
 from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit, LowRankRNN
 from dsn.util.plot_util import assess_constraints_mix
@@ -24,44 +30,49 @@ def get_savedir(
     savedir = resdir + savestr + "/"
     return savedir
 
+
 def get_savestr(system, arch_dict, c_init_order, random_seed, randsearch=False):
     archstring = get_archstring(arch_dict)
     sysparams = system.free_params[0]
     num_free_params = len(system.free_params)
     if num_free_params > 1:
-        if (num_free_params >= 5):
+        if num_free_params >= 5:
             sysparams = "D=%d" % system.D
         else:
             for i in range(1, num_free_params):
                 sysparams += "_%s" % system.free_params[i]
 
-    sigma_init = arch_dict['sigma_init']
-    if (type(sigma_init) == float or type(sigma_init) == np.float64):
-        sigma_str = '_sigma=%.2f' % sigma_init
-    elif (type(sigma_init) == np.ndarray and np.all(sigma_init == sigma_init[0])):
-        sigma_str = '_sigma=%.2f' % sigma_init[0]
+    if "sigma_init" in arch_dict.keys():
+        sigma_init = arch_dict["sigma_init"]
+        if type(sigma_init) == float or type(sigma_init) == np.float64:
+            sigma_str = "_sigma=%.2f" % sigma_init
+        elif type(sigma_init) == np.ndarray and np.all(sigma_init == sigma_init[0]):
+            sigma_str = "_sigma=%.2f" % sigma_init[0]
+        else:
+            sigma_str = ""
     else:
-        sigma_str = ''
+        sigma_str = ""
 
-    if (randsearch):
+    if randsearch:
         savestr = "%s_%s_%s_flow=%s_rs=%d" % (
-                    system.name,
-                    sysparams,
-                    system.behavior_str,
-                    archstring,
-                    random_seed,
-                    )
+            system.name,
+            sysparams,
+            system.behavior_str,
+            archstring,
+            random_seed,
+        )
     else:
         savestr = "%s_%s_%s_flow=%s%s_c=%d_rs=%d" % (
-                    system.name,
-                    sysparams,
-                    system.behavior_str,
-                    archstring,
-                    sigma_str,
-                    c_init_order,
-                    random_seed,
-                    )
+            system.name,
+            sysparams,
+            system.behavior_str,
+            archstring,
+            sigma_str,
+            c_init_order,
+            random_seed,
+        )
     return savestr
+
 
 def get_system_from_template(sysname, param_dict):
     """Returns template system class given system-specific parameters.
@@ -75,62 +86,56 @@ def get_system_from_template(sysname, param_dict):
             system (system): System from template parameterization.
 
     """
-    if (sysname == "Linear2D"):
+    if sysname == "Linear2D":
         """# Parameters
                omega - frequency
         """
-        omega = param_dict['omega']
-        d_std = param_dict['d_std']
-        omega_std = param_dict['omega_std']
+        omega = param_dict["omega"]
+        d_std = param_dict["d_std"]
+        omega_std = param_dict["omega_std"]
         fixed_params = {"tau": 1.0}
         means = np.array([0.0, 2 * np.pi * omega])
-        variances = np.array([d_std**2, (2 * np.pi * omega_std)**2])
+        variances = np.array([d_std ** 2, (2 * np.pi * omega_std) ** 2])
         behavior = {"type": "oscillation", "means": means, "variances": variances}
         system = Linear2D(fixed_params, behavior)
 
-    elif (sysname == "STGCircuit"):
-        freq = param_dict['freq']
-        if (freq == "med"):
+    elif sysname == "STGCircuit":
+        freq = param_dict["freq"]
+        if freq == "med":
             T = 200
-            mean = 0.53*np.ones((5,))
-            variance = (.025)**2*np.ones((5,))
-        elif (freq == "high"):
+            mean = 0.53 * np.ones((5,))
+            variance = (0.025) ** 2 * np.ones((5,))
+        elif freq == "high":
             T = 500
             high_freq = 0.75
             low_freq = 0.375
             mean = np.array([high_freq, high_freq, high_freq, low_freq, low_freq])
-            variance = (.025)**2*np.ones((5,))
+            variance = (0.025) ** 2 * np.ones((5,))
         else:
-            print('Error: freq not med or high.')
+            print("Error: freq not med or high.")
             exit()
 
         dt = 0.025
         fft_start = 0
         w = 20
 
-        fixed_params = {'g_synB':5e-9}
-        behavior = {"type":"freq",
-                    "mean":mean,
-                    "variance":variance}
-        model_opts = {"dt":dt,
-                      "T":T,
-                      "fft_start":fft_start,
-                      "w":w
-                     }
+        fixed_params = {"g_synB": 5e-9}
+        behavior = {"type": "freq", "mean": mean, "variance": variance}
+        model_opts = {"dt": dt, "T": T, "fft_start": fft_start, "w": w}
         system = STGCircuit(fixed_params, behavior, model_opts)
 
-    elif (sysname == "V1Circuit"):
+    elif sysname == "V1Circuit":
         """# Parameters
                behavior_type - in {'ISN_coeff'}
                silenced - in {'S', 'V'}
         """
         behavior_type = param_dict["behavior_type"]
 
-        if (behavior_type == 'ISN_coeff'):
+        if behavior_type == "ISN_coeff":
             # Simulation parameters
             T = 100
             dt = 0.005
-            init_conds = np.random.normal(1.0, 0.01, (4,1))
+            init_conds = np.random.normal(1.0, 0.01, (4, 1))
 
             # Set fixed parameters.
             base_I = 1.0
@@ -139,221 +144,242 @@ def get_system_from_template(sysname, param_dict):
             h = 0.0
             n = 2
             s_0 = 30
-            fixed_params = {'W_EE':W_EE, \
-                            'b_E':base_I, \
-                            'b_P':base_I, \
-                            'b_S':base_I, \
-                            'b_V':base_I, \
-                            'h_RUNE':h, \
-                            'h_RUNP':h, \
-                            'h_RUNS':h, \
-                            'h_RUNV':h, \
-                            'h_FFE':h, \
-                            'h_FFP':h, \
-                            'h_LATE':h, \
-                            'h_LATP':h, \
-                            'h_LATS':h, \
-                            'h_LATV':h, \
-                            'n':n, \
-                            's_0':s_0, \
-                            'tau':tau}
+            fixed_params = {
+                "W_EE": W_EE,
+                "b_E": base_I,
+                "b_P": base_I,
+                "b_S": base_I,
+                "b_V": base_I,
+                "h_RUNE": h,
+                "h_RUNP": h,
+                "h_RUNS": h,
+                "h_RUNV": h,
+                "h_FFE": h,
+                "h_FFP": h,
+                "h_LATE": h,
+                "h_LATP": h,
+                "h_LATS": h,
+                "h_LATV": h,
+                "n": n,
+                "s_0": s_0,
+                "tau": tau,
+            }
             # These are arbitrary since no input other than base.
-            c_vals=np.array([1.0])
-            s_vals=np.array([5])
-            r_vals=np.array([0.0])
+            c_vals = np.array([1.0])
+            s_vals = np.array([5])
+            r_vals = np.array([0.0])
             # 1 condition == (len(c_vals)*len(s_vals)*len(r_vals))
-            behavior = {'type':behavior_type, \
-                        'mean':0.0, \
-                        'std':0.25, \
-                        'c_vals':c_vals, \
-                        's_vals':s_vals, \
-                       'r_vals':r_vals}
-            if ('silenced' in param_dict.keys()):
-                behavior.update({'silenced':param_dict['silenced']})
-            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE":True}
+            behavior = {
+                "type": behavior_type,
+                "mean": 0.0,
+                "std": 0.25,
+                "c_vals": c_vals,
+                "s_vals": s_vals,
+                "r_vals": r_vals,
+            }
+            if "silenced" in param_dict.keys():
+                behavior.update({"silenced": param_dict["silenced"]})
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE": True}
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
-        elif (behavior_type == "difference"):
-            alpha = param_dict['alpha']
-            inc_val = param_dict['inc_val']
+        elif behavior_type == "difference":
+            alpha = param_dict["alpha"]
+            inc_val = param_dict["inc_val"]
             npzfile = np.load("data/V1/V1_Zs.npz")
-            Z = npzfile['Z_allen']
+            Z = npzfile["Z_allen"]
 
             base_I = 1.0
             tau = 0.02
-            fixed_params = {'W_EE':Z[0], \
-                            'W_PE':Z[1], \
-                            'W_SE':Z[2], \
-                            'W_VE':Z[3], \
-                            'W_EP':Z[4], \
-                            'W_PP':Z[5], \
-                            'W_VP':Z[6], \
-                            'W_ES':Z[7], \
-                            'W_PS':Z[8], \
-                            'W_VS':Z[9], \
-                            'W_SV':Z[10], \
-                            'b_E':base_I, \
-                            'b_P':base_I, \
-                            'b_S':base_I, \
-                            'b_V':base_I, \
-                            'h_FFE':0.0, \
-                            'h_FFP':0.0, \
-                            'h_LATE':0.0, \
-                            'h_LATP':0.0, \
-                            'h_LATS':0.0, \
-                            'h_LATV':0.0, \
-                            'n':2.0, \
-                            's_0':30, \
-                            'tau':tau}
-            c_vals=np.array([1.0])
-            s_vals=np.array([5])
-            r_vals=np.array([0.0, 1.0])
-            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
-            behavior = {'type':behavior_type, \
-                        'mean': inc_val, \
-                        'std':0.01, \
-                        'c_vals':c_vals, \
-                        's_vals':s_vals, \
-                        'r_vals':r_vals, \
-                        'alpha':alpha}
-            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE":False}
+            fixed_params = {
+                "W_EE": Z[0],
+                "W_PE": Z[1],
+                "W_SE": Z[2],
+                "W_VE": Z[3],
+                "W_EP": Z[4],
+                "W_PP": Z[5],
+                "W_VP": Z[6],
+                "W_ES": Z[7],
+                "W_PS": Z[8],
+                "W_VS": Z[9],
+                "W_SV": Z[10],
+                "b_E": base_I,
+                "b_P": base_I,
+                "b_S": base_I,
+                "b_V": base_I,
+                "h_FFE": 0.0,
+                "h_FFP": 0.0,
+                "h_LATE": 0.0,
+                "h_LATP": 0.0,
+                "h_LATS": 0.0,
+                "h_LATV": 0.0,
+                "n": 2.0,
+                "s_0": 30,
+                "tau": tau,
+            }
+            c_vals = np.array([1.0])
+            s_vals = np.array([5])
+            r_vals = np.array([0.0, 1.0])
+            C = c_vals.shape[0] * s_vals.shape[0] * r_vals.shape[0]
+            behavior = {
+                "type": behavior_type,
+                "mean": inc_val,
+                "std": 0.01,
+                "c_vals": c_vals,
+                "s_vals": s_vals,
+                "r_vals": r_vals,
+                "alpha": alpha,
+            }
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE": False}
             T = 100
             dt = 0.005
-            init_conds = np.random.normal(1.0, 0.01, (4,1))
+            init_conds = np.random.normal(1.0, 0.01, (4, 1))
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
-        elif (behavior_type == "rates"):
+        elif behavior_type == "rates":
             fac = param_dict["fac"]
             s = param_dict["s"]
             npzfile = np.load("data/V1/V1_Zs.npz")
-            Z = npzfile['Z_allen']
+            Z = npzfile["Z_allen"]
 
             tau = 0.02
-            fixed_params = {'W_EE':Z[0], \
-                            'W_PE':Z[1], \
-                            'W_SE':Z[2], \
-                            'W_VE':Z[3], \
-                            'W_EP':Z[4], \
-                            'W_PP':Z[5], \
-                            'W_VP':Z[6], \
-                            'W_ES':Z[7], \
-                            'W_PS':Z[8], \
-                            'W_VS':Z[9], \
-                            'W_SV':Z[10], \
-                            'h_RUNE':0.0, \
-                            'h_RUNP':0.0, \
-                            'h_RUNS':0.0, \
-                            'h_RUNV':0.0, \
-                            'h_FFE':0.0, \
-                            'h_FFP':0.0, \
-                            'h_LATE':0.0, \
-                            'h_LATP':0.0, \
-                            'h_LATS':0.0, \
-                            'h_LATV':0.0, \
-                            's_0':30, \
-                            'tau':tau}
-            c_vals=np.array([1.0])
+            fixed_params = {
+                "W_EE": Z[0],
+                "W_PE": Z[1],
+                "W_SE": Z[2],
+                "W_VE": Z[3],
+                "W_EP": Z[4],
+                "W_PP": Z[5],
+                "W_VP": Z[6],
+                "W_ES": Z[7],
+                "W_PS": Z[8],
+                "W_VS": Z[9],
+                "W_SV": Z[10],
+                "h_RUNE": 0.0,
+                "h_RUNP": 0.0,
+                "h_RUNS": 0.0,
+                "h_RUNV": 0.0,
+                "h_FFE": 0.0,
+                "h_FFP": 0.0,
+                "h_LATE": 0.0,
+                "h_LATP": 0.0,
+                "h_LATS": 0.0,
+                "h_LATV": 0.0,
+                "s_0": 30,
+                "tau": tau,
+            }
+            c_vals = np.array([1.0])
             s_type = type(s)
-            if (s_type == list):
-                s_vals=np.array(s)
-            elif (s_type == np.ndarray):
-                s_vals=s
-            elif (s_type == int):
-                s_vals=np.array([s])
+            if s_type == list:
+                s_vals = np.array(s)
+            elif s_type == np.ndarray:
+                s_vals = s
+            elif s_type == int:
+                s_vals = np.array([s])
             else:
                 raise TypeError()
 
-            r_vals=np.array([0.0])
-            C = c_vals.shape[0]*s_vals.shape[0]*r_vals.shape[0]
-            behavior = {'type':behavior_type, \
-                        'c_vals':c_vals, \
-                        's_vals':s_vals, \
-                        'r_vals':r_vals, \
-                        'fac':fac}
-            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE":False}
+            r_vals = np.array([0.0])
+            C = c_vals.shape[0] * s_vals.shape[0] * r_vals.shape[0]
+            behavior = {
+                "type": behavior_type,
+                "c_vals": c_vals,
+                "s_vals": s_vals,
+                "r_vals": r_vals,
+                "fac": fac,
+            }
+            model_opts = {"g_FF": "c", "g_LAT": "square", "g_RUN": "r", "XE": False}
             T = 100
             dt = 0.005
-            init_conds = np.random.normal(1.0, 0.01, (4,1))
+            init_conds = np.random.normal(1.0, 0.01, (4, 1))
             system = V1Circuit(fixed_params, behavior, model_opts, T, dt, init_conds)
 
-
-    elif (sysname == 'SCCircuit'):
+    elif sysname == "SCCircuit":
         behavior_type = param_dict["behavior_type"]
-        fixed_params = {'E_constant':0.0, \
-            'E_Pbias':0.0, \
-            'E_Prule':10.0, \
-            'E_Arule':10.0, \
-            'E_choice':2.0, \
-            'E_light':1.0};
+        fixed_params = {
+            "E_constant": 0.0,
+            "E_Pbias": 0.0,
+            "E_Prule": 10.0,
+            "E_Arule": 10.0,
+            "E_choice": 2.0,
+            "E_light": 1.0,
+        }
         if behavior_type == "WTA":
             C = 2
             param_str = "full"
-            p = param_dict['p']
-            var = param_dict['var']
-            inact_str = param_dict['inact_str']
-            N = param_dict['N']
+            p = param_dict["p"]
+            var = param_dict["var"]
+            inact_str = param_dict["inact_str"]
+            N = param_dict["N"]
             means = np.array([p, p])
-            variances = np.array([var,var])
+            variances = np.array([var, var])
             barrier_EPS = 1e-10
-            if (p==0.0 or p==1.0):
+            if p == 0.0 or p == 1.0:
                 behavior = {
                     "type": behavior_type,
                     "means": means,
                     "variances": variances,
-                    "inact_str":inact_str
+                    "inact_str": inact_str,
                 }
             else:
                 behavior = {
                     "type": behavior_type,
                     "means": means,
                     "variances": variances,
-                    "bounds":np.zeros(C) - barrier_EPS,
-                    "inact_str":inact_str
+                    "bounds": np.zeros(C) - barrier_EPS,
+                    "inact_str": inact_str,
                 }
-            model_opts = {"params":param_str, "C":C, "N":N}
+            model_opts = {"params": param_str, "C": C, "N": N}
             system = SCCircuit(fixed_params, behavior, model_opts)
         else:
             raise NotImplementedError()
-    elif (sysname == 'LowRankRNN'):
-        rank = param_dict['rank']
-        input_type = param_dict['input_type']
+    elif sysname == "LowRankRNN":
+        rank = param_dict["rank"]
+        input_type = param_dict["input_type"]
         behavior_type = param_dict["behavior_type"]
-        if (behavior_type == 'ND'):
-            fixed_params = {'MI':0.0, \
-                            'SmI':0.0, \
-                            'Sperp':0.0}
+        if behavior_type == "ND":
+            fixed_params = {"MI": 0.0, "SmI": 0.0, "Sperp": 0.0}
             means = np.array([0.6])
             variances = np.array([0.01])
             behavior = {"type": behavior_type, "means": means, "variances": variances}
-            model_opts = {'rank':rank, 'input_type':input_type}
+            model_opts = {"rank": rank, "input_type": input_type}
 
-            system = LowRankRNN(fixed_params, 
-                                behavior, 
-                                model_opts=model_opts, 
-                                solve_its=25, 
-                                solve_eps=0.8)
+            system = LowRankRNN(
+                fixed_params,
+                behavior,
+                model_opts=model_opts,
+                solve_its=25,
+                solve_eps=0.8,
+            )
 
-        elif (behavior_type == 'BI'):
-            solve_its = param_dict['solve_its']
-            solve_eps = param_dict['solve_eps']
-            variance = param_dict['variance']
-            gauss_newton = param_dict['gauss_newton']
-            fixed_params = {'MI':2.0,
-                            'Sm':1.0,
-                            'Sn':1.0,
-                            'SmI':0.0,
-                            'SnI':1.0,
-                            'Sperp':0.0}
+        elif behavior_type == "BI":
+            solve_its = param_dict["solve_its"]
+            solve_eps = param_dict["solve_eps"]
+            variance = param_dict["variance"]
+            gauss_newton = param_dict["gauss_newton"]
+            fixed_params = {
+                "MI": 2.0,
+                "Sm": 1.0,
+                "Sn": 1.0,
+                "SmI": 0.0,
+                "SnI": 1.0,
+                "Sperp": 0.0,
+            }
             prior = np.array([4.0, 1.0])
-            variances = variance*np.ones((2,))
+            variances = variance * np.ones((2,))
             behavior = {"type": behavior_type, "prior": prior, "variances": variances}
-            model_opts = {'rank':rank, 'input_type':input_type, 'gauss_newton':gauss_newton}
+            model_opts = {
+                "rank": rank,
+                "input_type": input_type,
+                "gauss_newton": gauss_newton,
+            }
 
-            system = LowRankRNN(fixed_params, 
-                                behavior, 
-                                model_opts=model_opts, 
-                                solve_its=solve_its, 
-                                solve_eps=solve_eps)
+            system = LowRankRNN(
+                fixed_params,
+                behavior,
+                model_opts=model_opts,
+                solve_its=solve_its,
+                solve_eps=solve_eps,
+            )
         else:
             raise NotImplementedError()
 
@@ -361,8 +387,6 @@ def get_system_from_template(sysname, param_dict):
         raise NotImplementedError()
 
     return system
-
-
 
 
 def get_arch_from_template(system, param_dict):
@@ -377,73 +401,65 @@ def get_arch_from_template(system, param_dict):
 
     """
     sysname = system.name
-    if (sysname == "Linear2D"):
-        D = param_dict['D']
-        repeats = param_dict['repeats']
-        nlayers = param_dict['nlayers']
-        sigma_init = param_dict['sigma_init']
-        Sigma_init = np.square(sigma_init)*np.eye(system.D)
+    if sysname == "Linear2D":
+        D = param_dict["D"]
+        repeats = param_dict["repeats"]
+        nlayers = param_dict["nlayers"]
+        sigma_init = param_dict["sigma_init"]
+        Sigma_init = np.square(sigma_init) * np.eye(system.D)
 
         flow_type = "RealNVP"
         post_affine = True
         K = 1
-        real_nvp_arch = {
-                         'num_masks':4,
-                         'nlayers':nlayers,
-                         'upl':15,
-                        }
+        real_nvp_arch = {"num_masks": 4, "nlayers": nlayers, "upl": 15}
         mu_init = np.zeros((D,))
 
         arch_dict = {
-                     "D": D,
-                     "flow_type": flow_type,
-                     "repeats": repeats,
-                     "post_affine": post_affine,
-                     "K": K,
-                     "real_nvp_arch":real_nvp_arch,
-                     "mo":0.99,
-                     "init_mo":0.99,
-                     "mu_init": mu_init,
-                     "sigma_init": sigma_init,
-                     "Sigma_init": Sigma_init,
-                    }
+            "D": D,
+            "flow_type": flow_type,
+            "repeats": repeats,
+            "post_affine": post_affine,
+            "K": K,
+            "real_nvp_arch": real_nvp_arch,
+            "mo": 0.99,
+            "init_mo": 0.99,
+            "mu_init": mu_init,
+            "sigma_init": sigma_init,
+            "Sigma_init": Sigma_init,
+        }
 
-    elif (sysname == "STGCircuit"):
-        D = param_dict['D']
-        repeats = param_dict['repeats']
-        num_masks = param_dict['num_masks']
-        nlayers = param_dict['nlayers']
-        sigma_init = param_dict['sigma_init']
+    elif sysname == "STGCircuit":
+        D = param_dict["D"]
+        repeats = param_dict["repeats"]
+        num_masks = param_dict["num_masks"]
+        nlayers = param_dict["nlayers"]
+        sigma_init = param_dict["sigma_init"]
 
         flow_type = "RealNVP"
         post_affine = True
         K = 1
-        real_nvp_arch = {
-                         'num_masks':num_masks,
-                         'nlayers':nlayers,
-                         'upl':10,
-                        }
+        real_nvp_arch = {"num_masks": num_masks, "nlayers": nlayers, "upl": 10}
 
         # Use informed initialization:
-        #mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
+        # mu_init, sigma_init = get_gauss_init(system, n_gs=10000)
         mu_init = system.density_network_init_mu
-        Sigma_init = (sigma_init**2)*np.eye(2)
+        Sigma_init = (sigma_init ** 2) * np.eye(2)
 
         arch_dict = {
-                     "D": D,
-                     "flow_type": flow_type,
-                     "repeats": repeats,
-                     "post_affine": post_affine,
-                     "K": K,
-                     "real_nvp_arch":real_nvp_arch,
-                     "mo":0.99,
-                     "init_mo":0.99,
-                     "mu_init": mu_init,
-                     "sigma_init":sigma_init,
-                     "Sigma_init": Sigma_init,
-                    }
+            "D": D,
+            "flow_type": flow_type,
+            "repeats": repeats,
+            "post_affine": post_affine,
+            "K": K,
+            "real_nvp_arch": real_nvp_arch,
+            "mo": 0.99,
+            "init_mo": 0.99,
+            "mu_init": mu_init,
+            "sigma_init": sigma_init,
+            "Sigma_init": Sigma_init,
+        }
 
-    elif (sysname == "V1Circuit"):
+    elif sysname == "V1Circuit":
         """# Parameters
                behavior_type - in {'ISN_coeff'}
                silenced - in {'S', 'V'}
@@ -453,17 +469,17 @@ def get_arch_from_template(system, param_dict):
                upl - units per layer for real-nvp fs
         """
         behavior_type = param_dict["behavior_type"]
-        D = param_dict['D']
-        repeats = param_dict['repeats']
-        nlayers = param_dict['nlayers']
+        D = param_dict["D"]
+        repeats = param_dict["repeats"]
+        nlayers = param_dict["nlayers"]
         flow_type = "RealNVP"
-        upl = param_dict['upl']
-        if (behavior_type == 'ISN_coeff'):
+        upl = param_dict["upl"]
+        if behavior_type == "ISN_coeff":
             # Fixed architecture template parameters
             num_masks = 8
-            mu_init = 10.0*np.ones((D,))
-            sigma_init = param_dict['sigma_init']
-        elif (behavior_type in ['difference', 'rates']):
+            mu_init = 10.0 * np.ones((D,))
+            sigma_init = param_dict["sigma_init"]
+        elif behavior_type in ["difference", "rates"]:
             num_masks = 4
             """
             init_param_fn = 'data/V1/ISN_%s_gauss_init.npz' % silenced
@@ -474,159 +490,154 @@ def get_arch_from_template(system, param_dict):
             mu_init, Sigma_init = get_gauss_init(system)
         post_affine = True
         K = 1
-        real_nvp_arch = {
-                         'num_masks':num_masks,
-                         'nlayers':nlayers,
-                         'upl':upl,
-                        }
-
+        real_nvp_arch = {"num_masks": num_masks, "nlayers": nlayers, "upl": upl}
 
         arch_dict = {
-                     "D": D,
-                     "flow_type": flow_type,
-                     "repeats": repeats,
-                     "post_affine": post_affine,
-                     "K": K,
-                     "real_nvp_arch":real_nvp_arch,
-                     "mo":0.99,
-                     "init_mo":1.0,
-                     "mu_init": mu_init,
-                     "Sigma_init": Sigma_init,
-                    }
+            "D": D,
+            "flow_type": flow_type,
+            "repeats": repeats,
+            "post_affine": post_affine,
+            "K": K,
+            "real_nvp_arch": real_nvp_arch,
+            "mo": 0.99,
+            "init_mo": 1.0,
+            "mu_init": mu_init,
+            "Sigma_init": Sigma_init,
+        }
 
-    elif (sysname == "SCCircuit"):
+    elif sysname == "SCCircuit":
         behavior_type = param_dict["behavior_type"]
-        D = param_dict['D']
-        repeats = param_dict['repeats']
-        nlayers = param_dict['nlayers']
-        upl = param_dict['upl']
-        sigma_init = param_dict['sigma_init']
-        Sigma_init = np.square(sigma_init)*np.eye(system.D)
-        if (behavior_type == 'WTA'):
+        D = param_dict["D"]
+        repeats = param_dict["repeats"]
+        nlayers = param_dict["nlayers"]
+        upl = param_dict["upl"]
+        sigma_init = param_dict["sigma_init"]
+        Sigma_init = np.square(sigma_init) * np.eye(system.D)
+        if behavior_type == "WTA":
             flow_type = "RealNVP"
             post_affine = True
             K = 1
-            real_nvp_arch = {
-                             'num_masks':8,
-                             'nlayers':nlayers,
-                             'upl':upl,
-                            }
+            real_nvp_arch = {"num_masks": 8, "nlayers": nlayers, "upl": upl}
             mu_init = np.zeros((D,))
             arch_dict = {
-                         "D": D,
-                         "flow_type": flow_type,
-                         "repeats": repeats,
-                         "post_affine": post_affine,
-                         "K": K,
-                         "real_nvp_arch":real_nvp_arch,
-                         "mo":0.99,
-                         "init_mo":0.99,
-                         "mu_init": mu_init,
-                         "sigma_init": sigma_init,
-                         "Sigma_init": Sigma_init,
-                        } 
+                "D": D,
+                "flow_type": flow_type,
+                "repeats": repeats,
+                "post_affine": post_affine,
+                "K": K,
+                "real_nvp_arch": real_nvp_arch,
+                "mo": 0.99,
+                "init_mo": 0.99,
+                "mu_init": mu_init,
+                "sigma_init": sigma_init,
+                "Sigma_init": Sigma_init,
+            }
         else:
             raise NotImplementedError()
-    elif (sysname == "LowRankRNN"):
-        D = param_dict['D']
-        repeats = param_dict['repeats']
-        nlayers = param_dict['nlayers']
-        upl = param_dict['upl']
-        sigma_init = param_dict['sigma_init']
-        Sigma_init = np.square(sigma_init)*np.eye(system.D)
+    elif sysname == "LowRankRNN":
+        D = param_dict["D"]
+        repeats = param_dict["repeats"]
+        nlayers = param_dict["nlayers"]
+        upl = param_dict["upl"]
+        sigma_init = param_dict["sigma_init"]
+        Sigma_init = np.square(sigma_init) * np.eye(system.D)
 
         num_masks = 2
-        #mu_init, sigma_init = get_gauss_init(system)
+        # mu_init, sigma_init = get_gauss_init(system)
         mu_init = np.array([2.5, 0.0, 0.0])
 
         flow_type = "RealNVP"
         post_affine = True
         K = 1
-        real_nvp_arch = {
-                         'num_masks':num_masks,
-                         'nlayers':nlayers,
-                         'upl':upl,
-                        }
+        real_nvp_arch = {"num_masks": num_masks, "nlayers": nlayers, "upl": upl}
 
         arch_dict = {
-                     "D": D,
-                     "flow_type": flow_type,
-                     "repeats": repeats,
-                     "post_affine": post_affine,
-                     "K": K,
-                     "real_nvp_arch":real_nvp_arch,
-                     "mo":0.99,
-                     "init_mo":1.0,
-                     "mu_init": mu_init,
-                     "sigma_init": sigma_init,
-                     "Sigma_init": Sigma_init,
-                    }
+            "D": D,
+            "flow_type": flow_type,
+            "repeats": repeats,
+            "post_affine": post_affine,
+            "K": K,
+            "real_nvp_arch": real_nvp_arch,
+            "mo": 0.99,
+            "init_mo": 1.0,
+            "mu_init": mu_init,
+            "sigma_init": sigma_init,
+            "Sigma_init": Sigma_init,
+        }
 
     return arch_dict
 
+
 def get_gauss_init(system, n_gs=10000):
-    init_param_dir = 'data/%s/' % system.name
-    init_param_fname = init_param_dir + '%s_init_param.npz' % system.behavior_str
-    if (not os.path.isfile(init_param_fname)):
-        print('Running grid search to determine DSN initialization.')
+    init_param_dir = "data/%s/" % system.name
+    init_param_fname = init_param_dir + "%s_init_param.npz" % system.behavior_str
+    if not os.path.isfile(init_param_fname):
+        print("Running grid search to determine DSN initialization.")
         Z_thresh, mu_init, sigma_init = grid_search(system, n=n_gs)
-        print('%d / %d' % (Z_thresh.shape[0], n_gs))
-        if (not os.path.exists(init_param_dir)):
+        print("%d / %d" % (Z_thresh.shape[0], n_gs))
+        if not os.path.exists(init_param_dir):
             os.mkdir(init_param_dir)
         np.savez(init_param_fname, mu_init=mu_init, sigma_init=sigma_init)
     else:
         npzfile = np.load(init_param_fname)
-        mu_init = npzfile['mu_init']
-        sigma_init = npzfile['sigma_init']
+        mu_init = npzfile["mu_init"]
+        sigma_init = npzfile["sigma_init"]
     return mu_init, sigma_init
 
 
-
 def get_grid_search_bounds(system):
-    if (not system.has_support_map):
-        print('Error: System has no support mapping.')
+    if not system.has_support_map:
+        print("Error: System has no support mapping.")
         return None
     Z_a, Z_b = system.density_network_bounds
 
-    if (system.name == 'Linear2D'):
+    if system.name == "Linear2D":
         d_mean = system.mu[0]
         omega_mean = system.mu[1]
         d_var = system.mu[2]
         d_std = np.sqrt(d_var)
-        omega_var =system.mu[3]
+        omega_var = system.mu[3]
         omega_std = np.sqrt(omega_var)
-        T_x_a = np.array([d_mean-2*d_std, omega_mean-2*omega_std, np.NINF, np.NINF])
-        T_x_b = np.array([d_mean+2*d_std, omega_mean+2*omega_std, np.PINF, np.PINF])
-    if (system.name == 'V1Circuit'):
-        if (system.behavior['type'] == 'ISN_coeff'):
+        T_x_a = np.array(
+            [d_mean - 2 * d_std, omega_mean - 2 * omega_std, np.NINF, np.NINF]
+        )
+        T_x_b = np.array(
+            [d_mean + 2 * d_std, omega_mean + 2 * omega_std, np.PINF, np.PINF]
+        )
+    if system.name == "V1Circuit":
+        if system.behavior["type"] == "ISN_coeff":
             ISN_mean = system.mu[0]
             ISN_var = system.mu[1]
             ISN_std = np.sqrt(ISN_var)
-            T_x_a = np.array([ISN_mean-2*ISN_std, np.NINF])
-            T_x_b = np.array([ISN_mean+2*ISN_std, np.PINF])
-        elif (system.behavior['type'] == 'difference'):
+            T_x_a = np.array([ISN_mean - 2 * ISN_std, np.NINF])
+            T_x_b = np.array([ISN_mean + 2 * ISN_std, np.PINF])
+        elif system.behavior["type"] == "difference":
             mean = system.mu[0]
             var = system.mu[1]
             std = np.sqrt(var)
-            T_x_a = np.array([mean-2*std, np.NINF])
-            T_x_b = np.array([mean+2*std, np.PINF])
-        elif (system.behavior['type'] == 'rates'):
+            T_x_a = np.array([mean - 2 * std, np.NINF])
+            T_x_b = np.array([mean + 2 * std, np.PINF])
+        elif system.behavior["type"] == "rates":
             mean = system.mu[:4]
             var = system.mu[4:]
             std = np.sqrt(var)
-            T_x_a = np.concatenate((mean-std, np.NINF*np.ones((4,))), axis=0)
-            T_x_b = np.concatenate((mean+std, np.PINF*np.ones((4,))), axis=0)
-    
-    elif (system.name == 'STGCircuit'):
-        if (system.behavior['type'] == 'freq'):
+            T_x_a = np.concatenate((mean - std, np.NINF * np.ones((4,))), axis=0)
+            T_x_b = np.concatenate((mean + std, np.PINF * np.ones((4,))), axis=0)
+
+    elif system.name == "STGCircuit":
+        if system.behavior["type"] == "freq":
             f_mean = system.mu[:5]
             f_var = system.mu[5:]
             f_std = np.sqrt(f_var)
-            T_x_a = np.concatenate((f_mean - 0.25*f_std, np.NINF*np.ones((5,))), axis=0)
-            T_x_b = np.concatenate((f_mean + 0.25*f_std, np.PINF*np.ones((5,))), axis=0)
+            T_x_a = np.concatenate(
+                (f_mean - 0.25 * f_std, np.NINF * np.ones((5,))), axis=0
+            )
+            T_x_b = np.concatenate(
+                (f_mean + 0.25 * f_std, np.PINF * np.ones((5,))), axis=0
+            )
 
-    elif (system.name == "LowRankRNN"):
-        if (system.model_opts['rank'] == 1 and system.behavior['type'] == "BI"):
+    elif system.name == "LowRankRNN":
+        if system.model_opts["rank"] == 1 and system.behavior["type"] == "BI":
             mu_mean = system.mu[0]
             deltaT_mean = system.mu[1]
             mu_var = system.mu[2]
@@ -634,65 +645,72 @@ def get_grid_search_bounds(system):
             mu_std = np.sqrt(mu_var)
             deltaT_std = np.sqrt(deltaT_var)
 
-            T_x_a = np.array([mu_mean-2*mu_std, deltaT_mean-2*deltaT_std, np.NINF, np.NINF])
-            T_x_b = np.array([mu_mean+2*mu_std, deltaT_mean+2*deltaT_std, np.PINF, np.PINF])
+            T_x_a = np.array(
+                [mu_mean - 2 * mu_std, deltaT_mean - 2 * deltaT_std, np.NINF, np.NINF]
+            )
+            T_x_b = np.array(
+                [mu_mean + 2 * mu_std, deltaT_mean + 2 * deltaT_std, np.PINF, np.PINF]
+            )
 
     return Z_a, Z_b, T_x_a, T_x_b
 
+
 def grid_search(system, n=10000, Z=None, T_x=None):
-    if (Z is None and T_x is None):
-        Z = tf.placeholder(tf.float64, (1,None,system.D))
+    if Z is None and T_x is None:
+        Z = tf.placeholder(tf.float64, (1, None, system.D))
         T_x = system.compute_suff_stats(Z)
 
     # get bounds
     Z_a, Z_b, T_x_a, T_x_b = get_grid_search_bounds(system)
-    _Z = np.zeros((1,n,system.D))
+    _Z = np.zeros((1, n, system.D))
     for i in range(system.D):
-        _Z[0,:,i] = np.random.uniform(Z_a[i], Z_b[i], (n,))
+        _Z[0, :, i] = np.random.uniform(Z_a[i], Z_b[i], (n,))
 
     with tf.Session() as sess:
-        _T_x = sess.run(T_x, {Z:_Z})
+        _T_x = sess.run(T_x, {Z: _Z})
     inds = []
     for j in range(system.num_suff_stats):
-        inds_j = np.logical_and(T_x_a[j] <= _T_x[0,:,j], _T_x[0,:,j] <= T_x_b[j])
+        inds_j = np.logical_and(T_x_a[j] <= _T_x[0, :, j], _T_x[0, :, j] <= T_x_b[j])
         inds.append(inds_j)
     thresh_inds = np.prod(np.array(inds), axis=0) == 1
-    Z_thresh = _Z[0,thresh_inds,:]
+    Z_thresh = _Z[0, thresh_inds, :]
     mu = np.mean(Z_thresh, axis=0)
     Sigma = np.cov(Z_thresh.T)
     return Z_thresh, mu, Sigma
 
+
 def abc_sample(system, n=10000, sigma=1.0, inds=None, Z=None, T_x=None):
     if inds is None:
-        inds = np.array(system.num_suff_stats*[True])
-    if (Z is None and T_x is None):
-        Z = tf.placeholder(tf.float64, (1,None,system.D))
+        inds = np.array(system.num_suff_stats * [True])
+    if Z is None and T_x is None:
+        Z = tf.placeholder(tf.float64, (1, None, system.D))
         T_x = system.compute_suff_stats(Z)
 
     # get bounds
     Z_a, Z_b = system.density_network_bounds
     mu = np.expand_dims(np.expand_dims(system.mu, 0), 0)
-    _Z = np.zeros((1,n,system.D))
+    _Z = np.zeros((1, n, system.D))
     for i in range(system.D):
-        _Z[0,:,i] = np.random.uniform(Z_a[i], Z_b[i], (n,))
+        _Z[0, :, i] = np.random.uniform(Z_a[i], Z_b[i], (n,))
 
     with tf.Session() as sess:
-        _T_x = sess.run(T_x, {Z:_Z})
+        _T_x = sess.run(T_x, {Z: _Z})
 
-    u = np.sqrt(np.sum(np.square(_T_x[:,:,inds] - mu[:,:,inds]), axis=2))[0]
-    k_u = np.exp(-0.5*u**2 / (2.0*sigma**2)) / np.sqrt(2.0*np.pi)
-    K = 1.0 / (np.sqrt(2.0*np.pi) * sigma)
+    u = np.sqrt(np.sum(np.square(_T_x[:, :, inds] - mu[:, :, inds]), axis=2))[0]
+    k_u = np.exp(-0.5 * u ** 2 / (2.0 * sigma ** 2)) / np.sqrt(2.0 * np.pi)
+    K = 1.0 / (np.sqrt(2.0 * np.pi) * sigma)
     p = k_u / K
-    r = np.random.uniform(0,1,(n,))
+    r = np.random.uniform(0, 1, (n,))
     accept = r < p
 
-    Z_abc = _Z[0,accept,:]
+    Z_abc = _Z[0, accept, :]
     return Z_abc
+
 
 def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict):
     num_cs = c_init_ords.shape[0]
     num_rs = random_seeds.shape[0]
-    
+
     model_dirs = []
     for i in range(num_cs):
         c_init_order = c_init_ords[i]
@@ -700,22 +718,23 @@ def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict
             rs = random_seeds[k]
             savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
             model_dirs.append(savedir)
-    if ('tol' not in conv_dict.keys()):
-        conv_dict['tol'] = None
-    if ('tol_inds' not in conv_dict.keys()):
-        conv_dict['tol_inds'] = []
-    first_its, ME_its, MEs = assess_constraints_mix(model_dirs, 
-                                                    tol=conv_dict['tol'], 
-                                                    tol_inds=conv_dict['tol_inds'],
-                                                    alpha=conv_dict['alpha'], 
-                                                    frac_samps=conv_dict['frac_samples']
-                                                    )
+    if "tol" not in conv_dict.keys():
+        conv_dict["tol"] = None
+    if "tol_inds" not in conv_dict.keys():
+        conv_dict["tol_inds"] = []
+    first_its, ME_its, MEs = assess_constraints_mix(
+        model_dirs,
+        tol=conv_dict["tol"],
+        tol_inds=conv_dict["tol_inds"],
+        alpha=conv_dict["alpha"],
+        frac_samps=conv_dict["frac_samples"],
+    )
     num_models = len(model_dirs)
     # Find the model that had maximum entropy while satisfying convergence criteria
     # iterate because of Nones
     flg = True
     for i in range(num_models):
-        if (flg):
+        if flg:
             if MEs[i] is not None:
                 max_ME = MEs[i]
                 max_ind = i
@@ -724,8 +743,8 @@ def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict
             if (MEs[i] is not None) and MEs[i] > max_ME:
                 max_ME = MEs[i]
                 max_ind = i
-    
-    if (flg):
+
+    if flg:
         best_model = None
         max_ME = None
         first_it = None
@@ -734,8 +753,9 @@ def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict
         best_model = model_dirs[max_ind]
         ME_it = ME_its[max_ind]
         first_it = first_its[max_ind]
-    
+
     return best_model, max_ME, ME_it, first_it
+
 
 def load_DSNs(model_dirs, load_its):
     num_models = len(model_dirs)
@@ -747,49 +767,97 @@ def load_DSNs(model_dirs, load_its):
         load_it = load_its[i]
 
         sess = tf.Session()
-        if i==0:
+        if i == 0:
             load_time1 = time.time()
         collection, has_Z_inv, has_Z_input = load_dgm(sess, model_dir, load_it)
-        if i==0:
+        if i == 0:
             load_time2 = time.time()
-            print('Loaded DGM in %.2f seconds' % (load_time2-load_time1))
-        if (has_Z_inv and has_Z_input):
-            print('here 1')
-            W, Z, log_q_Z, Z_INV, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
-            tf_vars.append([W, Z, Z_input, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
-                            batch_norm_layer_means, batch_norm_layer_vars])
-        elif (has_Z_inv and (not has_Z_input)):
-            print('here 2')
-            W, Z, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
-            tf_vars.append([W, Z, Z_INV, log_q_Z, batch_norm_mus, batch_norm_sigmas,
-                            batch_norm_layer_means, batch_norm_layer_vars])
-        elif ((not has_Z_inv) and has_Z_input):
-            print('here 4')
-            W, Z, log_q_Z, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
-            tf_vars.append([W, Z, Z_input, log_q_Z, batch_norm_mus, batch_norm_sigmas,
-                            batch_norm_layer_means, batch_norm_layer_vars])
+            print("Loaded DGM in %.2f seconds" % (load_time2 - load_time1))
+        if has_Z_inv and has_Z_input:
+            print("here 1")
+            W, Z, log_q_Z, Z_INV, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = (
+                collection
+            )
+            tf_vars.append(
+                [
+                    W,
+                    Z,
+                    Z_input,
+                    Z_INV,
+                    log_q_Z,
+                    batch_norm_mus,
+                    batch_norm_sigmas,
+                    batch_norm_layer_means,
+                    batch_norm_layer_vars,
+                ]
+            )
+        elif has_Z_inv and (not has_Z_input):
+            print("here 2")
+            W, Z, log_q_Z, Z_INV, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = (
+                collection
+            )
+            tf_vars.append(
+                [
+                    W,
+                    Z,
+                    Z_INV,
+                    log_q_Z,
+                    batch_norm_mus,
+                    batch_norm_sigmas,
+                    batch_norm_layer_means,
+                    batch_norm_layer_vars,
+                ]
+            )
+        elif (not has_Z_inv) and has_Z_input:
+            print("here 4")
+            W, Z, log_q_Z, Z_input, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = (
+                collection
+            )
+            tf_vars.append(
+                [
+                    W,
+                    Z,
+                    Z_input,
+                    log_q_Z,
+                    batch_norm_mus,
+                    batch_norm_sigmas,
+                    batch_norm_layer_means,
+                    batch_norm_layer_vars,
+                ]
+            )
         else:
-            print('here 5')
-            W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = collection
-            tf_vars.append([W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas,
-                            batch_norm_layer_means, batch_norm_layer_vars])
+            print("here 5")
+            W, Z, log_q_Z, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars = (
+                collection
+            )
+            tf_vars.append(
+                [
+                    W,
+                    Z,
+                    log_q_Z,
+                    batch_norm_mus,
+                    batch_norm_sigmas,
+                    batch_norm_layer_means,
+                    batch_norm_layer_vars,
+                ]
+            )
 
         num_batch_norms = len(batch_norm_mus)
-        param_fname = model_dir + 'params%d.npz' % load_it
-        if (os.path.exists(param_fname)):
+        param_fname = model_dir + "params%d.npz" % load_it
+        if os.path.exists(param_fname):
             paramfile = np.load(param_fname)
-            _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
-            _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
+            _batch_norm_mus = paramfile["batch_norm_mus"][load_it]
+            _batch_norm_sigmas = paramfile["batch_norm_sigmas"][load_it]
         else:
-            param_fname = model_dir + 'params.npz'
+            param_fname = model_dir + "params.npz"
             paramfile = np.load(param_fname)
-            _batch_norm_mus = paramfile['batch_norm_mus'][load_it]
-            _batch_norm_sigmas = paramfile['batch_norm_sigmas'][load_it]
-        
+            _batch_norm_mus = paramfile["batch_norm_mus"][load_it]
+            _batch_norm_sigmas = paramfile["batch_norm_sigmas"][load_it]
+
         feed_dict = {}
         for j in range(num_batch_norms):
-            feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
-            feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
+            feed_dict.update({batch_norm_mus[j]: _batch_norm_mus[j]})
+            feed_dict.update({batch_norm_sigmas[j]: _batch_norm_sigmas[j]})
 
         sessions.append(sess)
         feed_dicts.append(feed_dict)
@@ -798,19 +866,21 @@ def load_DSNs(model_dirs, load_its):
 
 
 def load_DSN_fast(system, arch_dict, model_dir, ME_it):
-    paramfname = model_dir + 'params%d.npz' % ME_it
+    paramfname = model_dir + "params%d.npz" % ME_it
 
-    W = tf.placeholder(tf.float64, (1,None,system.D))
-    Z, sum_log_det_jacobian, flow_layers = density_network(W, arch_dict, system.support_mapping,
-                                                            paramfname=paramfname)
+    W = tf.placeholder(tf.float64, (1, None, system.D))
+    Z, sum_log_det_jacobian, flow_layers = density_network(
+        W, arch_dict, system.support_mapping, paramfname=paramfname
+    )
 
-    log_base_density = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
+    log_base_density = tf.reduce_sum(
+        (-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2
+    )
     log_q_z = log_base_density - sum_log_det_jacobian
 
     paramfile = np.load(paramfname)
-    _batch_norm_mus = paramfile['batch_norm_mus']
-    _batch_norm_sigmas = paramfile['batch_norm_sigmas']
-
+    _batch_norm_mus = paramfile["batch_norm_mus"]
+    _batch_norm_sigmas = paramfile["batch_norm_sigmas"]
 
     batch_norm_mus = []
     batch_norm_sigmas = []
@@ -819,9 +889,9 @@ def load_DSN_fast(system, arch_dict, model_dir, ME_it):
     batch_norm = False
     for i in range(len(flow_layers)):
         flow_layer = flow_layers[i]
-        if (flow_layer.name == 'RealNVP' and flow_layer.batch_norm):
+        if flow_layer.name == "RealNVP" and flow_layer.batch_norm:
             batch_norm = True
-            num_masks = arch_dict['real_nvp_arch']['num_masks']
+            num_masks = arch_dict["real_nvp_arch"]["num_masks"]
             for j in range(num_masks):
                 batch_norm_mus.append(flow_layer.mus[j])
                 batch_norm_sigmas.append(flow_layer.sigmas[j])
@@ -829,24 +899,33 @@ def load_DSN_fast(system, arch_dict, model_dir, ME_it):
                 batch_norm_layer_vars.append(flow_layer.layer_vars[j])
 
     feed_dict = {}
-    if (batch_norm):
+    if batch_norm:
         num_batch_norms = len(batch_norm_mus)
         for j in range(num_batch_norms):
-            feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[ME_it][j]})
-            feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[ME_it][j]})
+            feed_dict.update({batch_norm_mus[j]: _batch_norm_mus[ME_it][j]})
+            feed_dict.update({batch_norm_sigmas[j]: _batch_norm_sigmas[ME_it][j]})
 
-    Z_input = tf.placeholder(tf.float64, (1,None,system.D))
+    Z_input = tf.placeholder(tf.float64, (1, None, system.D))
     Z_INV = Z_input
     layer_ind = len(flow_layers) - 1
-    while (layer_ind > -1):
+    while layer_ind > -1:
         layer = flow_layers[layer_ind]
         Z_INV = layer.inverse(Z_INV)
         layer_ind -= 1
 
-    tf_vars = W, Z, Z_input, Z_INV, log_q_z, batch_norm_mus, batch_norm_sigmas, batch_norm_layer_means, batch_norm_layer_vars
+    tf_vars = (
+        W,
+        Z,
+        Z_input,
+        Z_INV,
+        log_q_z,
+        batch_norm_mus,
+        batch_norm_sigmas,
+        batch_norm_layer_means,
+        batch_norm_layer_vars,
+    )
     return tf_vars, feed_dict
 
-                
 
 def initialize_adam_parameters(sess, optimizer, all_params):
     nparams = len(all_params)
@@ -869,8 +948,10 @@ def initialize_adam_parameters(sess, optimizer, all_params):
 
 def check_convergence(cost_grad_vals, cur_ind, lag, alpha):
     logger_len = cost_grad_vals.shape[0]
-    if (cur_ind < lag):
-        last_grads = np.concatenate((cost_grad_vals[-(lag-cur_ind):, :], cost_grad_vals[:cur_ind, :]), 0)
+    if cur_ind < lag:
+        last_grads = np.concatenate(
+            (cost_grad_vals[-(lag - cur_ind) :, :], cost_grad_vals[:cur_ind, :]), 0
+        )
     else:
         last_grads = cost_grad_vals[(cur_ind - lag) : cur_ind, :]
     nvars = last_grads.shape[1]
@@ -977,7 +1058,6 @@ def setup_param_logging(all_params):
                         )
                     )
     return summaries
-
 
 
 # Gabriel's MMD stuff
@@ -1090,33 +1170,31 @@ def rvs(dim):
 
 
 def initialize_nf(system, arch_dict, random_seed):
-    Sigma_init = arch_dict['Sigma_init']
+    Sigma_init = arch_dict["Sigma_init"]
 
-    if (system.density_network_bounds is not None):
+    if system.density_network_bounds is not None:
         a, b = system.density_network_bounds
     else:
         a = None
         b = None
 
-    initdir = get_initdir(arch_dict,
-                          random_seed,
-                          init_type='gauss',
-                          a=a,
-                          b=b)
+    initdir = get_initdir(arch_dict, random_seed, init_type="gauss", a=a, b=b)
     initialized = check_init(initdir)
-    if (not initialized):
-        initialize_gauss_nf(system.D,
-                            arch_dict,
-                            random_seed,
-                            initdir,
-                            bounds=system.density_network_bounds)
+    if not initialized:
+        initialize_gauss_nf(
+            system.D,
+            arch_dict,
+            random_seed,
+            initdir,
+            bounds=system.density_network_bounds,
+        )
     return initdir
 
 
 def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
-    mu_init = arch_dict['mu_init']
-    Sigma_init = arch_dict['Sigma_init']
-    if (bounds is not None):
+    mu_init = arch_dict["mu_init"]
+    Sigma_init = arch_dict["Sigma_init"]
+    if bounds is not None:
         # make this more flexible for single bounds
         fam_class = family_from_str("truncated_normal")
         family = fam_class(D, a=bounds[0], b=bounds[1])
@@ -1124,21 +1202,17 @@ def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
         fam_class = family_from_str("normal")
         family = fam_class(D)
 
-    if (mu_init is None):
+    if mu_init is None:
         mu_init = np.zeros((D,))
 
-    params = {
-        "mu": mu_init,
-        "Sigma": Sigma_init,
-        "dist_seed": 0,
-    }
+    params = {"mu": mu_init, "Sigma": Sigma_init, "dist_seed": 0}
     n = 1000
     lr_order = -3
     check_rate = 100
     min_iters = 20000
     max_iters = 50000
     converged = False
-    while (not converged):
+    while not converged:
         converged = train_nf(
             family,
             params,
@@ -1156,48 +1230,47 @@ def initialize_gauss_nf(D, arch_dict, random_seed, gauss_initdir, bounds=None):
         if converged:
             print("done initializing gaussian NF")
         else:
-            max_iters = 4*max_iters
+            max_iters = 4 * max_iters
     return converged
 
+
 def get_perturb_bounds(system, v, z0):
-    assert(system.has_support_map)
+    assert system.has_support_map
     a, b = system.density_network_bounds
     border_scales_a = (a - z0) / v
     border_scales_b = (b - z0) / v
-        
+
     all_scales = np.concatenate((border_scales_a, border_scales_b), axis=0)
-    neg_scales = all_scales[all_scales<0]
-    pos_scales = all_scales[all_scales>0]
-        
+    neg_scales = all_scales[all_scales < 0]
+    pos_scales = all_scales[all_scales > 0]
+
     lim1 = np.max(neg_scales)
     lim2 = np.min(pos_scales)
 
     alpha = np.abs(min(np.abs(lim1), lim2))
-        
+
     return -alpha, alpha
 
-def get_perturbs(system, V, z0, n, Z=None, T_x=None):
+
+def get_perturbs(system, V, z0, n, d, Z=None, T_x=None):
     num_vs = V.shape[1]
-    if (Z is None and T_x is None):
+    if Z is None and T_x is None:
         Z = tf.placeholder(tf.float64, (1, None, system.D))
-        print('creating graph')
+        print("creating graph")
         T_x = system.compute_suff_stats(Z)
-        print('graph ready')
-    
-    Z_perturbs = np.zeros((num_vs,n,system.D))
+        print("graph ready")
+
+    Z_perturbs = np.zeros((num_vs, n, system.D))
     delta_perturbs = np.zeros((num_vs, n))
-    T_x_perturbs = np.zeros((num_vs,n,system.num_suff_stats))
+    T_x_perturbs = np.zeros((num_vs, n, system.num_suff_stats))
     with tf.Session() as sess:
         for j in range(num_vs):
-            print(i,j)
-            v = V[:,j]
+            v = V[:, j]
 
-            #lim1, lim2 = get_perturb_bounds(system, v, z0)
-            #delta = np.linspace(lim1, lim2+((lim2-lim1)/n), n)
-            delta = np.linspace(-1,1.00001, n)
+            delta = np.linspace(-d, d, n)
             for i in range(system.D):
-                Z_perturbs[j,:,i] = delta*v[i] + z0[0,0,i]
-            T_x_perturbs[j] = sess.run(T_x, {Z:np.expand_dims(Z_perturbs[j,:,:], 0)})
+                Z_perturbs[j, :, i] = delta * v[i] + z0[0, 0, i]
+            T_x_perturbs[j] = sess.run(T_x, {Z: np.expand_dims(Z_perturbs[j, :, :], 0)})
             delta_perturbs[j] = delta
 
     return T_x_perturbs, delta_perturbs, Z_perturbs
@@ -1209,8 +1282,159 @@ def compute_r2(y, X, beta):
     RSS = np.sum(np.square(y - np.dot(X, beta)))
     return 1.0 - (RSS / TSS)
 
+
 def linregress(y, X):
-    X = np.concatenate((X, np.ones((X.shape[0],1))), axis=1)
+    X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=1)
     beta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), y)
     r2 = compute_r2(y, X, beta)
     return beta, r2
+
+
+def bootstrap_test(T_x, mu, M, N):
+    total_samps = T_x.shape[0]
+    assert N < total_samps
+    boot_means = np.zeros((M,))
+    for i in range(M):
+        inds_i = np.random.choice(np.arange(total_samps), N, replace=False)
+        boot_means[i] = np.mean(T_x[inds_i])
+    gt = float(np.sum(boot_means > mu))
+    lt = float(np.sum(boot_means < mu))
+    p_val = 2 * min(gt / M, lt / M)
+    return p_val
+
+
+def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
+    EPS = 1e-10
+    n_fnames = len(model_dirs)
+    fnames = []
+    for i in range(n_fnames):
+        fnames.append(model_dirs[i] + "opt_info.npz")
+
+    first_its = []
+    ME_its = []
+    MEs = []
+    for i in range(n_fnames):
+        AL_conv_fname = model_dirs[i] + "AL_conv.npz"
+        if os.path.isfile(AL_conv_fname):
+            AL_conv_file = np.load(AL_conv_fname)
+            first_it = AL_conv_file["first_it"]
+            ME_it = AL_conv_file["ME_it"]
+            ME = AL_conv_file["ME"]
+            frac_samps_eq = approx_equal(
+                frac_samps, AL_conv_file["frac_samps"], EPS, verbose=False
+            )
+            alpha_eq = approx_equal(alpha, AL_conv_file["alpha"], EPS, verbose=False)
+            if len(AL_conv_file["tol_inds"]) > 0:
+                tol_shape_eq = tol.shape[0] == AL_conv_file["tol"].shape[0]
+                tol_eq = tol_shape_eq and approx_equal(tol, AL_conv_file["tol"], EPS)
+            else:
+                tol_eq = len(tol_inds) == 0
+            if not (alpha_eq and tol_eq and frac_samps_eq):
+                pass
+            else:
+                if np.isnan(first_it):
+                    first_it = None
+                if np.isnan(ME_it):
+                    ME_it = None
+                if np.isnan(ME):
+                    ME = None
+                first_its.append(first_it)
+                ME_its.append(ME_it)
+                MEs.append(ME)
+                continue
+
+        fname = fnames[i]
+        try:
+            npzfile = np.load(fname)
+            assert len(npzfile["epoch_inds"]) > 1
+        except:
+            print("no file %s" % fname)
+            first_its.append(None)
+            ME_its.append(None)
+            MEs.append(None)
+            continue
+
+        mu = npzfile["mu"]
+        n_suff_stats = mu.shape[0]
+        total_samps = npzfile["T_xs"].shape[1]
+        samps_per_boot = int(frac_samps * total_samps)
+        total_its = npzfile["T_xs"].shape[0]
+        Hs = npzfile["Hs"]
+        epoch_inds = npzfile["epoch_inds"]
+        check_rate = npzfile["check_rate"]
+
+        if Hs.shape[0] == total_its:
+            H_inds = np.arange(Hs.shape[0])
+        else:
+            H_inds = np.arange(0, Hs.shape[0] + 1, epoch_inds[1] // check_rate)
+
+        boot_samps = 200
+        first_flag = False
+        inds_to_check = np.arange(total_its)[np.logical_not(np.isnan(Hs[H_inds]))]
+        jj = 0
+        print(i, "------------------")
+        print("thresh", alpha / n_suff_stats)
+        while jj < inds_to_check.shape[0]:
+            j = inds_to_check[jj]
+            T_xs = npzfile["T_xs"][j]
+            T_x_mean = np.mean(T_xs, 0)
+            tol_it = 0
+            pvals = []
+            failed = False
+            for ii in range(n_suff_stats):
+                if ii in tol_inds:
+                    failed = (T_x_mean[ii] < (mu[ii] - tol[tol_it])) or (
+                        (mu[ii] + tol[tol_it]) < T_x_mean[ii]
+                    )
+                    tol_it += 1
+                    if failed:
+                        break
+                else:
+                    pval = bootstrap_test(
+                        T_xs[:, ii], mu[ii], boot_samps, samps_per_boot
+                    )
+                    pvals.append(pval)
+            print(j, "pvals", pvals)
+            con_sat = np.prod(np.array(pvals) > (alpha / n_suff_stats))
+            if (not failed) and con_sat == 1:
+                if not first_flag:
+                    first_it = j
+                    first_flag = True
+
+                ME_it = j
+                H = Hs[H_inds[j]]
+                greater_H = Hs[H_inds[(j + 1) :]] > H
+                inds_to_check = np.arange(j + 1, total_its)[greater_H]
+                jj = -1
+            jj += 1
+
+        if not first_flag:
+            first_its.append(None)
+            ME_its.append(None)
+            MEs.append(None)
+            np.savez(
+                AL_conv_fname,
+                first_it=np.nan,
+                ME_it=np.nan,
+                ME=np.nan,
+                alpha=alpha,
+                tol=tol,
+                tol_inds=tol_inds,
+                frac_samps=frac_samps,
+            )
+        else:
+            first_its.append(first_it)
+            ME_its.append(ME_it)
+            MEs.append(H)
+            np.savez(
+                AL_conv_fname,
+                first_it=first_it,
+                ME_it=ME_it,
+                ME=H,
+                alpha=alpha,
+                tol=tol,
+                tol_inds=tol_inds,
+                frac_samps=frac_samps,
+            )
+
+    return first_its, ME_its, MEs

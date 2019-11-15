@@ -20,21 +20,12 @@ repeats = 1
 # Get V1 system
 sysname = "V1Circuit"
 dirstr = "V1Circuit_test"
-behavior_type = 'difference'
-param_dict = {
-    "behavior_type":behavior_type,
-    "alpha":alpha_str,
-    "inc_val":0.5,
-}
+behavior_type = "difference"
+param_dict = {"behavior_type": behavior_type, "alpha": alpha_str, "inc_val": 0.5}
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
-arch_params = {
-               'D':system.D,
-               'repeats':repeats,
-               'nlayers':nlayers,
-               'upl':upl,
-              }
+arch_params = {"D": system.D, "repeats": repeats, "nlayers": nlayers, "upl": upl}
 
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
@@ -51,12 +42,12 @@ train_dsn(
     batch_size,
     AL_it_max=AL_it_max,
     c_init_order=c_init_order,
-    AL_fac=AL_fac, 
+    AL_fac=AL_fac,
     min_iters=iters,
     max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
     dir_str=dirstr,
-    db=False
+    db=False,
 )

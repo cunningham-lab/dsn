@@ -10,17 +10,15 @@ upl = int(sys.argv[4])
 sigma_init = float(sys.argv[5])
 random_seed = int(sys.argv[6])
 
-real_nvp_arch = {"num_masks":num_masks,
-                 "nlayers":nlayers,
-                 "upl":upl}
+real_nvp_arch = {"num_masks": num_masks, "nlayers": nlayers, "upl": upl}
 
 arch_dict = {
-	"D":D,
-	"mult_and_shift":None,
+    "D": D,
+    "mult_and_shift": None,
     "latent_dynamics": None,
     "TIF_flow_type": "RealNVP",
     "repeats": 1,
-    "real_nvp_arch":real_nvp_arch
+    "real_nvp_arch": real_nvp_arch,
 }
 
 min_iters = 50000

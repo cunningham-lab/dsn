@@ -20,27 +20,29 @@ nlayers = 2
 upl = 10
 
 # Get Low Rank RNN system
-sysname = 'LowRankRNN'
+sysname = "LowRankRNN"
 rank = 1
-input_type = 'input'
-behavior_type = 'BI'
-param_dict = {'rank':rank,
-              'input_type':input_type,
-              'behavior_type':behavior_type,
-              'solve_its':40,
-              'variance':variance,
-              'gauss_newton':False,
-              'solve_eps':0.2}
+input_type = "input"
+behavior_type = "BI"
+param_dict = {
+    "rank": rank,
+    "input_type": input_type,
+    "behavior_type": behavior_type,
+    "solve_its": 40,
+    "variance": variance,
+    "gauss_newton": False,
+    "solve_eps": 0.2,
+}
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
 arch_params = {
-               'D':system.D,
-               'sigma_init':sigma_init,
-               'repeats':repeats,
-               'nlayers':nlayers,
-               'upl':upl,
-              }
+    "D": system.D,
+    "sigma_init": sigma_init,
+    "repeats": repeats,
+    "nlayers": nlayers,
+    "upl": upl,
+}
 
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
@@ -57,12 +59,12 @@ train_dsn(
     batch_size,
     AL_it_max=AL_it_max,
     c_init_order=c_init_order,
-    AL_fac=AL_fac, 
+    AL_fac=AL_fac,
     min_iters=iters,
     max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
     dir_str="LRRNN",
-    db=False
+    db=False,
 )

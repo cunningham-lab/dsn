@@ -18,25 +18,25 @@ random_seed = int(sys.argv[6])
 
 # Get STG system
 sysname = "STGCircuit"
-param_dict = {"freq":freq}
+param_dict = {"freq": freq}
 system = get_system_from_template(sysname, param_dict)
 
 repeats = 1
 # Get DSN architecture
 arch_params = {
-               'D':system.D,
-               'repeats':repeats,
-               'num_masks':num_masks,
-               'nlayers':nlayers,
-               'sigma_init':sigma_init,
-              }
+    "D": system.D,
+    "repeats": repeats,
+    "num_masks": num_masks,
+    "nlayers": nlayers,
+    "sigma_init": sigma_init,
+}
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
 
 AL_it_max = 10
 AL_fac = 4.0
 iters = 2500
-batch_size = 300 
+batch_size = 300
 lr_order = -3
 check_rate = 100
 

@@ -13,6 +13,7 @@ from dsn.util.tf_DMFT_solvers import (
     warm_start,
 )
 import os
+
 DTYPE = tf.float64
 
 
@@ -189,10 +190,10 @@ class Linear2D(system):
         super().__init__(fixed_params, behavior)
         self.name = "Linear2D"
         a = -10.0 * np.ones((self.D,))
-        b =  10.0 * np.ones((self.D,))
+        b = 10.0 * np.ones((self.D,))
         self.density_network_bounds = [a, b]
         self.has_support_map = True
-        #self.has_support_map = False
+        # self.has_support_map = False
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -257,8 +258,8 @@ class Linear2D(system):
             K = z_shape[0]
             M = z_shape[1]
 
-            mu_means = self.behavior['means']
-            mu_variances = self.behavior['variances']
+            mu_means = self.behavior["means"]
+            mu_variances = self.behavior["variances"]
 
             # read free parameters from z vector
             ind = 0
@@ -454,8 +455,18 @@ class STGCircuit(system):
 
         """
         if self.behavior["type"] == "freq":
-            T_x_labels = [r"$f_{f1}", r"$f_{f2}", r"$f_{h}$", r"$f_{s1}", r"$f_{s2}", \
-                          r"$f_{f1}^2", r"$f_{f2}^2", r"$f_{h}^2$", r"$f_{s1}^2", r"$f_{s2}^2"]
+            T_x_labels = [
+                r"$f_{f1}",
+                r"$f_{f2}",
+                r"$f_{h}$",
+                r"$f_{s1}",
+                r"$f_{s2}",
+                r"$f_{f1}^2",
+                r"$f_{f2}^2",
+                r"$f_{h}^2$",
+                r"$f_{s1}^2",
+                r"$f_{s2}^2",
+            ]
         else:
             raise NotImplementedError
         return T_x_labels
@@ -657,8 +668,8 @@ class STGCircuit(system):
         if db:
             xs = [x]
         else:
-            vs = [x[:,:5]]
-            #v_hs = [x[:, 2]]
+            vs = [x[:, :5]]
+            # v_hs = [x[:, 2]]
         for i in range(self.T):
             dxdt = f(x, g_el, g_synA, g_synB)
             x = x + dxdt * self.dt
@@ -738,12 +749,12 @@ class STGCircuit(system):
         x_t = self.simulate(z, db=False)
 
         if self.behavior["type"] == "freq":
-            v = tf.reshape(x_t, (self.T+1, M*5, 1))
-            v = tf.transpose(v, [1, 0, 2])[:,self.fft_start:,:] # (M5, T-fft+1, 1)
+            v = tf.reshape(x_t, (self.T + 1, M * 5, 1))
+            v = tf.transpose(v, [1, 0, 2])[:, self.fft_start :, :]  # (M5, T-fft+1, 1)
             v_rect = tf.nn.relu(v)  # [M5,T-fft,1]
-            v_rect_LPF = tf.nn.conv1d(
-                v_rect, avg_filter, stride=1, padding="VALID"
-            )[:,:,0]
+            v_rect_LPF = tf.nn.conv1d(v_rect, avg_filter, stride=1, padding="VALID")[
+                :, :, 0
+            ]
 
             v_rect_LPF = v_rect_LPF - tf.expand_dims(tf.reduce_mean(v_rect_LPF, 1), 1)
 
@@ -752,10 +763,10 @@ class STGCircuit(system):
             V_pow = tf.pow(tf.abs(V), alpha)
             freq_id = V_pow / tf.expand_dims(tf.reduce_sum(V_pow, 1), 1)
 
-            f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id)) # (1 x M5)
-            f_h = tf.reshape(f_h, (1,M,5))
+            f_h = tf.matmul(tf.expand_dims(freqs, 0), tf.transpose(freq_id))  # (1 x M5)
+            f_h = tf.reshape(f_h, (1, M, 5))
             freq_mu = np.expand_dims(np.expand_dims(self.mu[:5], 0), 0)
-            T_x = tf.concat((f_h, tf.square(f_h-freq_mu)), 2)
+            T_x = tf.concat((f_h, tf.square(f_h - freq_mu)), 2)
         else:
             raise NotImplementedError
 
@@ -829,10 +840,10 @@ class V1Circuit(system):
         self,
         fixed_params,
         behavior,
-        model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r", "XE":True},
+        model_opts={"g_FF": "c", "g_LAT": "linear", "g_RUN": "r", "XE": True},
         T=100,
         dt=0.005,
-        init_conds=np.random.normal(1.0, 0.01, (4,1)),
+        init_conds=np.random.normal(1.0, 0.01, (4, 1)),
     ):
         self.model_opts = model_opts
         num_c = behavior["c_vals"].shape[0]
@@ -844,35 +855,35 @@ class V1Circuit(system):
         self.T = T
         self.dt = dt
         self.init_conds = init_conds
-        if (behavior['type'] == 'ISN_coeff'):
+        if behavior["type"] == "ISN_coeff":
             a = np.zeros((self.D,))
             b = 20.0 * np.ones((self.D,))
             self.density_network_bounds = [a, b]
             self.has_support_map = True
             self.density_network_init_mu = 5.0 * np.ones((self.D,))
-        elif (behavior['type'] == 'rates'):
+        elif behavior["type"] == "rates":
             val = 5.0
             a = np.array([-val, -val, -val, -val, 0.001])
             b = np.array([val, val, val, val, 3.0])
-            #pfac = 2 
-            #a = np.array([0.0, 0.0, 0.0, 0.0, 0.5])
-            #b = np.array([1.5, 1.5, 3.0, 4.0, 3.0])
-            #a = np.array([0.0, -pfac*val, -2.0, 0.0])
-            #b = np.array([5.0, val, 2.0, val])
+            # pfac = 2
+            # a = np.array([0.0, 0.0, 0.0, 0.0, 0.5])
+            # b = np.array([1.5, 1.5, 3.0, 4.0, 3.0])
+            # a = np.array([0.0, -pfac*val, -2.0, 0.0])
+            # b = np.array([5.0, val, 2.0, val])
             # s = 10
-            #a = np.array([0.0, 0.0, 0.0, 0.0])
-            #b = np.array([1.5, 1.5, 3.0, 4.0])
+            # a = np.array([0.0, 0.0, 0.0, 0.0])
+            # b = np.array([1.5, 1.5, 3.0, 4.0])
             self.density_network_bounds = [a, b]
             self.has_support_map = True
             self.density_network_init_mu = 0.0 * np.ones((self.D,))
         else:
             val = 5.0
             a = -val * np.ones((self.D,))
-            b =  val * np.ones((self.D,))
+            b = val * np.ones((self.D,))
             self.density_network_bounds = [a, b]
             self.has_support_map = True
             self.density_network_init_mu = 0.0 * np.ones((self.D,))
-            #self.density_network_init_mu = np.zeros((self.D,))
+            # self.density_network_init_mu = np.zeros((self.D,))
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -912,7 +923,7 @@ class V1Circuit(system):
             all_params (list): List of strings of all parameters of full system model.
             all_param_labels (list): List of tex strings for all parameters.
         """
-        if (self.model_opts['XE']):
+        if self.model_opts["XE"]:
             all_params = [
                 "W_EE",
                 "W_XE",
@@ -972,7 +983,7 @@ class V1Circuit(system):
                 "n",
                 "s_0",
             ]
-        if (self.model_opts['XE']):
+        if self.model_opts["XE"]:
             all_param_labels = {
                 "W_EE": [r"$W_{EE}$"],
                 "W_XE": [r"$W_{XE}$"],
@@ -1052,13 +1063,13 @@ class V1Circuit(system):
             T_x_labels (list): List of tex strings for elements of $$T(x)$$.
 
         """
-        if (self.behavior["type"] == "ISN_coeff"):
+        if self.behavior["type"] == "ISN_coeff":
             T_x_labels = ["ISN", "(ISN-E[ISN])^2"]
-            if ('silenced' in self.behavior.keys()):
-                if (self.behavior['silenced'] == 'S'):
-                     T_x_labels.append(r'$r_{ss,S}$')
-                elif (self.behavior['silenced'] == 'V'):
-                     T_x_labels.append(r'$r_{ss,V}$')
+            if "silenced" in self.behavior.keys():
+                if self.behavior["silenced"] == "S":
+                    T_x_labels.append(r"$r_{ss,S}$")
+                elif self.behavior["silenced"] == "V":
+                    T_x_labels.append(r"$r_{ss,V}$")
                 else:
                     raise NotImplementedError()
         elif self.behavior["type"] == "old_difference":
@@ -1078,22 +1089,19 @@ class V1Circuit(system):
             for i in range(len(label_inds)):
                 T_x_labels.append(all_T_x_labels[label_inds[i]])
         elif self.behavior["type"] == "difference":
-            alpha = self.behavior['alpha']
-            T_x_labels = [
-                          r"$d_{%s,ss}$" % alpha,
-                          r"$(d_{%s,ss}-\mu)^2$" % alpha
-                         ]
+            alpha = self.behavior["alpha"]
+            T_x_labels = [r"$d_{%s,ss}$" % alpha, r"$(d_{%s,ss}-\mu)^2$" % alpha]
         elif self.behavior["type"] == "rates":
             T_x_labels = [
-                          r"$r_{E,ss}$",
-                          r"$r_{P,ss}$",
-                          r"$r_{S,ss}$",
-                          r"$r_{V,ss}$",
-                          r"$(r_{E,ss}-\mu)^2$",
-                          r"$(r_{P,ss}-\mu)^2$",
-                          r"$(r_{S,ss}-\mu)^2$",
-                          r"$(r_{V,ss}-\mu)^2$",
-                         ]
+                r"$r_{E,ss}$",
+                r"$r_{P,ss}$",
+                r"$r_{S,ss}$",
+                r"$r_{V,ss}$",
+                r"$(r_{E,ss}-\mu)^2$",
+                r"$(r_{P,ss}-\mu)^2$",
+                r"$(r_{S,ss}-\mu)^2$",
+                r"$(r_{V,ss}-\mu)^2$",
+            ]
         else:
             raise NotImplementedError
         return T_x_labels
@@ -1120,7 +1128,6 @@ class V1Circuit(system):
         z_shape = tf.shape(z)
         K = z_shape[0]
         M = z_shape[1]
-
 
         # read free parameters from z vector
         ind = 0
@@ -1208,7 +1215,9 @@ class V1Circuit(system):
         # load fixed parameters
         for fixed_param in self.fixed_params.keys():
             if fixed_param == "W_EE":
-                W_EE = self.fixed_params[fixed_param] * tf.ones((self.C, M), dtype=DTYPE)
+                W_EE = self.fixed_params[fixed_param] * tf.ones(
+                    (self.C, M), dtype=DTYPE
+                )
             elif fixed_param == "W_XE":
                 W_XE = self.fixed_params[fixed_param] * tf.ones(
                     (self.C, M), dtype=DTYPE
@@ -1304,8 +1313,10 @@ class V1Circuit(system):
                 raise NotImplementedError
 
         # Gather weights into the dynamics matrix W [C,M,4,4]
-        W_EX = tf.stack([W_EE, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2)
-        if (self.model_opts['XE']):
+        W_EX = tf.stack(
+            [W_EE, -W_EP, -W_ES, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
+        )
+        if self.model_opts["XE"]:
             W_PX = tf.stack(
                 [W_XE, -W_PP, -W_PS, tf.zeros((self.C, M), dtype=DTYPE)], axis=2
             )
@@ -1462,8 +1473,11 @@ class V1Circuit(system):
 
         # construct the input
         pow_eps = 1e-16
+
         def f(r, t):
-            drdt = tf.divide(-r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h) + pow_eps, n), tau)
+            drdt = tf.divide(
+                -r + tf.pow(tf.nn.relu(tf.matmul(W, r) + h) + pow_eps, n), tau
+            )
             return tf.clip_by_value(drdt, -1e30, 1e30)
 
         # worst-case cost is about
@@ -1552,20 +1566,20 @@ class V1Circuit(system):
         # [T, C, M, D, 1]
 
         if self.behavior["type"] == "ISN_coeff":
-            assert(self.fixed_params['n'] == 2.0)
-            u_E = tf.sqrt(r_t[-1,:,:,0,0]) # [1 x M]
-            ISN = 1 - 2*u_E*self.W[:,:,0,0] # [1 x M]
+            assert self.fixed_params["n"] == 2.0
+            u_E = tf.sqrt(r_t[-1, :, :, 0, 0])  # [1 x M]
+            ISN = 1 - 2 * u_E * self.W[:, :, 0, 0]  # [1 x M]
             ISN_var = tf.square(ISN - self.mu[0])
             T_x = tf.stack((ISN, ISN_var), axis=2)
-            if ('silenced' in self.behavior.keys()):
-                if (self.behavior['silenced'] == 'S'):
-                    r_ss = tf.expand_dims(r_t[-1,:,:,2,0], 2)
-                elif (self.behavior['silenced'] == 'V'):
-                    r_ss = tf.expand_dims(r_t[-1,:,:,3,0], 2)
+            if "silenced" in self.behavior.keys():
+                if self.behavior["silenced"] == "S":
+                    r_ss = tf.expand_dims(r_t[-1, :, :, 2, 0], 2)
+                elif self.behavior["silenced"] == "V":
+                    r_ss = tf.expand_dims(r_t[-1, :, :, 3, 0], 2)
                 else:
                     raise NotImplementedError()
                 T_x = tf.concat((T_x, r_ss), axis=2)
-                    
+
         elif self.behavior["type"] == "old_difference":
             diff_inds = self.behavior["diff_inds"]
             r1_ss_list = []
@@ -1581,22 +1595,24 @@ class V1Circuit(system):
         elif self.behavior["type"] == "difference":
             r_shape = tf.shape(r_t)
             M = r_shape[2]
-            if (self.behavior['alpha'] == 'E'):
+            if self.behavior["alpha"] == "E":
                 alpha_ind = 0
-            elif (self.behavior['alpha'] == 'P'):
+            elif self.behavior["alpha"] == "P":
                 alpha_ind = 1
-            elif (self.behavior['alpha'] == 'S'):
+            elif self.behavior["alpha"] == "S":
                 alpha_ind = 2
-            elif (self.behavior['alpha'] == 'V'):
+            elif self.behavior["alpha"] == "V":
                 alpha_ind = 3
 
-            r_ss = r_t[-1,:,:,:,0]  # C x M x D
-            diff_ss = tf.expand_dims(r_ss[1, :, alpha_ind] - r_ss[0, :, alpha_ind], 0)  # M x D
+            r_ss = r_t[-1, :, :, :, 0]  # C x M x D
+            diff_ss = tf.expand_dims(
+                r_ss[1, :, alpha_ind] - r_ss[0, :, alpha_ind], 0
+            )  # M x D
             mu_targ = self.mu[0]
             T_x = tf.stack((diff_ss, tf.square(diff_ss - mu_targ)), 2)
 
         elif self.behavior["type"] == "rates":
-            r_ss = r_t[-1,0,:,:,0]  # M x D
+            r_ss = r_t[-1, 0, :, :, 0]  # M x D
             mu_targ = np.expand_dims(self.mu[:4], 0)
             r_ss_var = tf.square(r_ss - mu_targ)
             T_x = tf.expand_dims(tf.concat((r_ss, r_ss_var), axis=1), 0)
@@ -1612,28 +1628,28 @@ class V1Circuit(system):
         """
 
         if self.behavior["type"] == "ISN_coeff":
-            if ('silenced' in self.behavior.keys()):
+            if "silenced" in self.behavior.keys():
                 mu = np.zeros((3,))
             else:
                 mu = np.zeros((2,))
-            mu[0] = self.behavior['mean']
-            mu[1] = self.behavior['std']**2
+            mu[0] = self.behavior["mean"]
+            mu[1] = self.behavior["std"] ** 2
         elif self.behavior["type"] == "old_difference":
             means = self.behavior["d_mean"]
             variances = self.behavior["d_var"]
             first_moments = means
             second_moments = np.square(means) + variances
             mu = np.concatenate((first_moments, second_moments), axis=0)
-        elif self.behavior["type"] in ["difference", "rates"] :
-            if (self.behavior["type"] == "rates"):
-                fac = self.behavior['fac']
+        elif self.behavior["type"] in ["difference", "rates"]:
+            if self.behavior["type"] == "rates":
+                fac = self.behavior["fac"]
                 assert approx_equal(self.behavior["r_vals"], np.array([0.0]), 1e-16)
                 datadir = "data/V1/"
                 fname = datadir + "ProcessedData.mat"
                 M = sio.loadmat(fname)
                 s_data = M["ProcessedData"]["StimulusSize_deg"][0, 0][0]
-                MeanResponse = M["ProcessedData"]["MeanResponse"][0, 0][:,:,0]
-                SEMMeanResponse = M["ProcessedData"]["SEMMeanResponse"][0, 0][:,:,0]
+                MeanResponse = M["ProcessedData"]["MeanResponse"][0, 0][:, :, 0]
+                SEMMeanResponse = M["ProcessedData"]["SEMMeanResponse"][0, 0][:, :, 0]
                 s_inds = [np.where(s_data == i)[0][0] for i in self.behavior["s_vals"]]
 
                 cell_ord = [3, 2, 0, 1]
@@ -1641,14 +1657,16 @@ class V1Circuit(system):
                 SEMMeanResponse = SEMMeanResponse[cell_ord][:, s_inds].T  # C x D
 
                 D = 4
-                means = fac*np.reshape(MeanResponse, (self.C*D))
-                stds = fac*np.reshape(SEMMeanResponse, (self.C*D))
+                means = fac * np.reshape(MeanResponse, (self.C * D))
+                stds = fac * np.reshape(SEMMeanResponse, (self.C * D))
                 variances = np.square(stds)
                 mu = np.concatenate((means, stds), axis=0)
             else:
-                assert approx_equal(self.behavior["r_vals"], np.array([0.0, 1.0]), 1e-16)
-                mean = self.behavior['mean']
-                std = self.behavior['std']
+                assert approx_equal(
+                    self.behavior["r_vals"], np.array([0.0, 1.0]), 1e-16
+                )
+                mean = self.behavior["mean"]
+                std = self.behavior["std"]
                 variance = np.square(std)
                 mu = np.array([mean, variance])
 
@@ -1664,9 +1682,8 @@ class V1Circuit(system):
             Z (np.array): Samples from the DSN at the final layer.
         """
         a, b = self.density_network_bounds
-        #return SoftPlusFlow([], inputs)
+        # return SoftPlusFlow([], inputs)
         return IntervalFlow([], inputs, a, b)
-
 
     def get_behavior_str(self,):
         """Returns `behavior_str`.
@@ -1675,11 +1692,14 @@ class V1Circuit(system):
             behavior_str (str): String for DSN filenaming.
 
         """
-        if (self.behavior['type'] == 'ISN_coeff'):
-            behavior_str = "ISN_%.2E_%.2E" % (self.behavior['mean'], self.behavior['std'])
-            if ('silenced' in self.behavior.keys()):
-                behavior_str += '_%s=0' % self.behavior['silenced']
-        elif (self.behavior["type"] == "difference"):
+        if self.behavior["type"] == "ISN_coeff":
+            behavior_str = "ISN_%.2E_%.2E" % (
+                self.behavior["mean"],
+                self.behavior["std"],
+            )
+            if "silenced" in self.behavior.keys():
+                behavior_str += "_%s=0" % self.behavior["silenced"]
+        elif self.behavior["type"] == "difference":
             """
             s_vals = self.behavior["s_vals"]
             behavior_str = "diff_s="
@@ -1688,8 +1708,8 @@ class V1Circuit(system):
                     behavior_str += "_"
                 behavior_str += "%d" % s_vals[i]
             """
-            alpha_str = self.behavior['alpha']
-            behavior_str = '%s_diff_%.2E_%.2E' % (alpha_str, self.mu[0], self.mu[1])
+            alpha_str = self.behavior["alpha"]
+            behavior_str = "%s_diff_%.2E_%.2E" % (alpha_str, self.mu[0], self.mu[1])
         else:
             behavior_str = super().get_behavior_str()
         return behavior_str
@@ -1721,7 +1741,7 @@ class SCCircuit(system):
     """
 
     def __init__(
-        self, fixed_params, behavior, model_opts={"params": "reduced", "C": 1, "N":100}
+        self, fixed_params, behavior, model_opts={"params": "reduced", "C": 1, "N": 100}
     ):
         self.model_opts = model_opts
         self.C = self.model_opts["C"]
@@ -2155,7 +2175,7 @@ class SCCircuit(system):
         I_constant = E_constant * tf.ones((self.T, 1, 1, 4, 1), dtype=DTYPE)
 
         I_Pbias = np.zeros((self.T, 4))
-        I_Pbias[self.t < self.T*self.dt] = np.array([1, 0, 0, 1])
+        I_Pbias[self.t < self.T * self.dt] = np.array([1, 0, 0, 1])
         I_Pbias = np.expand_dims(np.expand_dims(np.expand_dims(I_Pbias, 2), 1), 1)
         I_Pbias = E_Pbias * tf.constant(I_Pbias)
 
@@ -2369,12 +2389,16 @@ class SCCircuit(system):
         square_diff = tf.expand_dims(tf.transpose(square_diff), 0)
 
         if self.behavior["type"] == "WTA":
-            mu_p = self.behavior['means']
-            var_p = self.behavior['variances']
+            mu_p = self.behavior["means"]
+            var_p = self.behavior["variances"]
             p_hats = tf.stack((E_v_LP[:, :, 0], E_v_RP[:, :, 1]), axis=2)
-            p_hat_vars = tf.stack((tf.square(E_v_LP[:, :, 0] - mu_p[0]), 
-                                   tf.square(E_v_RP[:, :, 1] - mu_p[1])), 
-                                   axis=2)
+            p_hat_vars = tf.stack(
+                (
+                    tf.square(E_v_LP[:, :, 0] - mu_p[0]),
+                    tf.square(E_v_RP[:, :, 1] - mu_p[1]),
+                ),
+                axis=2,
+            )
             Bern_Var_Err = tf.stack(
                 (Bern_Var_Err_L[:, :, 0], Bern_Var_Err_R[:, :, 1]), axis=2
             )
@@ -2453,11 +2477,7 @@ class SCCircuit(system):
             variances = self.behavior["variances"]
             bern_var_errs = np.zeros((2,))
             WTA_diffs = np.ones((2,))
-            mu = np.concatenate((means,
-                                 variances,
-                                 bern_var_errs,
-                                 WTA_diffs),
-                                 axis=0)
+            mu = np.concatenate((means, variances, bern_var_errs, WTA_diffs), axis=0)
 
         else:
             raise NotImplementedError
@@ -2526,47 +2546,55 @@ class LowRankRNN(system):
     def get_a_b(self,):
         a = np.zeros((self.D,))
         b = np.zeros((self.D,))
-        if (self.model_opts['rank'] == 2 and self.behavior['type'] == 'CDD'):
+        if self.model_opts["rank"] == 2 and self.behavior["type"] == "CDD":
             lb = -1.0
             ub = 1.0
-            a_dict = {"g":0.0, 
-                      "rhom":lb, 
-                      "rhon":lb, 
-                      "betam":0.0, 
-                      "betan":0.0, 
-                      "gammaLO":lb, 
-                      "gammaHI":lb}
-            b_dict = {"g":ub, 
-                      "rhom":ub, 
-                      "rhon":ub, 
-                      "betam":1.0, 
-                      "betan":1.0, 
-                      "gammaLO":ub, 
-                      "gammaHI":ub}
+            a_dict = {
+                "g": 0.0,
+                "rhom": lb,
+                "rhon": lb,
+                "betam": 0.0,
+                "betan": 0.0,
+                "gammaLO": lb,
+                "gammaHI": lb,
+            }
+            b_dict = {
+                "g": ub,
+                "rhom": ub,
+                "rhon": ub,
+                "betam": 1.0,
+                "betan": 1.0,
+                "gammaLO": ub,
+                "gammaHI": ub,
+            }
             for i in range(self.D):
                 a[i] = a_dict[self.free_params[i]]
                 b[i] = b_dict[self.free_params[i]]
-        elif (self.model_opts['rank'] == 1 and self.behavior['type'] == 'BI'):
+        elif self.model_opts["rank"] == 1 and self.behavior["type"] == "BI":
             lb = -5.0
             ub = 5.0
-            a_dict = {"g":0.0, 
-                      "Mm":lb, 
-                      "Mn":lb, 
-                      "MI":lb, 
-                      "Sm":0.0, 
-                      "Sn":0.0, 
-                      "SmI":0.0,
-                      "SnI":0.0,
-                      "Sperp":0.0}
-            b_dict = {"g":ub, 
-                      "Mm":ub, 
-                      "Mn":ub, 
-                      "MI":ub, 
-                      "Sm":ub, 
-                      "Sn":ub, 
-                      "SmI":ub,
-                      "SnI":ub,
-                      "Sperp":ub}
+            a_dict = {
+                "g": 0.0,
+                "Mm": lb,
+                "Mn": lb,
+                "MI": lb,
+                "Sm": 0.0,
+                "Sn": 0.0,
+                "SmI": 0.0,
+                "SnI": 0.0,
+                "Sperp": 0.0,
+            }
+            b_dict = {
+                "g": ub,
+                "Mm": ub,
+                "Mn": ub,
+                "MI": ub,
+                "Sm": ub,
+                "Sn": ub,
+                "SmI": ub,
+                "SnI": ub,
+                "Sperp": ub,
+            }
             for i in range(self.D):
                 a[i] = a_dict[self.free_params[i]]
                 b[i] = b_dict[self.free_params[i]]
@@ -2574,7 +2602,6 @@ class LowRankRNN(system):
             raise NotImplementedError()
 
         return a, b
-
 
     def get_all_sys_params(self,):
         """Returns ordered list of all system parameters and individual element labels.
@@ -2662,12 +2689,7 @@ class LowRankRNN(system):
                 # r"$\Delta_T^2$",
             ]
         elif self.behavior["type"] == "BI":
-            T_x_labels = [
-                r"$\mu$",
-                r"$\Delta_T$",
-                r"var $\mu$",
-                r"var $\Delta_T$",
-            ]
+            T_x_labels = [r"$\mu$", r"$\Delta_T$", r"var $\mu$", r"var $\Delta_T$"]
         elif self.behavior["type"] == "CDD":
             T_x_labels = [
                 r"$z_{ctxA,A} - z_{ctxA,B}$",
@@ -2886,7 +2908,7 @@ class LowRankRNN(system):
             if self.model_opts["input_type"] == "spont":
                 # mu_init, delta_0_init, delta_inf_init = self.warm_start_inits(z)
                 g, Mm, Mn, Sm = self.filter_Z(z)
-                
+
                 mu_init = 50.0 * tf.ones((M,), dtype=DTYPE)
                 delta_0_init = 55.0 * tf.ones((M,), dtype=DTYPE)
                 delta_inf_init = 45.0 * tf.ones((M,), dtype=DTYPE)
@@ -2976,10 +2998,10 @@ class LowRankRNN(system):
             delta_0_init = 5.0 * tf.ones((M,), dtype=DTYPE)
             delta_inf_init = 4.0 * tf.ones((M,), dtype=DTYPE)"""
             _, _, warm_start_inits, _ = self.get_warm_start_inits(z, beta=100.0)
-            mu_init = warm_start_inits[:,0]
-            kappa_init = warm_start_inits[:,1]
-            delta_0_init = warm_start_inits[:,2]
-            delta_inf_init = warm_start_inits[:,3]
+            mu_init = warm_start_inits[:, 0]
+            kappa_init = warm_start_inits[:, 1]
+            delta_0_init = warm_start_inits[:, 2]
+            delta_inf_init = warm_start_inits[:, 3]
 
             mu, kappa, delta_0, delta_inf, xs = rank1_input_chaotic_solve(
                 mu_init,
@@ -2993,7 +3015,7 @@ class LowRankRNN(system):
                 Sm[0, :],
                 Sn[0, :],
                 SmI[0, :],
-                SnI[0,:],
+                SnI[0, :],
                 Sperp[0, :],
                 self.solve_its,
                 self.solve_eps,
@@ -3085,15 +3107,15 @@ class LowRankRNN(system):
         if self.behavior["type"] in ["struct_chaos", "ND", "CDD"]:
             means = self.behavior["means"]
             variances = self.behavior["variances"]
-        if (self.behavior["type"] == "BI"):
+        if self.behavior["type"] == "BI":
             prior = self.behavior["prior"]
             variances = self.behavior["variances"]
             MI = self.fixed_params["MI"]
             SI = self.fixed_params["SnI"]
             M0 = prior[0]
             S0 = prior[1]
-            denom = (1.0/S0) + (1.0/SI)
-            Mpost = (M0/S0 + MI/SI)  / denom
+            denom = (1.0 / S0) + (1.0 / SI)
+            Mpost = (M0 / S0 + MI / SI) / denom
             Spost = 1 / denom
             means = np.array([Mpost, Spost])
             mu = np.concatenate((means, variances), axis=0)
@@ -3124,19 +3146,19 @@ class LowRankRNN(system):
         # Returns
             inits (list): list of (M,) tf.tensor solver inits
         """
-        
+
         ws_filename, _ = warm_start(self)
         ws_file = np.load(ws_filename)
-        param_grid = ws_file['param_grid']
-        solution_grid = ws_file['solution_grid']
+        param_grid = ws_file["param_grid"]
+        solution_grid = ws_file["solution_grid"]
 
         # take dot product and make approx one-hot
-        z = tf.transpose(z, [1,0,2])
+        z = tf.transpose(z, [1, 0, 2])
         param_grid = np.expand_dims(np.transpose(param_grid), 0)
         diffs = tf.reduce_sum(tf.square(z - param_grid), axis=2)
         # avoid the spectre of nan
         kernel_eps = 1e-16
-        sim_kernel = tf.exp(-beta*diffs) + kernel_eps
+        sim_kernel = tf.exp(-beta * diffs) + kernel_eps
         one_hot = sim_kernel / tf.expand_dims(tf.reduce_sum(sim_kernel, 1), 1)
         param_select = tf.matmul(one_hot, param_grid[0])
         warm_start_inits = tf.matmul(one_hot, solution_grid)

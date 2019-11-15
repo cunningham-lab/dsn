@@ -20,21 +20,12 @@ repeats = 1
 # Get V1 system
 sysname = "V1Circuit"
 dirstr = "V1Circuit"
-behavior_type = 'rates'
-param_dict = {
-    "behavior_type":behavior_type,
-    "fac":1.0,
-    "s":s,
-}
+behavior_type = "rates"
+param_dict = {"behavior_type": behavior_type, "fac": 1.0, "s": s}
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
-arch_params = {
-               'D':system.D,
-               'repeats':repeats,
-               'nlayers':nlayers,
-               'upl':upl,
-              }
+arch_params = {"D": system.D, "repeats": repeats, "nlayers": nlayers, "upl": upl}
 
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
@@ -51,7 +42,7 @@ train_dsn(
     batch_size,
     AL_it_max=AL_it_max,
     c_init_order=c_init_order,
-    AL_fac=AL_fac, 
+    AL_fac=AL_fac,
     min_iters=iters,
     max_iters=iters,
     random_seed=random_seed,

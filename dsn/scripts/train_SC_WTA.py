@@ -1,6 +1,10 @@
 import numpy as np
 import tensorflow as tf
-from dsn.util.dsn_util import get_savedir, get_system_from_template, get_arch_from_template
+from dsn.util.dsn_util import (
+    get_savedir,
+    get_system_from_template,
+    get_arch_from_template,
+)
 from dsn.util.systems import SCCircuit
 from dsn.train_dsn import train_dsn
 import pandas as pd
@@ -18,31 +22,31 @@ sigma_init = float(sys.argv[6])
 random_seed = int(sys.argv[7])
 
 sysname = "SCCircuit"
-dir_str = 'SC_WTA_%s' % inact_str
+dir_str = "SC_WTA_%s" % inact_str
 
 std = 0.15
-var = std**2
+var = std ** 2
 N = 500
 param_dict = {
-    "behavior_type":"WTA",
-    "p":p,
-    "var":var,
-    "inact_str":inact_str,
-    "N":N,
-    }
+    "behavior_type": "WTA",
+    "p": p,
+    "var": var,
+    "inact_str": inact_str,
+    "N": N,
+}
 
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
 repeats = 1
-nlayers = 2 
+nlayers = 2
 arch_params = {
-               'D':system.D,
-               'repeats':repeats,
-               'nlayers':nlayers,
-               'upl':upl,
-               'sigma_init':sigma_init,
-              }
+    "D": system.D,
+    "repeats": repeats,
+    "nlayers": nlayers,
+    "upl": upl,
+    "sigma_init": sigma_init,
+}
 
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
@@ -51,8 +55,8 @@ arch_dict = get_arch_from_template(system, param_dict)
 batch_size = 300
 AL_it_max = 40
 AL_fac = 4.0
-min_iters=5000
-max_iters=5000
+min_iters = 5000
+max_iters = 5000
 lr_order = -3
 
 train_dsn(
@@ -67,10 +71,8 @@ train_dsn(
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
-    dir_str='SC_WTA_NI',
+    dir_str="SC_WTA_NI",
     savedir=None,
     entropy=True,
     db=False,
 )
-
-

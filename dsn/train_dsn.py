@@ -1,4 +1,4 @@
-#p Copyright 2018 Sean Bittner, Columbia University
+# p Copyright 2018 Sean Bittner, Columbia University
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,14 +31,10 @@ from dsn.util.dsn_util import (
 from dsn.util.dsn_util import initialize_nf
 from dsn.util.plot_util import make_training_movie
 
-from tf_util.tf_util import (
-    density_network,
-    mixture_density_network,
-    log_grads,
-    AL_cost,
-)
+from tf_util.tf_util import density_network, mixture_density_network, log_grads, AL_cost
 from tf_util.normalizing_flows import count_params
 from tf_util.stat_util import sample_gumbel
+
 
 def train_dsn(
     system,
@@ -95,62 +91,54 @@ def train_dsn(
     COST_GRAD_LAG = 100
     ALPHA = 0.05
 
-    K = arch_dict['K']
+    K = arch_dict["K"]
     mixture = K > 1
 
     # Create model save directory if doesn't exist.
-    if (savedir is None):
-        savedir = get_savedir(
-            system, arch_dict, c_init_order, random_seed, dir_str
-        )
-    save_fname = savedir + 'opt_info.npz'
-    param_fname = savedir + 'params'
+    if savedir is None:
+        savedir = get_savedir(system, arch_dict, c_init_order, random_seed, dir_str)
+    save_fname = savedir + "opt_info.npz"
+    param_fname = savedir + "params"
     if not os.path.exists(savedir):
         print("Making directory %s ." % savedir)
         os.makedirs(savedir)
 
-
     # Look for model initialization.  If not found, optimize the init.
-    if (K > 1 and (not arch_dict['shared'])):
+    if K > 1 and (not arch_dict["shared"]):
         initdirs = []
-        for rs in range(1, K+1):
+        for rs in range(1, K + 1):
             # TODO add arch_dict mo init update
-            print('Initializing %d/%d...' % (rs, K))
-            initdirs.append(initialize_nf(system,
-                                          arch_dict, 
-                                          rs))
+            print("Initializing %d/%d..." % (rs, K))
+            initdirs.append(initialize_nf(system, arch_dict, rs))
     else:
         init_arch_dict = arch_dict.copy()
-        if ('init_mo' in arch_dict.keys()):
-            init_arch_dict['mo'] = arch_dict['init_mo']
-        print('Initializing...')
-        initdirs = [initialize_nf(system,
-                                  init_arch_dict, 
-                                  random_seed)]
+        if "init_mo" in arch_dict.keys():
+            init_arch_dict["mo"] = arch_dict["init_mo"]
+        print("Initializing...")
+        initdirs = [initialize_nf(system, init_arch_dict, random_seed)]
 
-
-    print('initdirs ', initdirs)
-    print('done.')
+    print("initdirs ", initdirs)
+    print("done.")
 
     # Reset tf graph, and set random seeds.
     tf.reset_default_graph()
     tf.set_random_seed(random_seed)
 
     # Load nf initialization
-    if (system.has_support_map):
+    if system.has_support_map:
         support_mapping = system.support_mapping
     else:
         support_mapping = None
 
-    if (mixture):
+    if mixture:
         W = tf.placeholder(tf.float64, shape=(None, None, system.D), name="W")
         np.random.seed(random_seed)
         G = tf.placeholder(tf.float64, shape=(None, None, K), name="G")
-        #Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, Mu, Sigma, C = mixture_density_network(
+        # Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, Mu, Sigma, C = mixture_density_network(
         Z, sum_log_det_jacobian, log_base_density, flow_layers, alpha, C = mixture_density_network(
             G, W, arch_dict, support_mapping, initdirs=initdirs
         )
-    else: # mixture
+    else:  # mixture
         W = tf.placeholder(tf.float64, shape=(1, None, system.D), name="W")
         np.random.seed(random_seed)
         Z, sum_log_det_jacobian, flow_layers = density_network(
@@ -159,10 +147,10 @@ def train_dsn(
 
     # Permutations and batch norms
     # havent implemented mixture flows for real nvp archs yet
-    if (not mixture):
-        init_param_fname = initdirs[0] + 'theta.npz'
-        init_param_file =  np.load(init_param_fname, allow_pickle=True)
-        init_thetas = init_param_file['theta'][()]
+    if not mixture:
+        init_param_fname = initdirs[0] + "theta.npz"
+        init_param_file = np.load(init_param_fname, allow_pickle=True)
+        init_thetas = init_param_file["theta"][()]
 
         final_thetas = {}
         batch_norm_mus = []
@@ -174,23 +162,30 @@ def train_dsn(
         batch_norm = False
         for i in range(len(flow_layers)):
             flow_layer = flow_layers[i]
-            if (flow_layer.name == 'PermutationFlow'):
-                final_thetas.update({'DensityNetwork/Layer%d/perm_inds' % (i+1):flow_layer.inds})
-            if (flow_layer.name == 'RealNVP' and flow_layer.batch_norm):
+            if flow_layer.name == "PermutationFlow":
+                final_thetas.update(
+                    {"DensityNetwork/Layer%d/perm_inds" % (i + 1): flow_layer.inds}
+                )
+            if flow_layer.name == "RealNVP" and flow_layer.batch_norm:
                 batch_norm = True
-                num_masks = arch_dict['real_nvp_arch']['num_masks']
+                num_masks = arch_dict["real_nvp_arch"]["num_masks"]
                 for j in range(num_masks):
                     batch_norm_mus.append(flow_layer.mus[j])
                     batch_norm_sigmas.append(flow_layer.sigmas[j])
                     batch_norm_layer_means.append(flow_layer.layer_means[j])
                     batch_norm_layer_vars.append(flow_layer.layer_vars[j])
-                    _batch_norm_mus.append(init_thetas['DensityNetwork/batch_norm_mu%d' % (j+1)])
-                    _batch_norm_sigmas.append(init_thetas['DensityNetwork/batch_norm_sigma%d' % (j+1)])
-
+                    _batch_norm_mus.append(
+                        init_thetas["DensityNetwork/batch_norm_mu%d" % (j + 1)]
+                    )
+                    _batch_norm_sigmas.append(
+                        init_thetas["DensityNetwork/batch_norm_sigma%d" % (j + 1)]
+                    )
 
     with tf.name_scope("Entropy"):
-        if (not mixture):
-            log_base_density = tf.reduce_sum((-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2)
+        if not mixture:
+            log_base_density = tf.reduce_sum(
+                (-tf.square(W) / 2.0) - np.log(np.sqrt(2.0 * np.pi)), 2
+            )
         log_q_z = log_base_density - sum_log_det_jacobian
         base_H = -tf.reduce_mean(log_base_density)
         sum_log_det_H = tf.reduce_mean(sum_log_det_jacobian)
@@ -205,21 +200,20 @@ def train_dsn(
         T_x = system.compute_suff_stats(Z)
         mu = system.compute_mu()
         T_x_mu_centered = system.center_suff_stats_by_mu(T_x)
-        if ('bounds' in system.behavior.keys()):
+        if "bounds" in system.behavior.keys():
             I_x = system.compute_I_x(Z, T_x)
         else:
             I_x = None
 
-
     # Compute inverse of dgm if known
-    print('Getting inverse')
-    Z_input = tf.placeholder(tf.float64, (1,None,system.D))
-    if (FIM and not mixture):
-        if (arch_dict['flow_type'] == 'RealNVP'):
-            print('computing inverse of realNVP')
+    print("Getting inverse")
+    Z_input = tf.placeholder(tf.float64, (1, None, system.D))
+    if FIM and not mixture:
+        if arch_dict["flow_type"] == "RealNVP":
+            print("computing inverse of realNVP")
             Z_INV = Z_input
             layer_ind = len(flow_layers) - 1
-            while (layer_ind > -1):
+            while layer_ind > -1:
                 layer = flow_layers[layer_ind]
                 Z_INV = layer.inverse(Z_INV)
                 layer_ind -= 1
@@ -227,8 +221,8 @@ def train_dsn(
         else:
             Z_INV = tf.placeholder(tf.float64, (1,))
 
-    print('Z_input', Z_input)
-    print('Z_inv', Z_INV)
+    print("Z_input", Z_input)
+    print("Z_inv", Z_INV)
 
     # Declare ugmented Lagrangian optimization hyperparameter placeholders.
     with tf.name_scope("AugLagCoeffs"):
@@ -238,32 +232,36 @@ def train_dsn(
     # Augmented Lagrangian cost function.
     print("Setting up augmented lagrangian gradient graph.")
     with tf.name_scope("AugLagCost"):
-        cost, cost_grads, R_x = AL_cost(H, T_x_mu_centered, Lambda, c, \
-                                      all_params, entropy=entropy, I_x=I_x)
+        cost, cost_grads, R_x = AL_cost(
+            H, T_x_mu_centered, Lambda, c, all_params, entropy=entropy, I_x=I_x
+        )
         tf.summary.scalar("cost", cost)
         for i in range(system.num_suff_stats):
-            tf.summary.scalar('R_%d' % (i+1), R_x[i])
+            tf.summary.scalar("R_%d" % (i + 1), R_x[i])
 
     # Compute gradient of density network params (theta) wrt cost.
     grads_and_vars = []
     for i in range(len(all_params)):
         grads_and_vars.append((cost_grads[i], all_params[i]))
 
-
     # Add inputs and outputs of NF to saved tf model.
     tf.add_to_collection("W", W)
     tf.add_to_collection("Z", Z)
     tf.add_to_collection("log_q_z", log_q_z)
-    if (FIM and not mixture):
+    if FIM and not mixture:
         tf.add_to_collection("Z_input", Z_input)
         tf.add_to_collection("Z_INV", Z_INV)
-    if (batch_norm):
+    if batch_norm:
         num_batch_norms = len(batch_norm_mus)
         for i in range(num_batch_norms):
-            tf.add_to_collection("batch_norm_mu%d" % (i+1), batch_norm_mus[i])
-            tf.add_to_collection("batch_norm_sigma%d" % (i+1), batch_norm_sigmas[i])
-            tf.add_to_collection("batch_norm_layer_mean%d" % (i+1), batch_norm_layer_means[i])
-            tf.add_to_collection("batch_norm_layer_var%d" % (i+1), batch_norm_layer_vars[i])
+            tf.add_to_collection("batch_norm_mu%d" % (i + 1), batch_norm_mus[i])
+            tf.add_to_collection("batch_norm_sigma%d" % (i + 1), batch_norm_sigmas[i])
+            tf.add_to_collection(
+                "batch_norm_layer_mean%d" % (i + 1), batch_norm_layer_means[i]
+            )
+            tf.add_to_collection(
+                "batch_norm_layer_var%d" % (i + 1), batch_norm_layer_vars[i]
+            )
 
     saver = tf.train.Saver(max_to_keep=MAX_TO_KEEP)
 
@@ -280,11 +278,11 @@ def train_dsn(
 
     num_diagnostic_checks = AL_it_max * (max_iters // check_rate) + 1
     nparam_vals = count_params(arch_dict)
-    if (db):
+    if db:
         COST_GRAD_LOG_LEN = num_diagnostic_checks
         param_vals = np.zeros((COST_GRAD_LOG_LEN, nparam_vals))
     else:
-        COST_GRAD_LOG_LEN = 2*COST_GRAD_LAG
+        COST_GRAD_LOG_LEN = 2 * COST_GRAD_LAG
         param_vals = None
 
     # Cyclically record gradients in a 2*COST_GRAD_LAG logger
@@ -304,7 +302,7 @@ def train_dsn(
 
     # Take snapshots of z and log density throughout training.
     nsamps = n
-    if (db):
+    if db:
         alphas = np.zeros((num_diagnostic_checks, K))
         mus = np.zeros((num_diagnostic_checks, K, system.D))
         sigmas = np.zeros((num_diagnostic_checks, K, system.D))
@@ -314,7 +312,7 @@ def train_dsn(
         log_base_q_zs = np.zeros((num_diagnostic_checks, nsamps))
         T_xs = np.zeros((num_diagnostic_checks, nsamps, system.num_suff_stats))
         # params
-        if (batch_norm):
+        if batch_norm:
             bn_mus = np.zeros((num_diagnostic_checks, num_batch_norms, system.D))
             bn_sigmas = np.zeros((num_diagnostic_checks, num_batch_norms, system.D))
     else:
@@ -326,7 +324,7 @@ def train_dsn(
         log_q_zs = np.zeros((AL_it_max + 1, nsamps))
         log_base_q_zs = np.zeros((AL_it_max + 1, nsamps))
         T_xs = np.zeros((AL_it_max + 1, nsamps, system.num_suff_stats))
-        if (batch_norm):
+        if batch_norm:
             bn_mus = np.zeros((AL_it_max + 1, num_batch_norms, system.D))
             bn_sigmas = np.zeros((AL_it_max + 1, num_batch_norms, system.D))
 
@@ -350,19 +348,30 @@ def train_dsn(
         feed_dict = {W: w_i, Lambda: _lambda, c: _c}
 
         # Initialize the batch norms.  Iteratively run out the coupling layers.
-        if (batch_norm):
-            print('Initializing batch norm parameters.')
+        if batch_norm:
+            print("Initializing batch norm parameters.")
             num_batch_norms = len(batch_norm_mus)
             for j in range(num_batch_norms):
-                feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
-                feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
+                feed_dict.update({batch_norm_mus[j]: _batch_norm_mus[j]})
+                feed_dict.update({batch_norm_sigmas[j]: _batch_norm_sigmas[j]})
 
-        if (mixture):
+        if mixture:
             g_i = np.expand_dims(sample_gumbel(nsamps, K), 0)
             feed_dict.update({G: g_i})
-       
-        args = [cost, cost_grads, Z, T_x, H, base_H, sum_log_det_H, log_q_z, log_base_density, summary_op]
-        if (batch_norm):
+
+        args = [
+            cost,
+            cost_grads,
+            Z,
+            T_x,
+            H,
+            base_H,
+            sum_log_det_H,
+            log_q_z,
+            log_base_density,
+            summary_op,
+        ]
+        if batch_norm:
             args.append(batch_norm_layer_means)
             args.append(batch_norm_layer_vars)
         _args = sess.run(args, feed_dict)
@@ -377,12 +386,12 @@ def train_dsn(
         _log_q_z = _args[7]
         _log_base_q_z = _args[8]
         summary = _args[9]
-        
+
         summary_writer.add_summary(summary, 0)
-        #log_grads(_cost_grads, cost_grad_vals, 0)
-        if (db):
+        # log_grads(_cost_grads, cost_grad_vals, 0)
+        if db:
             _params = sess.run(all_params)
-            #log_grads(_params, param_vals, 0)
+            # log_grads(_params, param_vals, 0)
 
         mean_T_xs[0, :] = np.mean(_T_x[0], 0)
         Hs[0] = _H
@@ -391,41 +400,40 @@ def train_dsn(
         costs[0] = cost_i
         check_it += 1
 
-        if (mixture):
-            #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
-            _alpha, _C = sess.run([alpha, C], {G:g_i})
-            alphas[0,:] = _alpha
-            #mus[0,:,:] = _mu
-            #sigmas[0,:,:] = _sigma
-            Cs[0,:,:] = _C
+        if mixture:
+            # _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+            _alpha, _C = sess.run([alpha, C], {G: g_i})
+            alphas[0, :] = _alpha
+            # mus[0,:,:] = _mu
+            # sigmas[0,:,:] = _sigma
+            Cs[0, :, :] = _C
         Zs[0, :, :] = _Z[0, :, :]
         log_q_zs[0, :] = _log_q_z[0, :]
         log_base_q_zs[0, :] = _log_base_q_z[0, :]
         T_xs[0, :, :] = _T_x[0]
 
-        if (batch_norm):
+        if batch_norm:
             bn_mus[0] = np.array(_batch_norm_mus)
             bn_sigmas[0] = np.array(_batch_norm_sigmas)
 
-        if (MODEL_SAVE):
+        if MODEL_SAVE:
             print("Saving model at beginning.")
             for ii in range(nparams):
-                final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
+                final_thetas.update({all_params[ii].name: sess.run(all_params[ii])})
             saver.save(sess, savedir + "model", global_step=0)
             np.savez(
-                    param_fname + '%d.npz' % 0,
-                    theta=final_thetas,
-                    batch_norm_mus=bn_mus,
-                    batch_norm_sigmas=bn_sigmas,
-                )
-
+                param_fname + "%d.npz" % 0,
+                theta=final_thetas,
+                batch_norm_mus=bn_mus,
+                batch_norm_sigmas=bn_sigmas,
+            )
 
         optimizer = tf.contrib.optimizer_v2.AdamOptimizer(learning_rate=lr)
         train_step = optimizer.apply_gradients(grads_and_vars)
 
         total_its = 1
         for k in range(AL_it_max):
-            print(k, 'check it', check_it)
+            print(k, "check it", check_it)
             print("AL iteration %d" % (k + 1))
             cs.append(_c)
             lambdas.append(_lambda)
@@ -443,75 +451,88 @@ def train_dsn(
 
                 w_i = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict.update({W: w_i})
-                if (mixture):
+                if mixture:
                     g_i = np.expand_dims(sample_gumbel(n, K), 0)
                     feed_dict.update({G: g_i})
 
                 # Log diagnostics for W draw before gradient step
                 if np.mod(cur_ind, check_rate) == 0:
-                    print('mode check rate', 'cur_ind', cur_ind, 'check_it', check_it)
-                    args = [cost, H, base_H, sum_log_det_H, T_x, Z, log_q_z, log_base_density]
-                    if (batch_norm):
+                    print("mode check rate", "cur_ind", cur_ind, "check_it", check_it)
+                    args = [
+                        cost,
+                        H,
+                        base_H,
+                        sum_log_det_H,
+                        T_x,
+                        Z,
+                        log_q_z,
+                        log_base_density,
+                    ]
+                    if batch_norm:
                         args.append(batch_norm_layer_means)
                         args.append(batch_norm_layer_vars)
                     _args = sess.run(args, feed_dict)
-                    if (batch_norm):
+                    if batch_norm:
                         _batch_norm_layer_means = _args[7]
                         _batch_norm_layer_vars = _args[8]
 
                     print(42 * "*")
                     print("it = %d " % (cur_ind))
-                    if (mixture):
+                    if mixture:
                         _alpha = sess.run(alpha)
-                        print('alpha', _alpha)
+                        print("alpha", _alpha)
                     cost_i = _args[0]
                     _H = _args[1]
                     print("H", _H)
                     print("cost", cost_i)
-                    print('baseH', _args[2])
-                    print('sum_log_det_Hs', _args[3])
-                    print('mean Tx',  np.mean(_args[4][0], 0))
+                    print("baseH", _args[2])
+                    print("sum_log_det_Hs", _args[3])
+                    print("mean Tx", np.mean(_args[4][0], 0))
                     sys.stdout.flush()
-                    
+
                     Hs[check_it] = _H
                     base_Hs[check_it] = _args[2]
                     sum_log_det_Hs[check_it] = _args[3]
                     mean_T_xs[check_it] = np.mean(_args[4][0], 0)
 
-                    if (db):
+                    if db:
                         raise NotImplementedError()
-                        if (mixture):
-                            #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
-                            _alpha, _C = sess.run([alpha, C], {G:g_i})
-                            alphas[check_it,:] = _alpha
-                            #mus[check_it,:,:] = _mu
-                            #sigmas[check_it,:,:] = _sigma
-                            Cs[check_it,:,:] = _C
+                        if mixture:
+                            # _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+                            _alpha, _C = sess.run([alpha, C], {G: g_i})
+                            alphas[check_it, :] = _alpha
+                            # mus[check_it,:,:] = _mu
+                            # sigmas[check_it,:,:] = _sigma
+                            Cs[check_it, :, :] = _C
                         Zs[check_it, :, :] = _args[5][0, :, :]
                         log_q_zs[check_it, :] = _args[6][0, :]
                         log_base_q_zs[check_it, :] = _args[7][0, :]
                         T_xs[check_it, :, :] = _args[8][0]
 
-                        if (batch_norm):
+                        if batch_norm:
                             bn_mus[check_it] = np.array(_batch_norm_mus)
                             bn_sigmas[check_it] = np.array(_batch_norm_sigmas)
 
-                        if (MODEL_SAVE):
+                        if MODEL_SAVE:
                             for ii in range(nparams):
-                                final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
+                                final_thetas.update(
+                                    {all_params[ii].name: sess.run(all_params[ii])}
+                                )
                             print("Saving model at iter %d." % (cur_ind))
                             saver.save(sess, savedir + "model", global_step=check_it)
                             np.savez(
-                                    param_fname + '%d.npz' % check_it,
-                                    theta=final_thetas,
-                                    batch_norm_mus=bn_mus,
-                                    batch_norm_sigmas=bn_sigmas,
-                                )
-
+                                param_fname + "%d.npz" % check_it,
+                                theta=final_thetas,
+                                batch_norm_mus=bn_mus,
+                                batch_norm_sigmas=bn_sigmas,
+                            )
 
                     if stop_early:
                         has_converged = check_convergence(
-                            cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN, COST_GRAD_LAG, ALPHA
+                            cost_grad_vals,
+                            cur_ind % COST_GRAD_LOG_LEN,
+                            COST_GRAD_LAG,
+                            ALPHA,
                         )
 
                     if has_converged:
@@ -557,55 +578,63 @@ def train_dsn(
 
                     print(42 * "*")
 
-                if np.mod(cur_ind-1, check_rate) == 0:
+                if np.mod(cur_ind - 1, check_rate) == 0:
                     start_time = time.time()
 
-                if (TB_SAVE and np.mod(cur_ind, TB_SAVE_EVERY) == 0):
+                if TB_SAVE and np.mod(cur_ind, TB_SAVE_EVERY) == 0:
                     # Create a fresh metadata object:
                     run_metadata = tf.RunMetadata()
-                    ts, cost_i, _cost_grads, summary = sess.run([train_step, cost, cost_grads, summary_op], 
-                                       feed_dict,
-                                       options=run_options,
-                                       run_metadata=run_metadata)
+                    ts, cost_i, _cost_grads, summary = sess.run(
+                        [train_step, cost, cost_grads, summary_op],
+                        feed_dict,
+                        options=run_options,
+                        run_metadata=run_metadata,
+                    )
                     summary_writer.add_summary(summary, cur_ind)
-                    if (not wrote_graph and i>20): # In case a GPU needs to warm up for optims
-                        assert(min_iters >= 20 and TB_SAVE_EVERY >= 20)
-                        print("Writing graph stuff for AL iteration %d." % (k+1))
-                        summary_writer.add_run_metadata(run_metadata, 
-                                                        "train_step_{}".format(cur_ind),
-                                                        cur_ind)
+                    if (
+                        not wrote_graph and i > 20
+                    ):  # In case a GPU needs to warm up for optims
+                        assert min_iters >= 20 and TB_SAVE_EVERY >= 20
+                        print("Writing graph stuff for AL iteration %d." % (k + 1))
+                        summary_writer.add_run_metadata(
+                            run_metadata, "train_step_{}".format(cur_ind), cur_ind
+                        )
                         wrote_graph = True
                 else:
                     args = [train_step, cost]
-                    if (batch_norm):
+                    if batch_norm:
                         args.append(batch_norm_layer_means)
                         args.append(batch_norm_layer_vars)
                     _args = sess.run(args, feed_dict)
                     ts = _args[0]
                     cost_i = _args[1]
-                    if (batch_norm):
+                    if batch_norm:
                         _batch_norm_layer_means = _args[2]
                         _batch_norm_layer_vars = _args[3]
 
                 if np.mod(cur_ind, check_rate) == 0:
-                    print('cost', cost_i)
+                    print("cost", cost_i)
                     costs[check_it] = cost_i
                     check_it += 1
 
                 # Update batch norm params
-                if (batch_norm):
-                    mom = arch_dict['mo']
+                if batch_norm:
+                    mom = arch_dict["mo"]
                     for j in range(num_batch_norms):
-                        _batch_norm_mus[j] = mom*_batch_norm_mus[j] + (1.0-mom)*_batch_norm_layer_means[j]
-                        _batch_norm_sigmas[j] = mom*_batch_norm_sigmas[j] + (1.0-mom)*np.sqrt(_batch_norm_layer_vars[j])
+                        _batch_norm_mus[j] = (
+                            mom * _batch_norm_mus[j]
+                            + (1.0 - mom) * _batch_norm_layer_means[j]
+                        )
+                        _batch_norm_sigmas[j] = mom * _batch_norm_sigmas[j] + (
+                            1.0 - mom
+                        ) * np.sqrt(_batch_norm_layer_vars[j])
 
-
-                if (batch_norm):
+                if batch_norm:
                     for j in range(num_batch_norms):
-                        feed_dict.update({batch_norm_mus[j]:_batch_norm_mus[j]})
-                        feed_dict.update({batch_norm_sigmas[j]:_batch_norm_sigmas[j]})
+                        feed_dict.update({batch_norm_mus[j]: _batch_norm_mus[j]})
+                        feed_dict.update({batch_norm_sigmas[j]: _batch_norm_sigmas[j]})
 
-                #log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
+                # log_grads(_cost_grads, cost_grad_vals, cur_ind % COST_GRAD_LOG_LEN)
 
                 if np.mod(cur_ind, check_rate) == 0:
                     end_time = time.time()
@@ -615,27 +644,29 @@ def train_dsn(
                 i += 1
             w_k = np.random.normal(np.zeros((1, nsamps, system.D)), 1.0)
             feed_dict.update({W: w_k})
-            if (mixture):
+            if mixture:
                 g_k = np.expand_dims(sample_gumbel(nsamps, K), 0)
                 feed_dict.update({G: g_k})
-            _H, _T_x, _Z, _log_q_z, _log_base_q_z = sess.run([H, T_x, Z, log_q_z, log_base_density], feed_dict)
+            _H, _T_x, _Z, _log_q_z, _log_base_q_z = sess.run(
+                [H, T_x, Z, log_q_z, log_base_density], feed_dict
+            )
 
-            if (not db):
-                if (mixture):
-                    #_alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
-                    #mus[k+1,:] = _mu
-                    #sigmas[k+1,:] = _sigma
-                    _alpha, _C = sess.run([alpha, C], {G:g_i})
-                    alphas[k+1,:] = _alpha
-                    Cs[k+1,:,:] = _C
+            if not db:
+                if mixture:
+                    # _alpha, _mu, _sigma, _C = sess.run([alpha, Mu, Sigma, C], {G:g_i})
+                    # mus[k+1,:] = _mu
+                    # sigmas[k+1,:] = _sigma
+                    _alpha, _C = sess.run([alpha, C], {G: g_i})
+                    alphas[k + 1, :] = _alpha
+                    Cs[k + 1, :, :] = _C
                 Zs[k + 1, :, :] = _Z[0, :, :]
                 log_q_zs[k + 1, :] = _log_q_z[0, :]
                 log_base_q_zs[k + 1, :] = _log_base_q_z[0, :]
                 T_xs[k + 1, :, :] = _T_x[0]
 
-                if (batch_norm):
-                    bn_mus[k+1] = np.array(_batch_norm_mus)
-                    bn_sigmas[k+1] = np.array(_batch_norm_sigmas)
+                if batch_norm:
+                    bn_mus[k + 1] = np.array(_batch_norm_mus)
+                    bn_sigmas[k + 1] = np.array(_batch_norm_sigmas)
 
             _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
             _R = np.mean(_T_x_mu_centered[0], 0)
@@ -648,37 +679,36 @@ def train_dsn(
             # saveParams(params, savedir);
             # save the model
             print("saving to", savedir)
-            if (MODEL_SAVE and not db):
+            if MODEL_SAVE and not db:
                 for ii in range(nparams):
-                    final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
-                print('saving model ', k+1)
-                print('Z_inv', Z_INV)
-                saver.save(sess, savedir + "model", global_step=(k+1))
+                    final_thetas.update({all_params[ii].name: sess.run(all_params[ii])})
+                print("saving model ", k + 1)
+                print("Z_inv", Z_INV)
+                saver.save(sess, savedir + "model", global_step=(k + 1))
                 np.savez(
-                        param_fname  + '%d.npz' % (k+1),
-                        theta=final_thetas,
-                        batch_norm_mus=bn_mus,
-                        batch_norm_sigmas=bn_sigmas,
-                    )
+                    param_fname + "%d.npz" % (k + 1),
+                    theta=final_thetas,
+                    batch_norm_mus=bn_mus,
+                    batch_norm_sigmas=bn_sigmas,
+                )
 
             total_its += i
             epoch_inds.append(total_its - 1)
 
-
             # If optimizing for feasible set and on f.s., quit.
-            if (system.behavior["type"] == "feasible"):
+            if system.behavior["type"] == "feasible":
                 is_feasible = system.behavior["is_feasible"](_T_x[0])
                 if is_feasible:
-                    print('On the feasible set.  Initialization complete.')
+                    print("On the feasible set.  Initialization complete.")
                     break
                 else:
-                    print('Not on safe part of feasible set yet.')
+                    print("Not on safe part of feasible set yet.")
 
             # do the hypothesis test to figure out whether or not we should update c
             for j in range(num_norms):
                 w_j = np.random.normal(np.zeros((1, n, system.D)), 1.0)
                 feed_dict.update({W: w_j})
-                if (mixture):
+                if mixture:
                     g_j = np.expand_dims(sample_gumbel(n, K), 0)
                     feed_dict.update({G: g_j})
                 _T_x_mu_centered = sess.run(T_x_mu_centered, feed_dict)
@@ -700,28 +730,27 @@ def train_dsn(
             norms = new_norms
 
         for i in range(nparams):
-            final_thetas.update({all_params[i].name:sess.run(all_params[i])});
+            final_thetas.update({all_params[i].name: sess.run(all_params[i])})
 
-
-        if (MODEL_SAVE):
+        if MODEL_SAVE:
             print("Saving model before exit")
             for ii in range(nparams):
-                final_thetas.update({all_params[ii].name:sess.run(all_params[ii])})
+                final_thetas.update({all_params[ii].name: sess.run(all_params[ii])})
             if db:
                 global_step = check_it
             else:
-                global_step = k+1
+                global_step = k + 1
             saver.save(sess, savedir + "model", global_step=global_step)
             np.savez(
-                    param_fname  + '%d.npz' % global_step,
-                    theta=final_thetas,
-                    batch_norm_mus=bn_mus,
-                    batch_norm_sigmas=bn_sigmas,
-                )
+                param_fname + "%d.npz" % global_step,
+                theta=final_thetas,
+                batch_norm_mus=bn_mus,
+                batch_norm_sigmas=bn_sigmas,
+            )
 
     print("saving to %s  ..." % savedir)
     sys.stdout.flush()
-                    
+
     np.savez(
         save_fname,
         costs=costs,
@@ -758,14 +787,16 @@ def train_dsn(
     )
 
     # make training movie
-    if (db):
+    if db:
         step = 1
-        video_fname = savedir + get_savestr(system, arch_dict, c_init_order, random_seed) + "_video"
+        video_fname = (
+            savedir
+            + get_savestr(system, arch_dict, c_init_order, random_seed)
+            + "_video"
+        )
         make_training_movie(savedir, system, step, save_fname=video_fname)
 
-    if (system.behavior["type"] == "feasible"):
+    if system.behavior["type"] == "feasible":
         return costs, _Z, is_feasible
     else:
         return costs, _Z
-
-

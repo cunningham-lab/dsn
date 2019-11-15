@@ -9,6 +9,7 @@ import numpy as np
 
 # Global variables for Gaussian quadrature
 
+
 def get_quadrature(num_pts, double=False):
     gauss_norm = 1 / np.sqrt(np.pi)
     gauss_points, gauss_weights = np.polynomial.hermite.hermgauss(num_pts)
@@ -26,6 +27,7 @@ def get_quadrature(num_pts, double=False):
         )
     else:
         return gauss_norm, gauss_points, gauss_weights
+
 
 #### Single Gaussian intergrals
 
@@ -144,6 +146,7 @@ def PrimPhi(mu, delta0, num_pts=200):
 
 #### Nested Gaussian intergrals
 
+
 def IntPrimPrim(mu, delta0, deltainf, num_pts=200):  # Performs the external integral
     gauss_norm, gauss_points, gauss_weights, gauss_points_inner, gauss_points_outer = get_quadrature(
         num_pts, double=True
@@ -176,6 +179,7 @@ def IntPhiPhi(mu, delta0, deltainf, num_pts=200):
     )
     outer_integrand = gauss_norm * np.dot(inner_integrand, gauss_weights)
     return gauss_norm * np.dot(outer_integrand ** 2, gauss_weights)
+
 
 def IntPrimePrime(mu, delta0, deltainf, num_pts=200):
     gauss_norm, gauss_points, gauss_weights, gauss_points_inner, gauss_points_outer = get_quadrature(

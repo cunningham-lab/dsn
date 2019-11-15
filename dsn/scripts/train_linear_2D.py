@@ -20,29 +20,27 @@ sysname = "Linear2D"
 omega = 1.0
 d_std = 0.25
 omega_std = 0.1
-param_dict = {'omega':omega,
-              'd_std':d_std,
-              'omega_std':omega_std}
+param_dict = {"omega": omega, "d_std": d_std, "omega_std": omega_std}
 system = get_system_from_template(sysname, param_dict)
 
 arch_params = {
-               'D':system.D,
-               'repeats':repeats,
-               'nlayers':nlayers,
-               'sigma_init':sigma_init,
-              }
+    "D": system.D,
+    "repeats": repeats,
+    "nlayers": nlayers,
+    "sigma_init": sigma_init,
+}
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
 
 n = 1000
-AL_it_max =20
+AL_it_max = 20
 AL_fac = 4.0
 lr_order = -3
 min_iters = 2000
 max_iters = 2000
 check_rate = 100
 dist_seed = 0
-dir_str = "2DLDS"
+dir_str = "2DLDS_test"
 
 np.random.seed(dist_seed)
 cost, z = train_dsn(

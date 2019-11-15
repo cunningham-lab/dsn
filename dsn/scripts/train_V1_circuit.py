@@ -20,26 +20,21 @@ silenced = False
 
 # Get V1 system
 sysname = "V1Circuit"
-behavior_type = 'ISN_coeff'
+behavior_type = "ISN_coeff"
 if silenced:
-    param_dict = {
-        "behavior_type":behavior_type,
-        "silenced":silenced,
-    }
+    param_dict = {"behavior_type": behavior_type, "silenced": silenced}
 else:
-    param_dict = {
-        "behavior_type":behavior_type,
-    }
+    param_dict = {"behavior_type": behavior_type}
 system = get_system_from_template(sysname, param_dict)
 
 # Get DSN architecture
 arch_params = {
-               'D':system.D,
-               'repeats':repeats,
-               'nlayers':nlayers,
-               'upl':upl,
-               'sigma_init':sigma_init*np.ones((system.D,))
-              }
+    "D": system.D,
+    "repeats": repeats,
+    "nlayers": nlayers,
+    "upl": upl,
+    "sigma_init": sigma_init * np.ones((system.D,)),
+}
 
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
@@ -56,12 +51,12 @@ train_dsn(
     batch_size,
     AL_it_max=AL_it_max,
     c_init_order=c_init_order,
-    AL_fac=AL_fac, 
+    AL_fac=AL_fac,
     min_iters=iters,
     max_iters=iters,
     random_seed=random_seed,
     lr_order=lr_order,
     check_rate=100,
     dir_str="V1Circuit_test",
-    db=False
+    db=False,
 )
