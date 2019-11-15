@@ -41,14 +41,16 @@
 
 \thispagestyle{plain}
 {\Large Interrogating theoretical models of neural computation with deep inference} \\
-Sean R. Bittner$^{1}$, Agostina Palmigiano$^{1}$, Alex T. Piet$^{2}$, Chunyu A. Duan$^{3}$, Carlos D. Brody$^{2}$, \\
-Kenneth D. Miller$^{1}$, and John P. Cunningham$^{4}$.
+Sean R. Bittner$^{1}$, Agostina Palmigiano$^{1}$, Alex T. Piet$^{2,3}$, Chunyu A. Duan$^{4}$, Carlos D. Brody$^{2,3,5}$, \\
+Kenneth D. Miller$^{1}$, and John P. Cunningham$^{6}$.
 
 {\small
 $^{1}$Department of Neuroscience, Columbia University, \\
 $^{2}$Princeton Neuroscience Institute, \\
-$^{3}$Institute of Neuroscience, Chinese Academy of Sciences, \\
-$^{4}$Department of Statistics, Columbia University
+$^{3}$Princeton University, \\
+$^{4}$Institute of Neuroscience, Chinese Academy of Sciences, \\
+$^{5}$Howard Hughes Medical Institute, \\
+$^{6}$Department of Statistics, Columbia University
 }
 
 \linenumbers
@@ -145,7 +147,7 @@ In this last step lies the opportunity for a precise quantification of the emerg
 \begin{center}
 \includegraphics[scale=0.32]{figures/fig1/fig1.pdf}
 \end{center}
-\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability density of their generating parameters (stars) in the EPI-inferred distribution.  B. The EPI distribution of STG model parameters producing network syncing.  Samples are colored by log probability density.  Distribution contours of emergent property value error are shown at levels of $2.5 \times 10^{-5}$, $5 \times 10^{-5}$, $1 \times 10^{-4}$, $2 \times 10^{-4}$, and $4 \times 10^{-4}$ (dark to light gray).  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ (solid) and $v_2$ (dashed) with lengths scaled by the square root of the absolute value of their eigenvalues.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.  $v_1$ is sensitive to network syncing ($p=1.56 \times 10^{-6}$), while $v_2$ is not ($p=0.672$) (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$.}
+\caption{Emergent property inference (EPI) in the stomatogastric ganglion.  A. For a choice of model (STG) and emergent property (network syncing), emergent property inference (EPI, gray box) learns a distribution of the model parameters $z = \left[g_{\text{el}}, g_{\text{synA}} \right]$ producing network syncing.  In the STG model, jagged connections indicate electrical coupling having electrical conductance $g_{\text{el}}$. Other connections in the diagram are inhibitory synaptic projections having strength $g_{\text{synA}}$ onto the hub neuron, and $g_{\text{synB}}=5$nS for mutual inhibitory connections.  Network syncing traces are colored by log probability density of their generating parameters (stars) in the EPI-inferred distribution.  B. The EPI distribution of STG model parameters producing network syncing.  Samples are colored by log probability density.  Distribution contours of emergent property value error are shown at levels of $2.5 \times 10^{-5}$, $5 \times 10^{-5}$, $1 \times 10^{-4}$, $2 \times 10^{-4}$, and $4 \times 10^{-4}$ (dark to light gray).  Eigenvectors of the Hessian at the mode of the inferred distribution are indicated as $v_1$ (solid) and $v_2$ (dashed) with lengths scaled by the square root of the absolute value of their eigenvalues.  Simulated activity is shown for three samples (stars). (Inset) Sensitivity of the system with respect to network syncing along all dimensions of parameter space away from the mode.  $v_1$ is sensitive to network syncing ($p<10^{-4}$), while $v_2$ is not ($p=0.67$) (see Section \ref{methods_STG}).  C. Deep probability distributions map a latent random variable $w$ through a deep neural network with weights and biases $\theta$ to parameters $z = f_\theta(w)$ distributed as $q_\theta(z)$. D. EPI optimization: To learn the EPI distribution $q_\theta(z)$ of model parameters that produce an emergent property, the emergent property statistics $T(x)$ are set in expectation over model parameter samples $z \sim q_\theta(z)$ and model simulations $x \sim p(x \mid z)$ to emergent property values $\mu$.}
  \label{fig:STG}
 \end{figure}
 
@@ -241,7 +243,7 @@ We want to know the differential inputs $dh$ that result in a differential stead
 These statements amount to the emergent property 
 \begin{equation}
 \mathcal{B}(\alpha, y) ~~\triangleq~~ 
-\mathbb{E} \begin{bmatrix} dx_{\alpha} \\ (dx_{\alpha} - y)^2 \end{bmatrix} ~~=~~ \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
+\mathbb{E} \begin{bmatrix} dx_{\alpha} \\ (dx_{\alpha} - y)^2 \end{bmatrix} ~~=~~ \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}.
 \end{equation}
 We maintain the notation $\mathcal{B}(\cdot)$ throughout the rest of the study as short hand for emergent property, which represents a different signature of computation in each application. 
 
@@ -284,7 +286,7 @@ In the remainder of the study, we focus on using EPI to understand models of mor
 In a rapid task switching experiment \cite{duan2015requirement}, rats were explicitly cued on each trial to either orient towards a visual stimulus in the Pro (P) task or orient away from a visual stimulus in the Anti (A) task (Fig. \ref{fig:SC}a). Neural recordings in the midbrain superior colliculus (SC) exhibited two populations of neurons that simultaneously represented both task context (Pro or Anti) and motor response (contralateral or ipsilateral to the recorded side): the Pro/Contra and Anti/Ipsi neurons \cite{duan2018collicular}.
 Duan et al. proposed a model of SC that, like the V1 model analyzed in the previous section, is a four-population dynamical system.  
 We analyzed this model, where the neuron-type populations are functionally-defined as the Pro- and Anti-populations in each hemisphere (left (L) and right (R)), their connectivity is parameterized geometrically  (Fig. \ref{fig:SC}B).
-The input-output function of this model is chosen such that the population responses $x = \begin{bmatrix} x_{LP} & x_{LA} & x_{RP} & x_{RA} \end{bmatrix}^\top$ are bounded from 0 to 1 giving rise to high (1) or low (0) responses at the end of the trial:
+The input-output function of this model is chosen such that the population responses $x = [x_{LP}, x_{LA}, x_{RP}, x_{RA}]^\top$ are bounded from 0 to 1 giving rise to high (1) or low (0) responses at the end of the trial:
 \begin{equation}
 x_\alpha =\left(\frac{1}{2}\tanh\left(\frac{u_\alpha - \epsilon}{\zeta}\right)+ \frac{1}{2} \right)
 \end{equation}
@@ -294,7 +296,7 @@ where $\epsilon = 0.05$ and $\zeta = 0.5$.  The dynamics evolve with timescale $
 \end{equation}
 with gaussian noise of variance $\sigma^2$ = 1.
 The input $h$ is comprised of a cue-dependent input to the Pro or Anti populations, a stimulus orientation input to either the Left or Right populations, and a choice-period input to the entire network (see Section \ref{methods_SC}).
-Here, we use EPI to determine the changes in network connectivity $z = \begin{bmatrix} sW_P & sW_A & vW_{PA} & vW_{AP} & dW_{PA} & dW_{AP} & hW_P & hW_A \end{bmatrix}$ resulting in greater levels of rapid task switching accuracy.
+Here, we use EPI to determine the changes in network connectivity $z = [ sW_P, sW_A, vW_{PA}, vW_{AP}, dW_{PA}, dW_{AP}, hW_P, hW_A]$ resulting in greater levels of rapid task switching accuracy.
 %Activities were bounded between $0$ and $1$, so that a high output of the Pro population in a given hemisphere corresponds to the contralateral response.   
 %An additional stipulation is that when one Pro population responds with a high-output, the opposite Pro population must respond with a low output.
 %Finally, this circuit operates in the presence of Gaussian noise resulting in trial-to-trial variability (see Section \ref{methods_SC}).
@@ -312,7 +314,7 @@ At the end of successful trials, the response of the Pro population in the hemis
 Constraining a population response $x_\alpha \in \left[0,1\right]$ to be either 0 or 1 can be achieved by requiring that it has Bernoulli variance (see Section \ref{methods_SC}).
 Thus, we can formulate rapid task switching at a level of accuracy $p \in \left[0, 1\right]$ in both tasks in terms of the average steady response of the Pro population $\hat{p}$ of the correct choice,  the error in Bernoulli variance of that Pro neuron $\sigma^2_{\text{err}}$, and the average difference in Pro neuron responses $d$ in both Pro and Anti trials:
 \begin{equation}
-\mathcal{B}(p) ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
+\mathcal{B}(p) ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}.
 \end{equation}
 Thus, $\mathcal{B}(p)$ denotes Bernoulli, winner-take-all responses between Pro neurons in a model executing rapid task switching near accuracy level $p$.
 
@@ -322,11 +324,9 @@ The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change accord
 
 %Here, we used EPI to learn distributions of the SC weight matrix parameters $z = W$ conditioned on of various levels of rapid task switching accuracy $\mathcal{B}(p)$ for $p \in \{50\%, 60\%, 70\%, 80\%, 90\%\}$ (see Section \ref{methods_SC}).  Following the approach in Duan et al., we decomposed the connectivity matrix $W = V\Lambda V^{-1}$ in such a way (the Schur decomposition) that the basis vectors $v_i$ are the same for all $W$ (Fig. \ref{fig:SC}C). These basis vectors have intuitive roles in processing for this task, and are accordingly named the \textit{all} mode - all neurons co-fluctuate, \textit{side} mode - one side dominates the other, \textit{task} mode - the Pro or Anti populations dominate the other, and \textit{diag} mode - Pro- and Anti-populations of opposite hemispheres dominate the opposite pair. The corresponding eigenvalues (e.g. $\lambda_{\text{task}}$, which change according to $W$) indicate the degree to which activity along that mode is increased or decreased by $W$.  
 
-We found that for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple).  Specifically, \\
-$\mathbb{E}_{q_\theta(z \mid \mathcal{B}(70\%)} \left[\lambda_{\text{task}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(80\%)} \left[\lambda_{\text{task}}(z) \right]$ (p-value$=3.53 \times 10^{-18}$ Mann-Whitney test with 50 estimates using 100 samples $z \sim q_\theta(z \mid \mathcal{B})$),
-$\mathbb{E}_{q_\theta(z \mid \mathcal{B}(70\%)} \left[\lambda_{\text{task}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(80\%)} \left[\lambda_{\text{task}}(z) \right]$ (p-value$=3.53 \times 10^{-18}$), and $\mathbb{E}_{q_\theta(z \mid \mathcal{B}(80\%)} \left[\lambda_{\text{task}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(90\%)} \left[\lambda_{\text{task}}(z) \right]$ (p-value$=5.23 \times 10^{-14}$).
-Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues $\mathbb{E}_{q_\theta(z \mid \mathcal{B}(60\%)} \left[\lambda_{\text{side}}(z) \right] < \mathbb{E}_{q_\theta(z \mid \mathcal{B}(50\%)} \left[\lambda_{\text{side}}(z) \right]$ (p-value$=3.53 \times 10^{-18}$) (Fig. \ref{fig:SC}D, orange).  
-Such side mode suppression relative to $50\%$ remains in the models achieving greater accuracy, revealing its importance towards task performance (p-value$=3.53 \times 10^{-18}$ for all accuracies).   
+We found that for greater task accuracies, the task mode eigenvalue increases, indicating the importance of $W$ to the task representation (Fig. \ref{fig:SC}D, purple; adjacent distributions from 60\% to 90\% have  $p<10^{-4}$, Mann-Whitney test with 50 estimates and 100 samples).
+Stepping from random chance (50\%) networks to marginally task-performing (60\%) networks, there is a marked decrease of the side mode eigenvalues (Fig. \ref{fig:SC}D, orange; $p<10^{-4}$).  
+Such side mode suppression relative to $50\%$ remains in the models achieving greater accuracy, revealing its importance towards task performance.
 There were no interesting trends with task accuracy in the all or diag mode (hence not shown in Fig. \ref{fig:SC}). 
 Importantly, we can conclude from our methodology that side mode suppression in $W$ allows rapid task switching, and that greater task-mode representations in $W$ increase accuracy.  These hypotheses are confirmed by forward simulation of the SC model (Fig. \ref{fig:SC}E, see Section \ref{methods_SC}) suggesting experimentally testable predictions: increase in rapid task switching performance should be correlated with changes in effective connectivity resulting in an increase in task mode and decrease in side mode eigenvalues.
 
@@ -358,26 +358,26 @@ The task we consider is Gaussian posterior conditioning: calculate the parameter
 The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (Fig. \ref{fig:RNN}A, a setup inspired by \cite{echeveste2019cortical}). 
 To solve this Gaussian posterior conditioning task, the RNN response to a constant input $h = y w + (n-M_n)$ must equal the posterior mean along readout vector $r$ , where
 \begin{equation}
-\kappa_r =  \frac{1}{N} \sum_{j=1}^N r_j \phi(x_j)
+\kappa_r =  \frac{1}{N} \sum_{j=1}^N r_j \phi(x_j).
 \end{equation}
 Additionally, the amount of chaotic variance $\Delta_T$ must equal the posterior variance.
 Theory for low-rank RNNs allows us to express $\kappa_r$ and $\Delta_T$ in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
 This allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $\kappa_r$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
 \begin{equation}
-\mathbb{E} \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}
+\mathbb{E} \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}.
 \end{equation}
 We specify a substantial amount of variance in these emergent property statistics, so that the inferred distribution results in RNNs with a variety of errors in their solutions to the gaussian posterior conditioning problem. 
 
-We used EPI to learn distributions of RNN connectivity properties $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$ executing Gaussian posterior conditioning given an input of $y=2$, where the true posterior is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$ (see Section \ref{methods_LRRNN}) (Fig. \ref{fig:RNN}B). 
+We used EPI to learn distributions of RNN connectivity properties $z = [g, M_m, M_n]$ executing Gaussian posterior conditioning given an input of $y=2$, where the true posterior is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$ (see Section \ref{methods_LRRNN}) (Fig. \ref{fig:RNN}B). 
 We examined the nature of the over- and under-estimation of the posterior means (Fig. \ref{fig:RNN}B, left) and variances (Fig. \ref{fig:RNN}B, right) in the inferred distributions (300 samples).  
 There is symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. \ref{fig:RNN}B).  
-The product of $M_m$ and $M_n$ strongly determines the posterior mean ($r=0.616$, $p=7.37 \times 10^{-33}$). (Fig. \ref{fig:RNN}B, left), and the random strength $g$ is the most influential variable on the chaotic variance (Fig. \ref{fig:RNN}B, right)  ($r=0.564$, $p=1.34 \times 10^{-33}$).
+The product of $M_m$ and $M_n$ strongly determines the posterior mean (Fig. \ref{fig:RNN}B, left; $r=0.62$,  $p<10^{-4}$), and the random strength $g$ strongly determines the chaotic variance (Fig. \ref{fig:RNN}B, right; $r=0.56$,  $p<10^{-4}$).
 Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).  
 While the relationship of the random strength to chaotic variance (and resultingly posterior variance in this problem) is well-known \cite{sompolinsky1988chaos}, the distribution admits a hypothesis: the estimation of the posterior mean by the RNN increases with the product of $M_m$ and $M_n$.
 
 We tested this prediction by taking parameters $z_1$ and $z_2$ as representative samples from the positive and negative $M_m$-$M_n$ quadrants, respectively.
 Instead of using the theoretical predictions shown in Figure \ref{fig:RNN}B, we simulated finite-size realizations of these networks with 2,000 neurons (e.g. Fig. \ref{fig:RNN}C).  
-We perturbed these parameter choices by the product $M_m M_n$ clarifying that the posterior mean can be directly controlled in this way (Fig. \ref{fig:RNN}D) ($z_1$: $p=2.85 \times  10^{-214}$, $z_2$: $p=4.70 \times 10^{-26}$, see Section \ref{methods_LRRNN}).
+We perturbed these parameter choices by the product $M_m M_n$ clarifying that the posterior mean can be directly controlled in this way (Fig. \ref{fig:RNN}D; $p<10^{-4}$), see Section \ref{methods_LRRNN}).
 Thus, EPI confers a clear picture of error in this computation: the product of the low rank vector means $M_m$ and $M_n$ modulates the estimated posterior mean while the random strength $g$ modulates the estimated posterior variance.
 This novel procedure of inference on reduced parameterizations of RNNs conditioned on the emergent property of task execution is generalizable to other settings modeled in \cite{mastrogiuseppe2018linking} like noisy integration and context-dependent decision making (Fig. S5).
 
@@ -464,25 +464,25 @@ Emergent property inference (EPI) learns distributions of theoretical model para
 Consider model parameterization $z$ and data $x$ which has an intractable likelihood $p(x \mid z)$ defined by a model simulator of which samples are available $x \sim p(x \mid z)$.  
 EPI optimizes a distribution $q_\theta(z)$ (itself parameterized by $\theta$) of model parameters $z$ to produce an emergent property of interest $\mathcal{B}$,
 \begin{equation}
-\mathcal{B} ~~\triangleq~~  \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
+\mathcal{B} ~~\triangleq~~  \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu.
 \end{equation}
 Precisely, the emergent property statistics $T(x)$ must equal the emergent property values $\mu$, in expectation over the EPI distribution of parameters $q_\theta(z)$ and distribution of simulated activity $p(x \mid z)$.  This is a viable way to represent emergent properties in theoretical models, as we have demonstrated in the main text, and enables the EPI optimization.
 
 With EPI, we use deep probability distributions to learn flexible approximations to model parameter distributions $q_\theta(z)$.
  In deep probability distributions, a simple random variable $w \sim q_0(w)$ is mapped deterministically via a sequence of deep neural network layers ($f_1$, .. $f_l$) parameterized by weights and biases $\theta$ to the support of the distribution of interest:
 \begin{equation}
-z = f_{\theta}(\omega) = f_l(..f_1(w))
+z = f_{\theta}(\omega) = f_l(..f_1(w)).
 \end{equation}
 Given a simulator defined by a theoretical model $x \sim p(x \mid z)$ and some emergent property of interest $\mathcal{B}$, $q_\theta(z)$ is optimized via the neural network parameters $\theta$ to find a maximally entropic distribution $q_{\theta}^*$ within the deep variational family $\mathcal{Q}$ producing the emergent property:
 \begin{equation} \label{eq:opt}
 \begin{split}
 q_\theta^*(z) &= \argmax_{q_\theta \in Q} H(q_\theta(z)) \\
- &  \text{s.t.  } \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu \\
+ &  \text{s.t.  } \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu. \\
  \end{split}
 \end{equation} 
-Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy $H(q_\theta(z))$, we will need to take gradients with respect to the log probability density of samples from the deep probability distribution.
+Since we are optimizing parameters $\theta$ of our deep probability distribution with respect to the entropy $H(q_\theta(z))$, we will need to take gradients with respect to the log probability density of samples from the deep probability distribution:
 \begin{equation}
-H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = \mathbb{E}_{z \sim q_\theta}\left[-\log(q_\theta(z)) \right] = \mathbb{E}_{w \sim q_0}\left[-\log(q_\theta(f_\theta(w))) \right]
+H(q_\theta(z)) = \int - q_\theta(z) \log(q_\theta(z)) dz = \mathbb{E}_{z \sim q_\theta}\left[-\log(q_\theta(z)) \right] = \mathbb{E}_{w \sim q_0}\left[-\log(q_\theta(f_\theta(w))) \right].
 \end{equation}
 \begin{equation}
 \nabla_\theta H(q_\theta(z)) = \mathbb{E}_{w \sim q_0}\left[- \nabla_\theta \log(q_\theta(f_\theta(w))) \right]
@@ -499,14 +499,14 @@ To gain intuition for EPI, consider a two-dimensional linear dynamical system mo
 \end{equation}
 with
 \begin{equation}
-A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}
+A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}.
 \end{equation}
 %To run EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, we selected the real part of the  eigenvalue $\text{real}(\lambda_1) = d$ and imaginary component of  $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  $\lambda_1$ is the eigenvalue of greatest real part when there is zero imaginary component, and alternatively of positive imaginary component, when the eigenvalues are complex conjugate pairs.  Those emergent property statistics were then constrained to
-To run EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first and second moments of the oscillatory frequency $2 \pi \text{imag}(\lambda_1)$ and the growth/decay factor $\text{real}(\lambda_1)$ of the oscillating system. 
+To run EPI with the dynamics matrix elements as the free parameters $z = [ a_1, a_2, a_3, a_4]$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first and second moments of the oscillatory frequency $2 \pi \text{imag}(\lambda_1)$ and the growth/decay factor $\text{real}(\lambda_1)$ of the oscillating system. 
  $\lambda_1$ is the eigenvalue of greatest real part when the imaginary component is zero, and alternatively of positive imaginary component when the eigenvalues are complex conjugate pairs.  
 To learn the distribution of real entries of $A$ that produce a band of oscillating systems around 1Hz, we formalized this emergent property as $\text{real}(\lambda_1)$ having mean zero with variance $0.25^2$, and the oscillation frequency $2 \pi \text{imag}(\lambda_1)$ having mean $\omega = 1$ Hz with variance (0.1Hz)$^2$:
 \begin{equation}
- \mathbb{E}\left[T(x) \right] ~~ \triangleq ~~ \mathbb{E} \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix} ~~ \triangleq ~~ \mu
+ \mathbb{E}\left[T(x) \right] ~~ \triangleq ~~ \mathbb{E} \begin{bmatrix} \text{real}(\lambda_1) \\ \text{imag}(\lambda_1) \\ (\text{real}(\lambda_1)-0)^2  \\ (\text{imag}(\lambda_1)-2 \pi \omega)^2 \end{bmatrix} = \begin{bmatrix} 0.0 \\ 2 \pi \omega \\ 0.25^2 \\ (2 \pi 0.1)^2 \end{bmatrix} ~~ \triangleq ~~ \mu.
  \end{equation} 
 %To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with  \[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\] that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, then we would select the real part of the complex conjugate eigenvalues $\text{real}(\lambda_1) = d$ (via an arbitrary choice of eigenvalue of the dynamics matrix $\lambda_1$) and the positive imaginary component of one of the eigenvalues $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  Those emergent property statistics
 \begin{figure}
@@ -520,7 +520,7 @@ Fig. S1: A. Two-dimensional linear dynamical system model, where real entries of
 
 Unlike the models we presented in the main text, this model admits an analytical form for the mean emergent property statistics given parameter $z$, since the eigenvalues can be calculated using the quadratic formula: 
 \begin{equation}
-\lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}
+\lambda = \frac{(\frac{a_1 + a_4}{\tau}) \pm \sqrt{(\frac{a_1+a_4}{\tau})^2 + 4(\frac{a_2 a_3 - a_1 a_4}{\tau})}}{2}.
 \end{equation}
 
 Importantly, even though $\mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right]$ is calculable directly via a closed form function and does not require simulation, we cannot derive the distribution $q^*_\theta$ directly.  This fact is due to the formally hard problem of the backward mapping: finding the natural parameters $\eta$ from the mean parameters $\mu$ of an exponential family distribution \cite{wainwright2008graphical}.  Instead, we used EPI to approximate this distribution (Fig. S1B). We used a real-NVP normalizing flow architecture with four masks, two neural network layers of 15 units per mask, with batch normalization momentum 0.99, mapped onto a support of $z_i \in \left[-20, 20 \right]$. (see Section \ref{methods_NF}).
@@ -535,7 +535,7 @@ To explain the bimodality of the EPI distribution, we examined the imaginary com
 \text{imag}(\lambda_1) = \begin{cases}
                              \sqrt{\frac{a_1 a_4 - a_2 a_3}{\tau}},  & \text{if } a_1 a_4 < a_2 a_3 \\
                              0 & \text{otherwise } \\
-                         \end{cases} 
+                         \end{cases}.
 \end{equation}
 
 When $\tau=1$ and $a_1 a_4 > a_2 a_3$ (center of distribution above), we have the following equation for the other two dimensions:
@@ -558,7 +558,7 @@ Fig. S2: A. Probability contours in the $a_1-a_4$ plane can be derived from the 
 \includegraphics[scale=0.5]{figures/figS4/figS4.pdf}
 \end{center}
 \begin{flushleft}
-Fig. S3: Sampled dynamical system trajectories from the EPI distribution.  Each trajectory is initialized at $x(0) = \begin{bmatrix} \frac{\sqrt{2}}{2} & -\frac{\sqrt{2}}{2} \end{bmatrix}$.
+Fig. S3: Sampled dynamical system trajectories from the EPI distribution.  Each trajectory is initialized at $x(0) = [\frac{\sqrt{2}}{2}, -\frac{\sqrt{2}}{2}]$.
 \end{flushleft}
 \end{figure}
 
@@ -581,7 +581,7 @@ Throughout the study, $\beta = 4.0$, $\gamma = 0.25$, and the batch size was a h
 The intention is that $c$ and $\eta$ start at values encouraging entropic growth early in optimization.  
 Then, as they increase in magnitude with each training epoch, the constraint satisfaction terms are increasingly weighted, resulting in a decrease in entropy.
 This encourages the discovery of suitable regions of parameter space, and the subsequent refinement of the distribution to produce the emergent property.
-In the two-dimensional example, each augmented Lagrangian epoch ran for 2,000 iterations (Fig. S1C-D).
+In the two-dimensional linear dynamical system example, each augmented Lagrangian epoch ran for 2,000 iterations (Fig. S1C-D).
 Notice the initial entropic growth, and subsequent reduction upon each update of $\eta$ and $c$.
 The momentum parameters of the Adam optimizer were reset at the end of each augmented Lagrangian epoch.
 
@@ -598,49 +598,49 @@ In the linear two-dimensional system example, we used a batch size of $n = 1000$
 Deep probability models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network.  For $z' = f(z)$,
 
 \begin{equation}
-q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right| = q(z) \left| \det \frac{\partial f(z)}{\partial z} \right|^{-1}
+q(z') = q(f^{-1}(z')) \left| \det \frac{\partial f^{-1}(z')}{\partial z'} \right| = q(z) \left| \det \frac{\partial f(z)}{\partial z} \right|^{-1}.
 \end{equation}
 
 However, this computation has cubic complexity in dimensionality for fully connected layers.  By restricting our layers to normalizing flows \cite{rezende2015variational} -- bijective functions with fast log determinant Jacobian computations, we can tractably optimize deep generative models with objectives that are a function of sample density, like entropy. Most of our analyses use either a planar flow \cite{rezende2015variational} or real NVP \cite{dinh2017density}, which have proven effective in our architecture searches.  Planar flow architectures are specified by the number of planar bijection layers used, while real NVP architectures are specified by the number of masks, neural network layers per mask, units per layer, and batch normalization momentum parameter.
 
 
 \subsubsection{Emergent property inference as variational inference in an exponential family}\label{methods_VI}
-Consider the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics $T(z)$ into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ remains unchanged.
+Consider the goal of doing variational inference with an exponential family posterior distribution $p(z \mid x)$.  We use the following abbreviated notation to collect the base measure $b(z)$ and sufficient statistics $T(z)$ into $\tilde{T}(z)$ and likewise concatenate a 1 onto the end of the natural parameter $\tilde{\eta}(x)$.  The log normalizing constant $A(\eta(x))$ remains unchanged:
 \begin{equation}
 \begin{split}
 p(z \mid x) = b(z) \exp{\left( \eta(x)^\top T(z) - A(\eta(x)) \right)} = \exp{\left( \begin{bmatrix} \eta(x) \\ 1 \end{bmatrix}^\top \begin{bmatrix} T(z) \\ b(z) \end{bmatrix} - A(\eta(x)) \right)} \\= \exp{\left(\tilde{\eta(x)}^\top \tilde{T}(z) - A(\eta(x)) \right)} 
-\end{split}
+\end{split}.
 \end{equation}
 Variational inference with an exponential family posterior distribution uses optimization to minimize the following divergence \cite{blei2017variational}:
 \begin{equation}
-q_\theta^* = \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x))
+q_\theta^* = \argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)).
 \end{equation}
-$q_\theta(z)$ is the variational approximation to the posterior with variational parameters $\theta$.  We can write this KL divergence in terms of entropy of the variational approximation.
+$q_\theta(z)$ is the variational approximation to the posterior with variational parameters $\theta$.  We can write this KL divergence in terms of entropy of the variational approximation:
 \begin{equation}
 KL(q_\theta \mid \mid p(z \mid x)) = \mathbb{E}_{z \sim q_\theta} \left[ \log (q_\theta(z)) \right] - \mathbb{E}_{z \sim q_\theta} \left[ \log (p(z \mid x)) \right]
 \end{equation}
 \begin{equation}
- = -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) - A(\eta(x)) \right]
+ = -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) - A(\eta(x)) \right].
 \end{equation}
-As far as the variational optimization is concerned, the log normalizing constant is independent of $q_\theta(z)$, so it can be dropped. 
+As far as the variational optimization is concerned, the log normalizing constant is independent of $q_\theta(z)$, so it can be dropped
 \begin{equation}
-\argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)) =  \argmin_{q_\theta \in Q} -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) \right]
+\argmin_{q_\theta \in Q} KL(q_\theta \mid \mid p(z \mid x)) =  \argmin_{q_\theta \in Q} -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top  \tilde{T}(z) \right].
 \end{equation}
- Further, we can write the objective in terms of the first moment of the sufficient statistics $\mu = \mathbb{E}_{z \sim p(z \mid x)}\left[T(z) \right]$.
+ Further, we can write the objective in terms of the first moment of the sufficient statistics $\mu = \mathbb{E}_{z \sim p(z \mid x)}\left[T(z) \right]$:
  \begin{equation}
-=  \argmin_{q_\theta \in Q} -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right] + \tilde{\eta(x)}^\top \mu
+=  \argmin_{q_\theta \in Q} -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right] + \tilde{\eta}(x)^\top \mu
  \end{equation}
   \begin{equation}
-=  \argmin_{q_\theta \in Q} -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right]
- \end{equation}
+=  \argmin_{q_\theta \in Q} -H(q_\theta) - \mathbb{E}_{z \sim q_\theta} \left[ \tilde{\eta}(x)^\top \left(  \tilde{T}(z) -\mu \right) \right].
+ \end{equation}.
 
-In comparison, in emergent property inference (EPI), we're solving the following problem.
+In comparison, in emergent property inference (EPI), we're solving the following problem:
 \begin{equation}
-q_\theta^*(z) = \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu
+q_\theta^*(z) = \argmax_{q_\theta \in Q} H(q_\theta(z)),   \text{  s.t.  } \mathbb{E}_{z \sim q_\theta}\left[ \mathbb{E}_{x\sim p(x \mid z)}\left[T(x)\right] \right] = \mu.
 \end{equation}
 The Lagrangian objective (without the augmentation) is
 \begin{equation}
-q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \eta_{\text{opt}}^\top \left(\mathbb{E}_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right)
+q_\theta^* = \argmin_{q_\theta \in Q} - H(q_\theta) + \eta_{\text{opt}}^\top \left(\mathbb{E}_{z \sim q_\theta} \left[\tilde{T}(z) \right] - \mu \right).
 \end{equation}
 As the optimization proceeds, $\eta_{\text{opt}}^\top$ should converge to the natural parameter $\tilde{\eta}(x)$ through its adaptations in each epoch (see Section \ref{methods_AL_opt}). 
 
@@ -650,9 +650,9 @@ The derivation of the natural parameter $\tilde{\eta}(x)$ of an exponential fami
 In this study, we used emergent property inference to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
-We analyze how the parameters $z = \begin{bmatrix} g_{el} & g_{synA} \end{bmatrix}$ govern the emergent phenomena of network syncing in a model of the stomatogastric ganglion (STG) shown in Figure \ref{fig:STG}A with activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$.
+We analyze how the parameters $z = [ g_{el}, g_{synA}]$ govern the emergent phenomena of network syncing in a model of the stomatogastric ganglion (STG) shown in Figure \ref{fig:STG}A with activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$.
 Each neuron's membrane potential $x_\alpha(t)$ for $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$ is the solution of the following differential equation:
-\begin{equation} C_m \frac{dx_\alpha}{dt} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right] 
+\begin{equation} C_m \frac{dx_\alpha}{dt} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right].
 \end{equation} 
 The membrane potential of each neuron is affected by the leak, calcium, potassium, hyperpolarization,
 electrical and synaptic currents, respectively, which are functions of  all membrane potentials and the conductance parameters $z$.  
@@ -666,23 +666,24 @@ The capacitance of the cell membrane was set to $C_m = 1nF$. Specifically, the c
 \end{equation} 
 \begin{equation}  h_K(x; z) = g_K N (x_\alpha - V_K) 
 \end{equation} 
-\begin{equation}  h_{hyp}(x; z) = g_h H(x_\alpha - V_{hyp})
+\begin{equation}  h_{hyp}(x; z) = g_h H(x_\alpha - V_{hyp}).
 \end{equation} 
 The reversal potentials were set to $V_{leak} = -40mV$, $V_{Ca} = 100mV$, $V_K = -80mV$, $V_{hyp} = -20mV$, and $V_{syn} = -75mV$.  The other conductance parameters were fixed to $g_{leak} = 1 \times 10^{-4} \mu S$. $g_{Ca}$, $g_{K}$, and $g_{hyp}$ had different values based on fast, intermediate (hub) or slow neuron.  Fast: $g_{Ca} = 1.9 \times 10^{-2}$, $ g_K = 3.9 \times 10^{-2} $, and $ g_{hyp} = 2.5 \times 10^{-2} $.  Intermediate: $g_{Ca} = 1.7 \times 10^{-2}$, $ g_K = 1.9 \times 10^{-2} $, and $ g_{hyp} = 8.0 \times 10^{-3} $.  Intermediate: $g_{Ca} = 8.5 \times 10^{-3}$, $ g_K = 1.5 \times 10^{-2} $, and $ g_{hyp} = 1.0 \times 10^{-2} $.
 
-Furthermore, the Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating variables $M_\infty$, $N_\infty$ and $H_\infty$, respectively.
+Furthermore, the Calcium, Potassium, and hyperpolarization channels have time-dependent gating dynamics dependent on steady-state gating variables $M_\infty$, $N_\infty$ and $H_\infty$, respectively:
 \begin{equation}  M_{\infty} = 0.5 \left( 1 + \tanh \left( \frac{x_\alpha - v_1}{v_2} \right) \right) \end{equation}
 \begin{equation}  \frac{dN}{dt} = \lambda_N (N_\infty - N)  \end{equation}
 \begin{equation}  N_\infty = 0.5 \left( 1 + \tanh \left( \frac{x_\alpha - v_3}{v_4} \right) \right) \end{equation}
 \begin{equation}  \lambda_N = \phi_N \cosh \left( \frac{x_\alpha - v_3}{2 v_4} \right) \end{equation}
 \begin{equation}  \frac{dH}{dt} = \frac{\left( H_\infty - H \right)}{\tau_h} \end{equation}
 \begin{equation}  H_\infty = \frac{1}{1 + \exp \left( \frac{x_\alpha + v_5}{v_6} \right)} \end{equation}
-\begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_\alpha + v_7}{v_8} \right)} \right) \end{equation}
+\begin{equation}  \tau_h = 272 - \left( \frac{-1499}{1 + \exp \left( \frac{-x_\alpha + v_7}{v_8} \right)} \right).
+ \end{equation}
 where we set $v_1 = 0mV$, $v_2  = 20mV$, $v_3 = 0mV$, $v_4 = 15mV$, $v_5 = 78.3mV$,
 $v_6 = 10.5mV$, $v_7 = -42.2mV$, $v_8 = 87.3mV$, $v_9 = 5mV$, and $v_{th} = -25mV$.  These are the same parameter values used in \cite{gutierrez2013multiple}.
 
 Finally, there is a synaptic gating variable as well:
-\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_\alpha}{v_9} \right)} 
+\begin{equation} S_\infty = \frac{1}{1 + \exp \left( \frac{v_{th} - x_\alpha}{v_9} \right)} .
 \end{equation}
 When the dynamic gating variables are considered, this is actually a 15-dimensional nonlinear dynamical system.
 
@@ -691,17 +692,17 @@ In order to measure the frequency of the hub neuron during EPI, the STG model wa
 %Our original approach to measuring frequency was to take the max of the fast Fourier transform (FFT) of the simulated time series.  There are a few key considerations here.  One is resolution in frequency space.  Each FFT entry will correspond to a signal frequency of $\frac{F_s k}{N}$, where N is the number of samples used for the FFT, $F_s = \frac{1}{dt}$, and $k \in \left[0, 1, ..., N-1\right]$.  Our resolution is improved by increasing $N$ and decreasing $dt$.  Increasing N = T-b, where $b$ is some fixed number of buffer burn-in initialization samples, necessitates an increase in simulation time steps $T$, which directly increases computational cost.  Increasing $F_s$ (decreasing $dt$) increases system approximation accuracy, but requires more time steps before a full cycle is observed.  At the level of $dt = 0.025$, thousands of temporal samples were required for resolution of .01Hz.  These challenges in frequency resolution with the discrete Fourier transform motivated the use of an alternative basis of complex exponentials.  Instead, we used a basis of complex exponentials with frequencies from 0.0-1.0 Hz at 0.01Hz resolution, $\Phi = \left[ 0.0, 0.01, ..., 1.0 \right]^\top$
 
 
-Another consideration was that the frequency spectra of the neuron membrane potentials had several peaks.  High-frequency sub-threshold activity obscured the maximum frequency measurement in the complex exponential basis.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal was subsequently mean centered.  After this pre-processing, the maximum frequency in the filter bank accurately reflected the firing frequency.
+Another consideration was that the frequency spectra of the neuron membrane potentials had several peaks.  High-frequency sub-threshold activity obscured the maximum frequency measurement in the complex exponential basis.  Accordingly, subthreshold activity was set to zero, and the whole signal was low-pass filtered with a moving average window of length 20.  The signal was subsequently mean centered.  After this preprocessing, the maximum frequency in the filter bank accurately reflected the firing frequency.
 
 Finally, to differentiate through the maximum frequency identification, we used a sum-of-powers normalization.  Let $\mathcal{X}_\alpha \in \mathcal{C}^{|\Phi|}$ be the complex exponential filter bank dot products with the signal $x_\alpha \in \mathbb{R}^{N}$, where $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$.  The ``frequency identification" vector is 
 \begin{equation}
-v_\alpha = \frac{|\mathcal{X}_\alpha|^\beta}{\sum_{k=1}^N |\mathcal{X}_\alpha(k)|^\beta}
+v_\alpha = \frac{|\mathcal{X}_\alpha|^\beta}{\sum_{k=1}^N |\mathcal{X}_\alpha(k)|^\beta}.
 \end{equation}
 The frequency is then calculated as $\omega_\alpha = v_\alpha^\top \Phi$ with $\beta = 100$.
 
 Network syncing, like all other emergent properties in this work, are defined by the emergent property statistics and values.  The emergent property statistics are the first and second moments of the firing frequencies. The first moments are set to 0.53Hz, while the second moments are set to 0.025Hz$^2$:
 \begin{equation}
-E \begin{bmatrix} \omega_{\text{f1}} \\ \omega_{\text{f2}} \\ \omega_{\text{hub}} \\ \omega_{\text{s1}} \\ \omega_{\text{s2}} \\ (\omega_{\text{f1}} - 0.53)^2 \\ (\omega_{\text{f2}} - 0.53)^2 \\ (\omega_{\text{hub}} - 0.53)^2 \\ (\omega_{\text{s1}} - 0.53)^2 \\ (\omega_{\text{s2}} - 0.53)^2  \end{bmatrix} = \begin{bmatrix} 0.53 \\ 0.53 \\ 0.53 \\ 0.53 \\ 0.53 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}
+E \begin{bmatrix} \omega_{\text{f1}} \\ \omega_{\text{f2}} \\ \omega_{\text{hub}} \\ \omega_{\text{s1}} \\ \omega_{\text{s2}} \\ (\omega_{\text{f1}} - 0.53)^2 \\ (\omega_{\text{f2}} - 0.53)^2 \\ (\omega_{\text{hub}} - 0.53)^2 \\ (\omega_{\text{s1}} - 0.53)^2 \\ (\omega_{\text{s2}} - 0.53)^2  \end{bmatrix} = \begin{bmatrix} 0.53 \\ 0.53 \\ 0.53 \\ 0.53 \\ 0.53 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \\ 0.025^2 \end{bmatrix}.
 \end{equation}
 Throughout optimization, the augmented Lagrangian parameters $\eta$ and $c$, were updated after each epoch of 2,500 iterations (see Section \ref{methods_AL_opt}).  The optimization converged after four epochs (Fig. S4).
 
@@ -714,7 +715,7 @@ Fig. S4: Emergent property inference of the STG model producing network syncing.
 \end{flushleft}
 \end{figure}
 
-For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z \in \left[ \begin{bmatrix} 4 & 0 \end{bmatrix}, \begin{bmatrix} 8 & 4 \end{bmatrix} \right]$. We used an augmented Lagrangian coefficient of $c_0 = 10^{2}$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = \begin{bmatrix} 6 & 2 \end{bmatrix}$ with standard deviation $\sigma_{\text{init}} = 0.5$.
+For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z \in \left[ [4, 0], [8, 4] \right]$. We used an augmented Lagrangian coefficient of $c_0 = 10^{2}$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [6, 2]$ with standard deviation $\sigma_{\text{init}} = 0.5$.
 
 We calculated the Hessian at the mode of the inferred EPI distribution.  
 The Hessian of a probability model is the second order gradient of the log probability density $\log q_\theta(z)$ with respect to the parameters $z$:  $\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$.  
@@ -723,25 +724,17 @@ In Figure \ref{fig:STG}B, the eigenvectors of the Hessian $v_1$ and $v_2$ are sh
 The length of the arrows is inversely proportional to the square root of absolute value of their eigenvalues $\lambda_1 = -10.8$ and $\lambda_2 = -2.27$.
 We quantitatively measured the sensitivity of the model with respect to network syncing along the eigenvectors of the Hessian (Fig. \ref{fig:STG}B, inset).
 Sensitivity was measured as the slope coefficient of linear regression fit to network syncing error (the sum of squared differences of each neuron's frequency from 0.53Hz) as a function of parametric perturbation magnitude (maximum 0.25) away from the mode along both orientations indicated by the eigenvector with 100 equally spaced samples.
-The sensitivity slope coefficient of eigenvector $v_1$ with respect to network syncing was significant ($\beta = 4.82 \times 10^{-2}$, $p=1.56 \times 10^{-6}$).
+The sensitivity slope coefficient of eigenvector $v_1$ with respect to network syncing was significant ($\beta = 4.82 \times 10^{-2}$, $p<10^{-4}$).
 In contrast, eigenvector $v_2$ did not identify a dimension of parameter space significantly sensitive to network syncing ($\beta = 8.65 \times 10^{-4}$ with $p=.67$).
 These sensitivities were compared to all other dimensions of parameter space (100 equally spaced angles from 0 to $\pi$), revealing that the Hessian eigenvectors indeed identified the directions of greatest sensitivity and degeneracy (Fig. \ref{fig:STG}B, inset).
 The contours of Figure \ref{fig:STG} were calculated as error in $T(x)$ from $\mu$ in both the first and second moment emergent property statistics.
 
 \subsubsection{Primary visual cortex}\label{methods_V1}
 The dynamics of each neural populations average rate
-$x = \begin{bmatrix} x_E & x_P & x_S & x_V \end{bmatrix}^\top$
+$x = [ x_E, x_P, x_S, x_V]^\top$
 are given by:
 \begin{equation}
-\tau \frac{dx}{dt} = -x + [W x+ h]_+^n
-\end{equation}
-
-Some neuron-types largely lack synaptic projections to other neuron-types \cite{pfeffer2013inhibition}, and it is popular to only consider a subset of the effective connectivities \cite{litwin2016inhibitory, GarciaDelMolino2017, Chen2019}.
-\begin{equation} \label{eq:V1_W}
-W = \begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\
-                                W_{PE} & W_{PP} & W_{PS} & 0 \\
-                                W_{SE} & 0 & 0 & W_{SV} \\
-                                W_{VE} & W_{VP} &  W_{VS} &  0 \end{bmatrix}
+\tau \frac{dx}{dt} = -x + [W x+ h]_+^n.
 \end{equation}
 
 By consolidating information from many experimental datasets, Billeh et al. \cite{billeh2019systematic} produce estimates of the synaptic strength (in mV)
@@ -756,7 +749,7 @@ and connection probability
 C = \begin{bmatrix} 0.16 & 0.411 & 0.424 &  0.087 \\
 0.395 & .451 & 0.857 & 0.02 \\
 0.182 & 0.03 & 0.082 & 0.625 \\
-0.105 & 0.22 & 0.77 & 0.028 \end{bmatrix}
+0.105 & 0.22 & 0.77 & 0.028 \end{bmatrix}.
 \end{equation}
 
 Multiplying these connection probabilities and synaptic efficacies gives us an effective connectivity matrix:
@@ -764,16 +757,23 @@ Multiplying these connection probabilities and synaptic efficacies gives us an e
 W_{\text{full}} = C \odot M = \begin{bmatrix} 0.16 & 0.411 & 0.424 &  0.087 \\
 0.395 & .451 & 0.857 & 0.02 \\
 0.182 & 0.03 & 0.082 & 0.625 \\
-0.105 & 0.22 & 0.77 & 0.028 \end{bmatrix}
+0.105 & 0.22 & 0.77 & 0.028 \end{bmatrix}.
 \end{equation}
 
-We used the entries of this full effective connectivity matrix that are not considered to be ineffectual (Equation \ref{eq:V1_W}).
+Theoretical work on these systems considers a subset of the effective connectivities \cite{litwin2016inhibitory, GarciaDelMolino2017, Chen2019}
+\begin{equation} \label{eq:V1_W}
+W = \begin{bmatrix} W_{EE} & W_{EP} & W_{ES} & 0 \\
+                                W_{PE} & W_{PP} & W_{PS} & 0 \\
+                                W_{SE} & 0 & 0 & W_{SV} \\
+                                W_{VE} & W_{VP} &  W_{VS} &  0 \end{bmatrix}.
+\end{equation}
+In coherence with this work, we only keep the entries of $W_{\text{full}}$ corresponding to parameters in Equation \ref{eq:V1_W}.
 
-We look at how this four-dimensional nonlinear dynamical model of V1 responds to different inputs, and compare the predictions of the linear response to the approximate posteriors obtained through EPI.  The input to the system is the sum of a baseline input $b = \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top$ and a differential input $dh$:
+We look at how this four-dimensional nonlinear dynamical model of V1 responds to different inputs, and compare the predictions of the linear response to the approximate posteriors obtained through EPI.  The input to the system is the sum of a baseline input $b = [1, 1, 1, 1]^\top$ and a differential input $dh$:
 \begin{equation}
-h = b + dh
+h = b + dh.
 \end{equation}
-All simulations of this system had $T=100$ time points, a time step $dt = 5$ms, and time constant $\tau = 20$ms.  And the system was initialized to a random draw $x(0)_i \sim \mathcal{N}(1, 0.01)$.
+All simulations of this system had $T=100$ time points, a time step $dt = 5$ms, and time constant $\tau = 20$ms.  The system was initialized to a random draw $x(0)_i \sim \mathcal{N}(1, 0.01)$.
 
 We can describe the dynamics of this system more generally by
 \begin{equation}
@@ -781,7 +781,7 @@ We can describe the dynamics of this system more generally by
 \end{equation}
 where the input to each neuron is
 \begin{equation}
-u_i = \sum_j W_{ij} x_j + h_i
+u_i = \sum_j W_{ij} x_j + h_i.
 \end{equation}
 Let $F_{ij} = \gamma_i \delta(i,j)$, where $\gamma_i = f'(u_i)$.  Then, the linear response is
 \begin{equation}
@@ -789,14 +789,14 @@ Let $F_{ij} = \gamma_i \delta(i,j)$, where $\gamma_i = f'(u_i)$.  Then, the line
 \end{equation}
 which is calculable by
 \begin{equation}
-\frac{dx_{ss}}{dh} = (F^{-1} - W)^{-1}
+\frac{dx_{ss}}{dh} = (F^{-1} - W)^{-1}.
 \end{equation}
 This calculation is used to produce the magenta lines in Figure \ref{fig:V1_EPI}C, which show the linearly predicted inputs that generate a response from two standard deviations (of $\mathcal{B}$) below and above $y$.
 
 The emergent property we considered was the first and second moments of the change in steady state rate $dx_{ss}$ between the baseline input $h= b$ and $h = b + dh$.  We use the following notation to indicate that the emergent property statistics were set to the following values:
 \begin{equation}
 \mathcal{B}(\alpha, y) ~~\triangleq~~ 
-\mathbb{E} \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}
+\mathbb{E} \begin{bmatrix} dx_{\alpha,ss} \\ (dx_{\alpha,ss} - y)^2 \end{bmatrix} = \begin{bmatrix} y \\ 0.01^2 \end{bmatrix}.
 \end{equation}
 
 In the final analysis for this model, we sweep the input one neuron at a time away from the mode of each inferred distributions $dh^* = z^* = \argmax_{z} \log q_\theta(z \mid \mathcal{B}(\alpha, 0.1)$.
@@ -805,9 +805,9 @@ The differential responses $\delta x_{\alpha,ss}$ are examined at perturbed inpu
 We measured the linear regression slope between neuron-types of $\delta x$ and $\delta h$ to confirm the hypotheses H1-H3 (H4 is simply observing the nonmonotonicity) and report the p values for tests of non-zero slope.
 
 {\addtolength{\leftskip}{10 mm}
-H1: the neuron-type responses are sensitive to their direct inputs. 
-E-population: $\beta=1.62$, $p=2.97 \times 10^{-31}$ (Fig. \ref{fig:V1_HT}A black),
-P-population: $\beta=1.06$, $p=1.64 \times 10^{-34}$ (Fig. \ref{fig:V1_HT}B blue), S-population: $\beta=6.80$, $p=2.65 \times 10^{-26}$  (Fig. \ref{fig:V1_HT}C red), V-population: $\beta=6.41$, $p=1.36 \times 10^{-25}$  (Fig. \ref{fig:V1_HT}D green). \\
+H1: the neuron-type ressponses are sensitive to their direct inputs. 
+E-population: $\beta=1.62$, $p<10^{-4}$ (Fig. \ref{fig:V1_HT}A black),
+P-population: $\beta=1.06$, $p<10^{-4}$ (Fig. \ref{fig:V1_HT}B blue), S-population: $\beta=6.80$, $p<10^{-4}$  (Fig. \ref{fig:V1_HT}C red), V-population: $\beta=6.41$, $p<10^{-4}$  (Fig. \ref{fig:V1_HT}D green). \\
 H2: the E-population ($\beta=0$, $p=1$) and P-populations ($\beta=0$, $p=1$) are not affected by $\delta h_V$ (Fig. \ref{fig:V1_HT}A green, \ref{fig:V1_HT}B green); \\
 H3: the S-population is not affected by $\delta h_P$ ($\beta=0$, $p=1$) (Fig. \ref{fig:V1_HT}C blue); \\
 
@@ -816,7 +816,7 @@ H3: the S-population is not affected by $\delta h_P$ ($\beta=0$, $p=1$) (Fig. \r
 For each $\mathcal{B}(\alpha, y)$ with $\alpha \in \{E, P, S, V\}$ and $y \in \{0.1, 0.5\}$, we ran EPI using a real NVP architecture of four masks layers with two hidden layers of 10 units,  mapped to a support of $z_i \in \left[-5, 5\right]$ with no batch normalization.  We used an augmented Lagrangian coefficient of $c_0 = 10^5$, a batch size $n=1000$, set $\nu = 0.5$.
 The EPI distributions shown in Fig. \ref{fig:V1_EPI} are the converged distributions with maximum entropy across random seeds.
 
-Here, we demonstrate that the algorithm does not necessarily need to start at such an agnostic initialization.  We set the parameters of the Gaussian initialization $\mu_\text{init}$ and $\Sigma_\text{init}$ to the mean and covariance of random samples $z^{(i)} \sim \mathcal{U}(-5, 5)$ that produced emergent property statistic $dx_{\alpha,ss}$ within a bound $\epsilon$ of the emergent property value $y$. $\epsilon=0.01$ was set to be one standard deviation of the emergent property value according to the emergent property value $0.01^2$ of the variance emergent property statistic.  This is the only application in the study where such an informed initialization was used.
+We set the parameters of the Gaussian initialization $\mu_\text{init}$ and $\Sigma_\text{init}$ to the mean and covariance of random samples $z^{(i)} \sim \mathcal{U}(-5, 5)$ that produced emergent property statistic $dx_{\alpha,ss}$ within a bound $\epsilon$ of the emergent property value $y$. $\epsilon=0.01$ was set to be one standard deviation of the emergent property value according to the emergent property value $0.01^2$ of the variance emergent property statistic.  
 
 \subsubsection{Superior colliculus}\label{methods_SC}
 In the model of Duan et al \cite{duan2018collicular}, there are four total units: two in each hemisphere corresponding to the Pro/Contra and Anti/Ipsi populations.  They are denoted as left Pro (LP), left Anti (LA), right Pro (RP) and right Anti (RA).  Each unit has an activity ($x_\alpha$) and internal variable ($u_\alpha$) related by
@@ -827,48 +827,48 @@ where $\alpha \in \{LP, LA, RA, RP\}$ $\epsilon = 0.05$ and $\zeta = 0.5$ contro
 
 We order the elements of $x$ and $u$ in the following manner
 \begin{equation}
-x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} u = \begin{bmatrix} u_{LP} \\ u_{LA} \\ u_{RP} \\ u_{RA} \end{bmatrix}
+x = \begin{bmatrix} x_{LP} \\ x_{LA} \\ x_{RP} \\ x_{RA} \end{bmatrix} \hspace{2cm} u = \begin{bmatrix} u_{LP} \\ u_{LA} \\ u_{RP} \\ u_{RA} \end{bmatrix}.
 \end{equation}
 
  The internal variables follow dynamics:
 \begin{equation}
 \tau \frac{du}{dt} = -u + Wx + h + \sigma dB
 \end{equation}
-with time constant $\tau = 0.09s$ and Gaussian noise $\sigma dB$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B).
+with time constant $\tau = 0.09s$ and Gaussian noise $\sigma dB$ controlled by the magnitude of $\sigma=1.0$.  The weight matrix has 8 parameters $sW_P$, $sW_A$, $vW_{PA}$, $vW_{AP}$, $hW_P$, $hW_A$, $dW_{PA}$, and $dW_{AP}$ (Fig. 4B):
 \begin{equation}
-W = \begin{bmatrix} sW_P & vW_{PA} & hW_P & dW_{PA}  \\ vW_{AP}  & sW_A & dW_{AP}  & hW_A \\ hW_P & dW_{PA}  & sW_P & vW_{PA}  \\ dW_{AP}  & hW_A & vW_{AP}  & sW_A \end{bmatrix}
+W = \begin{bmatrix} sW_P & vW_{PA} & hW_P & dW_{PA}  \\ vW_{AP}  & sW_A & dW_{AP}  & hW_A \\ hW_P & dW_{PA}  & sW_P & vW_{PA}  \\ dW_{AP}  & hW_A & vW_{AP}  & sW_A \end{bmatrix}.
 \end{equation}
 
 The system receives five inputs throughout each trial, which has a total length of 1.8s.
 \begin{equation}
-h = h_{\text{rule}} + h_{\text{choice-period}} + h_{\text{light}}
+h = h_{\text{rule}} + h_{\text{choice-period}} + h_{\text{light}}.
 \end{equation}
 
 There are rule-based inputs depending on the condition,
 \begin{equation}h_{\text{P,rule}}(t) = \begin{cases}
-                           I_{\text{P,rule}} \begin{bmatrix} 1 & 0 & 0 & 1 \end{bmatrix}^\top,& \text{if } t\leq 1.2s \\
+                           I_{\text{P,rule}} [1, 0, 0, 1]^\top,& \text{if } t\leq 1.2s \\
                             0,              & \text{otherwise}
                          \end{cases}
 \end{equation}
 \begin{equation} h_{\text{A,rule}}(t) = \begin{cases}
-                           I_{\text{A,rule}} \begin{bmatrix} 0 & 1 & 1 & 0 \end{bmatrix}^\top,& \text{if } t\leq 1.2s \\
+                           I_{\text{A,rule}} [0, 1, 1, 0]^\top,& \text{if } t\leq 1.2s \\
                             0,              & \text{otherwise}
                          \end{cases}
 \end{equation}
 a choice-period input,
 \begin{equation} h_{\text{choice}}(t) = \begin{cases}
-                           I_{\text{choice}} \begin{bmatrix} 1 & 1 & 1 & 1 \end{bmatrix}^\top,& \text{if } t > 1.2s \\
+                           I_{\text{choice}} [1, 1, 1, 1]^\top,& \text{if } t > 1.2s \\
                             0,              & \text{otherwise}
                          \end{cases}
 \end{equation}
 and an input to the right or left-side depending on where the light stimulus is delivered.     
 \begin{equation}  h_{\text{light}}(t) = \begin{cases}
-                           I_{\text{light}} \begin{bmatrix} 1 & 1 & 0 & 0 \end{bmatrix}^\top,& \text{if } t > 1.2s \text{ and Left} \\
-                           I_{\text{light}} \begin{bmatrix} 0 & 0 & 1 & 1 \end{bmatrix}^\top,& \text{if } t > 1.2s \text{ and Right} \\
+                           I_{\text{light}} [1, 1, 0, 0]^\top,& \text{if } t > 1.2s \text{ and Left} \\
+                           I_{\text{light}} [0, 0, 1, 1]^\top,& \text{if } t > 1.2s \text{ and Right} \\
                             0,              & t \leq 1.2s
-                         \end{cases} 
+                         \end{cases} .
 \end{equation}
-The input parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A,rule}} = 10$,  $I_{\text{choice}} = 2$,  and $I_{\text{light}} = 1$
+The input parameterization was fixed to $I_{\text{P,rule}} = 10 $,  $I_{\text{A,rule}} = 10$,  $I_{\text{choice}} = 2$,  and $I_{\text{light}} = 1$.
 
 To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition, let $\hat{p}_i$ be the empirical average steady state (ss) response (final $x_{LP}$ at end of task) over M=500 Gaussian noise draws for a given SC model parameterization $z_i$:
 \begin{equation}
@@ -877,20 +877,20 @@ To produce a Bernoulli rate of $p_{LP}$ in the Left, Pro condition, let $\hat{p}
 where from here on $x_\alpha$ denotes the steady state activity at the end of the trial.
 For the first emergent property statistic, the average over EPI samples (from $q_\theta(z)$) is set to the desired value $p_{LP}$:
 \begin{equation}
-\mathbb{E}_{z_i \sim q_\phi} \left[ \mathbb{E}_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z=z_i \right] \right] = \mathbb{E}_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}
+\mathbb{E}_{z_i \sim q_\phi} \left[ \mathbb{E}_{\sigma dB} \left[ x_{LP,\text{ss}} \mid s=L, c=P, z=z_i \right] \right] = \mathbb{E}_{z_i \sim q_\phi} \left[ \hat{p}_i \right] = p_{LP}.
 \end{equation}
 
-For the next emergent property statistic, we ask that the variance of the steady state responses across Gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$.
+For the next emergent property statistic, we ask that the variance of the steady state responses across Gaussian draws, is the Bernoulli variance for the empirical rate $\hat{p}_i$:
 \begin{equation}
 \mathbb{E}_{z \sim q\phi} \left[ \sigma^2_{err} \right] = 0
 \end{equation}
 \begin{equation}
-\sigma^2_{err} = Var_{\sigma dB} \left[ x_{LP} \mid s=L, c=P, z=z_i \right] - \hat{p}_i(1 - \hat{p}_i)
+\sigma^2_{err} = Var_{\sigma dB} \left[ x_{LP} \mid s=L, c=P, z=z_i \right] - \hat{p}_i(1 - \hat{p}_i).
 \end{equation}
 
 We have an additional constraint that the Pro neuron on the opposite hemisphere should have the opposite value (0 and 1).  We can enforce this with a final constraint:
 \begin{equation}
-\mathbb{E}_{z \sim q\phi} \left[ d_P \right] = \mathbb{E}_{\sigma dB} \left[ (x_{LP} - x_{RP})^2  \mid s=L, c=P, z=z_i \right] = 1
+\mathbb{E}_{z \sim q\phi} \left[ d_P \right] = \mathbb{E}_{\sigma dB} \left[ (x_{LP} - x_{RP})^2  \mid s=L, c=P, z=z_i \right] = 1.
 \end{equation}
 
 Since the maximum variance of a random variable bounded from 0 to 1 is the Bernoulli variance $\hat{p}(1-\hat{p})$, and the maximum squared difference between to variables bounded from 0 to 1 is 1, we do not need to control the second moment of these test statistics.  In practice, these variables are dynamical system states and can only exponentially decay (or saturate) to 0 (or 1), so the Bernoulli variance error and squared difference constraints can only be undershot.  This is important to be mindful of when evaluating the convergence criteria.  Instead of using our usual hypothesis testing criteria for convergence to the emergent property, we set a slack variable threshold only for these technically infeasible emergent property values to 0.05.
@@ -899,39 +899,37 @@ Training DSNs to learn distributions of dynamical system parameterizations that 
 
 In total, the emergent property of rapid task switching at accuracy level $p$ was defined as
 \begin{equation}
-\mathcal{B}(p) ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}
+\mathcal{B}(p) ~~\triangleq~~ \mathbb{E}\begin{bmatrix} \hat{p}_P \\ \hat{p}_A \\ (\hat{p}_P-p)^2 \\ (\hat{p}_A - p)^2 \\ \sigma^2_{P,err} \\ \sigma^2_{A,err} \\ d_P \\ d_A \end{bmatrix} = \begin{bmatrix} p \\ p \\ 0.15^2 \\ 0.15^2 \\ 0 \\ 0 \\ 1 \\ 1 \end{bmatrix}.
 \end{equation}
 
 For each accuracy level $p$, we ran EPI for 10 different random seeds  using an architecture of 10 planar flows with a  support of $z \in \mathbb{R}^8$.   
 We used an augmented Lagrangian coefficient of $c_0 = 10^2$, a batch size $n=300$, and set $\nu = 0.5$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian of zero mean with standard deviation $\sigma_{\text{init}} = 1$.
 The EPI distributions shown in Fig. \ref{fig:SC} are the converged distributions with maximum entropy across random seeds.
 
-We report significant correlations $r$ and their p-values from Figure \ref{fig:SC}E.  Correlations were measured from 5,000 samples of $q_\theta(z \mid \mathcal{B}(p))$ and p-values are reported for one-tailed tests, since we predict positive correlation between task performance and $\lambda_{\text{task}}$, and negative correlation between task performance in and $\lambda_{\text{side}}$.
+We report significant correlations $r$ and their p-values from Figure \ref{fig:SC}E in Table 1.  Correlations were measured from 5,000 samples of $q_\theta(z \mid \mathcal{B}(p))$ and p-values are reported for one-tailed tests, since we hypothesized a positive correlation between task accuracies $p_P$ or $p_A$ and $\lambda_{\text{task}}$, and a negative correlation between task accuracies $p_P$ and $p_A$ and $\lambda_{\text{side}}$.
 
 \begin{table}[h]
 \begin{tabular}{l|l|l|l|l}
 $\lambda$  & $\hat{p}$ & $q_\theta(z)$ & $r$ & p-value \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(60\%))$ & $1.24 \times 10^{-01}$ & $3.04 \times 10^{-18}$  \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(70\%))$ & $7.56 \times 10^{-01}$ & 0.00 \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(80\%))$ & $4.59 \times 10^{-01}$ & $2.76 \times 10^{-259}$  \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(90\%))$ & $3.76 \times 10^{-01}$ & $1.83 \times 10^{-167}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(60\%))$ & $1.24 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(70\%))$ & $7.56 \times 10^{-01}$ & $p<10^{-4}$ \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(80\%))$ & $4.59 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(90\%))$ & $3.76 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
 
-$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(60\%))$ & $4.80 \times 10^{-02}$ & $1.38 \times 10^{-03}$  \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(70\%))$ & $2.08 \times 10^{-01}$ & $7.17 \times 10^{-50}$  \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(80\%))$ & $4.84 \times 10^{-01}$ & $3.45 \times 10^{-291}$  \\ \hline
-$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(90\%))$ & $4.25 \times 10^{-01}$ & $1.04 \times 10^{-217}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(60\%))$ & $4.80 \times 10^{-02}$ & $p<.01$ \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(70\%))$ & $2.08 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(80\%))$ & $4.84 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{task}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(90\%))$ & $4.25 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
 
-$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(50\%))$ & $-7.57 \times 10^{-02}$ & $1.69 \times 10^{-07}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(60\%))$ & $-6.73 \times 10^{-02}$ & $3.87 \times 10^{-06}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(70\%))$ & $-4.86 \times 10^{-01}$ & $4.43 \times 10^{-295}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(80\%))$ & $-1.43 \times 10^{-01}$ & $5.97 \times 10^{-24}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(90\%))$ & $-1.93 \times 10^{-01}$ & $8.08 \times 10^{-43}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(50\%))$ & $-7.57 \times 10^{-02}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(60\%))$ & $-6.73 \times 10^{-02}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(70\%))$ & $-4.86 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(80\%))$ & $-1.43 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_P$ & $q(z \mid \mathcal{B}(90\%))$ & $-1.93 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
 
-$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(50\%))$ & $-1.33 \times 10^{-02}$ & $6.94 \times 10^{-01}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(60\%))$ & $-7.60 \times 10^{-02}$ & $1.47 \times 10^{-07}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(70\%))$ & $-2.73 \times 10^{-01}$ & $5.23 \times 10^{-86}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(80\%))$ & $-2.74 \times 10^{-01}$ & $1.30 \times 10^{-86}$  \\ \hline
-$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(90\%))$ & $-1.82 \times 10^{-02}$ & $3.95 \times 10^{-01}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(60\%))$ & $-7.60 \times 10^{-02}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(70\%))$ & $-2.73 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
+$\lambda_{\text{side}}$ & $\hat{p}_A$ & $q(z \mid \mathcal{B}(80\%))$ & $-2.74 \times 10^{-01}$ & $p<10^{-4}$  \\ \hline
 \end{tabular}
 \caption{Table of significant correlation values from Fig. \ref{fig:SC}E.}
 \end{table}
@@ -945,10 +943,10 @@ W = g\chi + \frac{1}{N}mn^\top,
 \end{equation}
 where  $\chi_{ij} \sim \mathcal{N}(0, \frac{1}{N})$, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$. From such a parameterization, this theory produces consistency equations for the dynamic mean field variables in terms of parameters like $g$, $M_m$, and $M_n$, which we study in Section \ref{results_RNN}.  That is the dynamic mean field variables (e.g. the activity along a vector $\kappa_v$, the total variance $\Delta_0$, structured variance $\Delta_\infty$, and the chaotic variance $\Delta_T$) are written as functions of one another in terms of connectivity parameters.  The values of these variables can be used obtained using a nonlinear system of equations solver.  These dynamic mean field variables are then cast as task-relevant variables with respect to the context of the provided inputs. Mastrogiuseppe et al. designed low-rank RNN connectivities via minimalist connectivity parameters to solve canonical tasks from behavioral neuroscience. 
 
-We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = \begin{bmatrix} g & M_m & M_n \end{bmatrix}$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_r$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
+We consider the DMFT equation solver as a black box that takes in a low-rank parameterization $z$ (e.g. $z = [g, M_m, M_n]$)  and outputs the values of the dynamic mean field variables, of which we cast $\kappa_r$ and $\Delta_T$ as task-relevant variables $\mu_{\text{post}}$ and $\sigma^2_{\text{post}}$ in the Gaussian posterior conditioning toy example.
 Importantly, the solution produced by the solver is differentiable with respect to the input parameters, allowing us to use DMFT to calculate the emergent property statistics in EPI to learn distributions on such connectivity parameters of RNNs that execute tasks.
 
-Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $r = \begin{bmatrix} 1 & ... & 1 \end{bmatrix}^\top$.  The consistency equations for these variables in the presence of a constant input $h = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
+Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\Delta_0$ and $\Delta_\infty$, where the readout is nominally chosen to point in the unit orthant $r = [1, ..., 1]^\top$.  The consistency equations for these variables in the presence of a constant input $h = y - (n - M_n)$ can be derived following \cite{mastrogiuseppe2018linking} are
 {\small
 \begin{equation}
 \begin{split}
@@ -960,7 +958,7 @@ Specifically, we solve for the mean field variables $\kappa_r$, $\kappa_n$, $\De
 \end{split} 
 \end{equation}
 }
-where here $z$ is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system to a steady state.
+where here $z$ is a gaussian integration variable. We can solve these equations by simulating the following Langevin dynamical system to a steady state:
 
 \begin{equation}
 \begin{split}
@@ -970,18 +968,18 @@ l(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \frac{d \kappa_n(t)}{dt} = -\kappa_n + G(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
 \frac{d l(t)}{dt}  = -l(t) + H(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t)) \\
 \frac{d \Delta_\infty(t)}{dt}  = -\Delta_\infty(t) + L(\kappa_r(t), \kappa_n(t), \Delta_0(t), \Delta_\infty(t))
-\end{split}
+\end{split}.
 \end{equation}
 Then, the chaotic variance, which is necessary for the Gaussian posterior conditioning example, is simply calculated via
 \begin{equation}
-\Delta_T = \Delta_0 - \Delta_\infty
+\Delta_T = \Delta_0 - \Delta_\infty.
 \end{equation}
 
-We ran EPI using a real NVP architecture of two masks and two layers per mask with 10 units mapped to a support of $z \in \left[ \begin{bmatrix} 0 & -5 & -5 \end{bmatrix}, \begin{bmatrix} 5 & 5 & 5  \end{bmatrix} \right]$ with no batch normalization. 
-We used an augmented Lagrangian coefficient of $c_0 = 1$, a batch size $n=300$, set $\nu = 0.2$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = \begin{bmatrix} 2.5 & 0 & 0 \end{bmatrix}$ with standard deviation $\sigma_{\text{init}} = 2.0$.
- The EPI distribution shown in Fig. \ref{fig:SC} is the converged distributions with maximum entropy across five random seeds.
+We ran EPI using a real NVP architecture of two masks and two layers per mask with 10 units mapped to a support of $z \in \left[[0, -5, -5], [5, 5, 5] \right]$ with no batch normalization. 
+We used an augmented Lagrangian coefficient of $c_0 = 1$, a batch size $n=300$, set $\nu = 0.2$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [2.5, 0, 0]$ with standard deviation $\sigma_{\text{init}} = 2.0$.
+ The EPI distribution shown in Fig. \ref{fig:RNN} is the converged distributions with maximum entropy across five random seeds.
 
-To examine the effect of product $M_m M_n$ on the posterior mean, $\mu_{\text{post}}$ we took perturbations in $M_m M_n$ away from two representative parameters  $z_1$ and $z_2$ in 21 equally space increments from -1 to 1.  For each perturbation, we sampled 10 2,000-neuron RNNs and measure the calculated posterior means.  In Fig. \ref{fig:RNN}D, we plot the product of $M_m M_n$ in the perturbation versus the average posterior mean across 10 network realizations with standard error bars.  The correlation between perturbation product $M_m M_n$ and $\mu_{\text{post}}$ was measured over all simulations.  For perturbations away from $z_1$ the correlation was 0.995 with $p=2.85 \times 10^{-214}$, and for perturbations away from $z_2$ the correlation was 0.983 with $p=4.70 \times 10^{-156}$
+To examine the effect of product $M_m M_n$ on the posterior mean, $\mu_{\text{post}}$ we took perturbations in $M_m M_n$ away from two representative parameters  $z_1$ and $z_2$ in 21 equally space increments from -1 to 1.  For each perturbation, we sampled 10 2,000-neuron RNNs and measure the calculated posterior means.  In Fig. \ref{fig:RNN}D, we plot the product of $M_m M_n$ in the perturbation versus the average posterior mean across 10 network realizations with standard error bars.  The correlation between perturbation product $M_m M_n$ and $\mu_{\text{post}}$ was measured over all simulations.  For perturbations away from $z_1$ the correlation was 0.995 with $p<10^{-4}$, and for perturbations away from $z_2$ the correlation was 0.983 with $p<10^{-4}$.
 
 In addition to the Gaussian posterior conditioning example in Section \ref{results_RNN}, we modeled two tasks from Mastrogiuseppe et al.: noisy detection and context-dependent discrimination.  We used the same theoretical equations and task setups described in their study.
 
