@@ -705,7 +705,7 @@ Accordingly, we replace the notation of $p(z \mid x)$ with $p(z \mid \mathcal{B}
 In this study, we used emergent property inference to examine several models relevant to theoretical neuroscience.  Here, we provide the details of each model  and the related analyses.
 
 \subsubsection{Stomatogastric ganglion}\label{methods_STG}
-We analyze how the parameters $z = [ g_{el}, g_{synA}]$ govern the emergent phenomena of network syncing in a model of the stomatogastric ganglion (STG) \cite{gutierrez2013multiple} shown in Figure \ref{fig:STG}A with activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$, using the same hyperparameter choices as Gutierrez et al.
+We analyze how the parameters $z = [ g_{\text{el}}, g_{\text{synA}}]$ govern the emergent phenomena of network syncing in a model of the stomatogastric ganglion (STG) \cite{gutierrez2013multiple} shown in Figure \ref{fig:STG}A with activity $x = \left[ x_{\text{f1}}, x_{\text{f2}}, x_{\text{hub}}, x_{\text{s1}}, x_{\text{s2}} \right]$, using the same hyperparameter choices as Gutierrez et al.
 Each neuron's membrane potential $x_\alpha(t)$ for $\alpha \in \{ \text{f1}, \text{f2}, \text{hub}, \text{s1}, \text{s2} \}$ is the solution of the following differential equation:
 \begin{equation} C_m \frac{dx_\alpha}{dt} = - \left[ h_{leak}(x; z) + h_{Ca}(x; z) + h_K(x; z) + h_{hyp}(x; z) + h_{elec}(x; z) + h_{syn}(x; z)\right].
 \end{equation} 
@@ -714,7 +714,7 @@ electrical and synaptic currents, respectively, which are functions of  all memb
 The capacitance of the cell membrane was set to $C_m = 1nF$. Specifically, the currents are the difference in the neuron's membrane potential and that current type's reversal potential multiplied by a conductance:
 \begin{equation}  h_{leak}(x; z) = g_{leak} (x_\alpha - V_{leak}) 
 \end{equation} 
-\begin{equation}  h_{elec}(x; z) = g_{el} (x_\alpha^{post} - x_\alpha^{pre})
+\begin{equation}  h_{elec}(x; z) = g_{\text{el}} (x_\alpha^{post} - x_\alpha^{pre})
 \end{equation} 
 \begin{equation}  h_{syn}(x; z) = g_{syn} S_\infty^{pre} (x_\alpha^{post} - V_{syn}) \end{equation} 
 \begin{equation}  h_{Ca}(x; z) = g_{Ca} M_\infty (x_\alpha - V_{Ca}) 
@@ -771,7 +771,7 @@ Throughout optimization, the augmented Lagrangian parameters $\eta$ and $c$, wer
 \end{flushleft}
 \end{figure}
 
-For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z \in \left[ [4, 0], [8, 4] \right]$. We used an augmented Lagrangian coefficient of $c_0 = 10^{2}$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [6, 2]$ with standard deviation $\sigma_{\text{init}} = 0.5$.
+For EPI in Fig 2C, we used a real NVP architecture with four masks and two layers of 10 units per mask, and batch normalization momentum of 0.99 mapped onto a support of $z = [g_{\text{el}}, g_{\text{synA}}] \in [4,8] \times [0,4]$. We used an augmented Lagrangian coefficient of $c_0 = 10^{2}$, a batch size $n=300$, set $\nu = 0.1$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [6, 2]$ with standard deviation $\sigma_{\text{init}} = 0.5$.
 
 We calculated the Hessian at the mode of the inferred EPI distribution.  
 The Hessian of a probability model is the second order gradient of the log probability density $\log q_\theta(z)$ with respect to the parameters $z$:  $\frac{\partial^2 \log q_\theta(z)}{\partial z \partial z^\top}$.  
@@ -948,7 +948,7 @@ where the Bernoulli variance error $\sigma^2_{err}$ for the Pro task, left condi
 
 We have an additional constraint that the Pro neuron on the opposite hemisphere should have the opposite value (0 and 1).  We can enforce this with another constraint:
 \begin{equation}
-\mathbb{E}_{z \sim q\phi} \left[ d_P \right] = 1.
+\mathbb{E}_{z \sim q\phi} \left[ d_P \right] = 1,
 \end{equation}
 where the distance between Pro neuron steady states $d_P$ in the Pro condition is
 \begin{equation}
@@ -1053,7 +1053,7 @@ l(t) = \frac{\Delta_0(t)^2-\Delta_\infty(t)^2}{2} \\
 \end{equation}
 Then, the chaotic variance, which is necessary for the Gaussian posterior conditioning example, is simply calculated via $\Delta_T = \Delta_0 - \Delta_\infty$.
 
-We ran EPI using a real NVP architecture of two masks and two layers per mask with 10 units mapped to a support of $z \in \left[[0, -5, -5], [5, 5, 5] \right]$ with no batch normalization. 
+We ran EPI using a real NVP architecture of two masks and two layers per mask with 10 units mapped to a support of $z = [g, M_m, M_n] \in [0,5] \times [-5,5] \times[-5,5]$ with no batch normalization. 
 We used an augmented Lagrangian coefficient of $c_0 = 1$, a batch size $n=300$, set $\nu = 0.15$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [2.5, 0, 0]$ with standard deviation $\sigma_{\text{init}} = 2.0$.
  The EPI distribution shown in Fig. \ref{fig:RNN} is the converged distributions with maximum entropy across five random seeds.
 
