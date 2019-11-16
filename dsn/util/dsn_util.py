@@ -14,8 +14,7 @@ from tf_util.tf_util import (
 )
 import scipy.linalg
 from dsn.util.systems import Linear2D, V1Circuit, SCCircuit, STGCircuit, LowRankRNN
-from dsn.util.plot_util import assess_constraints_mix
-
+from tf_util.stat_util import approx_equal
 from tf_util.families import family_from_str
 from efn.train_nf import train_nf
 import os
@@ -707,7 +706,7 @@ def abc_sample(system, n=10000, sigma=1.0, inds=None, Z=None, T_x=None):
     return Z_abc
 
 
-def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict):
+def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, converge_dict):
     num_cs = c_init_ords.shape[0]
     num_rs = random_seeds.shape[0]
 
@@ -718,17 +717,7 @@ def get_ME_model(system, arch_dict, c_init_ords, random_seeds, dirstr, conv_dict
             rs = random_seeds[k]
             savedir = get_savedir(system, arch_dict, c_init_order, rs, dirstr)
             model_dirs.append(savedir)
-    if "tol" not in conv_dict.keys():
-        conv_dict["tol"] = None
-    if "tol_inds" not in conv_dict.keys():
-        conv_dict["tol_inds"] = []
-    first_its, ME_its, MEs = assess_constraints_mix(
-        model_dirs,
-        tol=conv_dict["tol"],
-        tol_inds=conv_dict["tol_inds"],
-        alpha=conv_dict["alpha"],
-        frac_samps=conv_dict["frac_samples"],
-    )
+    first_its, ME_its, MEs = assess_constraints(model_dirs, converge_dict)
     num_models = len(model_dirs)
     # Find the model that had maximum entropy while satisfying convergence criteria
     # iterate because of Nones
@@ -1303,33 +1292,48 @@ def bootstrap_test(T_x, mu, M, N):
     return p_val
 
 
-def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
-    EPS = 1e-10
+def assess_constraints(model_dirs, converge_dict, verbose=True):
+    cd_keys = converge_dict.keys()
+    if (not 'tol' in cd_keys):
+        tol = None
+    else:
+        tol = converge_dict['tol']
+
+    if (not 'tol_inds' in cd_keys):
+        tol_inds = []
+    else:
+        tol_inds = converge_dict['tol']
+    alpha = converge_dict['alpha']
+    nu = converge_dict['nu']
+
+    if (type(model_dirs) == str):
+        model_dirs = [model_dirs]
     n_fnames = len(model_dirs)
     fnames = []
     for i in range(n_fnames):
         fnames.append(model_dirs[i] + "opt_info.npz")
 
+    # If hypothesis tests have been run, simply load the results.
     first_its = []
     ME_its = []
     MEs = []
     for i in range(n_fnames):
-        AL_conv_fname = model_dirs[i] + "AL_conv.npz"
+        AL_conv_fname = model_dirs[i] + "EPI_conv.npz"
         if os.path.isfile(AL_conv_fname):
             AL_conv_file = np.load(AL_conv_fname)
             first_it = AL_conv_file["first_it"]
             ME_it = AL_conv_file["ME_it"]
             ME = AL_conv_file["ME"]
-            frac_samps_eq = approx_equal(
-                frac_samps, AL_conv_file["frac_samps"], EPS, verbose=False
+            nu_eq = approx_equal(
+                nu, AL_conv_file["nu"], 1e-10, verbose=False
             )
-            alpha_eq = approx_equal(alpha, AL_conv_file["alpha"], EPS, verbose=False)
+            alpha_eq = approx_equal(alpha, AL_conv_file["alpha"], 1e-10, verbose=False)
             if len(AL_conv_file["tol_inds"]) > 0:
                 tol_shape_eq = tol.shape[0] == AL_conv_file["tol"].shape[0]
-                tol_eq = tol_shape_eq and approx_equal(tol, AL_conv_file["tol"], EPS)
+                tol_eq = tol_shape_eq and approx_equal(tol, AL_conv_file["tol"], 1e-10)
             else:
                 tol_eq = len(tol_inds) == 0
-            if not (alpha_eq and tol_eq and frac_samps_eq):
+            if not (alpha_eq and tol_eq and nu_eq):
                 pass
             else:
                 if np.isnan(first_it):
@@ -1357,7 +1361,7 @@ def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
         mu = npzfile["mu"]
         n_suff_stats = mu.shape[0]
         total_samps = npzfile["T_xs"].shape[1]
-        samps_per_boot = int(frac_samps * total_samps)
+        samps_per_boot = int(nu * total_samps)
         total_its = npzfile["T_xs"].shape[0]
         Hs = npzfile["Hs"]
         epoch_inds = npzfile["epoch_inds"]
@@ -1368,12 +1372,18 @@ def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
         else:
             H_inds = np.arange(0, Hs.shape[0] + 1, epoch_inds[1] // check_rate)
 
+        # Run convergence test for each point of optimization in which
+        # batch samples were saved.  
+        # Goal is to find first convergence, and ME convergence.  If 
+        # a convergent point of optimization is found, only check
+        # points of optimization with greater entropy.
         boot_samps = 200
         first_flag = False
         inds_to_check = np.arange(total_its)[np.logical_not(np.isnan(Hs[H_inds]))]
         jj = 0
-        print(i, "------------------")
-        print("thresh", alpha / n_suff_stats)
+
+        if (verbose):
+            print("***", fname, '***')
         while jj < inds_to_check.shape[0]:
             j = inds_to_check[jj]
             T_xs = npzfile["T_xs"][j]
@@ -1394,7 +1404,8 @@ def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
                         T_xs[:, ii], mu[ii], boot_samps, samps_per_boot
                     )
                     pvals.append(pval)
-            print(j, "pvals", pvals)
+            if (verbose):
+                print("AL_it", j, "pvals", pvals)
             con_sat = np.prod(np.array(pvals) > (alpha / n_suff_stats))
             if (not failed) and con_sat == 1:
                 if not first_flag:
@@ -1420,7 +1431,7 @@ def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
                 alpha=alpha,
                 tol=tol,
                 tol_inds=tol_inds,
-                frac_samps=frac_samps,
+                nu=nu,
             )
         else:
             first_its.append(first_it)
@@ -1434,7 +1445,14 @@ def assess_constraints(model_dirs, tol, tol_inds, alpha, frac_samps):
                 alpha=alpha,
                 tol=tol,
                 tol_inds=tol_inds,
-                frac_samps=frac_samps,
+                nu=nu,
             )
+
+    if (verbose):
+        print('ME convergences:')
+        for i in range(n_fnames):
+            print('%d: %d' % (i+1, ME_its[i]), end='')
+            if (i < (n_fnames-1)):
+                print(', ', end='')
 
     return first_its, ME_its, MEs
