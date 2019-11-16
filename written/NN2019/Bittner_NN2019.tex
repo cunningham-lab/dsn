@@ -518,7 +518,7 @@ To learn the distribution of real entries of $A$ that produce a band of oscillat
 %To gain intuition for EPI, consider two-dimensional linear dynamical systems, $\tau \dot{x} = Ax$ with  \[A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}\] that produce a band of oscillations. To do EPI with the dynamics matrix elements as the free parameters $z = \left[a_1, a_2, a_3, a_4 \right]$, and fixing $\tau=1$, such that the posterior yields a band of oscillations, the emergent property statistics $T(x)$ are chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, then we would select the real part of the complex conjugate eigenvalues $\text{real}(\lambda_1) = d$ (via an arbitrary choice of eigenvalue of the dynamics matrix $\lambda_1$) and the positive imaginary component of one of the eigenvalues $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  Those emergent property statistics
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
+\includegraphics[scale=0.58]{figures/figS1/figS1.pdf}
 \end{center}
 \begin{flushleft}
 Fig. S1: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The DSN distribution for a two-dimensional linear dynamical system  with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (2,000 iterations), the entropy dipped due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments adjust closer to their constraints.
@@ -553,7 +553,7 @@ Since we constrained $\mathbb{E}_{z \sim q_\theta}\left[\text{imag}(\lambda)\rig
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figures/figS3/figS3.pdf}
+\includegraphics[scale=0.5]{figures/figS2/figS2.pdf}
 \end{center}
 \begin{flushleft}
 Fig. S2: A. Probability contours in the $a_1-a_4$ plane can be derived from the relationship to emergent property statistic of growth/decay factor $\text{real}(\lambda_1)$. B. Probability contours in the $a_2-a_3$ plane can be derived from the emergent property statistic of oscillation frequency $2\pi \text{imag}(\lambda_1)$ (see text).
@@ -562,7 +562,7 @@ Fig. S2: A. Probability contours in the $a_1-a_4$ plane can be derived from the 
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figures/figS4/figS4.pdf}
+\includegraphics[scale=0.5]{figures/figS3/figS3.pdf}
 \end{center}
 \begin{flushleft}
 Fig. S3: Sampled dynamical system trajectories from the EPI distribution.  Each trajectory is initialized at $x(0) = [\frac{\sqrt{2}}{2}, -\frac{\sqrt{2}}{2}]$.
@@ -741,7 +741,7 @@ Throughout optimization, the augmented Lagrangian parameters $\eta$ and $c$, wer
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.4]{figures/figS5/figS5.pdf}
+\includegraphics[scale=0.45]{figures/figS4/figS4.pdf}
 \end{center}
 \begin{flushleft}
 Fig. S4: Emergent property inference of the STG model producing network syncing. A. Entropy throughout optimization. B. The first moment emergent property statistics converge to the emergent property values at 10,000 iterations, following the fourth augmented Lagrangian epoch of 2,500 iterations.  (There is no convergence at the end of the third epoch, because $q_\theta(z)$ failed to produce enough samples yielding $\omega_{\text{f1}}(x)$ less than $0.53$Hz.)    C. The second moment emergent property statistics converge to the emergent property values.
@@ -1022,7 +1022,7 @@ In addition to the Gaussian posterior conditioning example in Section \ref{resul
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.5]{figures/figS1/figS1.pdf}
+\includegraphics[scale=0.5]{figures/figS5/figS5.pdf}
 \end{center}
 Fig. S5: A. EPI for rank-1 networks doing noisy discrimination. B. EPI for rank-2 networks doing context-dependent discrimination.  See \cite{mastrogiuseppe2018linking} for theoretical equations and task description.
 \end{figure}
