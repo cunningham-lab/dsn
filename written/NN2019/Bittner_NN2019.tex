@@ -210,7 +210,7 @@ Equipped with this method, we now prove out the value of EPI by using it to inve
 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.52]{figures/fig2/fig2.pdf}
+\includegraphics[scale=0.54]{figures/fig2/fig2.pdf}
 \end{center}
 \caption{Hypothesis generation through EPI in a V1 model.  A. Four-population model of primary visual cortex with excitatory (black), parvalbumin (blue), somatostatin (red), and VIP (green) neurons.   Some neuron-types largely do not form synaptic projections to others  (excitatory and inhibitory projections filled and unfilled, respectively).  B. Linear response predictions become inaccurate with greater input strength.  V1 model simulations for input (solid) $h=b$ and (dashed) $h = b + dh$. Stars indicate the linear response prediction.  C. EPI distributions on differential input $dh$ conditioned on differential response $\mathcal{B}(\alpha, y)$. Supporting evidence for the four generated hypotheses are indicated by gray boxes with labels H1, H2, H3, and H4. The linear prediction from two standard deviations away from $y$ (from negative to positive) is overlaid in magenta (very small, near origin). }
  \label{fig:V1_EPI}
@@ -278,7 +278,7 @@ H4: the V-population exhibits a nonmonotonic response to $\delta h_E$ (Fig. \ref
 
 }
 
-These hypotheses were in stark contrast to what was available to us via traditional analytical linear prediction (Fig. 2C, magenta, see Section \ref{methods_V1}).
+These hypotheses were in stark contrast to what was available to us via traditional analytical linear prediction (Fig. \ref{fig:V1_EPI}C, magenta, see Section \ref{methods_V1}).
 To this point, we have shown the utility of EPI on relatively low-level emergent properties like network syncing and differential neuron-type population responses.  
 In the remainder of the study, we focus on using EPI to understand models of more abstract cognitive function.
 
@@ -342,50 +342,54 @@ In theoretical neuroscience, RNN dynamics usually follow the equation
 where $x$ is the network activity, $W$ is the network connectivity, $\phi(\cdot) = \tanh(\cdot)$, and $h$ is the input to the system.
 Such RNNs are trained to do a task from a systems neuroscience experiment, and then the unit activations of the trained RNN are compared to recorded neural activity.
 Fully-connected RNNs with tens of thousands of parameters are challenging to characterize \cite{sussillo2013opening}, especially making statistical inferences about their parameterization.
-Alternatively, we considered a rank-1, $N$-neuron RNN with connectivity
+Alternatively, we considered a rank-1, $N$-neuron RNN with connectivity consisting of the sum of a random and a structured component:
 \begin{equation}
-W = g\chi + \frac{1}{N}mn^\top,
+W = g\chi + \frac{1}{N}mn^\top.
 \end{equation}
-where $\chi_{i,j} \sim \mathcal{N}(0, \frac{1}{N})$, $g$ is the random strength, and the entries of $m$ and $n$ are drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.  
+The random component $g \chi$ has strength $g$, and random component weights are Gaussian distributed $\chi_{i,j} \sim \mathcal{N}(0, \frac{1}{N})$.  
+The structured component $\frac{1}{N}m n\top$ has entries of $m$ and $n$ drawn from Gaussian distributions $m_i \sim \mathcal{N}(M_m, 1)$ and $n_i \sim \mathcal{N}(M_n, 1)$.
+Recent theoretical work derives the low-dimensional response properties of low-rank networks from statistical parameterizations of their connectivity, such as $z = [g, M_m, M_n]$ \cite{mastrogiuseppe2018linking}.
 We used EPI to infer the parameterizations of rank-1 RNNs solving an example task, enabling discovery of properties of connectivity that result in different types of error in the computation.
 
 
-The task we consider is Gaussian posterior conditioning: calculate the parameters of a posterior distribution induced by a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ and a likelihood $p(y | \mu_y) = \mathcal{N}(\mu_y,\sigma^2_y = 1)$, given a single observation $y$.  Conjugacy offers the result analytically; $p(\mu_y | y ) = \mathcal{N}\left(\mu_{post},\sigma_{post}^2\right)$, where:   
+The task we consider is Gaussian posterior conditioning: calculate the parameters of a posterior distribution induced by a prior $p(\mu_y) = \mathcal{N}(\mu_0=4, \sigma_0^2=1)$ and a likelihood $p(y | \mu_y) = \mathcal{N}(\mu_y,\sigma^2_y = 1)$, given a single observation $y$.  
+Conjugacy offers the result analytically; $p(\mu_y | y ) = \mathcal{N}\left(\mu_{post},\sigma_{post}^2\right)$, where:   
 \begin{equation}
 \mu_{\text{post}} = \frac{\frac{\mu_0}{\sigma_0^2} + \frac{y}{\sigma_y^2}}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}
 ~~~~~~~~~~
  \sigma^2_{\text{post}} = \frac{1}{\frac{1}{\sigma_0^2} + \frac{1}{\sigma_y^2}}.
 \end{equation} 
-The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (Fig. \ref{fig:RNN}A, a setup inspired by \cite{echeveste2019cortical}). 
-To solve this Gaussian posterior conditioning task, the RNN response to a constant input $h = y w + (n-M_n)$ must equal the posterior mean along readout vector $r$ , where
+%The RNN is trained to solve this task by producing readout activity that is on average the posterior mean $\mu_{\text{post}}$, and activity whose variability is the posterior variance $\sigma^2_{\text{post}}$ (Fig. \ref{fig:RNN}A, a setup inspired by \cite{echeveste2019cortical}). 
+To solve this Gaussian posterior conditioning task, the RNN response to a constant input $h = y r + (n-M_n)$ must equal the posterior mean along readout vector $r$ , where
 \begin{equation}
 \kappa_r =  \frac{1}{N} \sum_{j=1}^N r_j \phi(x_j).
 \end{equation}
 Additionally, the amount of chaotic variance $\Delta_T$ must equal the posterior variance.
 Theory for low-rank RNNs allows us to express $\kappa_r$ and $\Delta_T$ in terms of each other through a solvable system of nonlinear equations  (see Section \ref{methods_LRRNN}) \cite{mastrogiuseppe2018linking}.
-This allows us to mathematically formalize the execution of this task into an emergent property, where the emergent property statistics of the RNN activity are $\kappa_r$ and $\Delta_T$ and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
+This theory facilitates the mathematical formalization of task execution into an emergent property, where the emergent property statistics of the RNN activity are $\kappa_r$ and $\Delta_T$, and the emergent property values are the ground truth posterior mean $\mu_{\text{post}}$ and variance $\sigma^2_{\text{post}}$:
 \begin{equation}
 \mathbb{E} \begin{bmatrix} \kappa_r \\ \Delta_T \\ (\kappa_r-\mu_{\text{post}})^2 \\ (\Delta_T^2-\sigma^2_{\text{post}})^2 \end{bmatrix} ~~=~~ \begin{bmatrix} \mu_{\text{post}} \\ \sigma^2_{\text{post}} \\ 0.1 \\ 0.1 \end{bmatrix}.
 \end{equation}
-We specify a substantial amount of variance in these emergent property statistics, so that the inferred distribution results in RNNs with a variety of errors in their solutions to the gaussian posterior conditioning problem. 
+We chose a substantial amount of variance in these emergent property statistics, so that the inferred distribution resulted in RNNs with a variety of errors in their solutions to the gaussian posterior conditioning problem. 
 
-We used EPI to learn distributions of RNN connectivity properties $z = [g, M_m, M_n]$ executing Gaussian posterior conditioning given an input of $y=2$, where the true posterior is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$ (see Section \ref{methods_LRRNN}) (Fig. \ref{fig:RNN}B). 
-We examined the nature of the over- and under-estimation of the posterior means (Fig. \ref{fig:RNN}B, left) and variances (Fig. \ref{fig:RNN}B, right) in the inferred distributions (300 samples).  
-There is symmetry in the $M_m$-$M_n$ plane, suggesting a degeneracy in the product of $M_m$ and $M_n$ (Fig. \ref{fig:RNN}B).  
-The product of $M_m$ and $M_n$ strongly determines the posterior mean (Fig. \ref{fig:RNN}B, left; $r=0.62$,  $p<10^{-4}$), and the random strength $g$ strongly determines the chaotic variance (Fig. \ref{fig:RNN}B, right; $r=0.56$,  $p<10^{-4}$).
+EPI was used to learn distributions of RNN connectivity properties $z = [g, M_m, M_n]$ executing Gaussian posterior conditioning given an input of $y=2$, where the true posterior is $\mu_{\text{post}}=3$ and $\sigma_{\text{post}} = 0.5$ (Fig. \ref{fig:RNN}A). 
+We examined the nature of the over- and under-estimation of the posterior means (Fig. \ref{fig:RNN}B left) and variances (Fig. \ref{fig:RNN}B right) in the inferred distributions (300 samples).  
+The symmetry in the $M_m$-$M_n$ plane, suggests a degeneracy in the product of $M_m$ and $M_n$ (Fig. \ref{fig:RNN}B).  
+Indeed, $M_m M_n$ strongly determines the posterior mean ($r=0.62$,  $p<10^{-4}$). 
+Furthermore, the random strength $g$ strongly determines the chaotic variance ($r=0.56$,  $p<10^{-4}$).
 Neither of these observations were obvious from what mathematical analysis is available in networks of this type (see Section \ref{methods_LRRNN}).  
-While the relationship of the random strength to chaotic variance (and resultingly posterior variance in this problem) is well-known \cite{sompolinsky1988chaos}, the distribution admits a hypothesis: the estimation of the posterior mean by the RNN increases with the product of $M_m$ and $M_n$.
+While the link between random strength $g$ and chaotic variance $\Delta_T$ (and resultingly posterior variance in this problem) is well-known \cite{sompolinsky1988chaos}, the distribution admits a novel hypothesis: the estimation of the posterior mean by the RNN increases with $M_m M_n$.
 
 We tested this prediction by taking parameters $z_1$ and $z_2$ as representative samples from the positive and negative $M_m$-$M_n$ quadrants, respectively.
 Instead of using the theoretical predictions shown in Figure \ref{fig:RNN}B, we simulated finite-size realizations of these networks with 2,000 neurons (e.g. Fig. \ref{fig:RNN}C).  
-We perturbed these parameter choices by the product $M_m M_n$ clarifying that the posterior mean can be directly controlled in this way (Fig. \ref{fig:RNN}D; $p<10^{-4}$), see Section \ref{methods_LRRNN}).
+We perturbed these parameter choices by $M_m M_n$ clarifying that the posterior mean can be directly controlled in this way (Fig. \ref{fig:RNN}D; $p<10^{-4}$), see Section \ref{methods_LRRNN}).
 Thus, EPI confers a clear picture of error in this computation: the product of the low rank vector means $M_m$ and $M_n$ modulates the estimated posterior mean while the random strength $g$ modulates the estimated posterior variance.
 This novel procedure of inference on reduced parameterizations of RNNs conditioned on the emergent property of task execution is generalizable to other settings modeled in \cite{mastrogiuseppe2018linking} like noisy integration and context-dependent decision making (Fig. S5).
 
 %The observations are supported by 2,000-neuron realizations of drawn parameters $z_1$ and $z_2$ from the inferred distribution.  $z_1$ has relatively high product of low rank vector means $M_m M_n$, and produces an RNN overestimating the posterior mean (Fig. 5C, left cyan).  In turn, $z_2$, having relatively low $M_m M_n$, produces an RNN underestimates the posterior mean, since $\mu(t) < 3$ (Fig. 5C, right cyan).  Finally, the evidently greater level of chaotic variance in RNNs with $z_1$ compared to $z_2$ make sense given that $g$ is greater in $z_1$ than in $z_2$. 
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.7]{figures/fig5/fig5.pdf}
+\includegraphics[scale=0.8]{figures/fig5/fig5.pdf}
 \end{center}
 \caption{Sources of error in an RNN solving a simple task.  A. (left) A rank-1 RNN executing a Gaussian posterior conditioning computation on $\mu_y$. (right) Error in this computation can come from over- or under-estimating the posterior mean or variance. B. EPI distribution of rank-1 RNNs executing Gaussian posterior conditioning.  Samples are colored by (left) posterior mean $\mu_{\text{post}}=\kappa_r$ and (right) posterior variance $\sigma^2_{\text{post}}=\Delta_T$  C.  Finite-size network simulations of 2,000 neurons with parameters $z_1$ and $z_2$ sampled from the inferred distribution.  Activity along readout $\kappa_r$ (cyan) is stable despite chaotic fluctuations.  D. The posterior mean computed by RNNs parameterized by $z_1$ and $z_2$ perturbed in the dimension of the product of $M_m$ and $M_n$.  Means and standard errors are shown across 10 realizations of 2,000-neuron networks.}
 \label{fig:RNN}
@@ -531,7 +535,7 @@ To learn the distribution of real entries of $A$ that produce a band of oscillat
 \includegraphics[scale=0.58]{figures/figS1/figS1.pdf}
 \end{center}
 \begin{flushleft}
-Fig. S1: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The EPI distribution for a two-dimensional linear dynamical system with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (2,000 iterations), the entropy dipped due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments adjust closer to their constraints.
+Fig. S1: A. Two-dimensional linear dynamical system model, where real entries of the dynamics matrix $A$ are the parameters.  B. The EPI distribution for a two-dimensional linear dynamical system with $\tau=1$ that produces an average of 1Hz oscillations with some small amount of variance.  Dashed lines indicate the parameter axes. C. Entropy throughout the optimization.  At the beginning of each augmented Lagrangian epoch (2,000 iterations), the entropy dipped due to the shifted optimization manifold where emergent property constraint satisfaction is increasingly weighted.  D. Emergent property moments throughout optimization.  At the beginning of each augmented Lagrangian epoch, the emergent property moments adjust closer to their constraints.
 \end{flushleft}
 \end{figure}
 
@@ -1028,7 +1032,7 @@ Then, the chaotic variance, which is necessary for the Gaussian posterior condit
 \end{equation}
 
 We ran EPI using a real NVP architecture of two masks and two layers per mask with 10 units mapped to a support of $z \in \left[[0, -5, -5], [5, 5, 5] \right]$ with no batch normalization. 
-We used an augmented Lagrangian coefficient of $c_0 = 1$, a batch size $n=300$, set $\nu = 0.2$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [2.5, 0, 0]$ with standard deviation $\sigma_{\text{init}} = 2.0$.
+We used an augmented Lagrangian coefficient of $c_0 = 1$, a batch size $n=300$, set $\nu = 0.15$, and initialized $q_\theta(z)$ to produce an isotropic Gaussian with mean $\mu_{\text{init}} = [2.5, 0, 0]$ with standard deviation $\sigma_{\text{init}} = 2.0$.
  The EPI distribution shown in Fig. \ref{fig:RNN} is the converged distributions with maximum entropy across five random seeds.
 
 To examine the effect of product $M_m M_n$ on the posterior mean, $\mu_{\text{post}}$ we took perturbations in $M_m M_n$ away from two representative parameters  $z_1$ and $z_2$ in 21 equally space increments from -1 to 1.  For each perturbation, we sampled 10 2,000-neuron RNNs and measure the calculated posterior means.  In Fig. \ref{fig:RNN}D, we plot the product of $M_m M_n$ in the perturbation versus the average posterior mean across 10 network realizations with standard error bars.  The correlation between perturbation product $M_m M_n$ and $\mu_{\text{post}}$ was measured over all simulations.  For perturbations away from $z_1$ the correlation was 0.995 with $p<10^{-4}$, and for perturbations away from $z_2$ the correlation was 0.983 with $p<10^{-4}$.
