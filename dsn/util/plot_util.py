@@ -8,37 +8,30 @@ import os
 import time
 from matplotlib import animation
 from tf_util.stat_util import approx_equal
-from dsn_util.dsn_util import assess_constraints
+from dsn.util.dsn_util import assess_constraints
 
 
 def plot_opt(
     model_dirs,
+    converge_dict,
     legendstrs=None,
-    con_method="mix",
-    nus=0.2,
+    xlim_its=None,
     maxconlim=3.0,
-    alpha=0.05,
     plotR2=False,
     fontsize=16,
-    tol=0.1,
-    tol_inds=[],
     T_x_labels=None,
 ):
     max_legendstrs = 10
     n_fnames = len(model_dirs)
     if legendstrs is None:
         legendstrs = n_fnames * [""]
+    if (type(xlim_its) == int):
+        xlim_its = n_fnames*[xlim_its]
     fnames = []
     for i in range(n_fnames):
         fnames.append(model_dirs[i] + "opt_info.npz")
 
-    if con_method == "mix":
-        first_its, ME_its, MEs = assess_constraints(
-            model_dirs, tol, tol_inds, alpha, nu
-        )
-    else:
-        first_its = n_fnames * [-1]
-        ME_its = n_fnames * [-1]
+    first_its, ME_its, MEs = assess_constraints(model_dirs, converge_dict)
 
     # read optimization diagnostics from files
     costs_list = []
@@ -69,7 +62,10 @@ def plot_opt(
         epoch_inds = npzfile["epoch_inds"]
 
         check_rate = npzfile["check_rate"]
-        last_inds.append(npzfile["it"] // check_rate)
+        if (xlim_its is None):
+            last_inds.append(npzfile["it"] // check_rate)
+        else:
+            last_inds.append(xlim_its[i] // check_rate)
 
         costs_list.append(costs)
         Hs_list.append(Hs)
@@ -133,10 +129,16 @@ def plot_opt(
                 ],
                 "k--",
             )
-    ax.set_xlabel("iterations", fontsize=fontsize)
+
+    xticks = epoch_inds[epoch_inds <= (last_ind*check_rate)]
+    xtick_labels = ['%d' % i for i in range(len(xticks))]
+    xlabel = "EPI epochs (%d iterations)" % epoch_inds[1]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xtick_labels, fontsize=(fontsize-4))
+    ax.set_yticks(ax.get_yticks(False))
+    ax.set_yticklabels(['%d' % (int(x)) for x in ax.get_yticks(False)], fontsize=(fontsize-4))
+    ax.set_xlabel(xlabel, fontsize=fontsize)
     ax.set_ylabel(r"$H(q_\theta(z))$", fontsize=fontsize)
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
 
     if plotR2:
         ax = axs[1]
@@ -170,6 +172,7 @@ def plot_opt(
     yscale_fac = 5
     n_cols = min(n_suff_stats, 4)
     n_rows = int(np.ceil(n_suff_stats / n_cols))
+    xlabel = "EPI epochs"
     figsize = (n_cols * 4, n_rows * 4)
     fig, axs = plt.subplots(n_rows, n_cols, figsize=figsize)
     if n_rows == 1:
@@ -238,7 +241,7 @@ def plot_opt(
         if T_x_labels is not None:
             ax.set_ylabel(
                 r"$E_{z\sim q_\theta}[$" + T_x_labels[i] + "$]$",
-                fontsize=(fontsize + 4),
+                fontsize=(fontsize + 2),
             )
         else:
             ax.set_ylabel(r"$E[T_%d(z)]$" % (i + 1), fontsize=fontsize)
@@ -246,7 +249,11 @@ def plot_opt(
             if not legendstrs[0] == "":
                 ax.legend(fontsize=fontsize)
         if i > n_suff_stats - n_cols - 1:
-            ax.set_xlabel("iterations", fontsize=fontsize)
+            ax.set_xticks(xticks)
+            ax.set_xticklabels(xtick_labels, fontsize=(fontsize-2))
+            ax.set_xlabel(xlabel, fontsize=fontsize)
+            ax.set_yticks(ax.get_yticks(False))
+            ax.set_yticklabels(['%d' % (int(x)) for x in ax.get_yticks(False)], fontsize=(fontsize-2))
 
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
@@ -474,7 +481,6 @@ def dsn_pairplots(
     cbarticks=None,
     figsize=(10, 10),
 ):
-    print("ticks", ticks)
     n_fnames = len(model_dirs)
     if D is None:
         if dist_str == "Zs":
@@ -509,7 +515,6 @@ def dsn_pairplots(
     cs = []
     models = []
     for k in range(n_fnames):
-        print(k)
         fname = model_dirs[k] + "opt_info.npz"
         AL_final_it = AL_final_its[k]
         if AL_final_it is None:
@@ -522,7 +527,6 @@ def dsn_pairplots(
         dist, dist_label_strs = dist_from_str(
             dist_str, f_str, system, npzfile, AL_final_it
         )
-        print("dist", dist.shape)
         dists.append(dist)
         if D == 1:
             continue
@@ -611,9 +615,9 @@ def dsn_pairplots(
                             ax.plot([0, 0], [ymin, ymax], "--", c=[0.5, 0.5, 0.5])
                         if ticks is not None:
                             ax.set_xticks(ticks)
-                            ax.set_xticklabels(ticks, fontsize=(fontsize - 10))
+                            ax.set_xticklabels(ticks, fontsize=(fontsize - 5))
                             ax.set_yticks(ticks)
-                            ax.set_yticklabels(ticks, fontsize=(fontsize - 10))
+                            ax.set_yticklabels(ticks, fontsize=(fontsize - 5))
                     else:
                         ax.axis("off")
         else:
@@ -672,8 +676,6 @@ def dsn_pairplots(
         if pfnames is not None:
             print("saving figure to ", pfnames[k])
             plt.savefig(pfnames[k])
-        else:
-            print("not saving figure")
         figs.append(fig)
     return dists, cs, axs
 
@@ -1296,12 +1298,9 @@ def make_training_movie(model_dir, system, step, save_fname="temp", axis_lims=No
         bar_ax.spines["top"].set_visible(False)
 
     # plot entropy
-    alpha = 0.05
-    nu = 0.5
+    converge_dict = {'tol':None, 'tol_inds':[], 'alpha':alpha, 'nu':nu}
     n_suff_stats = system.num_suff_stats
-    AL_final_its, ME_its, MEs = assess_constraints(
-        [model_dir], tol=[], tol_inds=[], alpha=alpha, nu=nu
-    )
+    AL_final_its, ME_its, MEs = assess_constraints(model_dir, converge_dict)
     iterations = np.arange(0, check_rate * Hs.shape[0], check_rate)
     if D == 2:
         H_ax = plt.subplot(3, 1, 1)
