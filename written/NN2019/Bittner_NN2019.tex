@@ -409,26 +409,24 @@ In fact, EPI should scale reasonably to high dimensional parameter spaces, as th
 Of course, increasing the dimensionality of the dynamical state of the model makes optimization more expensive, and there is a practical limit there as with any machine learning approach.
 Although, theoretical approaches (e.g. \cite{mastrogiuseppe2018linking}) can be used to reason about the wholistic activity of such high dimensional systems by introducing some degree of additional structure into the model.
 
-There are additional technical considerations when assessing the suitability of EPI for a particular modeling question.  
-First and foremost, as in any optimization problem, the defined emergent property should always be appropriately conditioned (constraints should not have wildly different units).  
-Furthermore, if the program is underconstrained (not enough constraints), the distribution grows (in entropy) unstably unless mapped to a finite support.  
-If overconstrained, there is no parameter set producing the emergent property, and EPI optimization will fail (appropriately).
-Next, one should consider the computational cost of the gradient calculations. 
-In the best circumstance, there is a simple, closed form expression (e.g. Section \ref{methods_2DLDS}) for the emergent property statistic given the model parameters.  
-On the other end of the spectrum, many forward simulation iterations may be required before a high quality measurement of the emergent property statistic is available  (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive.
-
 \subsection{Novel hypotheses from EPI} 
 %Machine learning has played an effective, multifaceted role in neuroscientific progress. 
 %Primarily, it has revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  
 %Secondarily, trained algorithms of varying degrees of biological relevance are beginning to be viewed as fully-observable computational systems comparable to the brain \cite{ sussillo2013opening, richards2019deep}.  
-In neuroscience, machine learning has primarily been used to revealed structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning, ladenbauer2019inferring} (see review, \cite{paninski2018neural}).  Such careful inference procedures are developed for these statistical models allowing precise, quantitative reasoning, which clarifies the way data informs knowledge of the model parameters.  However, these inferable statistical models lack resemblance to the underlying biology, making it unclear how to go from the structure revealed by these methods, to the neural mechanisms giving rise to it.  In contrast, theoretical neuroscience has focused on careful mechanistic modeling and the production of emergent properties of computation.  The careful steps of 1.) model design and 2.) emergent property definition, are followed by 3.) practical inference methods resulting in an opaque characterization of the way model parameters govern computation.  In this work, we replaced this opaque procedure of parameter identification in theoretical neuroscience with emergent property inference, opening the door to careful inference in careful models of neural computation.
+In neuroscience, machine learning has primarily been used to reveal structure in large-scale neural datasets \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning, ladenbauer2019inferring} (see review, \cite{paninski2018neural}). 
+ Such careful inference procedures are developed for these statistical models allowing precise, quantitative reasoning, which clarifies the way data informs beliefs about the model parameters.  
+ However, these statistical models lack resemblance to the underlying biology, making it unclear how to go from the structure revealed by these methods, to the neural mechanisms giving rise to it. 
+In contrast, theoretical neuroscience has focused on careful mechanistic modeling and the production of emergent properties of computation.  
+The careful steps of \emph{i}.) model design and \emph{ii}.) emergent property definition, are followed by \emph{iii}.) practical inference methods resulting in an opaque characterization of the way model parameters govern computation.  
+In this work, we replaced this opaque procedure of parameter identification in theoretical neuroscience with emergent property inference, opening the door to careful inference in careful models of neural computation.
 
 Biologically realistic models of neural circuits often prove formidable to analyze.
 Two main factors contribute to the difficulty of this endeavor.
-First, even in simple point-neuron circuit models, the number of parameters scales quadratically with the number of neurons, limiting the analytical dissection of its parameter space. 
-Second, even in low dimensional circuits, the structure of the phase space itself is intricate and each parameter configuration can support multiple steady states \cite{kraynyukova2018stabilized} or non-trivial dynamics on strange attractors \cite{morrison2016diversity}.
+First, in most neural circuit models, the number of parameters scales quadratically with the number of neurons, limiting analysis of its parameter space. 
+Second, even in low dimensional circuits, the structure of the parametric regimes governing emergent properties is intricate.  
+For example, these circuit models can support more than one steady state \cite{kraynyukova2018stabilized} and non-trivial dynamics on strange attractors \cite{morrison2016diversity}.
 
-In Section \ref{results_V1}, we advanced the tractability of low-dimensional neuronal circuit models by showing that EPI offers insights about cell-type specific input-responsivity that cannot be afforded through the available linear analytical methods  \cite{litwin2016inhibitory, GarciaDelMolino2017, Chen2019}. 
+In Section \ref{results_V1}, we advanced the tractability of low-dimensional neural circuit models by showing that EPI offers insights about cell-type specific input-responsivity that cannot be afforded through the available linear analytical methods  \cite{litwin2016inhibitory, GarciaDelMolino2017, Chen2019}. 
 By flexibly conditioning this V1 model on different emergent properties, we performed an exploratory analysis of a \emph{model} rather than a dataset, generating a set of testable hypotheses, which were proved out. 
 Furthermore, exploratory analyses can be directed towards formulating hypotheses of a specific form. 
 For example, model parameter dependencies on behavioral performance can be assessed by using EPI to condition on various levels of task accuracy (See Section \ref{results_SC}). 
@@ -455,13 +453,13 @@ The ability to apply the probabilistic model selection toolkit to RNNs should pr
 %A paragraph on bridging large scale recordings with theory.
 
 EPI leverages deep learning technology for neuroscientific inquiry in a categorically different way than approaches focused on training neural networks to execute behavioral tasks \cite{richards2019deep}. 
-This large body of research focused on examining optimized deep neural networks employs careful consideration of the objective function, learning rule, and architecture used.
+These works focus on examining optimized deep neural networks while considering the objective function, learning rule, and architecture used.
 This endeavor efficiently obtains sets of parameters that can be reasoned about with respect to such considerations, but lacks the careful probabilistic treatment of parameter inference in EPI.
 These approaches can be used complementarily to enhance the practice of theoretical neuroscience.
 
 \textbf{Acknowledgements}: \\
 This work was funded by NSF Graduate Research Fellowship,  DGE-1644869, McKnight Endowment Fund, NIH NINDS 5R01NS100066, Simons Foundation 542963, NSF NeuroNex Award, DBI-1707398, The Gatsby Charitable Foundation, Simons Collaboration on the Global Brain Postdoctoral Fellowship, Chinese Postdoctoral Science Foundation, and International Exchange Program Fellowship. 
-Helpful conversations were had with Francesca Mastrogiuseppe, Srdjan Ostojic, James Fitzgerald, Stephen Baccus, Dhruva Raman, Mehrdad Jazayeri, Liam Paninski, and Larry Abbott.
+Helpful conversations were had with Francesca Mastrogiuseppe, Srdjan Ostojic, James Fitzgerald, Stephen Baccus, Dhruva Raman, Liam Paninski, and Larry Abbott.
 
 \textbf{Data availability statement}: \\
 The datasets generated during and/or analysed during the current study are available from the corresponding author upon reasonable request.
@@ -628,6 +626,14 @@ This significance threshold is adjusted through Bonferroni correction according 
 The p-values for each constraint are calculated according to a two-tailed nonparametric test, where 200 estimations of the sample mean $R(\theta)^i$ are made from $k$ resamplings of $z$ from a finite sample of size $n$ taken at the end of the augmented Lagrangian epoch.
 $k$ is determined by a fraction of the batch size $\nu$, which varies according to the application.
 In the linear two-dimensional system example, we used a batch size of $n = 1000$ and set $\nu = 0.1$ resulting in convergence after the ninth epoch of optimization. (Fig. S1C-D black dotted line).
+
+When assessing the suitability of EPI for a particular modeling question, there are some important technical considerations. 
+First and foremost, as in any optimization problem, the defined emergent property should always be appropriately conditioned (constraints should not have wildly different units).  
+Furthermore, if the program is underconstrained (not enough constraints), the distribution grows (in entropy) unstably unless mapped to a finite support.  
+If overconstrained, there is no parameter set producing the emergent property, and EPI optimization will fail (appropriately).
+Next, one should consider the computational cost of the gradient calculations. 
+In the best circumstance, there is a simple, closed form expression (e.g. Section \ref{methods_2DLDS}) for the emergent property statistic given the model parameters.  
+On the other end of the spectrum, many forward simulation iterations may be required before a high quality measurement of the emergent property statistic is available  (e.g. Section \ref{methods_STG}).  In such cases, optimization will be expensive.
 
 \subsubsection{Normalizing flows}\label{methods_NF}
 Deep probability models typically consist of several layers of fully connected neural networks.  When each neural network layer is restricted to be a bijective function, the sample density can be calculated using the change of variables formula at each layer of the network.  For $z' = f(z)$,
