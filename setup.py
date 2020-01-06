@@ -7,7 +7,7 @@ setup(name='dsn',
       description='Degenerate solution networks.',
       author='Sean Bittner',
       author_email='srb2201@columbia.edu',
-      install_requires=['numpy', 'tensorflow==1.15.1', \
+      install_requires=['numpy', 'tensorflow>=1.15.0', \
                         'statsmodels', 'matplotlib', 'scikit-learn', 'scipy'],
       packages=['dsn', 'dsn.util'],
      )
