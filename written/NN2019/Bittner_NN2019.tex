@@ -119,10 +119,6 @@ The novel scientific insights offered by EPI contextualize and clarify the previ
 
 %These works build on a long line of successful research in neural data analysis over the last twenty years \cite{kass2001spike, brown1998statistical, paninski2004maximum, byron2009gaussian, latimer2015single, duncker2019learning} (see review, \cite{paninski2018neural}).  Now, the use of these modern and powerful inference engines has freed researchers from  making model choices as much to accommodate inference, as to represent the computation being studied \cite{gao2015high} (Sorry, I'm confused by which paper PLDS refers to.).
 
-We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits (\cite{nonnenmacher2018sbi, desitler2019statistical, gonccalves2019training}, preprint posted simultaneously with this preprint).
-We are encouraged by this general problem being recognized by others in the community, and we emphasize that these works offer complementary neuroscientific contributions (different theoretical models of focus) and use different technical methodologies (ours is built on our prior work \cite{loaiza2017maximum}, theirs similarly \cite{LueckmannGoncalves_17}).
-These distinct methodologies and scientific investigations emphasize the increased importance and timeliness of both works. 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -189,21 +185,29 @@ Then, mathematically, we must solve the following optimization program:
 \end{split}
 \end{equation}
 where $T(x), \mu$ are defined as in Equation \ref{eq:EP}, and $p(x|z)$ is the intractable distribution of data from the model, $x$, given that model's parameters $z$ (we access samples from this distribution by running the model forward).   The purpose of each element in this program is detailed in Figure \ref{fig:STG}D.
-Finally, we recognize that many distributions in $\mathcal{Q}$ will respect the emergent property constraints, so we require a normative principle to select amongst them.  
-This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
-Here we chose Shannon entropy as a means to find parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but we emphasize that the EPI methodology is unaffected by this choice (although the results of course depend on the primal objective chosen).  
-%Here we chose Shannon entropy as a means to find parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but we emphasize that the EPI method is unaffected by this choice (but the results of course will depend on the primal objective chosen).  
-%Stating such a problem is easy enough; finding a tractable and suitably flexible family of probability distributions ($\mathcal{Q}$) is hard.  
-%With normalizing flows, we leverage the tractable calculation of log sample probability $\log q_\theta(z)$ to optimize entropy \cite{loaiza2017maximum}.
-%One can interpret the resulting probabilities as increasing with closeness in emergent property statistics to the emergent property values (see Section \ref{methods_2DLDS}).
+Finally, we recognize that many distributions in $\mathcal{Q}$ will respect the emergent property constraints, so we select that which has maximum entropy.
+This principle, captured in Equation \ref{eq:EPI} by the primal objective $H$, identifies parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}.
+Such a normative principle of maximum entropy naturally fits with our scientific objective of reasoning about parametric sensitivity and robustness; the recovered distribution of EPI is as variable as possible along each parametric manifold such that it produces the emergent property.
+%Finally, we recognize that many distributions in $\mathcal{Q}$ will respect the emergent property constraints, so we require a normative principle to select amongst them.  
+%This principle is captured in Equation \ref{eq:EPI} by the primal objective $H$.  
+%Here we chose Shannon entropy as a means to find parameter distributions with minimal assumptions beyond some chosen structure \cite{jaynes1957information, elsayed2017structure, loaiza2017maximum, savin2017maximum}, but we emphasize that the EPI methodology is unaffected by this choice (although the results of course depend on the primal objective chosen).  
 
 EPI optimizes the weights and biases $\theta$ of the deep neural network (which induces the probability distribution) by iteratively solving Equation \ref{eq:EPI}. 
 The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property (Fig. S4).
 Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is not different than its emergent property value (see Section \ref{methods_AL_opt}). 
 Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
+
 In relation to broader methodology, inspection of the EPI objective reveals a natural relationship to posterior inference.
 Specifically, EPI executes variational inference in an exponential family model, the sufficient statistics and mean parameter of which are defined by the emergent property statistics and values, respectively (see Section \ref{methods_VI}).
-Equipped with this method, we now prove out the value of EPI by using it to investigate and produce novel insights about three prominent models in neuroscience.
+Equipped with this method, we may examine structure in such inferred distributions or make comparisons between inferred distributions at graded values of emergent property statistics.
+We now prove out the value of EPI by using it to investigate and produce novel insights about three prominent models in neuroscience.
+%EPI optimizes the weights and biases $\theta$ of the deep neural network (which induces the probability distribution) by iteratively solving Equation \ref{eq:EPI}. 
+%The optimization is complete when the sampled models with parameters $z \sim q_\theta$ produce activity consistent with the specified emergent property (Fig. S4).
+%Such convergence is evaluated with a hypothesis test that the mean of each emergent property statistic is not different than its emergent property value (see Section \ref{methods_AL_opt}). 
+%Further validation of EPI is available in the supplementary materials, where we analyze a simpler model for which ground-truth statements can be made (Section \ref{methods_2DLDS}).
+%In relation to broader methodology, inspection of the EPI objective reveals a natural relationship to posterior inference.
+%Specifically, EPI executes variational inference in an exponential family model, the sufficient statistics and mean parameter of which are defined by the emergent property statistics and values, respectively (see Section \ref{methods_VI}).
+%Equipped with this method, we now prove out the value of EPI by using it to investigate and produce novel insights about three prominent models in neuroscience.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Comprehensive input-responsivity in a nonlinear sensory system} \label{results_V1}
@@ -230,14 +234,15 @@ Specifically, we consider a four-dimensional circuit model with dynamical state 
 \tau \frac{dx}{dt} = -x + [W x+ h]_+^n.
 \end{equation}
 
-The effective connectivity weights $W$ were obtained from experimental recordings of publicly available datasets of mouse V1 \cite{allen2018layer, billeh2019systematic} (see Section \ref{methods_V1}).
+We considered fixed effective connectivity weights $W$ approximated from experimental recordings of publicly available datasets of mouse V1 \cite{allen2018layer, billeh2019systematic} (see Section \ref{methods_V1}).
 The input $h = b + dh$ is comprised of a baseline input  $b = \left[ b_E, b_P , b_S , b_V \right]^\top$ and a differential input $dh = \left[ dh_E , dh_P , dh_S , dh_V\right]^\top$ to each neuron-type population.  
 Throughout subsequent analyses, the baseline input is $b = \left[ 1 ,1,1,1\right]^\top$. 
 
 With this model, we are interested in the differential responses of each neuron-type population to changes in input $dh$. 
 Initially, we studied the linearized response of the system to input $\frac{dx_{ss}}{dh}$ at the steady state response $x_{ss}$, i.e. a fixed point. 
 All analyses of this model consider the steady state response, so we drop the notation $ss$ from here on.
-While this linearization accurately predicts differential responses $dx = \left[ dx_{E} , dx_{P} , dx_{S} ,dx_{V} \right]^\top$  for small differential inputs to each population $dh = \left[ 0.1 , 0.1 , 0.1 , 0.1 \right]^\top$ (Fig \ref{fig:V1_EPI}B left), the linearization is a poor predictor in this nonlinear model more generally (Fig. \ref{fig:V1_EPI}B right).  Currently available approaches to deriving the steady state response of the system are limited.
+While this linearization accurately predicts differential responses $dx = \left[ dx_{E} , dx_{P} , dx_{S} ,dx_{V} \right]^\top$  for small differential inputs to each population $dh = \left[ 0.1 , 0.1 , 0.1 , 0.1 \right]^\top$ (Fig \ref{fig:V1_EPI}B left), the linearization is a poor predictor in this nonlinear model more generally (Fig. \ref{fig:V1_EPI}B right).  
+Currently available approaches to deriving the steady state response of the system are limited.
 
 To get a more comprehensive picture of the input-responsivity of each neuron-type beyond linear theory, we used EPI to learn a distribution of the differential inputs to each population $dh$ that produce an increase of $y$ in the rate of each neuron-type population $\alpha \in \{E, P, S, V \}$.  
 We want to know the differential inputs $dh$ that result in a differential steady state $dx_{\alpha}$ (the change in $x_{\alpha}$ when receiving input $h=b + dh$ with respect to the baseline $h = b$) of value $y$ with some small, arbitrarily chosen amount of variance  $0.01^2$.   
@@ -512,6 +517,11 @@ Work on likelihood-free variational inference (LFVI) \cite{tran2017hierarchical}
 Like LFVI, EPI can be framed as variational inference (see Section \ref{methods_VI}).
 But, unlike LFVI, EPI uses a single deep network to learn a distribution and is optimized to produce an emergent property, rather than condition on data points.  Optimizing the EPI objective is a technological challenge, the details of which we elaborate in Section \ref{methods_AL_opt}.  
  Before going through those details, we ground this optimization in a toy example.
+ 
+ We note that, during our preparation and early presentation of this work \cite{bittner2019degenerate, bittner2019examining}, another work has arisen with broadly similar goals: bringing statistical inference to mechanistic models of neural circuits (\cite{nonnenmacher2018sbi, desitler2019statistical, gonccalves2019training}, preprint posted simultaneously with this preprint).
+We are encouraged by this general problem being recognized by others in the community, and we emphasize that these works offer complementary neuroscientific contributions (different theoretical models of focus) and use different technical methodologies (ours is built on our prior work \cite{loaiza2017maximum}, theirs similarly \cite{LueckmannGoncalves_17}).
+These distinct methodologies and scientific investigations emphasize the increased importance and timeliness of both works. 
+
 %This optimization is done using the approach of MEFN \cite{loaiza2017maximum}, using architectures for deep probability distributions, called normalizing flows (see Section \ref{methods_NF}), conferring a tractable calculation of sample log probability.  In EPI, this methodology for learning maximum entropy distributions is repurposed toward variational learning of model parameter distributions.  
 %Similar to LFVI \cite{tran2017hierarchical}, we are motivated to do variational learning in models with intractable likelihood functions, in which standard methods like stochastic gradient variational Bayes \cite{kingma2013auto} or black box variational inference \cite{ranganath2014black} are not tractable.  Furthermore, EPI focuses on setting mathematically defined emergent property statistics to emergent property values of interest, whereas LFVI is focused on learning directly from datasets. 
 % Optimizing this objective is a technological challenge, the details of which we elaborate in Section \ref{methods_AL_opt}.  Before going through those details, we ground this optimization in a toy example.
@@ -528,7 +538,7 @@ with
 A = \begin{bmatrix} a_1 & a_2 \\ a_3 & a_4 \end{bmatrix}.
 \end{equation}
 %To run EPI with the dynamics matrix elements as the free parameters $z = \begin{bmatrix} a_1 & a_2 & a_3 & a_4 \end{bmatrix}$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first- and second-moments of the oscillatory frequency $\omega$ and the growth/decay factor $d$ of the oscillating system.  To learn the distribution of real entries of $A$ that yield a distribution of $d$ with mean zero with variance $0.25^2$, and oscillation frequency $\omega$ with mean 1 Hz with variance (0.1Hz)$^2$, we selected the real part of the  eigenvalue $\text{real}(\lambda_1) = d$ and imaginary component of  $\text{imag}(\lambda_1) = 2 \pi \omega$ as the emergent property statistics.  $\lambda_1$ is the eigenvalue of greatest real part when there is zero imaginary component, and alternatively of positive imaginary component, when the eigenvalues are complex conjugate pairs.  Those emergent property statistics were then constrained to
-To run EPI with the dynamics matrix elements as the free parameters $z = [ a_1, a_2, a_3, a_4]$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first and second moments of the oscillatory frequency, $2 \pi \text{imag}(\lambda_1)$, and the growth/decay factor, $\text{real}(\lambda_1)$, of the oscillating system. 
+To run EPI with the dynamics matrix elements as the free parameters $z = [ a_1, a_2, a_3, a_4]$ (fixing $\tau=1$), the emergent property statistics $T(x)$ were chosen to contain the first and second moments of the oscillatory frequency, $\frac{\text{imag}(\lambda_1)}{2 \pi}$, and the growth/decay factor, $\text{real}(\lambda_1)$, of the oscillating system. 
  $\lambda_1$ is the eigenvalue of greatest real part when the imaginary component is zero, and alternatively of positive imaginary component when the eigenvalues are complex conjugate pairs.  
 To learn the distribution of real entries of $A$ that produce a band of oscillating systems around 1Hz, we formalized this emergent property as $\text{real}(\lambda_1)$ having mean zero with variance $0.25^2$, and the oscillation frequency $2 \pi \text{imag}(\lambda_1)$ having mean $\omega = 1$ Hz with variance (0.1Hz)$^2$:
 \begin{equation}
