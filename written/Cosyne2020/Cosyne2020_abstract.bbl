@@ -1,0 +1,21 @@
+\begin{thebibliography}{1}
+
+\bibitem{paninski2018neural}
+Liam Paninski and John~P Cunningham.
+\newblock Neural data science: accelerating the experiment-analysis-theory
+  cycle in large-scale neuroscience.
+\newblock {\em Current opinion in neurobiology}, 50:232--241, 2018.
+
+\bibitem{bittner2019degenerate}
+Sean~R Bittner, Agostina Palmigiano, Kenneth~D Miller, and John~P Cunningham.
+\newblock Degenerate solution networks for theoretical neuroscience.
+\newblock {\em Computational and Systems Neuroscience Meeting (COSYNE), Lisbon,
+  Portugal}, 2019.
+
+\bibitem{duan2018collicular}
+Chunyu~A Duan, Marino Pagan, Alex~T Piet, Charles~D Kopec, Athena Akrami,
+  Alexander~J Riordan, Jeffrey~C Erlich, and Carlos~D Brody.
+\newblock Collicular circuits for flexible sensorimotor routing.
+\newblock {\em bioRxiv}, page 245613, 2018.
+
+\end{thebibliography}
