@@ -45,9 +45,9 @@ init_params = {'loc':0., 'scale':2.}
 q_theta, opt_data, save_path, failed = model.epi(
     mu, 
     arch_type='coupling', 
-    num_stages=2, 
+    num_stages=num_stages, 
     num_layers=2,
-    num_units=15,
+    num_units=num_units,
     post_affine=False,
     batch_norm=False,
     init_params=init_params,
