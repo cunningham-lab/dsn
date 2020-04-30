@@ -25,7 +25,7 @@ behavior = {"type": behavior_type, "means": means, "variances": variances}
 # set model options
 model_opts = {"rank": 2, "input_type": "input"}
 
-solve_its = 500
+solve_its = 200
 solve_eps = 0.2
 system = LowRankRNN(
     fixed_params, behavior, model_opts=model_opts, solve_its=solve_its, solve_eps=solve_eps
