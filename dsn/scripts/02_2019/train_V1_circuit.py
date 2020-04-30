@@ -44,11 +44,11 @@ arch_params = {
 param_dict.update(arch_params)
 arch_dict = get_arch_from_template(system, param_dict)
 
-AL_it_max = 40
+AL_it_max = 20
 batch_size = 1000
 lr_order = -3
 AL_fac = 4.0
-iters = 2000
+iters = 5000
 
 train_dsn(
     system,

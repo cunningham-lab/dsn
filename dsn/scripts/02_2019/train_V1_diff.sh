@@ -3,7 +3,7 @@
 #SBATCH --job-name=V1diff
 #SBATCH -c 1
 #SBATCH --gres=gpu
-#SBATCH --time=11:59:00
+#SBATCH --time=5:59:00
 #SBATCH --mem-per-cpu=2gb
 
 module load cuda90/toolkit

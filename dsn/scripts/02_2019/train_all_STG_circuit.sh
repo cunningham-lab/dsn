@@ -1,7 +1,7 @@
 #!/bin/bash
 for c_init_ord in 2
 do
-  for sigma_init in 2.0
+  for sigma_init in 0.5
   do
     for rs in {1..5}
     do

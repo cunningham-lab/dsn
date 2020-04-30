@@ -1,7 +1,7 @@
 #!/bin/bash
-for p in 0.8 0.9
+for p in 0.9
 do
-  for c in 5
+  for c in 2 
   do
     for rs in {1..5}
     do

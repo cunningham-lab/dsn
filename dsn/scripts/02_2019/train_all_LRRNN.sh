@@ -1,11 +1,11 @@
 #!/bin/bash
-for repeats in 1 2
+for repeats in 1
 do
-  for sigma_init in 1.0 2.0
+  for sigma_init in 1.0
   do
-    for rs in {1..5}
+    for rs in 1
     do
-      sbatch train_LRRNN.sh $repeats $sigma_init 0.1 0 $rs
+      sbatch train_LRRNN.sh $repeats $sigma_init 0.01 0 $rs
     done
   done
 done

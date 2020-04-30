@@ -1,13 +1,15 @@
 #!/bin/bash
 
-for reps in 2
+for c_init_ord in -4 -2 0
 do
-  for c0 in -3
+  for nlayers in 2
   do
-    for rs in {1..10}
+    for sigma_init in 3.0
     do
-      sbatch train_linear_2D.sh $reps $c0 1.0 $rs
-      sbatch train_linear_2D.sh $reps $c0 3.0 $rs
+      for rs in {1..4}
+      do
+        sbatch train_linear_2D.sh $c_init_ord $nlayers $sigma_init $rs
+      done
     done
   done
 done

@@ -1,14 +1,19 @@
 #!/bin/bash
-for repeats in 1
+for nlayers in 10
 do
-  for nlayers in 2 
+  for K in 20
   do
-    for upl in 10 15
+    for c_init in 0 5
     do
-      for rs in {1..5}
+      for sigma_init in 1.0 3.0
       do
-        sbatch train_V1_circuit.sh 3.0 $repeats $nlayers $upl 5 $rs
-        sbatch train_V1_circuit.sh 5.0 $repeats $nlayers $upl 5 $rs
+        for rs in {1..5}
+        do
+          for sigma0 in 0.1
+          do
+            sbatch train_V1_circuit.sh 60 $nlayers $K $c_init $sigma_init $rs $sigma0
+          done
+        done
       done
     done
   done
