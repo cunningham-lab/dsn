@@ -51,15 +51,19 @@ q_theta, opt_data, save_path, failed = model.epi(
     post_affine=False,
     batch_norm=False,
     init_params=init_params,
-    K=12,
+    K=2,
     N=500, 
-    num_iters=2000, 
+    num_iters=500, 
     lr=1e-3, 
     c0=1e0,
     beta=4.,
     nu=0.2,
+    random_seed=random_seed,
     verbose=True,
     stop_early=True,
     log_rate=100,
     save_movie_data=True,
 )
+
+if not failed:
+    model.epi_opt_movie(save_path)
