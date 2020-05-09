@@ -30,7 +30,8 @@ lb = -5.*np.ones((D,))
 ub = 5.*np.ones((D,))
 dh = Parameter("dh", D, lb=lb, ub=ub)
 parameters = [dh]
-model = Model("V1Circuit", parameters)
+name = "V1Circuit_%s" % alpha
+model = Model(name, parameters)
 
 # 2. Define the emergent property.
 # Emergent property statistics (eps).
@@ -48,14 +49,14 @@ q_theta, opt_data, save_path, failed = model.epi(
     num_stages=num_stages, 
     num_layers=2,
     num_units=num_units,
-    post_affine=False,
-    batch_norm=False,
+    post_affine=True,
+    batch_norm=True,
     init_params=init_params,
-    K=2,
+    K=15,
     N=500, 
-    num_iters=500, 
+    num_iters=5000, 
     lr=1e-3, 
-    c0=1e0,
+    c0=c0,
     beta=4.,
     nu=0.2,
     random_seed=random_seed,
@@ -66,4 +67,7 @@ q_theta, opt_data, save_path, failed = model.epi(
 )
 
 if not failed:
+    print("Making movie.")
     model.epi_opt_movie(save_path)
+    print("done.")
+

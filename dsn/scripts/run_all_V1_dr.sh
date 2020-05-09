@@ -1,11 +1,17 @@
 #!/bin/bash
-for stages in 2
+for alpha in E P S V
 do
-  for units in 15
+  for stages in 2
   do
-    for rs in 1
+    for units in 50
     do
-      sbatch run_V1_dr.sh $stages $units $rs
+      for logc0 in 0
+      do
+        for rs in {1..4}
+        do
+          sbatch run_V1_dr.sh $alpha $stages $units $logc0 $rs
+        done
+      done
     done
   done
 done
