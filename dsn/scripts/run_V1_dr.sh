@@ -6,4 +6,4 @@
 #SBATCH --mem-per-cpu=10gb
 
 source activate epi
-python3 V1_dr.py --alpha $1 --inc_val 0. --inc_std 0.25 --num_stages $2 --num_units $3 --logc0 $4 --random_seed $5
+python3 V1_dr.py --alpha $1 --inc_val 0. --inc_std $2 --num_stages $3 --num_units $4 --logc0 $5 --random_seed $6
