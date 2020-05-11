@@ -1,17 +1,17 @@
 #!/bin/bash
 for alpha in E
 do
-  for inc_std in 0.25
+  for beta in P S
   do
-    for stages in 2
+    for inc_std in 0.25
     do
-      for units in 50
+      for stages in 2 3
       do
-        for logc0 in 0
+        for units in 50
         do
-          for rs in {1..4}
+          for rs in {1..5}
           do
-            sbatch run_V1_dr.sh $alpha $inc_std $stages $units $logc0 $rs
+            sbatch run_V1_dr.sh $alpha $beta $inc_std $stages $units $rs
           done
         done
       done
